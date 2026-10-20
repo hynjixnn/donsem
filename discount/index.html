@@ -56,6 +56,7 @@
   <section class="card" id="discount">
     <h1>할인율 계산기</h1>
     <p class="sub">할인된 가격이 얼마인지, 또는 몇 % 할인인지 계산해요.</p>
+    <p class="trust">2026년 기준 · 2026.10.21 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
     <label>무엇을 계산할까요?</label>
     <div class="seg" data-k="o_mode"><button data-v="price" class="on">할인된 가격</button><button data-v="rate">몇 % 할인인지</button></div>
     <label>정가 (원래 가격)</label>
@@ -80,6 +81,12 @@
     <p>아니에요. 쿠폰은 이미 할인된 가격에서 한 번 더 깎아 주는 거라서, 30% 할인 후 10% 추가 할인은 정가 기준 37% 할인이에요. 그래서 할인을 두 번 받을 때는 생각보다 조금 덜 싸져요.</p>
     <h3>몇 % 할인인지는 어떻게 알 수 있나요?</h3>
     <p>할인율 = (정가 − 판매가) ÷ 정가 × 100이에요. 정가 50,000원짜리를 35,000원에 팔면 (50,000 − 35,000) ÷ 50,000 × 100 = 30% 할인이에요.</p>
+    <h3 id="basis">계산 근거</h3>
+    <ul class="basis">
+      <li>할인가 = 정가 × (1 − 할인율)</li>
+      <li>추가 할인은 이미 할인된 가격에 한 번 더 적용해요</li>
+    </ul>
+    <p class="basis-note">2026.10.21에 마지막으로 확인했어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
   </article>
 
   <footer>

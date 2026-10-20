@@ -56,6 +56,7 @@
   <section class="card" id="unit-price">
     <h1>단가 계산기</h1>
     <p class="sub">용량이 다른 상품 중 어느 쪽이 더 싼지 단위 가격으로 비교해요.</p>
+    <p class="trust">2026년 기준 · 2026.10.21 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
     <label>단위</label>
     <div class="seg" data-k="u_unit"><button data-v="g" class="on">g</button><button data-v="ml">ml</button><button data-v="개">개</button></div>
     <p class="hint">칸 순서: 가격 · 용량(한 개) · 묶음 개수. 상품 C는 비워 둬도 돼요.</p>
@@ -87,6 +88,11 @@
     <p>200ml 우유 24개 묶음이라면 용량에 200, 묶음 개수에 24를 넣으면 돼요. 전체 4,800ml로 계산해요.</p>
     <h3>큰 용량이 항상 더 싼가요?</h3>
     <p>대부분은 그렇지만, 작은 용량 할인 행사가 더 쌀 때도 많아요. 할인 중인 가격으로 바로 비교해 보세요. 할인율 자체가 궁금하면 <a href="/discount/">할인율 계산기</a>를 써 보세요.</p>
+    <h3 id="basis">계산 근거</h3>
+    <ul class="basis">
+      <li>단가 = 가격 ÷ (용량 × 묶음 개수) × 100 (개 단위는 × 1)</li>
+    </ul>
+    <p class="basis-note">2026.10.21에 마지막으로 확인했어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
   </article>
 
   <footer>

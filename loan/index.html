@@ -56,6 +56,7 @@
   <section class="card" id="loan">
     <h1>대출 이자 계산기</h1>
     <p class="sub">상환 방식별로 매달 갚을 돈과 총 이자를 계산해요.</p>
+    <p class="trust">2026년 기준 · 2026.10.21 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
     <label>대출 금액</label>
     <div class="field"><input data-k="l_amt" inputmode="numeric" value="100,000,000"><span>원</span></div>
     <label>대출 기간</label>
@@ -74,6 +75,13 @@
       <li><b>원금균등</b>: 처음에 많이 갚고 점점 줄어요. 총 이자는 더 적어요.</li>
       <li><b>만기일시</b>: 매달 이자만 내고 원금은 마지막에 한 번에 갚아요. 총 이자가 가장 많아요.</li>
     </ul>
+    <h3 id="basis">계산 근거</h3>
+    <ul class="basis">
+      <li>원리금균등: 월 상환액 = 원금 × 월이율 ÷ (1 − (1 + 월이율)^−개월)</li>
+      <li>원금균등: 매달 원금은 같고, 이자는 남은 원금에 붙어요</li>
+      <li>만기일시: 매달 이자 = 원금 × 월이율</li>
+    </ul>
+    <p class="basis-note">2026.10.21에 마지막으로 확인했어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
   </article>
 
   <footer>

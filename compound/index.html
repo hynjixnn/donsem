@@ -56,6 +56,7 @@
   <section class="card" id="compound">
     <h1>복리 투자 계산기</h1>
     <p class="sub">처음 넣은 돈 + 매달 추가 투자금이 복리로 얼마나 불어나는지 계산해요.</p>
+    <p class="trust">2026년 기준 · 2026.10.21 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
     <label>초기 투자금</label>
     <div class="field"><input data-k="c_init" inputmode="numeric" value="5,000,000"><span>원</span></div>
     <label>매달 추가 투자</label>
@@ -70,6 +71,12 @@
   <article class="guide">
     <h3>복리가 뭔가요?</h3>
     <p>복리는 수익에 다시 수익이 붙는 방식이에요. 처음엔 차이가 작지만 기간이 길수록 크게 벌어져요. '72의 법칙'으로 72를 연 수익률로 나누면 돈이 두 배가 되는 대략적인 햇수가 나와요. 연 6%면 약 12년, 연 8%면 약 9년이에요.</p>
+    <h3 id="basis">계산 근거</h3>
+    <ul class="basis">
+      <li>연 수익률을 월 수익률((1 + 연 수익률)^(1/12) − 1)로 바꿔 매달 복리로 계산해요</li>
+      <li>세금·수수료·물가는 반영하지 않아요</li>
+    </ul>
+    <p class="basis-note">2026.10.21에 마지막으로 확인했어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
   </article>
 
   <footer>

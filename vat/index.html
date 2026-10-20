@@ -56,6 +56,7 @@
   <section class="card" id="vat">
     <h1>부가세 계산기</h1>
     <p class="sub">공급가액과 부가세(10%), 합계금액을 서로 바꿔서 계산해요.</p>
+    <p class="trust">2026년 기준 · 2026.10.21 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
     <label>내가 아는 금액</label>
     <div class="seg" data-k="x_mode"><button data-v="total" class="on">합계금액 (부가세 포함)</button><button data-v="supply">공급가액 (부가세 별도)</button></div>
     <label>금액</label>
@@ -66,6 +67,12 @@
   <article class="guide">
     <h3>부가세는 어떻게 계산하나요?</h3>
     <p>부가세는 공급가액의 10%예요. 공급가액 10만 원이면 부가세 1만 원, 합계 11만 원이에요. 반대로 부가세가 포함된 합계금액만 알 때는 합계 ÷ 1.1을 하면 공급가액이 나와요.</p>
+    <h3 id="basis">계산 근거</h3>
+    <ul class="basis">
+      <li>부가가치세법: 세율 10%</li>
+      <li>공급가액 = 합계금액 ÷ 1.1 (원 단위 반올림)</li>
+    </ul>
+    <p class="basis-note">2026.10.21에 마지막으로 확인했어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
   </article>
 
   <footer>

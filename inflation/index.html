@@ -56,6 +56,7 @@
   <section class="card" id="inflation">
     <h1>물가상승률 계산기</h1>
     <p class="sub">물가가 오르면 같은 돈으로 살 수 있는 게 줄어들어요. 몇 년 뒤 돈의 가치를 계산해요.</p>
+    <p class="trust">2026년 기준 · 2026.10.21 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
     <label>금액</label>
     <div class="field"><input data-k="i_amt" inputmode="numeric" value="1,000,000"><span>원</span></div>
     <label>연 물가상승률</label>
@@ -72,6 +73,12 @@
     <p>한국은행은 물가가 1년에 2% 정도 오르는 것을 목표로 해요. 그래서 오래 뒤를 계산할 때는 보통 2~3%를 넣어요. 해마다 실제 물가상승률은 통계청 발표를 확인하면 돼요.</p>
     <h3>돈의 가치를 지키려면?</h3>
     <p>적어도 물가상승률보다 높은 이자나 수익을 받아야 돈의 가치가 줄지 않아요. <a href="/deposit/">예금 이자 계산기</a>나 <a href="/compound/">복리 계산기</a>로 내 돈이 물가보다 빨리 불어나는지 비교해 보세요.</p>
+    <h3 id="basis">계산 근거</h3>
+    <ul class="basis">
+      <li>미래 가격 = 지금 금액 × (1 + 물가상승률)^년</li>
+      <li>한국은행 물가안정목표: 소비자물가 상승률 연 2%</li>
+    </ul>
+    <p class="basis-note">2026.10.21에 마지막으로 확인했어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
   </article>
 
   <footer>

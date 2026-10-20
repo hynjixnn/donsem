@@ -157,3 +157,11 @@ footer a:hover { color: var(--text) !important; }
 /* 한 줄 정리 */
 .insight { margin: 16px 0 0; padding: 14px 16px; border-radius: 12px; background: var(--card); font-size: 15px; line-height: 1.6; }
 .insight b { display: block; color: var(--blue); font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+
+/* 신뢰 표시 */
+.trust { margin: 0 0 4px; font-size: 13px; color: var(--muted); }
+.trust a { color: var(--accent); }
+#basis, #contact { scroll-margin-top: 72px; }
+.basis { padding-left: 20px; font-size: 15px; line-height: 1.7; color: var(--muted); }
+.basis li { color: var(--muted) !important; margin-bottom: 4px; }
+.basis-note { font-size: 13px; color: var(--muted) !important; }
