@@ -144,3 +144,12 @@ footer a:hover { color: var(--text) !important; }
 .pair .field input { font-size: 16px; }
 .pair .field span { margin-left: 4px; font-size: 14px; }
 .hint { font-size: 13px; color: var(--muted); margin: 16px 0 0; }
+
+/* 결과 공유 */
+.share { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.share .btn { flex: 1 1 0; min-width: max-content; font: inherit; font-size: 16px; font-weight: 500; padding: 11px 18px; cursor: pointer; background: transparent; }
+.share .btn.fill { background: var(--blue); }
+.shared-note { margin: 24px 0 -16px; padding: 10px 14px; border-radius: 12px; background: var(--accent-soft); color: var(--blue); font-size: 14px; }
+.toast { position: fixed; left: 50%; bottom: 32px; transform: translate(-50%, 12px); opacity: 0; transition: opacity .2s, transform .2s;
+  background: rgba(29, 29, 31, .92); color: #fff; padding: 12px 20px; border-radius: 980px; font-size: 14px; z-index: 50; max-width: calc(100% - 32px); text-align: center; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }

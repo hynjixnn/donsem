@@ -407,4 +407,65 @@ document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.getAt
 // 휴대폰에서 메뉴가 옆으로 길 때, 지금 메뉴가 보이도록 밀어 두기
 const onNav = document.querySelector('nav a.on');
 if (onNav) onNav.parentElement.scrollLeft = onNav.offsetLeft - onNav.parentElement.offsetLeft - 16;
+
+// ── 결과 공유: 입력한 값을 링크 뒤에 붙여서, 받은 사람도 같은 결과를 보게 해요 ──
+function readState() {
+  const q = new URLSearchParams();
+  document.querySelectorAll('input[data-k]').forEach(el => {
+    const v = el.inputMode === 'numeric' ? el.value.replace(/[^0-9]/g, '') : el.value.trim();
+    if (v !== '') q.set(el.dataset.k, v);
+  });
+  document.querySelectorAll('.seg[data-k]').forEach(g => { const on = g.querySelector('.on'); if (on) q.set(g.dataset.k, on.dataset.v); });
+  return q;
+}
+function applyState(q) {
+  let used = false;
+  document.querySelectorAll('input[data-k]').forEach(el => {
+    if (!q.has(el.dataset.k)) return;
+    const v = q.get(el.dataset.k);
+    el.value = el.inputMode === 'numeric' && /^\d+$/.test(v) ? Number(v).toLocaleString('ko-KR') : v;
+    used = true;
+  });
+  document.querySelectorAll('.seg[data-k]').forEach(g => {
+    const b = q.has(g.dataset.k) && g.querySelector(`button[data-v="${CSS.escape(q.get(g.dataset.k))}"]`);
+    if (b) { g.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); used = true; }
+  });
+  if (document.querySelector('.seg[data-k="q_mode"]')) percentMode = seg('q_mode'); // 퍼센트 계산기가 예시 숫자로 덮어쓰지 않게
+  return used;
+}
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2200);
+}
+async function copyLink(url) {
+  try { await navigator.clipboard.writeText(url); }
+  catch (e) { const a = document.createElement('textarea'); a.value = url; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
+  toast('링크를 복사했어요. 카톡이나 문자에 붙여 넣으세요.');
+}
+const result = document.querySelector('.card .result');
+if (result) {
+  const fromLink = applyState(new URLSearchParams(location.search));
+  if (fromLink) {
+    const note = document.createElement('p');
+    note.className = 'shared-note'; note.textContent = '공유받은 링크로 열려서, 보낸 사람이 입력한 숫자로 계산했어요.';
+    result.before(note);
+  }
+  const bar = document.createElement('div');
+  bar.className = 'share';
+  bar.innerHTML = '<button type="button" class="btn fill" data-act="share">결과 공유하기</button><button type="button" class="btn line" data-act="copy">링크 복사</button>';
+  result.after(bar);
+  bar.addEventListener('click', async e => {
+    const act = e.target.dataset && e.target.dataset.act;
+    if (!act) return;
+    const url = `${location.origin}${location.pathname}?${readState()}`;
+    const head = result.querySelector('div') ? result.querySelector('div').textContent.trim() : '';
+    const big = result.querySelector('.big') ? result.querySelector('.big').textContent.trim() : '';
+    const name = document.querySelector('.card h1').textContent.trim();
+    if (act === 'share' && navigator.share) {
+      try { await navigator.share({ title: `${name} - 돈셈`, text: `[돈셈 ${name}] ${head} ${big}`, url }); } catch (err) { /* 공유 창을 닫은 경우 */ }
+    } else copyLink(url);
+  });
+}
 runAll();
