@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>날짜 계산기 - D-day, 며칠 후 날짜, 두 날짜 사이 일수 계산</title>
+<meta name="description" content="날짜 계산기. 오늘부터 D-day까지 남은 날, 기준일로부터 며칠 뒤 날짜, 두 날짜 사이 일수를 바로 계산해요. 적금 만기일, 계약 만료일, 월급날 계산에 써 보세요.">
+<link rel="canonical" href="https://doncalculator.com/date/">
+<meta property="og:title" content="날짜 계산기 - D-day, 며칠 후 날짜, 두 날짜 사이 일수 계산">
+<meta property="og:description" content="날짜 계산기. 오늘부터 D-day까지 남은 날, 기준일로부터 며칠 뒤 날짜, 두 날짜 사이 일수를 바로 계산해요. 적금 만기일, 계약 만료일, 월급날 계산에 써 보세요.">
+<meta property="og:url" content="https://doncalculator.com/date/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <a class="all" href="/">모든 계산기</a>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+    <a href="/unit-price/">단가 비교</a>
+    <a href="/fuel/">유류비</a>
+    <a href="/dutch-pay/">더치페이</a>
+    <a href="/date/">날짜</a>
+  </nav>
+
+  <section class="card" id="date">
+    <h1>날짜 계산기</h1>
+    <p class="sub">D-day, 며칠 뒤 날짜, 두 날짜 사이 일수를 계산해요.</p>
+    <label>무엇을 계산할까요?</label>
+    <div class="seg" data-k="z_mode"><button data-v="dday" class="on">D-day</button><button data-v="add">며칠 뒤</button><button data-v="between">두 날짜 사이</button></div>
+    <div data-mode="dday">
+      <label>목표 날짜</label>
+      <div class="field"><input data-k="z_target" type="date" value="2026-12-25"></div>
+    </div>
+    <div data-mode="add" hidden>
+      <label>기준 날짜</label>
+      <div class="field"><input data-k="z_base" type="date" value=""></div>
+      <label>더할 날</label>
+      <div class="field"><input data-k="z_n" inputmode="numeric" value="100"><span>일</span></div>
+      <label>기준 날짜를 1일째로 셀까요?</label>
+      <div class="seg" data-k="z_inc1"><button data-v="0" class="on">아니요</button><button data-v="1">네 (기념일처럼)</button></div>
+    </div>
+    <div data-mode="between" hidden>
+      <label>시작 날짜</label>
+      <div class="field"><input data-k="z_from" type="date" value="2026-01-01"></div>
+      <label>끝 날짜</label>
+      <div class="field"><input data-k="z_to" type="date" value="2026-12-31"></div>
+      <label>첫날도 셀까요?</label>
+      <div class="seg" data-k="z_inc2"><button data-v="0" class="on">아니요</button><button data-v="1">네 (첫날 포함)</button></div>
+    </div>
+    <div class="result" id="z_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>D-day는 어떻게 세나요?</h3>
+    <p>목표 날짜가 오늘부터 며칠 남았는지 세요. 목표 날짜 하루 전이 D-1, 당일이 D-day, 다음 날이 D+1이에요.</p>
+    <h3>100일 기념일은 어떻게 계산하나요?</h3>
+    <p>사귄 날이나 태어난 날을 1일째로 세기 때문에, 기준 날짜에 99일을 더한 날이 100일이에요. '며칠 뒤'에서 기준 날짜를 1일째로 세기를 고르면 바로 나와요.</p>
+    <h3>돈 관리에 이렇게 써 보세요</h3>
+    <p>적금 가입일에서 며칠 뒤가 만기일인지, 전세 계약 만료까지 며칠 남았는지 확인할 때 유용해요. 퇴직금을 받을 수 있는 1년(365일)이 언제 채워지는지도 알 수 있어요. 퇴직금이 궁금하면 <a href="/severance/">퇴직금 계산기</a>도 써 보세요.</p>
+  </article>
+
+  <footer>
+    날짜는 이용하는 기기의 오늘 날짜를 기준으로 계산해요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

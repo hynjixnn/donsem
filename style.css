@@ -136,3 +136,11 @@ footer a:hover { color: var(--text) !important; }
   .tile p { font-size: 13px; margin: 0; }
   .tile .go { display: none; }
 }
+
+/* 한 줄에 칸 여러 개 (단가 계산기) */
+.pair { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .8fr); gap: 8px; }
+.pair .field { padding: 0 10px; min-width: 0; }
+@media (max-width: 640px) { .pair { gap: 6px; } .pair .field { padding: 0 8px; } .pair .field input { font-size: 15px; } }
+.pair .field input { font-size: 16px; }
+.pair .field span { margin-left: 4px; font-size: 14px; }
+.hint { font-size: 13px; color: var(--muted); margin: 16px 0 0; }

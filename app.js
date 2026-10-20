@@ -310,8 +310,82 @@ function refinance() {
       ['수수료 되찾는 기간', back === null ? '되찾을 수 없어요' : back <= n ? `${back}개월` : '남은 기간 안에 못 되찾아요']]);
 }
 
+function unitPrice() {
+  const unit = seg('u_unit'), per = unit === '개' ? 1 : 100, label = unit === '개' ? '1개당' : `100${unit}당`;
+  document.querySelectorAll('#unit-price .u-unit').forEach(s => s.textContent = unit);
+  const items = ['A', 'B', 'C'].map(n => {
+    const price = val('u_p' + n), vol = val('u_v' + n), cnt = val('u_c' + n) || 1;
+    return { n, price, total: vol * cnt, unitPrice: price > 0 && vol > 0 ? price / (vol * cnt) * per : null };
+  }).filter(x => x.unitPrice !== null);
+  const out = document.getElementById('u_out');
+  if (!items.length) { out.innerHTML = '가격과 용량을 넣어 주세요.'; return; }
+  const best = items.reduce((a, b) => (b.unitPrice < a.unitPrice ? b : a));
+  const fmt = n => n.toLocaleString('ko-KR', { maximumFractionDigits: n < 100 ? 1 : 0 }) + '원';
+  out.innerHTML = `<div>가장 저렴한 상품</div><div class="big">상품 ${best.n} <small>${label} ${fmt(best.unitPrice)}</small></div>` +
+    rows(items.map(x => [`상품 ${x.n} (${x.total.toLocaleString('ko-KR')}${unit})`,
+      `${label} ${fmt(x.unitPrice)}${x === best ? ' ✓' : ` (+${((x.unitPrice / best.unitPrice - 1) * 100).toFixed(1)}%)`}`]));
+}
+
+function fuel() {
+  const mode = seg('e_mode'), out = document.getElementById('e_out');
+  document.querySelectorAll('#fuel > [data-mode]').forEach(d => d.hidden = d.dataset.mode !== mode);
+  if (mode === 'eff') {
+    const km = val('e_dist'), l = val('e_liter');
+    if (km <= 0 || l <= 0) { out.innerHTML = '주행 거리와 넣은 기름 양을 넣어 주세요.'; return; }
+    out.innerHTML = `<div>내 차 연비</div><div class="big">${(km / l).toFixed(1)} <small>km/L</small></div>` +
+      rows([['주행 거리', km.toLocaleString('ko-KR') + 'km'], ['넣은 기름', l.toLocaleString('ko-KR') + 'L'], ['100km 가는 데 드는 기름', (l / km * 100).toFixed(1) + 'L']]);
+    return;
+  }
+  const km = val('e_km') * num(seg('e_trip')), eff = val('e_eff'), price = val('e_price'), ppl = Math.max(1, Math.round(val('e_ppl')));
+  if (eff <= 0) { out.innerHTML = '연비를 넣어 주세요.'; return; }
+  const liter = km / eff, cost = liter * price;
+  out.innerHTML = `<div>유류비</div><div class="big">${won(cost)}</div>` +
+    rows([['총 거리', km.toLocaleString('ko-KR') + 'km'], ['필요한 기름', liter.toFixed(1) + 'L'], ['1km당 기름값', won(price / eff)]]
+      .concat(ppl > 1 ? [['한 사람당', won(cost / ppl)]] : []));
+}
+
+function dutchPay() {
+  const total = val('n_total'), ppl = Math.max(1, Math.round(val('n_ppl'))), tip = num(seg('n_tip')) / 100, unit = num(seg('n_unit'));
+  const sum = total * (1 + tip), each = sum / ppl;
+  const rounded = Math.ceil(Math.round(each) / unit) * unit; // 계산한 사람이 손해 보지 않게 올림
+  const extra = rounded * ppl - sum;
+  document.getElementById('n_out').innerHTML = `<div>한 사람당</div><div class="big">${won(rounded)}</div>` +
+    rows([['총 금액', won(total)]].concat(tip ? [[`팁 (${tip * 100}%)`, won(total * tip)], ['팁 포함 합계', won(sum)]] : [])
+      .concat([['정확히 나누면', won(each)], [`${ppl}명이 내는 돈`, won(rounded * ppl)], ['남는 돈 (계산한 사람 몫)', won(extra)]]));
+}
+
+function dateCalc() {
+  const mode = seg('z_mode'), out = document.getElementById('z_out');
+  document.querySelectorAll('#date > [data-mode]').forEach(d => d.hidden = d.dataset.mode !== mode);
+  const DAY = 86400000, W = '일월화수목금토';
+  const now = new Date(), today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()); // 기기의 오늘 날짜
+  const read = k => { const v = document.querySelector(`input[data-k="${k}"]`).value; return v ? Date.parse(v + 'T00:00:00Z') : null; };
+  const show = t => { const d = new Date(t); return `${d.getUTCFullYear()}년 ${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 (${W[d.getUTCDay()]})`; };
+  const base = document.querySelector('input[data-k="z_base"]');
+  if (!base.value) base.value = new Date(today).toISOString().slice(0, 10);
+  if (mode === 'dday') {
+    const t = read('z_target');
+    if (t === null) { out.innerHTML = '목표 날짜를 넣어 주세요.'; return; }
+    const d = Math.round((t - today) / DAY);
+    out.innerHTML = `<div>${show(t)}</div><div class="big">${d === 0 ? 'D-day' : d > 0 ? 'D-' + d : 'D+' + (-d)}</div>` +
+      rows([['오늘', show(today)], [d >= 0 ? '남은 날' : '지난 날', Math.abs(d).toLocaleString('ko-KR') + '일'], ['약', `${(Math.abs(d) / 7).toFixed(1)}주 · ${(Math.abs(d) / 30.44).toFixed(1)}개월`]]);
+  } else if (mode === 'add') {
+    const b = read('z_base'), n = Math.round(val('z_n')), inc = num(seg('z_inc1'));
+    if (b === null) { out.innerHTML = '기준 날짜를 넣어 주세요.'; return; }
+    const t = b + (n - inc) * DAY;
+    out.innerHTML = `<div>${inc ? `${n}일째 되는 날` : `${n}일 뒤`}</div><div class="big">${show(t)}</div>` +
+      rows([['기준 날짜', show(b)], ['오늘부터', (() => { const d = Math.round((t - today) / DAY); return d === 0 ? '오늘이에요' : d > 0 ? `${d}일 남았어요` : `${-d}일 지났어요`; })()]]);
+  } else {
+    const a = read('z_from'), b = read('z_to'), inc = num(seg('z_inc2'));
+    if (a === null || b === null) { out.innerHTML = '두 날짜를 넣어 주세요.'; return; }
+    const d = Math.round(Math.abs(b - a) / DAY) + inc;
+    out.innerHTML = `<div>두 날짜 사이</div><div class="big">${d.toLocaleString('ko-KR')}일</div>` +
+      rows([['시작', show(Math.min(a, b))], ['끝', show(Math.max(a, b))], ['약', `${(d / 7).toFixed(1)}주 · ${(d / 30.44).toFixed(1)}개월 · ${(d / 365).toFixed(2)}년`]]);
+  }
+}
+
 // 페이지마다 계산기가 하나씩 있어서, 그 페이지에 있는 계산기만 계산해요
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc };
 function runAll() { for (const id in calc) if (document.getElementById(id)) calc[id](); }
 
 // 입력할 때 콤마 자동 표시
