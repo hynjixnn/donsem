@@ -253,3 +253,26 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 @media (max-width: 640px) { .top-links { gap: 14px; } .sum b { font-size: 15px; } .tile.feature .go { display: inline; } }
 .sub-card h2 + .seg { margin-top: 16px; }
 .tile.feature { grid-column: 1 / -1; }
+
+/* ── 내 자산 ── */
+.net { margin: 24px 0 14px; }
+.net span { display: block; font-size: 15px; color: var(--muted); }
+.net b { display: block; font-size: 40px; line-height: 1.15; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.net b.minus { color: #d70015; }
+.net small { display: block; font-size: 14px; color: var(--muted); margin-top: 2px; }
+.sum.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#a-insight .insight { background: var(--field); }
+.amt-btn { border: 0; background: none; font: inherit; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); cursor: pointer; padding: 4px 6px; border-radius: 8px; white-space: nowrap; }
+.amt-btn:hover { background: var(--seg-bg); }
+.amt-btn.debt { color: #d70015; }
+.items .item.editing { flex-wrap: wrap; }
+.field.mini { flex: 0 1 170px; padding: 0 10px; }
+.field.mini input { font-size: 16px; padding: 8px 0; }
+.cat-top small { font-size: 12px; margin-left: 4px; }
+.cat-top small.up { color: var(--blue); }
+.cat-top small.down { color: #d70015; }
+.tile.feature.dark { background: var(--text); }
+.tile.feature.dark:hover { background: #333336; }
+@media (min-width: 641px) { .tile.feature { grid-column: span 2; } }
+@media (max-width: 640px) { .net b { font-size: 32px; } }
+.sub-card .insight { background: var(--field); }

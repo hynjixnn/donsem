@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내 자산 현황 - 돈셈, 순자산과 부채를 한눈에</title>
+<meta name="description" content="돈셈 내 자산. 통장, 예적금, 투자, 대출을 적어 두면 순자산과 부채 비율, 자산 구성, 월별 변화를 한눈에 보여 줘요. 가입 없이 쓰고 기록은 내 기기에만 저장돼요.">
+<link rel="canonical" href="https://doncalculator.com/assets/">
+<meta property="og:title" content="내 자산 현황 - 돈셈, 순자산과 부채를 한눈에">
+<meta property="og:description" content="돈셈 내 자산. 통장, 예적금, 투자, 대출을 적어 두면 순자산과 부채 비율, 자산 구성, 월별 변화를 한눈에 보여 줘요. 가입 없이 쓰고 기록은 내 기기에만 저장돼요.">
+<meta property="og:url" content="https://doncalculator.com/assets/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <div class="top-links"><a class="all" href="/budget/">가계부</a><a class="all" href="/assets/">내 자산</a><a class="all" href="/">모든 계산기</a></div>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+    <a href="/unit-price/">단가 비교</a>
+    <a href="/fuel/">유류비</a>
+    <a href="/dutch-pay/">더치페이</a>
+    <a href="/date/">날짜</a>
+  </nav>
+
+  <section class="card" id="assets">
+    <h1>내 자산</h1>
+    <p class="sub">통장, 투자, 대출을 적어 두면 순자산을 한눈에 보여 드려요.</p>
+    <p class="trust">🔒 기록은 이 기기에만 저장돼요 · 서버로 보내지 않아요</p>
+    <div class="net">
+      <span>순자산</span>
+      <b id="a-net"></b>
+      <small id="a-net-kr"></small>
+    </div>
+    <div class="sum two">
+      <div><span>자산</span><b id="a-total"></b></div>
+      <div><span>부채</span><b id="a-debt"></b></div>
+    </div>
+    <div id="a-insight"></div>
+  </section>
+
+  <section class="card sub-card">
+    <h2>항목 추가</h2>
+    <div class="seg" id="a-kind"><button type="button" data-v="asset" class="on">자산</button><button type="button" data-v="debt">부채</button></div>
+    <label>종류</label>
+    <div class="chips" id="a-cats"></div>
+    <label for="a-name">이름 (선택)</label>
+    <div class="field memo"><input id="a-name" type="text" maxlength="30" autocomplete="off"></div>
+    <label for="a-amt">금액</label>
+    <div class="field"><input id="a-amt" inputmode="numeric" placeholder="0" autocomplete="off"><span>원</span></div>
+    <p class="err" id="a-err" role="alert"></p>
+    <button type="button" class="btn fill wide" id="a-save">자산 추가하기</button>
+  </section>
+
+  <section class="card sub-card">
+    <h2>목록</h2>
+    <p class="sub small">금액을 누르면 바로 고칠 수 있어요. 한 달에 한 번 잔액을 업데이트해 보세요.</p>
+    <ul class="items" id="a-items"></ul>
+  </section>
+
+  <section class="card sub-card">
+    <h2>자산 구성</h2>
+    <div id="a-mix"></div>
+  </section>
+
+  <section class="card sub-card">
+    <h2>월별 순자산</h2>
+    <div id="a-history"></div>
+  </section>
+
+  <section class="card sub-card">
+    <h2>백업</h2>
+    <p class="sub small">기록은 이 기기의 브라우저에만 있어요. 기기를 바꾸기 전에 백업 파일을 저장해 두세요.</p>
+    <div class="row-btns">
+      <button type="button" class="btn line" id="a-export">백업 파일 저장</button>
+      <label class="btn line file-btn">백업 불러오기<input type="file" id="a-import" accept=".json,application/json"></label>
+    </div>
+    <button type="button" class="link danger" id="a-reset">내 자산 기록 전체 지우기</button>
+  </section>
+
+  <article class="guide">
+    <h3>순자산이 뭔가요?</h3>
+    <p>가진 것(자산)에서 갚아야 할 것(부채)을 뺀 금액이에요. 통장에 3,000만 원, 전세 보증금 2억 원이 있고 전세대출이 1억 5,000만 원이라면 순자산은 8,000만 원이에요.</p>
+    <h3>얼마나 자주 업데이트하면 좋을까요?</h3>
+    <p>월급날처럼 정해진 날에 한 달에 한 번 잔액을 고쳐 주면 충분해요. 달마다 순자산이 자동으로 기록돼서, 내 돈이 어떻게 늘고 있는지 볼 수 있어요.</p>
+    <h3>부채 비율은 얼마가 적당한가요?</h3>
+    <p>정해진 정답은 없지만, 부채가 자산의 절반 가까이 되면 금리를 한번 점검해 보는 게 좋아요. 지금보다 낮은 금리로 바꿀 수 있는지 <a href="/refinance/">대출 갈아타기 계산기</a>로 확인해 보세요. 매달 쓰는 돈은 <a href="/budget/">가계부</a>로 관리할 수 있어요.</p>
+  </article>
+
+  <footer>
+    내 자산 기록은 이 기기의 브라우저에만 저장되고 돈셈 서버로 보내지 않아요. 브라우저 데이터를 지우면 함께 지워지니 가끔 백업해 주세요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+<script src="/assets.js"></script>
+</body>
+</html>
