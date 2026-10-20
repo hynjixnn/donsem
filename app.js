@@ -957,3 +957,83 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   }
   bar.querySelector('.tab-add').addEventListener('click', open);
 })();
+
+// ── 홈 대시보드: 가계부·고정지출·내 자산·목표 기록이 있는 사람에게 첫 화면 맨 위에서 한눈에 ──
+(() => {
+  if (!document.body.classList.contains('home')) return;
+  const read = k => { try { return JSON.parse(localStorage.getItem(k)) || null; } catch (e) { return null; } };
+  const budget = read('donsem:budget'), fixed = read('donsem:fixed'), assets = read('donsem:assets'), goals = read('donsem:goals');
+  const has = {
+    budget: !!(budget && ((budget.entries || []).length || budget.budget)),
+    fixed: !!(fixed && (fixed.items || []).length),
+    assets: !!(assets && (assets.items || []).length),
+    goals: !!(goals && (goals.goals || []).length),
+  };
+  if (!Object.values(has).some(Boolean)) return; // 처음 온 사람에게는 원래 첫 화면 그대로
+
+  const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const month = iso(today).slice(0, 7), W = '일월화수목금토';
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const bar = (ratio, over) => `<div class="bar${over ? ' over' : ''}"><i style="width:${Math.max(0, Math.min(100, ratio * 100))}%"></i></div>`;
+  const cards = [];
+
+  if (has.budget) {
+    const list = (budget.entries || []).filter(e => String(e.date).startsWith(month));
+    const out = list.filter(e => e.type === 'out').reduce((s, e) => s + Number(e.amt || 0), 0);
+    const todayOut = list.filter(e => e.type === 'out' && e.date === iso(today)).reduce((s, e) => s + Number(e.amt || 0), 0);
+    let extra = `<p class="dash-sub">오늘 쓴 돈 ${won(todayOut)}</p>`;
+    if (budget.budget) {
+      const left = budget.budget - out, daysLeft = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate() - today.getDate() + 1;
+      extra = bar(out / budget.budget, left < 0) + `<p class="dash-sub">${left < 0 ? `예산을 ${won(-left)} 넘었어요` : `예산 ${Math.round(out / budget.budget * 100)}% 사용 · 하루 ${won(left / daysLeft)}씩 쓸 수 있어요`}</p>`;
+    }
+    cards.push(`<a class="dash-card" href="/budget/"><span class="dash-label">이번 달 지출</span><b class="dash-big">${won(out)}</b>${extra}</a>`);
+  }
+
+  if (has.fixed) {
+    const dayIn = (y, m, d) => new Date(y, m, Math.min(d, new Date(y, m + 1, 0).getDate()));
+    const next = x => {
+      if (x.cycle === 'year') { let d = dayIn(today.getFullYear(), x.month - 1, x.day); if (d < today) d = dayIn(today.getFullYear() + 1, x.month - 1, x.day); return d; }
+      let d = dayIn(today.getFullYear(), today.getMonth(), x.day); if (d < today) d = dayIn(today.getFullYear(), today.getMonth() + 1, x.day); return d;
+    };
+    const up = fixed.items.map(x => ({ x, d: next(x) })).sort((a, b) => a.d - b.d)[0];
+    const n = Math.round((up.d - today) / 86400000);
+    const leftThisMonth = fixed.items.filter(x => x.cycle !== 'year' || x.month - 1 === today.getMonth())
+      .filter(x => dayIn(today.getFullYear(), today.getMonth(), x.day) >= today).reduce((s, x) => s + x.amt, 0);
+    cards.push(`<a class="dash-card" href="/fixed/"><span class="dash-label">다음 결제</span><b class="dash-big"><span class="dday${n <= 3 ? ' soon' : ''}">${n === 0 ? '오늘' : 'D-' + n}</span> ${esc(up.x.name)}</b>
+      <p class="dash-sub">${up.d.getMonth() + 1}월 ${up.d.getDate()}일 (${W[up.d.getDay()]}) · ${won(up.x.amt)}</p><p class="dash-sub">이번 달 남은 고정지출 ${won(leftThisMonth)}</p></a>`);
+  }
+
+  if (has.assets) {
+    const a = assets.items.filter(x => x.kind === 'asset').reduce((s, x) => s + x.amt, 0), d = assets.items.filter(x => x.kind === 'debt').reduce((s, x) => s + x.amt, 0);
+    const prevKey = Object.keys(assets.history || {}).filter(m => m < month).sort().pop();
+    let sub = '<p class="dash-sub">매달 잔액을 고치면 변화가 쌓여요</p>';
+    if (prevKey) { const p = assets.history[prevKey], diff = (a - d) - (p.a - p.d); sub = `<p class="dash-sub ${diff >= 0 ? 'up' : 'down'}">${Number(prevKey.slice(5))}월보다 ${diff >= 0 ? '▲' : '▼'} ${won(Math.abs(diff))}</p>`; }
+    cards.push(`<a class="dash-card" href="/assets/"><span class="dash-label">순자산</span><b class="dash-big${a - d < 0 ? ' minus' : ''}">${a - d < 0 ? '-' : ''}${won(Math.abs(a - d))}</b>${sub}</a>`);
+  }
+
+  if (has.goals) {
+    const assetAmt = id => { const it = assets && (assets.items || []).find(x => x.id === id); return it ? it.amt : 0; };
+    const rows = goals.goals.slice(0, 2).map(g => {
+      const saved = g.mode === 'assets' ? (g.assetIds || []).reduce((s, id) => s + assetAmt(id), 0) : (g.saved || 0), r = saved / g.target;
+      return `<div class="dash-goal"><div class="cat-top"><span>${esc(g.name)}</span><span>${Math.min(100, Math.floor(r * 100))}%</span></div>${bar(r)}</div>`;
+    }).join('');
+    cards.push(`<a class="dash-card" href="/goals/"><span class="dash-label">목표${goals.goals.length > 2 ? ` · ${goals.goals.length}개 중 2개` : ''}</span>${rows}</a>`);
+  }
+
+  const missing = [['budget', '/budget/', '가계부'], ['fixed', '/fixed/', '고정지출'], ['assets', '/assets/', '내 자산'], ['goals', '/goals/', '목표 저축']].filter(([k]) => !has[k]);
+  const sec = document.createElement('section');
+  sec.className = 'dash';
+  sec.innerHTML = `<div class="dash-head"><div><span class="dash-date">${today.getMonth() + 1}월 ${today.getDate()}일 (${W[today.getDay()]})</span><h1>오늘도 돈셈 해요</h1></div>
+      <button type="button" class="btn fill dash-add">＋ 기록하기</button></div>
+    <div class="dash-grid">${cards.join('')}</div>
+    ${missing.length ? `<p class="dash-more">이것도 써 보세요 · ${missing.map(([, h, t]) => `<a href="${h}">${t}</a>`).join(' · ')}</p>` : ''}`;
+  const hero = document.querySelector('.hero');
+  hero.before(sec);
+  document.body.classList.add('has-dash');
+  sec.querySelector('.dash-add').addEventListener('click', () => {
+    const add = document.querySelector('.tabbar .tab-add');
+    if (add && getComputedStyle(document.querySelector('.tabbar')).display !== 'none') add.click(); // 휴대폰: 아래에서 기록 창
+    else location.href = '/budget/'; // 컴퓨터: 가계부로
+  });
+})();
