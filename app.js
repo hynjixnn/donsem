@@ -835,5 +835,5 @@ window.addEventListener('beforeinstallprompt', e => {
     if (choice.outcome === 'accepted') toast('홈 화면에 돈셈을 추가했어요.');
   });
 });
-if (isIOS && !standalone) installCard('<div class="install-text"><b>돈셈을 앱처럼 쓰세요</b><span>브라우저의 <b>공유 버튼</b>(네모에 화살표)을 누르고 <b>홈 화면에 추가</b>를 고르면 돼요</span></div>');
+if (isIOS && !standalone) installCard('<div class="install-text"><b>돈셈을 앱처럼 쓰세요</b><span><b>공유 버튼</b>(네모에 화살표)을 누르고 <b>홈 화면에 추가</b>를 고르세요. 공유 버튼이 안 보이면 주소창의 <b>≡</b> 또는 <b>⋯</b> 메뉴 안에 있어요.</span></div>');
 window.addEventListener('appinstalled', () => { const el = document.querySelector('.install'); if (el) el.remove(); });
