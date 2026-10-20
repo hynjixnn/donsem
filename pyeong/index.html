@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>평수 계산기 - 제곱미터(㎡)를 평으로, 평당 가격 계산</title>
+<meta name="description" content="평수 계산기. ㎡를 평으로, 평을 ㎡로 바로 바꾸고, 집값을 넣으면 평당 가격과 ㎡당 가격도 계산해요. 59㎡, 84㎡가 몇 평인지 확인해 보세요.">
+<link rel="canonical" href="https://doncalculator.com/pyeong/">
+<meta property="og:title" content="평수 계산기 - 제곱미터(㎡)를 평으로, 평당 가격 계산">
+<meta property="og:description" content="평수 계산기. ㎡를 평으로, 평을 ㎡로 바로 바꾸고, 집값을 넣으면 평당 가격과 ㎡당 가격도 계산해요. 59㎡, 84㎡가 몇 평인지 확인해 보세요.">
+<meta property="og:url" content="https://doncalculator.com/pyeong/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <a class="all" href="/">모든 계산기</a>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+  </nav>
+
+  <section class="card" id="pyeong">
+    <h1>평수 계산기</h1>
+    <p class="sub">㎡와 평을 서로 바꾸고, 집값을 넣으면 평당 가격도 계산해요.</p>
+    <label>내가 아는 면적</label>
+    <div class="seg" data-k="y_mode"><button data-v="m2" class="on">㎡ (제곱미터)</button><button data-v="py">평</button></div>
+    <label>면적</label>
+    <div class="field"><input data-k="y_area" inputmode="decimal" value="84"><span id="y_unit">㎡</span></div>
+    <label>가격 (평당 가격이 궁금하면, 없으면 0)</label>
+    <div class="field"><input data-k="y_price" inputmode="numeric" value="0"><span>원</span></div>
+    <div class="result" id="y_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>1평은 몇 ㎡인가요?</h3>
+    <p>1평은 약 3.3058㎡예요. 그래서 ㎡를 평으로 바꿀 때는 3.3058로 나누고(또는 0.3025를 곱하고), 평을 ㎡로 바꿀 때는 3.3058을 곱해요.</p>
+    <h3>59㎡, 84㎡는 몇 평인가요?</h3>
+    <p>전용면적 59㎡는 약 17.8평, 84㎡는 약 25.4평이에요. 흔히 "25평", "34평"이라고 부르는 건 공용면적까지 더한 공급면적 기준이라 숫자가 더 커요. 84㎡ 아파트를 보통 "34평형"이라고 부르는 이유예요.</p>
+    <h3>평당 가격은 어떻게 계산하나요?</h3>
+    <p>평당 가격 = 가격 ÷ 평수예요. 84㎡(약 25.4평) 아파트가 8억 원이면 평당 약 3,148만 원이에요. 전세를 월세로 바꿔 보고 싶다면 <a href="/rent/">전월세 전환 계산기</a>도 써 보세요.</p>
+  </article>
+
+  <footer>
+    1평 = 400/121㎡(약 3.3058㎡)로 계산했어요. 아파트 분양 평수는 공용면적이 포함돼서 전용면적으로 계산한 평수와 달라요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

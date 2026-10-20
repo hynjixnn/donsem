@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>예금 이자 계산기 - 정기예금 세후 이자 계산</title>
+<meta name="description" content="예금 이자 계산기. 예치 금액, 기간, 금리를 넣으면 정기예금 만기에 받는 세후 이자와 수령액을 바로 계산해요.">
+<link rel="canonical" href="https://doncalculator.com/deposit/">
+<meta property="og:title" content="예금 이자 계산기 - 정기예금 세후 이자 계산">
+<meta property="og:description" content="예금 이자 계산기. 예치 금액, 기간, 금리를 넣으면 정기예금 만기에 받는 세후 이자와 수령액을 바로 계산해요.">
+<meta property="og:url" content="https://doncalculator.com/deposit/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <a class="all" href="/">모든 계산기</a>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+  </nav>
+
+  <section class="card" id="deposit">
+    <h1>예금 이자 계산기</h1>
+    <p class="sub">목돈을 한 번에 맡겼을 때 만기에 받는 돈(세후)을 계산해요.</p>
+    <label>예치 금액</label>
+    <div class="field"><input data-k="d_amt" inputmode="numeric" value="10,000,000"><span>원</span></div>
+    <label>예치 기간</label>
+    <div class="field"><input data-k="d_n" inputmode="numeric" value="12"><span>개월</span></div>
+    <label>연 이자율</label>
+    <div class="field"><input data-k="d_r" inputmode="decimal" value="3.0"><span>%</span></div>
+    <label>이자 방식</label>
+    <div class="seg" data-k="d_type"><button data-v="simple" class="on">단리</button><button data-v="monthly">월복리</button></div>
+    <label>과세</label>
+    <div class="seg" data-k="d_tax"><button data-v="15.4" class="on">일반과세 15.4%</button><button data-v="9.5">세금우대 9.5%</button><button data-v="0">비과세</button></div>
+    <div class="result" id="d_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>예금과 적금, 뭐가 다른가요?</h3>
+    <p>예금은 목돈을 한 번에 맡기고, 적금은 매달 조금씩 넣어요. 같은 금리라면 처음부터 전액에 이자가 붙는 예금이 이자를 더 많이 받아요. 모아 둔 돈이 있으면 예금, 매달 저축하는 습관을 들이려면 적금이 잘 맞아요.</p>
+    <h3>단리와 월복리, 뭐가 다른가요?</h3>
+    <p>단리는 원금에만 이자가 붙고, 월복리는 매달 붙은 이자에도 다시 이자가 붙어요. 같은 금리라면 월복리가 조금 더 유리하지만, 1~2년짜리 적금에서는 차이가 크지 않아요.</p>
+  </article>
+
+  <footer>
+    계산 결과는 참고용이며 실제 금융상품의 조건(우대금리, 중도상환수수료, 세금 등)에 따라 달라질 수 있어요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

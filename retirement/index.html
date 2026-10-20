@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>노후자금 계산기 - 은퇴할 때 얼마가 있어야 할까</title>
+<meta name="description" content="노후자금 계산기. 은퇴 후 한 달 생활비, 은퇴까지 남은 기간, 물가상승률과 수익률을 넣으면 은퇴할 때 모아 둬야 하는 돈을 계산해요.">
+<link rel="canonical" href="https://doncalculator.com/retirement/">
+<meta property="og:title" content="노후자금 계산기 - 은퇴할 때 얼마가 있어야 할까">
+<meta property="og:description" content="노후자금 계산기. 은퇴 후 한 달 생활비, 은퇴까지 남은 기간, 물가상승률과 수익률을 넣으면 은퇴할 때 모아 둬야 하는 돈을 계산해요.">
+<meta property="og:url" content="https://doncalculator.com/retirement/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <a class="all" href="/">모든 계산기</a>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+  </nav>
+
+  <section class="card" id="retirement">
+    <h1>노후자금 계산기</h1>
+    <p class="sub">은퇴 후 생활비를 쓰려면 은퇴할 때 얼마가 있어야 하는지 계산해요.</p>
+    <label>은퇴 후 한 달 생활비 (지금 돈 가치로)</label>
+    <div class="field"><input data-k="t_month" inputmode="numeric" value="2,500,000"><span>원</span></div>
+    <label>은퇴까지 남은 기간</label>
+    <div class="field"><input data-k="t_until" inputmode="numeric" value="25"><span>년</span></div>
+    <label>은퇴 후 생활할 기간</label>
+    <div class="field"><input data-k="t_years" inputmode="numeric" value="25"><span>년</span></div>
+    <label>연 물가상승률</label>
+    <div class="field"><input data-k="t_inf" inputmode="decimal" value="2"><span>%</span></div>
+    <label>은퇴 후 모은 돈의 연 수익률</label>
+    <div class="field"><input data-k="t_r" inputmode="decimal" value="3"><span>%</span></div>
+    <div class="result" id="t_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>노후자금은 어떻게 계산하나요?</h3>
+    <p>먼저 지금의 생활비가 은퇴할 때 물가로 얼마가 되는지 계산해요. 그다음 은퇴 후 매달 그 돈을 꺼내 쓰면서, 남은 돈은 수익률만큼 불어나고 생활비는 물가만큼 오른다고 보고, 생활할 기간 동안 버틸 수 있는 금액을 거꾸로 계산해요.</p>
+    <h3>생활비에는 무엇을 넣으면 되나요?</h3>
+    <p>국민연금, 퇴직연금처럼 은퇴 후 따로 받을 돈이 있다면 그만큼 빼고 넣어 주세요. 예를 들어 한 달에 300만 원이 필요한데 국민연금으로 100만 원을 받는다면 200만 원을 넣으면 돼요.</p>
+    <h3>그 돈을 모으려면 매달 얼마씩 저축해야 하나요?</h3>
+    <p>계산된 금액을 <a href="/goal/">목표 저축 계산기</a>의 목표 금액에 넣고, 기간에 은퇴까지 남은 기간을 넣어 보세요. 매달 얼마씩 모아야 하는지 바로 나와요. 투자로 불릴 계획이라면 <a href="/compound/">복리 계산기</a>도 함께 써 보세요.</p>
+  </article>
+
+  <footer>
+    물가상승률과 수익률이 매년 같다고 가정한 참고용 계산이에요. 국민연금 같은 연금 수령액은 따로 빼서 생활비를 넣어 주세요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

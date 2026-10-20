@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>목표 저축 계산기 - 1억 모으려면 매달 얼마씩 모아야 할까</title>
+<meta name="description" content="목표 저축 계산기. 목표 금액, 기간, 금리를 넣으면 목표를 이루려면 매달 얼마씩 저축해야 하는지 바로 계산해요. 1억 모으기, 결혼자금, 전세자금 계획에 써 보세요.">
+<link rel="canonical" href="https://doncalculator.com/goal/">
+<meta property="og:title" content="목표 저축 계산기 - 1억 모으려면 매달 얼마씩 모아야 할까">
+<meta property="og:description" content="목표 저축 계산기. 목표 금액, 기간, 금리를 넣으면 목표를 이루려면 매달 얼마씩 저축해야 하는지 바로 계산해요. 1억 모으기, 결혼자금, 전세자금 계획에 써 보세요.">
+<meta property="og:url" content="https://doncalculator.com/goal/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <a class="all" href="/">모든 계산기</a>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+  </nav>
+
+  <section class="card" id="goal">
+    <h1>목표 저축 계산기</h1>
+    <p class="sub">목표 금액을 모으려면 매달 얼마씩 저축해야 하는지 계산해요.</p>
+    <label>목표 금액</label>
+    <div class="field"><input data-k="g_goal" inputmode="numeric" value="100,000,000"><span>원</span></div>
+    <label>지금까지 모은 돈 (없으면 0)</label>
+    <div class="field"><input data-k="g_now" inputmode="numeric" value="0"><span>원</span></div>
+    <label>기간</label>
+    <div class="field"><input data-k="g_y" inputmode="decimal" value="5"><span>년</span></div>
+    <label>연 이자율 (또는 예상 수익률)</label>
+    <div class="field"><input data-k="g_r" inputmode="decimal" value="3.5"><span>%</span></div>
+    <div class="result" id="g_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>1억 모으려면 매달 얼마씩 저축해야 하나요?</h3>
+    <p>이자가 하나도 없다면 5년(60개월) 동안 매달 약 167만 원이 필요해요. 연 3.5%로 불어난다고 하면 매달 약 152만 원으로 줄어들어요. 기간이 길수록, 금리가 높을수록 매달 넣어야 하는 돈이 줄어요.</p>
+    <h3>어떻게 계산하나요?</h3>
+    <p>매달 같은 금액을 넣고, 넣은 돈에 매달 이자가 붙어 다시 불어난다고(월복리) 보고 거꾸로 계산해요. 지금까지 모은 돈이 있다면 그 돈도 기간 동안 함께 불어나는 걸로 계산해요.</p>
+    <h3>함께 쓰면 좋은 계산기</h3>
+    <p>실제 적금 상품의 세후 이자는 <a href="/savings/">적금 이자 계산기</a>로, 투자로 오래 모을 때는 <a href="/compound/">복리 계산기</a>로 확인해 보세요. 오래 걸리는 목표라면 <a href="/inflation/">물가상승률 계산기</a>로 그때의 돈 가치도 함께 보면 좋아요.</p>
+  </article>
+
+  <footer>
+    계산 결과는 매달 같은 금리로 불어난다고 가정한 참고용 계산이며, 세금과 수수료는 반영하지 않았어요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

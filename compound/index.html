@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>복리 계산기 - 적립식 투자 복리 수익 계산</title>
+<meta name="description" content="복리 계산기. 초기 투자금과 매달 추가 투자금, 연 수익률, 기간을 넣으면 복리로 불어난 자산을 연도별로 계산해요.">
+<link rel="canonical" href="https://doncalculator.com/compound/">
+<meta property="og:title" content="복리 계산기 - 적립식 투자 복리 수익 계산">
+<meta property="og:description" content="복리 계산기. 초기 투자금과 매달 추가 투자금, 연 수익률, 기간을 넣으면 복리로 불어난 자산을 연도별로 계산해요.">
+<meta property="og:url" content="https://doncalculator.com/compound/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <a class="all" href="/">모든 계산기</a>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+  </nav>
+
+  <section class="card" id="compound">
+    <h1>복리 투자 계산기</h1>
+    <p class="sub">처음 넣은 돈 + 매달 추가 투자금이 복리로 얼마나 불어나는지 계산해요.</p>
+    <label>초기 투자금</label>
+    <div class="field"><input data-k="c_init" inputmode="numeric" value="5,000,000"><span>원</span></div>
+    <label>매달 추가 투자</label>
+    <div class="field"><input data-k="c_add" inputmode="numeric" value="500,000"><span>원</span></div>
+    <label>연 수익률</label>
+    <div class="field"><input data-k="c_r" inputmode="decimal" value="7"><span>%</span></div>
+    <label>투자 기간</label>
+    <div class="field"><input data-k="c_y" inputmode="numeric" value="10"><span>년</span></div>
+    <div class="result" id="c_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>복리가 뭔가요?</h3>
+    <p>복리는 수익에 다시 수익이 붙는 방식이에요. 처음엔 차이가 작지만 기간이 길수록 크게 벌어져요. '72의 법칙'으로 72를 연 수익률로 나누면 돈이 두 배가 되는 대략적인 햇수가 나와요. 연 6%면 약 12년, 연 8%면 약 9년이에요.</p>
+  </article>
+
+  <footer>
+    계산 결과는 참고용이며 실제 금융상품의 조건(우대금리, 중도상환수수료, 세금 등)에 따라 달라질 수 있어요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

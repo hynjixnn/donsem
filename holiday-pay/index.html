@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>주휴수당 계산기 - 시급과 주 근무시간으로 주휴수당 계산</title>
+<meta name="description" content="주휴수당 계산기. 시급과 일주일 근무시간을 넣으면 주휴수당, 주급, 한 달 예상 월급을 바로 계산해요. 주 15시간 이상 일하면 알바도 받을 수 있어요.">
+<link rel="canonical" href="https://doncalculator.com/holiday-pay/">
+<meta property="og:title" content="주휴수당 계산기 - 시급과 주 근무시간으로 주휴수당 계산">
+<meta property="og:description" content="주휴수당 계산기. 시급과 일주일 근무시간을 넣으면 주휴수당, 주급, 한 달 예상 월급을 바로 계산해요. 주 15시간 이상 일하면 알바도 받을 수 있어요.">
+<meta property="og:url" content="https://doncalculator.com/holiday-pay/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <a class="all" href="/">모든 계산기</a>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+  </nav>
+
+  <section class="card" id="holiday-pay">
+    <h1>주휴수당 계산기</h1>
+    <p class="sub">시급과 일주일에 일하는 시간을 넣으면 주휴수당과 한 달 예상 월급을 계산해요.</p>
+    <label>시급</label>
+    <div class="field"><input data-k="h_wage" inputmode="numeric" value="10,320"><span>원</span></div>
+    <label>일주일 근무시간 (휴게시간 빼고)</label>
+    <div class="field"><input data-k="h_hours" inputmode="decimal" value="20"><span>시간</span></div>
+    <div class="result" id="h_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>주휴수당이 뭔가요?</h3>
+    <p>일주일에 15시간 이상 일하고 정해진 날에 빠짐없이 출근하면, 쉬는 날 하루치 임금을 더 받는 거예요. 정규직뿐 아니라 아르바이트도 똑같이 받을 수 있어요.</p>
+    <h3>주휴수당은 어떻게 계산하나요?</h3>
+    <p>주휴수당 = (일주일 근무시간 ÷ 40) × 8 × 시급이에요. 일주일에 40시간 넘게 일해도 40시간까지만 계산해요. 예를 들어 시급 10,320원으로 일주일에 20시간 일하면 (20 ÷ 40) × 8 × 10,320 = 41,280원이에요.</p>
+    <h3>한 달은 왜 4.345주로 계산하나요?</h3>
+    <p>1년은 365일이라 52.14주이고, 이걸 12개월로 나누면 한 달은 평균 약 4.345주예요. 그래서 월급을 계산할 때 주급에 4.345를 곱해요.</p>
+  </article>
+
+  <footer>
+    계산 결과는 참고용이며, 결근이 있거나 계약 조건이 다르면 실제 금액이 달라질 수 있어요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

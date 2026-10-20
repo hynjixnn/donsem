@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자동차 할부 계산기 - 월 납입금과 총 이자 계산</title>
+<meta name="description" content="자동차 할부 계산기. 차량 가격, 선수금, 할부 기간, 금리를 넣으면 매달 낼 할부금과 총 이자, 실제로 내는 총 금액을 바로 계산해요.">
+<link rel="canonical" href="https://doncalculator.com/car-loan/">
+<meta property="og:title" content="자동차 할부 계산기 - 월 납입금과 총 이자 계산">
+<meta property="og:description" content="자동차 할부 계산기. 차량 가격, 선수금, 할부 기간, 금리를 넣으면 매달 낼 할부금과 총 이자, 실제로 내는 총 금액을 바로 계산해요.">
+<meta property="og:url" content="https://doncalculator.com/car-loan/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <a class="all" href="/">모든 계산기</a>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+  </nav>
+
+  <section class="card" id="car-loan">
+    <h1>자동차 할부 계산기</h1>
+    <p class="sub">차를 할부로 살 때 매달 내는 돈과 총 이자를 계산해요.</p>
+    <label>차량 가격</label>
+    <div class="field"><input data-k="k_price" inputmode="numeric" value="40,000,000"><span>원</span></div>
+    <label>선수금 (처음에 내는 돈, 없으면 0)</label>
+    <div class="field"><input data-k="k_down" inputmode="numeric" value="10,000,000"><span>원</span></div>
+    <label>할부 기간</label>
+    <div class="seg" data-k="k_n"><button data-v="12">12개월</button><button data-v="24">24개월</button><button data-v="36" class="on">36개월</button><button data-v="48">48개월</button><button data-v="60">60개월</button></div>
+    <label>할부 금리 (연)</label>
+    <div class="field"><input data-k="k_r" inputmode="decimal" value="5.5"><span>%</span></div>
+    <div class="result" id="k_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>자동차 할부금은 어떻게 계산하나요?</h3>
+    <p>차량 가격에서 선수금을 뺀 금액을 할부 원금으로 보고, 매달 같은 금액(원금 + 이자)을 내는 원리금균등 방식으로 계산해요. 4,000만 원짜리 차를 선수금 1,000만 원, 36개월, 연 5.5%로 사면 매달 약 906,000원을 내고, 총 이자는 약 261만 원이에요.</p>
+    <h3>할부 기간을 늘리면 이득인가요?</h3>
+    <p>기간을 늘리면 매달 내는 돈은 줄지만, 이자를 내는 기간이 길어져서 총 이자는 늘어나요. 같은 조건에서 60개월로 하면 매달 약 573,000원으로 줄지만 총 이자는 약 438만 원으로 늘어나요.</p>
+    <h3>선수금을 많이 내면 좋나요?</h3>
+    <p>선수금을 많이 낼수록 할부 원금이 줄어 이자도 줄어요. 다만 비상금까지 털어서 내는 것보다는 여유 자금 안에서 정하는 게 좋아요. 자동차 할부 말고 일반 대출과 비교해 보고 싶다면 <a href="/loan/">대출 이자 계산기</a>도 써 보세요.</p>
+  </article>
+
+  <footer>
+    원리금균등 상환으로 계산한 참고용 금액이에요. 취득세, 보험료, 할부 수수료 등은 들어 있지 않아요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
