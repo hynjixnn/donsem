@@ -661,8 +661,92 @@ moneyInputs.forEach(el => {
     if (add === 'clear') el.focus();
   });
 });
+// ── 토스처럼 편하게 ④: 어려운 말 풀이 (칸 이름 옆 ? 버튼) ──
+const GLOSSARY = [
+  ['이자 방식', '단리는 넣은 돈에만 이자가 붙고, 월복리는 매달 붙은 이자에도 다시 이자가 붙어요. 같은 금리면 월복리가 조금 더 받아요.'],
+  ['과세', '이자에 붙는 세금이에요. 보통은 15.4%를 떼고, 세금우대 상품은 9.5%, 비과세 상품은 세금이 없어요. 내 통장이 어디에 해당하는지는 가입한 은행에서 확인할 수 있어요.'],
+  ['상환 방식', '원리금균등은 매달 같은 금액을 갚아요. 원금균등은 처음에 많이 갚고 점점 줄어요. 만기일시는 매달 이자만 내다가 마지막에 원금을 한 번에 갚아요.'],
+  ['연 이자율', '1년 동안 붙는 이자의 비율이에요. 한 달 이자는 연 이자율을 12로 나눠서 계산해요.'],
+  ['연 수익률', '1년 동안 돈이 불어나는 비율이에요. 주식, 펀드처럼 해마다 달라지는 투자는 평균으로 넣어 보세요.'],
+  ['연 물가상승률', '물건값이 1년에 오르는 비율이에요. 한국은행은 2%를 목표로 해서 보통 2~3%를 넣어요.'],
+  ['전월세 전환율', '전세 보증금을 월세로 바꿀 때 쓰는 1년 이율이에요. 주택은 법으로 상한이 있어서 한국은행 기준금리 + 2%p를 넘을 수 없어요.'],
+  ['중도상환수수료율', '대출을 약속보다 일찍 갚을 때 내는 수수료 비율이에요. 대출 계약서나 은행 앱의 대출 상세에서 확인할 수 있어요.'],
+  ['수수료 내는 기간', '중도상환수수료를 내야 하는 기간이에요. 보통 대출받은 날부터 3년이고, 이 기간이 지나면 수수료 없이 갚을 수 있어요.'],
+  ['최근 3개월 월급', '세금을 떼기 전 금액(세전)이에요. 기본급에 매달 받는 수당까지 더해서 넣어 주세요.'],
+  ['1년 동안 받은 상여금', '보너스처럼 1년에 몇 번 받는 돈이에요. 퇴직금에는 1년 치의 3/12만큼만 들어가요.'],
+  ['1년 동안 받은 연차수당', '쓰지 못한 연차를 돈으로 받은 금액이에요. 퇴직금에는 1년 치의 3/12만큼만 들어가요.'],
+  ['일주일 근무시간', '쉬는 시간을 뺀, 일하기로 약속한 시간이에요. 하루 5시간씩 주 4일이면 20시간이에요.'],
+  ['할부 금리', '할부로 낸 돈에 붙는 1년 이율이에요. 카드사나 캐피탈의 할부 조건에서 확인할 수 있어요.'],
+  ['선수금', '차를 살 때 처음에 한 번에 내는 돈이에요. 많이 낼수록 할부 원금과 이자가 줄어요.'],
+  ['배당수익률', '주가 대비 1년에 받는 배당금 비율이에요. 주식 앱에서 종목마다 확인할 수 있어요.'],
+  ['지금 가진 주식의 평균 단가', '지금까지 산 주식의 평균 가격(평단가)이에요. 증권 앱의 잔고 화면에 나와요.'],
+  ['그 밖의 비용', '새 대출을 받을 때 드는 인지세, 근저당 설정비 같은 돈이에요. 없거나 모르면 0으로 둬도 돼요.'],
+  ['연비', '기름 1L로 갈 수 있는 거리예요. 계기판이나 자동차 설명서에서 확인할 수 있어요.'],
+  ['단위', 'g·ml는 100g(100ml)당 가격으로, 개는 1개당 가격으로 비교해요.'],
+  ['맞출 단위', '한 사람당 금액을 이 단위로 올려서 맞춰요. 계산한 사람이 모자란 돈을 채우지 않아도 돼요.'],
+];
+document.querySelectorAll('.card label').forEach(label => {
+  const text = label.textContent.trim(), hit = GLOSSARY.find(([k]) => text.startsWith(k));
+  if (!hit) return;
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'info'; btn.textContent = '?';
+  btn.setAttribute('aria-label', `${hit[0]} 설명 보기`); btn.setAttribute('aria-expanded', 'false');
+  label.append(btn);
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    const open = label.nextElementSibling && label.nextElementSibling.classList.contains('tip');
+    if (open) label.nextElementSibling.remove();
+    else { const tip = document.createElement('p'); tip.className = 'tip'; tip.textContent = hit[1]; label.after(tip); }
+    btn.setAttribute('aria-expanded', String(!open));
+  });
+});
+
+// ── 토스처럼 편하게 ⑤: 결과 숫자가 부드럽게 바뀌기 ──
+const calmMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+let lastBig = null, bigAnim = 0;
+function animateBig() {
+  const big = document.querySelector('.card .result .big');
+  if (!big) { lastBig = null; return; }
+  const node = big.firstChild;
+  const m = node && node.nodeType === 3 && node.textContent.match(/[\d,]+(\.\d+)?/);
+  if (!m) { lastBig = null; return; }
+  const to = Number(m[0].replace(/,/g, '')), dec = m[1] ? m[1].length - 1 : 0, from = lastBig;
+  lastBig = to;
+  cancelAnimationFrame(bigAnim);
+  if (calmMotion || from === null || from === to || !ready) return;
+  const start = performance.now(), before = node.textContent.slice(0, m.index), after = node.textContent.slice(m.index + m[0].length);
+  const step = now => {
+    const k = Math.min(1, (now - start) / 350), ease = 1 - Math.pow(1 - k, 3), v = from + (to - from) * ease;
+    if (!node.isConnected) return;
+    node.textContent = before + v.toLocaleString('ko-KR', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + after;
+    if (k < 1) bigAnim = requestAnimationFrame(step);
+  };
+  bigAnim = requestAnimationFrame(step);
+}
+
+// ── 토스처럼 편하게 ⑥: 휴대폰에서 결과가 화면 밖에 있으면 아래에 띄워 두기 ──
+let dock = null, resultVisible = true;
+function updateDock() {
+  const res = document.querySelector('.card .result');
+  if (!res) return;
+  if (!dock) {
+    dock = document.createElement('button');
+    dock.type = 'button'; dock.className = 'dock'; dock.setAttribute('aria-label', '계산 결과로 이동');
+    dock.innerHTML = '<span class="dock-label"></span><b class="dock-value"></b><span class="dock-go">결과 보기 ↓</span>';
+    dock.addEventListener('click', () => res.scrollIntoView({ behavior: calmMotion ? 'auto' : 'smooth', block: 'center' }));
+    document.body.append(dock);
+    new IntersectionObserver(([e]) => { resultVisible = e.isIntersecting; dock.classList.toggle('show', !resultVisible && !!res.querySelector('.big')); }).observe(res);
+  }
+  const head = res.querySelector('div'), big = res.querySelector('.big');
+  dock.querySelector('.dock-label').textContent = head ? head.textContent.trim() : '';
+  dock.querySelector('.dock-value').textContent = big ? big.textContent.trim() : '';
+  dock.classList.toggle('show', !resultVisible && !!big);
+}
+
 function afterRun() {
   moneyInputs.forEach(el => { el.closest('.field').nextElementSibling.querySelector('.krw').textContent = korean(num(el.value)); });
+  animateBig();
+  updateDock();
   remember();
 }
 

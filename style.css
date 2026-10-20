@@ -176,3 +176,22 @@ footer a:hover { color: var(--text) !important; }
 .krw { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1em; }
 .krw:empty { display: none; }
 .shared-note .reset { border: 0; background: none; padding: 0; margin-left: 4px; color: var(--blue); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+
+/* 어려운 말 풀이 */
+.info { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 6px; vertical-align: 1px;
+  border: 0; border-radius: 50%; background: var(--seg-bg); color: var(--muted); font: inherit; font-size: 12px; font-weight: 700; line-height: 1; cursor: pointer; padding: 0; }
+.info[aria-expanded="true"] { background: var(--blue); color: #fff; }
+.tip { margin: 0 0 10px; padding: 10px 14px; border-radius: 12px; background: var(--field); color: var(--text); font-size: 14px; line-height: 1.6; }
+
+/* 휴대폰: 결과가 화면 밖이면 아래에 띄워 두기 */
+.dock { display: none; }
+@media (max-width: 640px) {
+  .dock { display: flex; align-items: center; gap: 10px; position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 40;
+    padding: 12px 16px; border: 0; border-radius: 16px; background: rgba(29, 29, 31, .92); color: #fff; font: inherit; text-align: left; cursor: pointer;
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); transform: translateY(140%); transition: transform .25s ease; }
+  .dock.show { transform: translateY(0); }
+  .dock-label { font-size: 12px; color: rgba(255, 255, 255, .7); flex: none; max-width: 30%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dock-value { flex: 1; min-width: 0; font-size: 17px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .dock-go { flex: none; font-size: 13px; color: #6cb6ff; }
+}
+@media (prefers-reduced-motion: reduce) { .dock { transition: none; } }
