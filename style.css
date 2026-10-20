@@ -4,6 +4,7 @@
   --bg: #ffffff; --card: #f5f5f7; --field: #ffffff; --text: #1d1d1f; --muted: #6e6e73;
   --line: #d2d2d7; --accent: #0066cc; --accent-soft: rgba(0, 113, 227, .12); --blue: #0071e3; --blue-hover: #0077ed;
   --bar: rgba(255, 255, 255, .8); --shadow: none; --seg-bg: #e8e8ed; --seg-on: #ffffff;
+  --chip-hover: #dcdce1; --ink-tile: #1d1d1f; --ink-tile-hover: #333336; --soft-hover: rgba(255, 255, 255, .6);
 }
 
 * { box-sizing: border-box; }
@@ -171,7 +172,7 @@ footer a:hover { color: var(--text) !important; }
 .below:not(:has(.quick)) { justify-content: flex-end; }
 .quick { display: flex; gap: 6px; flex-wrap: wrap; }
 .quick button { border: 0; border-radius: 980px; background: var(--seg-bg); color: var(--text); font: inherit; font-size: 13px; font-weight: 500; padding: 6px 11px; cursor: pointer; }
-.quick button:hover { background: #dcdce1; }
+.quick button:hover { background: var(--chip-hover); }
 .quick button[data-add="clear"] { background: transparent; color: var(--muted); }
 .krw { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1em; }
 .krw:empty { display: none; }
@@ -271,8 +272,8 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 .cat-top small { font-size: 12px; margin-left: 4px; }
 .cat-top small.up { color: var(--blue); }
 .cat-top small.down { color: #d70015; }
-.tile.feature.dark { background: var(--text); }
-.tile.feature.dark:hover { background: #333336; }
+.tile.feature.dark { background: var(--ink-tile); }
+.tile.feature.dark:hover { background: var(--ink-tile-hover); }
 @media (min-width: 641px) { .tile.feature { grid-column: span 2; } }
 @media (max-width: 640px) { .net b { font-size: 32px; } }
 .sub-card .insight { background: var(--field); }
@@ -293,7 +294,7 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 .mm nav { display: none; }
 .mm-tabs { display: flex; gap: 4px; padding: 4px; margin: 0 auto 20px; max-width: 360px; border-radius: 980px; background: var(--seg-bg); }
 .mm-tabs a { flex: 1; text-align: center; padding: 8px 0; border-radius: 980px; color: var(--text); font-size: 15px; font-weight: 500; }
-.mm-tabs a:hover { text-decoration: none; background: rgba(255, 255, 255, .6); }
+.mm-tabs a:hover { text-decoration: none; background: var(--soft-hover); }
 .mm-tabs a.on { background: var(--blue); color: #fff; }
 .tiles.mm-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .tiles.mm-tiles .tile.feature { grid-column: auto; }
@@ -368,3 +369,28 @@ html { -webkit-tap-highlight-color: transparent; }
 @keyframes vt-fade-in { from { opacity: 0; } }
 @keyframes vt-fade-out { to { opacity: 0; } }
 @keyframes drop-in { from { opacity: 0; transform: translateY(-6px); } }
+
+/* ── 다크 모드: 메뉴바 버튼으로 라이트 → 다크 → 기기 설정 따라가기 (기본은 라이트) ── */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #000000; --card: #1c1c1e; --field: #2c2c2e; --text: #f5f5f7; --muted: #98989d;
+    --line: #38383a; --accent: #2997ff; --accent-soft: rgba(41, 151, 255, .16); --blue: #0a84ff; --blue-hover: #409cff;
+    --bar: rgba(22, 22, 23, .8); --seg-bg: #3a3a3c; --seg-on: #636366;
+    --chip-hover: #48484a; --ink-tile: #2c2c2e; --ink-tile-hover: #3a3a3c; --soft-hover: rgba(255, 255, 255, .08);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="auto"] {
+    color-scheme: dark;
+    --bg: #000000; --card: #1c1c1e; --field: #2c2c2e; --text: #f5f5f7; --muted: #98989d;
+    --line: #38383a; --accent: #2997ff; --accent-soft: rgba(41, 151, 255, .16); --blue: #0a84ff; --blue-hover: #409cff;
+    --bar: rgba(22, 22, 23, .8); --seg-bg: #3a3a3c; --seg-on: #636366;
+    --chip-hover: #48484a; --ink-tile: #2c2c2e; --ink-tile-hover: #3a3a3c; --soft-hover: rgba(255, 255, 255, .08);
+  }
+}
+.theme-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin-left: 6px; flex: none;
+  border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; padding: 0; }
+.theme-btn:hover { background: var(--seg-bg); color: var(--text); }
+.theme-btn svg { width: 18px; height: 18px; }
+.topbar-in > .top-right { display: flex; align-items: center; }
+@media (max-width: 640px) { .top-links { gap: 12px; } .theme-btn { margin-left: 4px; } }
+@media (max-width: 360px) { .top-links { gap: 9px; font-size: 13px; } }

@@ -838,3 +838,31 @@ window.addEventListener('beforeinstallprompt', e => {
 if (isIOS && !standalone) installCard('<div class="install-text"><b>돈셈을 앱처럼 쓰세요</b><span><b>공유 버튼</b>(네모에 화살표)을 누르고 <b>홈 화면에 추가</b>를 고르세요. 공유 버튼이 안 보이면 주소창의 <b>≡</b> 또는 <b>⋯</b> 메뉴 안에 있어요.</span></div>');
 window.addEventListener('appinstalled', () => { const el = document.querySelector('.install'); if (el) el.remove(); });
 
+
+// ── 화면 모드 버튼: 라이트 → 다크 → 기기 설정 따라가기 ──
+const THEME_KEY = 'donsem:theme';
+const THEME_ICON = {
+  light: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  dark: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  auto: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/>',
+};
+const THEME_NAME = { light: '라이트', dark: '다크', auto: '기기 설정 따라가기' };
+function applyTheme(t, announce) {
+  document.documentElement.dataset.theme = t;
+  const dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = dark ? '#000000' : '#ffffff';
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.querySelector('svg').innerHTML = THEME_ICON[t];
+    b.setAttribute('aria-label', `화면 모드 바꾸기 (지금: ${THEME_NAME[t]})`);
+    b.title = `화면 모드: ${THEME_NAME[t]}`;
+  });
+  if (announce) toast(t === 'auto' ? '기기 설정에 맞춰 라이트·다크가 바뀌어요.' : `${THEME_NAME[t]} 모드로 바꿨어요.`);
+}
+applyTheme(document.documentElement.dataset.theme || 'light', false);
+document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => {
+  const order = ['light', 'dark', 'auto'], next = order[(order.indexOf(document.documentElement.dataset.theme) + 1) % 3];
+  store.set(THEME_KEY, next);
+  applyTheme(next, true);
+}));
+if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (document.documentElement.dataset.theme === 'auto') applyTheme('auto', false); });

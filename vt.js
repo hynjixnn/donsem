@@ -1,3 +1,14 @@
+// ── 화면 모드(라이트/다크/기기 설정): 화면이 그려지기 전에 먼저 적용해서 흰 화면이 번쩍이지 않게 해요 ──
+(() => {
+  let t = 'light';
+  try { t = localStorage.getItem('donsem:theme') || 'light'; } catch (e) { /* 저장이 막힌 브라우저 */ }
+  if (!['light', 'dark', 'auto'].includes(t)) t = 'light';
+  document.documentElement.dataset.theme = t;
+  const dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = dark ? '#000000' : '#ffffff';
+})();
+
 // ── 페이지를 오갈 때 방향 정하기 (화면이 처음 그려지기 전에 알아야 해서 <head>에서 읽어요): 들어가면 오른쪽에서, 뒤로 가거나 첫 화면으로 가면 왼쪽에서, 돈 관리 탭끼리는 겹쳐서 ──
 const MONEY_TABS = ['/budget/', '/fixed/', '/assets/', '/goals/'];
 window.addEventListener('pagereveal', e => {
