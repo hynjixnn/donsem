@@ -4,7 +4,7 @@
   --bg: #ffffff; --card: #f5f5f7; --field: #ffffff; --text: #1d1d1f; --muted: #6e6e73;
   --line: #d2d2d7; --accent: #0066cc; --accent-soft: rgba(0, 113, 227, .12); --blue: #0071e3; --blue-hover: #0077ed;
   --bar: rgba(255, 255, 255, .8); --shadow: none; --seg-bg: #e8e8ed; --seg-on: #ffffff;
-  --chip-hover: #dcdce1; --ink-tile: #1d1d1f; --ink-tile-hover: #333336; --soft-hover: rgba(255, 255, 255, .6);
+  --logo-bg: #1d1d1f; --chip-hover: #dcdce1; --ink-tile: #1d1d1f; --ink-tile-hover: #333336; --soft-hover: rgba(255, 255, 255, .6);
 }
 
 * { box-sizing: border-box; }
@@ -376,7 +376,7 @@ html { -webkit-tap-highlight-color: transparent; }
     --bg: #000000; --card: #1c1c1e; --field: #2c2c2e; --text: #f5f5f7; --muted: #98989d;
     --line: #38383a; --accent: #2997ff; --accent-soft: rgba(41, 151, 255, .16); --blue: #0a84ff; --blue-hover: #409cff;
     --bar: rgba(22, 22, 23, .8); --seg-bg: #3a3a3c; --seg-on: #636366;
-    --chip-hover: #48484a; --ink-tile: #2c2c2e; --ink-tile-hover: #3a3a3c; --soft-hover: rgba(255, 255, 255, .08);
+    --logo-bg: #3a3a3c; --chip-hover: #48484a; --ink-tile: #2c2c2e; --ink-tile-hover: #3a3a3c; --soft-hover: rgba(255, 255, 255, .08);
 }
 @media (prefers-color-scheme: dark) {
   :root[data-theme="auto"] {
@@ -384,7 +384,7 @@ html { -webkit-tap-highlight-color: transparent; }
     --bg: #000000; --card: #1c1c1e; --field: #2c2c2e; --text: #f5f5f7; --muted: #98989d;
     --line: #38383a; --accent: #2997ff; --accent-soft: rgba(41, 151, 255, .16); --blue: #0a84ff; --blue-hover: #409cff;
     --bar: rgba(22, 22, 23, .8); --seg-bg: #3a3a3c; --seg-on: #636366;
-    --chip-hover: #48484a; --ink-tile: #2c2c2e; --ink-tile-hover: #3a3a3c; --soft-hover: rgba(255, 255, 255, .08);
+    --logo-bg: #3a3a3c; --chip-hover: #48484a; --ink-tile: #2c2c2e; --ink-tile-hover: #3a3a3c; --soft-hover: rgba(255, 255, 255, .08);
   }
 }
 .theme-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin-left: 6px; flex: none;
@@ -394,3 +394,4 @@ html { -webkit-tap-highlight-color: transparent; }
 .topbar-in > .top-right { display: flex; align-items: center; }
 @media (max-width: 640px) { .top-links { gap: 12px; } .theme-btn { margin-left: 4px; } }
 @media (max-width: 360px) { .top-links { gap: 9px; font-size: 13px; } }
+.logo-bg { fill: var(--logo-bg); }
