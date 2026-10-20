@@ -276,3 +276,15 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 @media (min-width: 641px) { .tile.feature { grid-column: span 2; } }
 @media (max-width: 640px) { .net b { font-size: 32px; } }
 .sub-card .insight { background: var(--field); }
+
+/* 앱처럼 쓰기 안내 */
+.install { position: relative; display: flex; align-items: center; gap: 12px; margin: 16px 0; padding: 16px 44px 16px 18px; border-radius: 18px; background: var(--card); }
+.home .install { max-width: 560px; margin: 8px auto 0; }
+.install-text { flex: 1; min-width: 0; }
+.install-text > b { display: block; font-size: 16px; }
+.install-text span { display: block; font-size: 14px; color: var(--muted); line-height: 1.5; }
+.install-text span b { color: var(--text); font-weight: 600; }
+.install .install-go { flex: none; border: 0; font: inherit; font-size: 15px; font-weight: 600; padding: 9px 18px; cursor: pointer; }
+.install-x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; }
+.install-x:hover { background: var(--seg-bg); }
+@media (display-mode: standalone) { .topbar { padding-top: env(safe-area-inset-top); } }

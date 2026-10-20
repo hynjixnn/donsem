@@ -806,3 +806,34 @@ if (document.body.classList.contains('home')) {
     document.querySelector('.hero').after(sec);
   }
 }
+
+// ── 앱처럼 쓰기: 홈 화면에 추가하면 주소창 없이 열리고, 인터넷이 끊겨도 열려요 ──
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => { /* 지원하지 않는 환경 */ }));
+const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const INSTALL_KEY = 'donsem:install-dismissed';
+function installCard(html) {
+  if (standalone || store.get(INSTALL_KEY) || document.querySelector('.install')) return null;
+  const anchor = document.querySelector('.hero') || document.querySelector('#budget, #assets'); // 첫 화면, 가계부, 내 자산에서만 보여 줘요
+  if (!anchor) return null;
+  const el = document.createElement('div');
+  el.className = 'install';
+  el.innerHTML = html + '<button type="button" class="install-x" aria-label="안내 닫기">×</button>';
+  anchor.after(el);
+  el.querySelector('.install-x').addEventListener('click', () => { store.set(INSTALL_KEY, '1'); el.remove(); });
+  return el;
+}
+let installEvent = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  installEvent = e;
+  const el = installCard('<div class="install-text"><b>돈셈을 앱처럼 쓰세요</b><span>홈 화면에 아이콘을 만들어 가계부를 바로 열 수 있어요</span></div><button type="button" class="btn fill install-go">설치</button>');
+  if (el) el.querySelector('.install-go').addEventListener('click', async () => {
+    installEvent.prompt();
+    const choice = await installEvent.userChoice;
+    installEvent = null; el.remove();
+    if (choice.outcome === 'accepted') toast('홈 화면에 돈셈을 추가했어요.');
+  });
+});
+if (isIOS && !standalone) installCard('<div class="install-text"><b>돈셈을 앱처럼 쓰세요</b><span>브라우저의 <b>공유 버튼</b>(네모에 화살표)을 누르고 <b>홈 화면에 추가</b>를 고르면 돼요</span></div>');
+window.addEventListener('appinstalled', () => { const el = document.querySelector('.install'); if (el) el.remove(); });
