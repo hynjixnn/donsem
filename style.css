@@ -165,3 +165,14 @@ footer a:hover { color: var(--text) !important; }
 .basis { padding-left: 20px; font-size: 15px; line-height: 1.7; color: var(--muted); }
 .basis li { color: var(--muted) !important; margin-bottom: 4px; }
 .basis-note { font-size: 13px; color: var(--muted) !important; }
+
+/* 토스처럼 편하게: 빠른 금액 버튼, 한글 금액, 처음 값으로 */
+.below { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.below:not(:has(.quick)) { justify-content: flex-end; }
+.quick { display: flex; gap: 6px; flex-wrap: wrap; }
+.quick button { border: 0; border-radius: 980px; background: var(--seg-bg); color: var(--text); font: inherit; font-size: 13px; font-weight: 500; padding: 6px 11px; cursor: pointer; }
+.quick button:hover { background: #dcdce1; }
+.quick button[data-add="clear"] { background: transparent; color: var(--muted); }
+.krw { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1em; }
+.krw:empty { display: none; }
+.shared-note .reset { border: 0; background: none; padding: 0; margin-left: 4px; color: var(--blue); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }

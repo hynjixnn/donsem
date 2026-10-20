@@ -554,7 +554,7 @@ function addInsight(id) {
   const s = insights[id]();
   if (s) out.insertAdjacentHTML('beforeend', `<p class="insight"><b>한 줄 정리</b>${s}</p>`);
 }
-function runAll() { for (const id in calc) if (document.getElementById(id)) { calc[id](); addInsight(id); } }
+function runAll() { for (const id in calc) if (document.getElementById(id)) { calc[id](); addInsight(id); } afterRun(); }
 
 // 입력할 때 콤마 자동 표시
 document.querySelectorAll('input[inputmode="numeric"]').forEach(el => {
@@ -612,13 +612,76 @@ async function copyLink(url) {
   catch (e) { const a = document.createElement('textarea'); a.value = url; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
   toast('링크를 복사했어요. 카톡이나 문자에 붙여 넣으세요.');
 }
+// ── 토스처럼 편하게 ①: 하던 것 기억하기 (이 기기 브라우저에만 저장돼요) ──
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 저장이 막힌 브라우저 */ } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* 저장이 막힌 브라우저 */ } },
+};
+const SAVE_KEY = 'donsem:last:' + location.pathname, RECENT_KEY = 'donsem:recent';
+let ready = false;
+function remember() {
+  if (!ready || !result) return;
+  store.set(SAVE_KEY, readState().toString());
+  const big = result.querySelector('.big');
+  let list = [];
+  try { list = JSON.parse(store.get(RECENT_KEY)) || []; } catch (e) { list = []; }
+  list = list.filter(x => x.p !== location.pathname);
+  list.unshift({ p: location.pathname, name: document.querySelector('.card h1').textContent.trim(), big: big ? big.textContent.trim() : '' });
+  store.set(RECENT_KEY, JSON.stringify(list.slice(0, 6)));
+}
+
+// ── 토스처럼 편하게 ②: 금액을 한글로 읽어 주기 (100,000,000 → 1억 원) ──
+function korean(n) {
+  n = Math.floor(n);
+  if (n < 10000) return '';
+  const parts = [], jo = Math.floor(n / 1e12), eok = Math.floor(n % 1e12 / 1e8), man = Math.floor(n % 1e8 / 1e4), rest = n % 1e4;
+  if (jo) parts.push(jo.toLocaleString('ko-KR') + '조');
+  if (eok) parts.push(eok.toLocaleString('ko-KR') + '억');
+  if (man) parts.push(man.toLocaleString('ko-KR') + '만');
+  if (rest) parts.push(rest.toLocaleString('ko-KR'));
+  return parts.join(' ') + (rest ? '원' : ' 원');
+}
+// ── 토스처럼 편하게 ③: 빠른 금액 버튼 (+10만, +100만 …) ──
+const moneyInputs = [...document.querySelectorAll('.card .field')]
+  .filter(f => !f.closest('.pair') && f.querySelector('span') && f.querySelector('span').textContent.trim() === '원')
+  .map(f => f.querySelector('input'));
+moneyInputs.forEach(el => {
+  const base = num(el.defaultValue);
+  const steps = base >= 10000000 ? [[1e6, '+100만'], [1e7, '+1000만'], [1e8, '+1억']] : base >= 100000 ? [[1e4, '+1만'], [1e5, '+10만'], [1e6, '+100만']] : [];
+  const below = document.createElement('div');
+  below.className = 'below';
+  below.innerHTML = (steps.length ? '<div class="quick">' + steps.map(([v, t]) => `<button type="button" data-add="${v}">${t}</button>`).join('') + '<button type="button" data-add="clear">지우기</button></div>' : '') + '<span class="krw" aria-live="polite"></span>';
+  el.closest('.field').after(below);
+  below.addEventListener('click', e => {
+    const add = e.target.dataset && e.target.dataset.add;
+    if (!add) return;
+    el.value = add === 'clear' ? '' : (num(el.value) + Number(add)).toLocaleString('ko-KR');
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    if (add === 'clear') el.focus();
+  });
+});
+function afterRun() {
+  moneyInputs.forEach(el => { el.closest('.field').nextElementSibling.querySelector('.krw').textContent = korean(num(el.value)); });
+  remember();
+}
+
 const result = document.querySelector('.card .result');
 if (result) {
+  const defaults = readState().toString();
   const fromLink = applyState(new URLSearchParams(location.search));
+  const note = document.createElement('p');
+  note.className = 'shared-note';
   if (fromLink) {
-    const note = document.createElement('p');
-    note.className = 'shared-note'; note.textContent = '공유받은 링크로 열려서, 보낸 사람이 입력한 숫자로 계산했어요.';
+    note.textContent = '공유받은 링크로 열려서, 보낸 사람이 입력한 숫자로 계산했어요.';
     result.before(note);
+  } else {
+    const saved = store.get(SAVE_KEY);
+    if (saved && saved !== defaults && applyState(new URLSearchParams(saved))) {
+      note.innerHTML = '지난번에 입력한 숫자를 불러왔어요. <button type="button" class="reset">처음 값으로</button>';
+      note.querySelector('.reset').addEventListener('click', () => { store.del(SAVE_KEY); location.replace(location.pathname); });
+      result.before(note);
+    }
   }
   const bar = document.createElement('div');
   bar.className = 'share';
@@ -637,3 +700,25 @@ if (result) {
   });
 }
 runAll();
+ready = true;
+remember(); // 이 계산기를 '최근 쓴 계산기'에 올려요
+
+// 첫 화면: 최근 쓴 계산기
+if (document.body.classList.contains('home')) {
+  let list = [];
+  try { list = JSON.parse(store.get(RECENT_KEY)) || []; } catch (e) { list = []; }
+  if (list.length) {
+    const sec = document.createElement('section');
+    sec.className = 'group recent';
+    sec.innerHTML = '<h2>최근 쓴 계산기</h2><div class="tiles"></div>';
+    list.forEach(x => {
+      const a = document.createElement('a');
+      a.className = 'tile'; a.href = x.p;
+      a.innerHTML = '<h3></h3><p></p><span class="go">이어서 계산하기 ›</span>';
+      a.querySelector('h3').textContent = x.name;
+      a.querySelector('p').textContent = x.big ? '최근 결과 ' + x.big : '';
+      sec.querySelector('.tiles').append(a);
+    });
+    document.querySelector('.hero').after(sec);
+  }
+}
