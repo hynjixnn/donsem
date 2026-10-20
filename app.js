@@ -866,3 +866,94 @@ document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click',
   applyTheme(next, true);
 }));
 if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (document.documentElement.dataset.theme === 'auto') applyTheme('auto', false); });
+
+// ── 휴대폰 하단 탭: 홈 · 계산기 · ＋기록 · 돈 관리 · 마이 ──
+(() => {
+  const path = location.pathname;
+  const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/'], MY = ['/my/', '/about/', '/privacy/'];
+  const active = path === '/' ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : 'calc';
+  const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const tabs = [
+    ['home', '/', '홈', ic('<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>')],
+    ['calc', '/calculators/', '계산기', ic('<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/>')],
+    ['add', '', '기록', ic('<path d="M12 6v12M6 12h12"/>')],
+    ['money', '/budget/', '돈 관리', ic('<path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M16 12h.01M4 9h16"/>')],
+    ['my', '/my/', '마이', ic('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')],
+  ];
+  const bar = document.createElement('div'); // <nav>는 계산기 메뉴용 스타일이 붙어 있어서 div로
+  bar.className = 'tabbar';
+  bar.setAttribute('role', 'navigation');
+  bar.setAttribute('aria-label', '아래 메뉴');
+  bar.innerHTML = tabs.map(([id, href, label, svg]) => id === 'add'
+    ? `<button type="button" class="tab-add" aria-label="지출이나 수입 바로 기록하기"><span>${svg}</span>${label}</button>`
+    : `<a href="${href}" class="${id === active ? 'on' : ''}"${id === active ? ' aria-current="page"' : ''}>${svg}${label}</a>`).join('');
+  document.body.append(bar);
+  document.body.classList.add('has-tabbar');
+
+  // ── ＋기록: 어느 페이지에서든 가계부에 바로 적기 ──
+  const CATS = { out: ['식비', '카페·간식', '교통', '쇼핑', '생활', '주거·통신', '의료', '문화·여가', '경조사', '기타'], in: ['월급', '용돈', '부수입', '이자·배당', '기타'] };
+  let type = 'out', cat = CATS.out[0], sheet = null;
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  function drawCats() {
+    sheet.querySelector('.qa-cats').innerHTML = CATS[type].map(c => `<button type="button" class="${c === cat ? 'on' : ''}" data-cat="${c}">${c}</button>`).join('');
+  }
+  function open() {
+    if (!sheet) {
+      sheet = document.createElement('div');
+      sheet.className = 'qa';
+      sheet.innerHTML = `<div class="qa-dim" data-close="1"></div>
+        <div class="qa-panel" role="dialog" aria-modal="true" aria-labelledby="qa-title">
+          <div class="qa-grip"></div>
+          <div class="qa-head"><b id="qa-title">바로 기록하기</b><button type="button" class="qa-x" data-close="1" aria-label="닫기">×</button></div>
+          <div class="seg qa-type"><button type="button" data-v="out" class="on">지출</button><button type="button" data-v="in">수입</button></div>
+          <div class="field qa-amt"><input inputmode="numeric" placeholder="0" aria-label="금액" autocomplete="off"><span>원</span></div>
+          <p class="qa-kr"></p>
+          <div class="chips qa-cats"></div>
+          <div class="field memo"><input class="qa-memo" type="text" maxlength="40" placeholder="메모 (선택)" aria-label="메모" autocomplete="off"></div>
+          <p class="err qa-err" role="alert"></p>
+          <button type="button" class="btn fill wide qa-save">지출 기록하기</button>
+          <a class="qa-link" href="/budget/">가계부에서 전체 보기 ›</a>
+        </div>`;
+      document.body.append(sheet);
+      const amt = sheet.querySelector('.qa-amt input');
+      amt.addEventListener('input', () => {
+        const d = amt.value.replace(/[^0-9]/g, '');
+        amt.value = d ? Number(d).toLocaleString('ko-KR') : '';
+        sheet.querySelector('.qa-kr').textContent = korean(num(amt.value));
+        sheet.querySelector('.qa-err').textContent = '';
+      });
+      sheet.addEventListener('click', e => {
+        const t = e.target;
+        if (t.dataset.close) close();
+        else if (t.dataset.v) { type = t.dataset.v; cat = CATS[type][0]; drawCats(); sheet.querySelector('.qa-save').textContent = type === 'out' ? '지출 기록하기' : '수입 기록하기'; }
+        else if (t.dataset.cat) { cat = t.dataset.cat; drawCats(); }
+      });
+      sheet.querySelector('.qa-save').addEventListener('click', save);
+      sheet.addEventListener('keydown', e => { if (e.key === 'Escape') close(); if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); save(); } });
+      drawCats();
+    }
+    sheet.classList.add('show');
+    document.documentElement.classList.add('qa-open');
+    setTimeout(() => sheet.querySelector('.qa-amt input').focus(), 60);
+  }
+  function close() {
+    if (!sheet) return;
+    sheet.classList.remove('show');
+    document.documentElement.classList.remove('qa-open');
+  }
+  function save() {
+    const amtEl = sheet.querySelector('.qa-amt input'), amt = num(amtEl.value);
+    if (!amt) { sheet.querySelector('.qa-err').textContent = '금액을 넣어 주세요.'; amtEl.focus(); return; }
+    let b;
+    try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
+    if (!b || !Array.isArray(b.entries)) b = { entries: [], budget: (b && b.budget) || 0 };
+    b.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, amt, cat, date: today(), memo: sheet.querySelector('.qa-memo').value.trim().slice(0, 40) });
+    try { localStorage.setItem('donsem:budget', JSON.stringify(b)); }
+    catch (e) { sheet.querySelector('.qa-err').textContent = '이 브라우저에서는 저장할 수 없어요.'; return; }
+    amtEl.value = ''; sheet.querySelector('.qa-memo').value = ''; sheet.querySelector('.qa-kr').textContent = '';
+    close();
+    toast(`${cat} ${won(amt)}을 가계부에 기록했어요.`);
+    if (path === '/budget/') setTimeout(() => location.reload(), 600); // 가계부를 보고 있었다면 바로 반영
+  }
+  bar.querySelector('.tab-add').addEventListener('click', open);
+})();

@@ -395,3 +395,45 @@ html { -webkit-tap-highlight-color: transparent; }
 @media (max-width: 640px) { .top-links { gap: 12px; } .theme-btn { margin-left: 4px; } }
 @media (max-width: 360px) { .top-links { gap: 9px; font-size: 13px; } }
 .logo-bg { fill: var(--logo-bg); }
+
+/* ── 휴대폰 하단 탭 (컴퓨터에서는 숨김) ── */
+.tabbar, .qa { display: none; }
+@media (max-width: 640px) {
+  .top-links { display: none; }
+  body.has-tabbar { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+  .tabbar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    background: var(--bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+    border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); view-transition-name: tabbar; }
+  .tabbar a, .tabbar button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; border: 0; background: none;
+    color: var(--muted); font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; }
+  .tabbar a:hover { text-decoration: none; }
+  .tabbar svg { width: 24px; height: 24px; }
+  .tabbar a.on { color: var(--blue); }
+  .tabbar .tab-add { color: var(--text); }
+  .tabbar .tab-add span { display: flex; align-items: center; justify-content: center; width: 40px; height: 28px; border-radius: 10px; background: var(--blue); color: #fff; }
+  .tabbar .tab-add span svg { width: 20px; height: 20px; stroke-width: 2.4; }
+  .dock { bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
+
+  /* ＋기록: 아래에서 올라오는 창 */
+  .qa { display: block; position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+  .qa.show { pointer-events: auto; }
+  .qa-dim { position: absolute; inset: 0; background: rgba(0, 0, 0, .35); opacity: 0; transition: opacity .25s; }
+  .qa.show .qa-dim { opacity: 1; }
+  .qa-panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow-y: auto; background: var(--bg); border-radius: 22px 22px 0 0;
+    padding: 8px 20px calc(20px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform .35s cubic-bezier(.22, 1, .36, 1); }
+  .qa.show .qa-panel { transform: translateY(0); }
+  .qa-grip { width: 36px; height: 5px; border-radius: 3px; background: var(--seg-bg); margin: 0 auto 10px; }
+  .qa-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .qa-head b { font-size: 20px; }
+  .qa-x { width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--card); color: var(--muted); font-size: 20px; cursor: pointer; }
+  .qa .field { margin-top: 12px; background: var(--card); }
+  .qa-amt input { font-size: 26px; font-weight: 700; }
+  .qa-kr { margin: 6px 4px 0; min-height: 1em; text-align: right; font-size: 13px; color: var(--muted); }
+  .qa-cats { margin-top: 10px; }
+  .qa-link { display: block; text-align: center; margin-top: 14px; font-size: 14px; }
+  html.qa-open { overflow: hidden; }
+}
+@media (max-width: 640px) and (prefers-reduced-motion: reduce) { .qa-panel, .qa-dim { transition: none; } }
+.search input { text-align: left; font-size: 17px; }
+.my-links .item a { flex: 1; color: var(--text); }
