@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>목표 저축 - 돈셈, 결혼자금·1억 모으기 진행률 한눈에</title>
+<meta name="description" content="돈셈 목표 저축. 결혼자금, 여행, 1억 모으기 같은 목표를 정하고 진행률과 남은 금액, 매달 모아야 할 돈을 보여 줘요. 내 자산의 통장과 연결하면 진행률이 저절로 올라가요.">
+<link rel="canonical" href="https://doncalculator.com/goals/">
+<meta property="og:title" content="목표 저축 - 돈셈, 결혼자금·1억 모으기 진행률 한눈에">
+<meta property="og:description" content="돈셈 목표 저축. 결혼자금, 여행, 1억 모으기 같은 목표를 정하고 진행률과 남은 금액, 매달 모아야 할 돈을 보여 줘요. 내 자산의 통장과 연결하면 진행률이 저절로 올라가요.">
+<meta property="og:url" content="https://doncalculator.com/goals/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="돈셈">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body class="mm">
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <div class="top-links"><a class="all" href="/budget/">가계부</a><a class="all" href="/assets/">내 자산</a><a class="all" href="/">모든 계산기</a></div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="mm-tabs" role="navigation" aria-label="돈 관리">
+    <a href="/budget/">가계부</a><a href="/fixed/">고정지출</a><a href="/assets/">내 자산</a><a href="/goals/">목표</a>
+  </div>
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+    <a href="/unit-price/">단가 비교</a>
+    <a href="/fuel/">유류비</a>
+    <a href="/dutch-pay/">더치페이</a>
+    <a href="/date/">날짜</a>
+  </nav>
+
+  <section class="card" id="goals">
+    <h1>목표 저축</h1>
+    <p class="sub">모으고 싶은 돈을 정하고, 얼마나 왔는지 한눈에 봐요.</p>
+    <p class="trust">🔒 기록은 이 기기에만 저장돼요 · <span id="g-summary"></span></p>
+    <div id="g-list" class="goal-list"></div>
+  </section>
+
+  <section class="card sub-card">
+    <h2>새 목표 만들기</h2>
+    <label for="g-name">목표 이름</label>
+    <div class="field memo"><input id="g-name" type="text" maxlength="30" placeholder="결혼자금" autocomplete="off"></div>
+    <label for="g-target">목표 금액</label>
+    <div class="field"><input id="g-target" inputmode="numeric" placeholder="0" autocomplete="off"><span>원</span></div>
+    <label for="g-date">목표 날짜 (선택)</label>
+    <div class="field"><input id="g-date" type="date"></div>
+    <label>모은 돈은 어떻게 셀까요?</label>
+    <div class="seg" id="g-mode"><button type="button" data-v="manual" class="on">직접 입력</button><button type="button" data-v="assets">내 자산과 연결</button></div>
+    <div id="g-manual-wrap">
+      <label for="g-saved">지금까지 모은 돈 (없으면 비워 두세요)</label>
+      <div class="field"><input id="g-saved" inputmode="numeric" placeholder="0" autocomplete="off"><span>원</span></div>
+    </div>
+    <div id="g-assets-wrap" hidden>
+      <p class="sub small">이 목표에 쓸 통장이나 투자를 골라 주세요. 내 자산에서 잔액을 고치면 진행률도 저절로 바뀌어요.</p>
+      <div id="g-assets"></div>
+    </div>
+    <p class="err" id="g-err" role="alert"></p>
+    <button type="button" class="btn fill wide" id="g-save">목표 만들기</button>
+  </section>
+
+  <section class="card sub-card">
+    <h2>백업</h2>
+    <p class="sub small">기록은 이 기기의 브라우저에만 있어요. 기기를 바꾸기 전에 백업 파일을 저장해 두세요.</p>
+    <div class="row-btns">
+      <button type="button" class="btn line" id="g-export">백업 파일 저장</button>
+      <label class="btn line file-btn">백업 불러오기<input type="file" id="g-import" accept=".json,application/json"></label>
+    </div>
+    <button type="button" class="link danger" id="g-reset">목표 전체 지우기</button>
+  </section>
+
+  <article class="guide">
+    <h3>목표를 정하면 왜 더 잘 모일까요?</h3>
+    <p>"언젠가 모아야지"보다 "2년 뒤 결혼자금 3,000만 원"처럼 금액과 날짜를 정하면, 매달 얼마를 남겨야 하는지가 분명해져요. 진행률이 눈에 보이면 꾸준히 이어 가기도 쉬워요.</p>
+    <h3>'내 자산과 연결'은 어떻게 쓰나요?</h3>
+    <p>목표를 위해 따로 모으는 적금 통장이나 투자 계좌를 <a href="/assets/">내 자산</a>에 적어 두고 연결하세요. 한 달에 한 번 내 자산에서 잔액만 고치면 목표 진행률도 함께 올라가요.</p>
+    <h3>이자까지 따지려면?</h3>
+    <p>목표 날짜를 정하면 나오는 '이자까지 따져 보기'를 누르면, 남은 금액과 기간이 채워진 채로 <a href="/goal/">목표 저축 계산기</a>가 열려요. 금리를 바꿔 가며 매달 얼마씩 모아야 하는지 비교해 보세요.</p>
+  </article>
+
+  <footer>
+    목표 기록은 이 기기의 브라우저에만 저장되고 돈셈 서버로 보내지 않아요. 브라우저 데이터를 지우면 함께 지워지니 가끔 백업해 주세요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+<script src="/goals.js"></script>
+</body>
+</html>

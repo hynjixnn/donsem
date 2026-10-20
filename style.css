@@ -306,3 +306,28 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 .dday { flex: none; min-width: 44px; text-align: center; padding: 4px 8px; border-radius: 980px; background: var(--seg-bg); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .dday.soon { background: var(--blue); color: #fff; }
 #f-sync { margin-top: 12px; }
+
+/* ── 목표 저축 ── */
+.mm-tabs { max-width: 420px; }
+.mm-tabs a { font-size: 14px; }
+@media (min-width: 641px) { .tiles.mm-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.goal-list { margin-top: 20px; display: grid; gap: 12px; }
+.goal { background: var(--field); border-radius: 18px; padding: 18px 18px 14px; }
+.goal.done { box-shadow: inset 0 0 0 2px var(--blue); }
+.goal-head { display: flex; justify-content: space-between; align-items: center; }
+.goal-head b { font-size: 18px; }
+.goal .src { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+.goal-num { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 12px; }
+.goal-num strong { font-size: 30px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.goal-num span { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.goal .bar { margin-top: 6px; }
+.bar.good i { background: #1a8a3a; }
+.goal-tip { margin: 10px 0 0; font-size: 14px; line-height: 1.6; }
+.goal-tip .muted { color: var(--muted); }
+.goal-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.goal-actions .btn.line { font-size: 14px; padding: 7px 14px; }
+.add-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.add-row .btn.fill { border: 0; font: inherit; font-size: 14px; padding: 8px 14px; color: #fff; cursor: pointer; }
+.chips.multi button { font-size: 13px; }
+.goal-head .del { width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; flex: none; }
+.goal-head .del:hover { background: var(--seg-bg); }
