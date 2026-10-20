@@ -386,7 +386,175 @@ function dateCalc() {
 
 // 페이지마다 계산기가 하나씩 있어서, 그 페이지에 있는 계산기만 계산해요
 const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc };
-function runAll() { for (const id in calc) if (document.getElementById(id)) calc[id](); }
+// ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
+const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
+const MIN_WAGE_2026 = 10320; // 2026년 최저시급
+const insights = {
+  s_out() {
+    const P = val('s_amt'), n = Math.floor(val('s_n')), r = val('s_r'), tax = num(seg('s_tax')) / 100;
+    if (!P || !n || !r) return '';
+    const net = P * (r / 1200) * n * (n + 1) / 2 * (1 - tax);
+    return `연 ${pct(r, 2)} 적금이지만, 넣은 돈 대비 실제로 받는 이자는 ${pct(net / (P * n) * 100, 2)}예요. 매달 나눠 넣어서 늦게 넣은 돈은 이자를 덜 받기 때문이에요.`;
+  },
+  d_out() {
+    const A = val('d_amt'), n = Math.floor(val('d_n')), r = val('d_r') / 100, tax = num(seg('d_tax')) / 100;
+    if (!A || !n || !r) return '';
+    return `세금을 떼면 한 달에 약 ${won(A * r / 12 * (1 - tax))}씩 이자가 생기는 셈이에요.`;
+  },
+  l_out() {
+    const L = val('l_amt'), n = Math.max(1, Math.floor(val('l_n'))), i = val('l_r') / 1200, type = seg('l_type');
+    if (!L || !i) return '';
+    const eq = (L * i / (1 - Math.pow(1 + i, -n))) * n - L, pr = L * i * (n + 1) / 2, bu = L * i * n;
+    const mine = { equal: eq, principal: pr, bullet: bu }[type];
+    if (type === 'principal') return `총 이자가 원금의 ${pct(mine / L * 100)}예요. 세 가지 방식 중 이자가 가장 적은 방식이에요.`;
+    return `총 이자가 원금의 ${pct(mine / L * 100)}예요. 원금균등으로 갚으면 총 이자를 ${won(mine - pr)} 아낄 수 있어요.`;
+  },
+  c_out() {
+    const r = val('c_r');
+    if (!r) return '';
+    return `연 ${pct(r)} 수익이면 약 ${(72 / r).toFixed(1)}년마다 돈이 두 배가 돼요 (72의 법칙). 일찍 시작할수록 복리 효과가 커져요.`;
+  },
+  v_out() {
+    const out = document.getElementById('v_out'), daily = out.querySelector('.rows div:last-child b');
+    if (!daily) return '';
+    return `일한 1년마다 30일 치 평균임금(약 ${won(num(daily.textContent) * 30)})씩 퇴직금이 쌓이는 셈이에요.`;
+  },
+  r_out() {
+    const r = val('r_rate') / 100;
+    if (!r) return '';
+    return seg('r_mode') === 'toMonthly'
+      ? `보증금을 1,000만 원 더 내면 월세가 약 ${won(10000000 * r / 12)} 줄어요.`
+      : `월세 1만 원은 보증금 약 ${won(10000 * 12 / r)}과 같은 값이에요.`;
+  },
+  x_out() {
+    return seg('x_mode') === 'total' ? '부가세는 합계금액의 약 9.09%(11분의 1)예요. 합계를 1.1로 나누면 공급가액이 나와요.' : '공급가액에 1.1을 곱하면 부가세가 포함된 합계금액이에요.';
+  },
+  h_out() {
+    const wage = val('h_wage'), h = val('h_hours');
+    if (!wage || !h) return '';
+    if (h < 15) return `주 15시간만 채우면 일주일에 주휴수당 ${won(15 / 40 * 8 * wage)}을 더 받을 수 있어요.`;
+    const weekly = wage * h + Math.min(h, 40) / 40 * 8 * wage;
+    return `주휴수당까지 합치면 실제 시급은 ${won(weekly / h)}으로 오르는 셈이에요.`;
+  },
+  p_out() {
+    const out = document.getElementById('p_out'), b = out.querySelectorAll('.rows b');
+    if (b.length < 3) return '';
+    const total = num(b[1].textContent), A = val('p_amt'), rate = val('p_rate') / 100;
+    return `하루 늦게 갚을 때마다 수수료가 약 ${won(A * rate / total)}씩 줄어요. 한 달 뒤에 갚으면 약 ${won(A * rate * 30 / total)}을 아껴요.`;
+  },
+  i_out() {
+    const r = val('i_rate');
+    if (!r) return '';
+    return `돈의 가치를 지키려면 적어도 연 ${pct(r)}보다 높은 이자나 수익을 받아야 해요.`;
+  },
+  o_out() {
+    if (seg('o_mode') === 'rate') {
+      const L = val('o_list'), S = val('o_sale');
+      return L && S && S < L ? `정가의 ${pct(S / L * 100)}만 내고 사는 거예요.` : '';
+    }
+    const r1 = val('o_rate'), r2 = val('o_rate2');
+    if (!r2) return '';
+    return `할인율을 그냥 더한 ${pct(r1 + r2)}가 아니라 ${pct((1 - (1 - r1 / 100) * (1 - r2 / 100)) * 100)}만큼 할인돼요. 쿠폰은 이미 깎인 가격에서 한 번 더 깎아 주기 때문이에요.`;
+  },
+  w_out() {
+    const out = document.getElementById('w_out'), b = out.querySelector('.rows b');
+    if (!b) return '';
+    const hour = num(b.textContent), diff = hour - MIN_WAGE_2026;
+    if (Math.abs(diff) < 1) return '2026년 최저시급(10,320원)과 같아요.';
+    return diff > 0 ? `2026년 최저시급(10,320원)보다 시간당 ${won(diff)} 많아요.` : `2026년 최저시급(10,320원)보다 시간당 ${won(-diff)} 적어요. 근로계약 조건을 꼭 확인해 보세요.`;
+  },
+  g_out() {
+    const big = document.querySelector('#g_out .big');
+    if (!big) return '';
+    const P = num(big.textContent);
+    return P ? `하루로 치면 약 ${won(P / 30.44)}씩 모으면 돼요.` : '';
+  },
+  y_out() {
+    const m2 = seg('y_mode') === 'm2' ? val('y_area') : val('y_area') * 400 / 121, price = val('y_price');
+    if (!m2) return '';
+    if (price > 0) return `1평(약 3.3㎡)이 ${won(price / (m2 * 121 / 400))}이라는 뜻이에요.`;
+    return `대략 가로세로 ${Math.sqrt(m2).toFixed(1)}m인 정사각형 크기예요.`;
+  },
+  q_out() {
+    const mode = seg('q_mode'), A = val('q_a'), B = val('q_b');
+    if (mode === 'change' && A && B) return `다시 처음 값으로 돌아가려면 ${pct(Math.abs(A / B - 1) * 100, 2)} ${B > A ? '내려야' : '올라야'} 해요. 오르고 내릴 때 기준이 달라서 그래요.`;
+    if (mode === 'ratio' && A && B && A < B) return `대략 ${(B / A).toFixed(1)}분의 1이에요.`;
+    return '';
+  },
+  a_out() {
+    const p1 = val('a_p1'), q1 = val('a_q1'), p2 = val('a_p2'), q2 = val('a_q2'), now = val('a_now') || p2;
+    if (!(q1 + q2) || !now) return '';
+    const avg = (p1 * q1 + p2 * q2) / (q1 + q2);
+    return avg > now ? `원금을 되찾으려면 주가가 평균 단가 ${won(avg)}까지, 지금보다 ${pct((avg / now - 1) * 100)} 올라야 해요.` : `지금 가격이 평균 단가보다 높아서 수익 중이에요.`;
+  },
+  b_out() {
+    const r = val('b_rate'), keep = 1 - num(seg('b_tax')) / 100;
+    if (!r) return '';
+    if (seg('b_mode') === 'income') return `세금을 떼면 실제 배당수익률은 연 ${pct(r * keep, 2)}예요.`;
+    const need = val('b_want') * 12 / keep / (r / 100), need2 = val('b_want') * 12 / keep / ((r + 1) / 100);
+    return `배당수익률이 1%p 높은 ${pct(r + 1)}라면 필요한 돈이 약 ${won(need - need2)} 줄어요.`;
+  },
+  t_out() {
+    const big = document.querySelector('#t_out .big'), until = val('t_until');
+    if (!big || !until) return '';
+    return `은퇴까지 ${until}년 동안 이자 없이 모은다면 매달 약 ${won(num(big.textContent) / (until * 12))}이 필요해요. 투자로 불리면 이보다 적게 모아도 돼요.`;
+  },
+  k_out() {
+    const price = val('k_price'), down = val('k_down'), n = num(seg('k_n')), i = val('k_r') / 1200, L = price - down;
+    if (L <= 0 || !i) return '';
+    const interest = x => (x * i / (1 - Math.pow(1 + i, -n))) * n - x;
+    return `총 이자는 차값의 ${pct(interest(L) / price * 100)}예요. 선수금을 100만 원 더 내면 총 이자가 약 ${won(interest(L) - interest(Math.max(0, L - 1000000)))} 줄어요.`;
+  },
+  f_out() {
+    const L = val('f_amt'), n = Math.round(val('f_n')), oldR = val('f_old');
+    if (!L || !n) return '';
+    const pay = r => { const i = r / 1200; return i === 0 ? L / n : L * i / (1 - Math.pow(1 + i, -n)); };
+    const extra = L * val('f_fee') / 100 + val('f_cost'), saveAt = r => (pay(oldR) - pay(r)) * n - extra;
+    if (saveAt(0) <= 0) return '수수료와 비용이 너무 커서, 금리가 0%여도 갈아타는 게 손해예요.';
+    let lo = 0, hi = oldR; // 이득과 손해가 갈리는 금리를 찾아요
+    for (let k = 0; k < 50; k++) { const mid = (lo + hi) / 2; saveAt(mid) > 0 ? lo = mid : hi = mid; }
+    return `수수료와 비용까지 따지면, 새 대출 금리가 연 ${lo.toFixed(2)}%보다 낮아야 갈아타는 게 이득이에요.`;
+  },
+  u_out() {
+    const per = seg('u_unit') === '개' ? 1 : 100;
+    const items = ['A', 'B', 'C'].map(n => ({ n, p: val('u_p' + n), t: val('u_v' + n) * (val('u_c' + n) || 1) })).filter(x => x.p > 0 && x.t > 0);
+    if (items.length < 2) return '';
+    items.forEach(x => x.u = x.p / x.t);
+    items.sort((a, b) => a.u - b.u);
+    const best = items[0], worst = items[items.length - 1];
+    if (worst.u === best.u) return '단가가 똑같아요. 필요한 양에 맞춰 고르면 돼요.';
+    return `상품 ${best.n}만큼의 양을 상품 ${worst.n}로 사면 ${won((worst.u - best.u) * best.t)}을 더 내야 해요.`;
+  },
+  e_out() {
+    if (seg('e_mode') !== 'cost') return '';
+    const km = val('e_km') * num(seg('e_trip')), eff = val('e_eff'), price = val('e_price');
+    if (!km || !eff || !price) return '';
+    return `연비가 1km/L만 좋아져도 이번 이동에서 약 ${won(km / eff * price - km / (eff + 1) * price)}을 아껴요.`;
+  },
+  n_out() {
+    const total = val('n_total'), ppl = Math.max(1, Math.round(val('n_ppl'))), tip = num(seg('n_tip')) / 100, unit = num(seg('n_unit'));
+    const each = total * (1 + tip) / ppl, rounded = Math.ceil(Math.round(each) / unit) * unit;
+    if (!total) return '';
+    return rounded - each < 0.5 ? '딱 나누어떨어져서 남는 돈이 없어요.' : `한 사람당 ${won(rounded - each)}씩만 더 내면, 계산한 사람이 손해 보지 않아요.`;
+  },
+  z_out() {
+    if (seg('z_mode') !== 'dday') return '';
+    const v = document.querySelector('input[data-k="z_target"]').value;
+    if (!v) return '';
+    const now = new Date(), today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()), t = Date.parse(v + 'T00:00:00Z');
+    if (t <= today) return '';
+    let work = 0;
+    for (let d = today + 86400000; d <= t; d += 86400000) { const w = new Date(d).getUTCDay(); if (w && w < 6) work++; }
+    return `오늘을 빼고 주말을 제외하면 평일은 ${work}일 남았어요 (공휴일은 따로 빼 주세요).`;
+  },
+};
+function addInsight(id) {
+  const out = document.getElementById(id);
+  if (!insights[id] || !out.querySelector('.big')) return;
+  const s = insights[id]();
+  if (s) out.insertAdjacentHTML('beforeend', `<p class="insight"><b>한 줄 정리</b>${s}</p>`);
+}
+function runAll() { for (const id in calc) if (document.getElementById(id)) { calc[id](); addInsight(id); } }
 
 // 입력할 때 콤마 자동 표시
 document.querySelectorAll('input[inputmode="numeric"]').forEach(el => {

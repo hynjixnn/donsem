@@ -153,3 +153,7 @@ footer a:hover { color: var(--text) !important; }
 .toast { position: fixed; left: 50%; bottom: 32px; transform: translate(-50%, 12px); opacity: 0; transition: opacity .2s, transform .2s;
   background: rgba(29, 29, 31, .92); color: #fff; padding: 12px 20px; border-radius: 980px; font-size: 14px; z-index: 50; max-width: calc(100% - 32px); text-align: center; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* 한 줄 정리 */
+.insight { margin: 16px 0 0; padding: 14px 16px; border-radius: 12px; background: var(--card); font-size: 15px; line-height: 1.6; }
+.insight b { display: block; color: var(--blue); font-size: 13px; font-weight: 600; margin-bottom: 2px; }
