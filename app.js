@@ -571,7 +571,7 @@ document.querySelectorAll('.seg').forEach(g => g.addEventListener('click', e => 
 }));
 
 // 지금 보고 있는 계산기 메뉴에 색 칠하기
-document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === location.pathname));
+document.querySelectorAll('nav a, .mm-tabs a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === location.pathname));
 // 휴대폰에서 메뉴가 옆으로 길 때, 지금 메뉴가 보이도록 밀어 두기
 const onNav = document.querySelector('nav a.on');
 if (onNav) onNav.parentElement.scrollLeft = onNav.offsetLeft - onNav.parentElement.offsetLeft - 16;

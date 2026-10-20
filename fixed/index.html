@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>고정지출 관리 - 돈셈, 구독료와 매달 나가는 돈 한눈에</title>
+<meta name="description" content="돈셈 고정지출 관리. 넷플릭스 같은 구독, 통신비, 보험료, 월세처럼 매달 나가는 돈을 정리하고 다가오는 결제일과 한 달·1년 합계를 보여 줘요. 가계부에 한 번에 기록할 수도 있어요.">
+<link rel="canonical" href="https://doncalculator.com/fixed/">
+<meta property="og:title" content="고정지출 관리 - 돈셈, 구독료와 매달 나가는 돈 한눈에">
+<meta property="og:description" content="돈셈 고정지출 관리. 넷플릭스 같은 구독, 통신비, 보험료, 월세처럼 매달 나가는 돈을 정리하고 다가오는 결제일과 한 달·1년 합계를 보여 줘요. 가계부에 한 번에 기록할 수도 있어요.">
+<meta property="og:url" content="https://doncalculator.com/fixed/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="돈셈">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="/style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body class="mm">
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><defs><mask id="logo-m" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff"/><rect x="6" y="6" width="5" height="5" rx="1.4"/><rect x="13" y="6" width="5" height="5" rx="1.4"/><rect x="6" y="13" width="5" height="5" rx="1.4"/><circle cx="15.5" cy="15.5" r="2.6"/></mask></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="currentColor" mask="url(#logo-m)"/></svg>돈셈</a>
+    <div class="top-links"><a class="all" href="/budget/">가계부</a><a class="all" href="/assets/">내 자산</a><a class="all" href="/">모든 계산기</a></div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="mm-tabs" role="navigation" aria-label="돈 관리">
+    <a href="/budget/">가계부</a><a href="/fixed/">고정지출</a><a href="/assets/">내 자산</a>
+  </div>
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+    <a href="/unit-price/">단가 비교</a>
+    <a href="/fuel/">유류비</a>
+    <a href="/dutch-pay/">더치페이</a>
+    <a href="/date/">날짜</a>
+  </nav>
+
+  <section class="card" id="fixed">
+    <h1>고정지출</h1>
+    <p class="sub">구독료, 통신비, 보험료처럼 매달 나가는 돈을 한눈에 봐요.</p>
+    <p class="trust">🔒 기록은 이 기기에만 저장돼요 · 서버로 보내지 않아요</p>
+    <div class="sum">
+      <div><span>한 달</span><b id="f-month-total"></b></div>
+      <div><span>1년</span><b id="f-year-total"></b></div>
+      <div><span>항목</span><b id="f-count"></b></div>
+    </div>
+    <div id="f-insight"></div>
+  </section>
+
+  <section class="card sub-card">
+    <h2>다가오는 결제</h2>
+    <ul class="items" id="f-upcoming"></ul>
+    <div id="f-sync"></div>
+  </section>
+
+  <section class="card sub-card">
+    <h2>추가하기</h2>
+    <label for="f-name">이름</label>
+    <div class="field memo"><input id="f-name" type="text" maxlength="30" placeholder="넷플릭스" autocomplete="off"></div>
+    <label>종류</label>
+    <div class="chips" id="f-cats"></div>
+    <label for="f-amt">금액</label>
+    <div class="field"><input id="f-amt" inputmode="numeric" placeholder="0" autocomplete="off"><span>원</span></div>
+    <label>결제 주기</label>
+    <div class="seg" id="f-cycle"><button type="button" data-v="month" class="on">매달</button><button type="button" data-v="year">매년</button></div>
+    <label for="f-day">결제일</label>
+    <div class="pair2">
+      <div class="field" id="f-month-wrap" hidden><select id="f-month" aria-label="결제 월"></select></div>
+      <div class="field"><select id="f-day"></select></div>
+    </div>
+    <p class="err" id="f-err" role="alert"></p>
+    <button type="button" class="btn fill wide" id="f-save">고정지출 추가하기</button>
+  </section>
+
+  <section class="card sub-card">
+    <h2>목록</h2>
+    <p class="sub small">금액을 누르면 바로 고칠 수 있어요. 요금이 바뀌면 여기서 고쳐 주세요.</p>
+    <ul class="items" id="f-items"></ul>
+  </section>
+
+  <section class="card sub-card">
+    <h2>백업</h2>
+    <p class="sub small">기록은 이 기기의 브라우저에만 있어요. 기기를 바꾸기 전에 백업 파일을 저장해 두세요.</p>
+    <div class="row-btns">
+      <button type="button" class="btn line" id="f-export">백업 파일 저장</button>
+      <label class="btn line file-btn">백업 불러오기<input type="file" id="f-import" accept=".json,application/json"></label>
+    </div>
+    <button type="button" class="link danger" id="f-reset">고정지출 전체 지우기</button>
+  </section>
+
+  <article class="guide">
+    <h3>고정지출을 왜 따로 관리하나요?</h3>
+    <p>매달 자동으로 빠져나가는 돈은 금액이 작아도 쌓이면 커요. 한 달 9,900원짜리 구독 다섯 개면 1년에 약 59만 원이에요. 한곳에 모아 두면 안 쓰는 구독이나 비싼 요금제를 찾기 쉬워요.</p>
+    <h3>1년에 한 번 내는 건 어떻게 계산하나요?</h3>
+    <p>자동차 보험료처럼 1년에 한 번 내는 돈은 12로 나눠서 한 달 합계에 넣어요. 그래야 실제로 한 달에 얼마가 필요한지 정확하게 알 수 있어요.</p>
+    <h3>가계부와 어떻게 연결되나요?</h3>
+    <p>'가계부에 한 번에 기록하기'를 누르면, 이번 달 결제일이 지난 고정지출을 <a href="/budget/">가계부</a>에 지출로 넣어 줘요. 같은 달에 두 번 눌러도 한 번만 기록돼요. 대출 상환액은 <a href="/loan/">대출 이자 계산기</a>로 확인할 수 있어요.</p>
+  </article>
+
+  <footer>
+    고정지출 기록은 이 기기의 브라우저에만 저장되고 돈셈 서버로 보내지 않아요. 브라우저 데이터를 지우면 함께 지워지니 가끔 백업해 주세요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+<script src="/fixed.js"></script>
+</body>
+</html>

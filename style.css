@@ -288,3 +288,21 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 .install-x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; }
 .install-x:hover { background: var(--seg-bg); }
 @media (display-mode: standalone) { .topbar { padding-top: env(safe-area-inset-top); } }
+
+/* ── 돈 관리 탭 (가계부 · 고정지출 · 내 자산) ── */
+.mm nav { display: none; }
+.mm-tabs { display: flex; gap: 4px; padding: 4px; margin: 0 auto 20px; max-width: 360px; border-radius: 980px; background: var(--seg-bg); }
+.mm-tabs a { flex: 1; text-align: center; padding: 8px 0; border-radius: 980px; color: var(--text); font-size: 15px; font-weight: 500; }
+.mm-tabs a:hover { text-decoration: none; background: rgba(255, 255, 255, .6); }
+.mm-tabs a.on { background: var(--blue); color: #fff; }
+.tiles.mm-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tiles.mm-tiles .tile.feature { grid-column: auto; }
+@media (max-width: 640px) { .tiles.mm-tiles { grid-template-columns: 1fr; } }
+
+/* ── 고정지출 ── */
+.pair2 { display: flex; gap: 8px; }
+.pair2 > .field { flex: 1; }
+.field select { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text); font: inherit; font-size: 17px; font-weight: 500; padding: 14px 0; outline: none; cursor: pointer; }
+.dday { flex: none; min-width: 44px; text-align: center; padding: 4px 8px; border-radius: 980px; background: var(--seg-bg); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.dday.soon { background: var(--blue); color: #fff; }
+#f-sync { margin-top: 12px; }
