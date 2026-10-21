@@ -1476,7 +1476,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals'];
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz'];
 const iconOf = path => { const slug = String(path).replace(/\//g, ''); return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -1617,7 +1617,7 @@ function addTileIcon(t) {
 
 // ── 위쪽 메뉴: 분류를 누르면(컴퓨터는 올리기만 해도) 그 분류 계산기가 펼쳐져요 ──
 const MENU = [
-  ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표']]],
+  ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표'], ['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제']]],
   ['저축 · 투자', [['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/goal/', '목표 저축', '1억 모으기'],
     ['/dividend/', '배당금', '주식 배당 세금'], ['/avg-price/', '물타기', '평균 단가 주식'], ['/retirement/', '노후자금', '은퇴 연금'], ['/inflation/', '물가상승률', '화폐 가치']]],
   ['대출 · 집', [['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
@@ -1827,3 +1827,17 @@ async function saveXlsx(name, url) {
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   toast('엑셀 파일로 저장했어요. 다운로드 폴더를 확인해 보세요.');
 }
+
+// ── 첫 화면: 오늘의 돈 퀴즈 카드 (O/X를 누르면 퀴즈 페이지에서 바로 정답을 보여 줘요) ──
+(() => {
+  if (!document.body.classList.contains('home') || typeof QUIZ === 'undefined') return;
+  const s = quizLoad(), id = quizToday(), done = s.days[quizDate()], streak = quizStreak(s);
+  const sec = document.createElement('section');
+  sec.className = 'quiz-home';
+  sec.innerHTML = `<div class="qh-head"><b>${iconOf('/quiz/')}오늘의 돈 퀴즈</b>${streak ? `<span class="qz-fire">🔥 ${streak}일 연속</span>` : ''}</div>
+    <p class="qz-q">${QUIZ[id][0]}</p>
+    ${done ? `<a class="qh-done" href="/quiz/">${done.ok ? '✓ 맞혔어요' : '✓ 오늘 문제를 풀었어요'} · 해설 다시 보기 ›</a>`
+      : `<div class="qz-btns"><a class="qz-btn" href="/quiz/?a=o"><span class="qz-o" aria-hidden="true"></span>맞아요</a><a class="qz-btn" href="/quiz/?a=x"><span class="qz-x" aria-hidden="true"></span>아니에요</a></div>`}`;
+  const first = document.querySelector('.wrap > .group');
+  if (first) first.before(sec);
+})();
