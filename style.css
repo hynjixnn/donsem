@@ -485,3 +485,10 @@ html { -webkit-tap-highlight-color: transparent; }
 .save-to { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 2px; }
 .save-btn.saved { border-color: transparent; background: var(--accent-soft); }
 @media (prefers-reduced-motion: no-preference) { .save-btn { transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), background-color .15s; } .save-btn:active { transform: scale(.98); transition-duration: .1s; } .save-btn.saved { animation: drop-in .32s cubic-bezier(.22, 1, .36, 1) both; } }
+
+/* 홈 "많이 찾는 계산기" 배지 */
+.tile .badge { align-self: flex-start; font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 3px 9px; margin-bottom: 10px; }
+.tile .badge.season { color: #c2410c; background: rgba(234, 88, 12, .12); }
+:root[data-theme=dark] .tile .badge.season { color: #fb923c; background: rgba(251, 146, 60, .16); }
+@media (prefers-color-scheme: dark) { :root[data-theme=auto] .tile .badge.season { color: #fb923c; background: rgba(251, 146, 60, .16); } }
+@media (max-width: 640px) { .tile .badge { font-size: 11px; padding: 2px 8px; margin-bottom: 8px; } }
