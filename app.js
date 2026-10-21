@@ -1613,3 +1613,124 @@ function addTileIcon(t) {
   });
   q.addEventListener('input', () => { pick('all'); document.getElementById('calc-none').textContent = '찾는 계산기가 없어요. 다른 말로 검색해 보세요.'; });
 })();
+
+// ── 위쪽 메뉴: 분류를 누르면(컴퓨터는 올리기만 해도) 그 분류 계산기가 펼쳐져요 ──
+const MENU = [
+  ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표']]],
+  ['저축 · 투자', [['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/goal/', '목표 저축', '1억 모으기'],
+    ['/dividend/', '배당금', '주식 배당 세금'], ['/avg-price/', '물타기', '평균 단가 주식'], ['/retirement/', '노후자금', '은퇴 연금'], ['/inflation/', '물가상승률', '화폐 가치']]],
+  ['대출 · 집', [['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
+    ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
+  ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
+    ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
+  ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'],
+    ['/fuel/', '유류비', '기름값 연비'], ['/dutch-pay/', '더치페이', 'n빵 정산'], ['/date/', '날짜', '디데이 d-day 며칠']]],
+];
+(() => {
+  const top = document.querySelector('.topbar'), inner = top && top.querySelector('.topbar-in'), right = top && top.querySelector('.top-right');
+  if (!inner || !right) return;
+  const path = location.pathname, here = MENU.findIndex(([, items]) => items.some(([href]) => href === path));
+  const short = t => t.replace(/\s*·\s*/g, '·');
+  const item = ([href, name]) => `<a href="${href}"${href === path ? ' class="on" aria-current="page"' : ''}>${iconOf(href)}<span>${name}</span></a>`;
+
+  // 컴퓨터: 로고 옆 분류 메뉴 / 휴대폰: 메뉴바 아래 한 줄 버튼 (돈 관리는 아래 탭에 있어서 빼요)
+  const btn = (t, i) => `<button type="button" data-g="${i}" aria-expanded="false" aria-controls="gnav-panel"${i === here ? ' class="here"' : ''}>${short(t)}</button>`;
+  const gnav = document.createElement('div');
+  gnav.className = 'gnav'; gnav.setAttribute('role', 'navigation'); gnav.setAttribute('aria-label', '계산기 분류');
+  gnav.innerHTML = MENU.map(([t], i) => btn(t, i)).join('');
+  inner.querySelector('.brand').after(gnav);
+  const chips = document.createElement('div');
+  chips.className = 'gnav-chips'; chips.setAttribute('role', 'navigation'); chips.setAttribute('aria-label', '계산기 분류');
+  chips.innerHTML = MENU.map(([t], i) => i ? btn(t, i) : '').join('');
+  inner.after(chips);
+  const sBtn = document.createElement('button');
+  sBtn.type = 'button'; sBtn.className = 'search-btn'; sBtn.dataset.g = 'search'; sBtn.setAttribute('aria-label', '계산기 검색'); sBtn.setAttribute('aria-expanded', 'false');
+  sBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+  right.prepend(sBtn);
+  document.body.classList.add('has-gnav');
+
+  const wrap = document.createElement('div');
+  wrap.className = 'gnav-layer';
+  wrap.innerHTML = '<div class="gnav-dim"></div><div class="gnav-panel" id="gnav-panel" role="dialog" aria-modal="false"><div class="gnav-in"></div></div>';
+  document.body.append(wrap);
+  const panel = wrap.querySelector('.gnav-in');
+  let open = null, timer = 0;
+
+  function draw(g) {
+    if (g === 'search') {
+      panel.innerHTML = `<div class="gnav-head"><b>계산기 검색</b><button type="button" class="gnav-x" aria-label="닫기">×</button></div>
+        <div class="field gnav-q"><input type="search" placeholder="예: 주휴, 대출, 퇴직금" autocomplete="off" aria-label="계산기 검색"></div><div class="gnav-list" aria-live="polite"></div>`;
+      const q = panel.querySelector('input'), list = panel.querySelector('.gnav-list');
+      const all = MENU.flatMap(([t, items]) => items.map(it => [...it, t]));
+      const find = () => {
+        const s = q.value.replace(/\s/g, '').toLowerCase();
+        const hits = s ? all.filter(([, name, kw, t]) => (name + kw + t).replace(/[\s·]/g, '').toLowerCase().includes(s)) : all.filter(([href]) => ['/salary/', '/loan/', '/year-end-tax/', '/unemployment/', '/severance/', '/budget/'].includes(href));
+        list.innerHTML = (s ? '' : '<p class="gnav-cap">많이 찾는 것</p>') + (hits.length ? hits.map(item).join('') : '<p class="gnav-none">찾는 계산기가 없어요. 다른 말로 찾아보세요.</p>');
+      };
+      q.addEventListener('input', e => { e.stopPropagation(); find(); });
+      q.addEventListener('keydown', e => { if (e.key === 'Enter') { const a = list.querySelector('a'); if (a) location.href = a.href; } });
+      find();
+      setTimeout(() => q.focus({ preventScroll: true }), 30);
+    } else {
+      const [t, items] = MENU[g];
+      panel.innerHTML = `<div class="gnav-head"><b>${t}</b><button type="button" class="gnav-x" aria-label="닫기">×</button></div>
+        <div class="gnav-list">${items.map(item).join('')}</div>
+        <a class="gnav-all" href="${g ? '/calculators/' : '/budget/'}">${g ? '모든 계산기 보기' : '가계부 열기'} ›</a>`;
+    }
+    panel.querySelector('.gnav-x').addEventListener('click', () => show(null));
+  }
+  function show(g) {
+    clearTimeout(timer);
+    if (g !== null && String(g) === String(open)) return;
+    open = g;
+    document.querySelectorAll('[data-g]').forEach(b => { const on = g !== null && b.dataset.g === String(g); b.classList.toggle('open', on); b.setAttribute('aria-expanded', String(on)); });
+    if (g === null) { wrap.classList.remove('show'); document.documentElement.classList.remove('gnav-open'); return; }
+    draw(g);
+    wrap.classList.add('show');
+    document.documentElement.classList.add('gnav-open');
+  }
+  const toggle = g => show(String(open) === String(g) ? null : g);
+  top.addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (b) toggle(b.dataset.g === 'search' ? 'search' : +b.dataset.g); });
+  wrap.querySelector('.gnav-dim').addEventListener('click', () => show(null));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && open !== null) { const g = open; show(null); const b = gnav.querySelector(`[data-g="${g}"]`) || sBtn; b.focus(); }
+    if (e.key === '/' && open === null && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); show('search'); }
+  });
+
+  // 컴퓨터(마우스): 분류 위에 올리면 펼치고, 메뉴 밖으로 나가면 닫아요
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    gnav.addEventListener('mouseover', e => {
+      const b = e.target.closest('[data-g]');
+      if (!b) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => show(+b.dataset.g), open === null ? 120 : 0);
+    });
+    const leave = () => { clearTimeout(timer); if (open !== 'search') timer = setTimeout(() => show(null), 250); };
+    const stay = () => clearTimeout(timer);
+    gnav.addEventListener('mouseleave', leave);
+    wrap.querySelector('.gnav-panel').addEventListener('mouseenter', stay);
+    wrap.querySelector('.gnav-panel').addEventListener('mouseleave', leave);
+  }
+  window.addEventListener('pageshow', () => show(null)); // 뒤로 가기로 돌아왔을 때 열린 채로 남지 않게
+})();
+
+// ── 홈: 분류마다 4개만 먼저 보여 주고, '전체 보기'를 누르면 나머지를 펼쳐요 ──
+(() => {
+  if (!document.body.classList.contains('home')) return;
+  document.querySelectorAll('.group:not(.popular):not(.bundles):not(.fav-group):not(.recent) > .tiles').forEach(tiles => {
+    const extra = [...tiles.children].slice(4);
+    if (!extra.length) return;
+    extra.forEach(t => t.classList.add('tile-more'));
+    tiles.classList.add('folded');
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'more-btn'; b.setAttribute('aria-expanded', 'false');
+    const label = () => { const open = !tiles.classList.contains('folded'); b.textContent = open ? '접기 ‹' : `전체 보기 (${extra.length}개 더) ›`; b.setAttribute('aria-expanded', String(open)); };
+    b.addEventListener('click', () => {
+      tiles.classList.toggle('folded');
+      label();
+      if (tiles.classList.contains('folded')) tiles.closest('.group').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+    label();
+    tiles.after(b);
+  });
+})();

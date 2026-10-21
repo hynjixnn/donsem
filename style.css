@@ -589,3 +589,71 @@ html { -webkit-tap-highlight-color: transparent; }
 /* 고정지출 → 구글 캘린더 */
 .chips a.gcal { border: 1px solid var(--line); border-radius: 980px; background: var(--field); color: var(--text); font-size: 14px; padding: 7px 13px; }
 .chips a.gcal:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+
+/* ── 위쪽 메뉴: 분류 메뉴 + 펼침 창 (애플 홈페이지처럼) ── */
+.has-gnav .top-links, .has-gnav .wrap > nav { display: none; }
+.gnav { display: flex; gap: 2px; margin: 0 auto 0 28px; }
+.gnav button, .gnav-chips button, .search-btn { border: 0; background: none; font: inherit; color: var(--muted); cursor: pointer; }
+.gnav button { padding: 8px 12px; border-radius: 980px; font-size: 14px; font-weight: 500; white-space: nowrap; transition: color .15s; }
+.gnav button:hover, .gnav button.open { color: var(--text); }
+.gnav button.here { color: var(--text); font-weight: 600; }
+.top-right { display: flex; align-items: center; gap: 6px; }
+.search-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.search-btn svg { width: 18px; height: 18px; }
+.search-btn:hover, .search-btn.open { color: var(--text); background: var(--seg-bg); }
+.gnav-chips { display: none; }
+
+.gnav-layer { position: fixed; inset: 52px 0 0; z-index: 9; pointer-events: none; }
+.gnav-layer.show { pointer-events: auto; }
+.gnav-dim { position: absolute; inset: 0; background: rgba(0, 0, 0, .18); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); opacity: 0; transition: opacity .3s; }
+.gnav-layer.show .gnav-dim { opacity: 1; }
+.gnav-panel { position: absolute; left: 0; right: 0; top: 0; background: var(--bg); border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
+  max-height: calc(100vh - 52px); overflow-y: auto; transform: translateY(-12px); opacity: 0; transition: transform .3s cubic-bezier(.22, 1, .36, 1), opacity .2s; }
+.gnav-layer.show .gnav-panel { transform: none; opacity: 1; }
+.gnav-in { max-width: 1024px; margin: 0 auto; padding: 28px 20px 36px; }
+.gnav-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.gnav-head b { font-size: 13px; font-weight: 600; color: var(--muted); }
+.gnav-x { display: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--card); color: var(--muted); font-size: 20px; cursor: pointer; }
+.gnav-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 16px; }
+.gnav-list a { display: flex; align-items: center; gap: 12px; padding: 8px 10px; margin-left: -10px; border-radius: 14px; color: var(--text); font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+.gnav-list a:hover { text-decoration: none; background: var(--card); }
+.gnav-list a.on { color: var(--blue); }
+.gnav-list .ico { width: 36px; height: 36px; flex: none; }
+.gnav-cap { grid-column: 1 / -1; margin: 4px 0 4px; font-size: 13px; color: var(--muted); }
+.gnav-none { grid-column: 1 / -1; color: var(--muted); font-size: 15px; }
+.gnav-all { display: inline-block; margin-top: 20px; font-size: 14px; }
+.gnav-q { max-width: 480px; margin: 0 0 16px; }
+.gnav-q input { text-align: left; font-size: 19px; }
+html.gnav-open { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .gnav-panel, .gnav-dim { transition: none; } }
+
+/* 컴퓨터 화면이 좁으면 글자를 조금 줄여요 */
+@media (max-width: 860px) { .gnav { margin-left: 12px; } .gnav button { padding: 8px 8px; font-size: 13px; } }
+
+/* 휴대폰: 메뉴바 아래 한 줄 분류 버튼, 누르면 아래에서 창이 올라와요 */
+@media (max-width: 640px) {
+  .gnav { display: none; }
+  .gnav-chips { display: flex; gap: 6px; max-width: 1024px; margin: 0 auto; padding: 0 20px 10px; overflow-x: auto; scrollbar-width: none; }
+  .gnav-chips::-webkit-scrollbar { display: none; }
+  .gnav-chips button { flex: none; padding: 6px 13px; border-radius: 980px; background: var(--seg-bg); color: var(--text); font-size: 14px; font-weight: 500; }
+  .gnav-chips button.here { background: var(--blue); color: #fff; }
+  .gnav-chips button.open { background: var(--text); color: var(--bg); }
+  .gnav-layer { inset: 0; z-index: 60; }
+  .gnav-dim { background: rgba(0, 0, 0, .35); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .gnav-panel { top: auto; bottom: 0; max-height: 85vh; border: 0; border-radius: 22px 22px 0 0; opacity: 1; transform: translateY(100%); }
+  .gnav-in { padding: 18px 20px calc(24px + env(safe-area-inset-bottom)); }
+  .gnav-head b { font-size: 20px; font-weight: 700; color: var(--text); }
+  .gnav-x { display: block; }
+  .gnav-list { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .gnav-list a { flex-direction: column; align-items: flex-start; gap: 8px; margin: 0; padding: 14px; background: var(--card); font-size: 15px; }
+  .gnav-list .ico { width: 32px; height: 32px; }
+  .gnav-q { max-width: none; }
+  .gnav-all { display: block; text-align: center; }
+}
+
+/* 홈: 분류마다 4개만 보이고 '전체 보기'로 펼쳐요 */
+.tiles.folded .tile-more { display: none; }
+.more-btn { display: block; margin: 16px auto 0; padding: 9px 20px; border: 1px solid var(--blue); border-radius: 980px; background: transparent;
+  color: var(--blue); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.more-btn:hover { background: var(--accent-soft); }
+.group { scroll-margin-top: 72px; }
