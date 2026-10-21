@@ -1135,7 +1135,7 @@ if (document.body.classList.contains('home')) {
       a.querySelector('p').textContent = x.big ? '최근 결과 ' + x.big : '';
       sec.querySelector('.tiles').append(a);
     });
-    document.querySelector('.hero').after(sec);
+    (document.querySelector('.duo') || document.getElementById('daily') || document.querySelector('.hero')).after(sec); // 첫 화면 큰 칸들 다음에
   }
 }
 
@@ -1743,7 +1743,7 @@ function addTileIcon(t) {
   }
 
   // 홈 · 모든 계산기 맨 위 "내 즐겨찾기"
-  const anchor = document.querySelector('.popular') || (location.pathname === '/calculators/' && document.querySelector('.group'));
+  const anchor = document.querySelector('.popular') || document.querySelector('.duo') || (location.pathname === '/calculators/' && document.querySelector('.group'));
   let box = null;
   if (anchor) {
     box = document.createElement('section');
@@ -2024,8 +2024,9 @@ async function saveXlsx(name, url) {
     ${done ? `<a class="qh-done" href="/quiz/"><span>${done.ok ? '✓ 맞혔어요' : '✓ 오늘 문제를 풀었어요'}</span><span>오늘의 금전운 ${'💰'.repeat(f.coins)} ${f.level} ›</span></a>`
       : `<div class="qz-btns"><a class="qz-btn" href="/quiz/?a=o"><span class="qz-o" aria-hidden="true"></span>맞아요</a><a class="qz-btn" href="/quiz/?a=x"><span class="qz-x" aria-hidden="true"></span>아니에요</a></div>
       <p class="qh-hint">풀면 오늘의 금전운이 열리고 돈나무가 자라요 🌱</p>`}`;
-  const first = document.querySelector('.wrap > .group');
-  if (first) first.before(sec);
+  const daily = document.getElementById('daily'), first = document.querySelector('.wrap > .group');
+  if (daily) daily.append(sec); else if (first) first.before(sec);
+  if (document.querySelector('.showcase')) return; // 첫 화면 큰 칸에 돈BTI가 있으면 배너는 생략
   // 돈BTI 테스트 배너 (해 본 사람은 내 결과 캐릭터를 보여 줘요)
   let my = null;
   try { my = localStorage.getItem('donsem:money-type'); } catch (e) { my = null; }
@@ -2214,3 +2215,16 @@ function countOnce(k, v) {
   try { localStorage.setItem('donsem:counted', JSON.stringify(done)); } catch (e) { /* 저장이 막힌 브라우저 */ }
   return counter(k, v);
 }
+
+// ── 첫 화면 휴대폰: 화면에 보이면 실수령액 숫자가 올라가요 ──
+(() => {
+  const n = document.querySelector('.phone .ph-result strong');
+  if (!n || !('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const to = Number(n.dataset.to), io = new IntersectionObserver(es => {
+    if (!es[0].isIntersecting) return;
+    io.disconnect();
+    const t0 = performance.now(), step = t => { const k = Math.min(1, (t - t0) / 900), e = 1 - Math.pow(1 - k, 3); n.textContent = won(to * e); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }, { threshold: 0.6 });
+  io.observe(n);
+})();

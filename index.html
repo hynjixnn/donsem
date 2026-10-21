@@ -73,23 +73,62 @@
   </nav>
 
   <section class="hero">
-    <svg class="hero-logo" width="72" height="72" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" class="logo-bg"/><path d="M50 29H22v42h28" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M70 29L57 71M70 47l13 24" fill="none" stroke="#0a84ff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <h1>복잡한 돈 계산,<br>숫자 몇 개면 끝.</h1>
-    <p>연봉 실수령액부터 연말정산, 대출, 적금까지. 생활 속 돈 계산을 무료로 바로 해 드려요.</p>
+    <p>연봉 실수령액부터 연말정산, 대출, 적금까지.<br>생활 속 돈 계산을 무료로 바로 해 드려요.</p>
     <div class="btns">
       <a class="btn fill" href="/salary/">연봉 실수령액 계산하기</a>
-      <a class="btn line" href="/year-end-tax/">연말정산 환급 보기</a>
+      <a class="btn line" href="/calculators/">모든 계산기 보기</a>
     </div>
+    <!-- 휴대폰 안에 실제 계산 결과 (연봉 4,000만 원·비과세 20만 원·1인 기준, 연봉 실수령액 계산기와 같은 숫자 — 1월·7월 요율이 바뀌면 함께 고쳐요) -->
+    <a class="phone" href="/salary/?m_mode=year&amp;m_amt=40000000" aria-label="연봉 4,000만 원 실수령액 계산 결과 예시 보기">
+      <div class="phone-screen">
+        <div class="ph-top"><span class="ph-logo"></span>돈셈</div>
+        <div class="ph-card">
+          <b class="ph-title">연봉 실수령액 계산기</b>
+          <span class="ph-label">연봉 (세전)</span>
+          <div class="ph-field">40,000,000<small>원</small></div>
+          <div class="ph-result">
+            <span>한 달 실수령액</span>
+            <strong data-to="2935813">2,935,813원</strong>
+            <ul><li><i>국민연금</i>-148,810원</li><li><i>건강보험</i>-112,640원</li><li><i>근로소득세</i>-84,620원</li><li><i>고용보험</i>-28,190원</li></ul>
+          </div>
+          <div class="ph-insight">세전 월급의 <b>88.1%</b>를 받아요</div>
+        </div>
+      </div>
+    </a>
   </section>
 
-  <section class="group popular">
-    <h2>많이 찾는 계산기</h2>
-    <div class="tiles">
-      <a class="tile" href="/salary/"><span class="badge">인기</span><h3>연봉 실수령액</h3><p>세금과 4대보험 빼고 매달 통장에 들어오는 돈</p><span class="go">계산하기 ›</span></a>
-      <a class="tile" href="/year-end-tax/"><span class="badge season">연말 필수</span><h3>연말정산 환급</h3><p>13월의 월급, 얼마나 돌려받을지 미리 보기</p><span class="go">계산하기 ›</span></a>
-      <a class="tile" href="/unemployment/"><span class="badge">인기</span><h3>실업급여</h3><p>그만두면 얼마나, 몇 달 받는지</p><span class="go">계산하기 ›</span></a>
-      <a class="tile" href="/loan/"><span class="badge">인기</span><h3>대출 이자</h3><p>매달 갚을 돈과 총 이자</p><span class="go">계산하기 ›</span></a>
-    </div>
+  <section class="showcase" aria-label="돈셈 대표 기능">
+    <a class="sc-tile sc-dark" href="/quiz/">
+      <h2>오늘의 돈 퀴즈</h2>
+      <p>하루 한 문제 풀고, 돈나무를 키워요.</p>
+      <span class="sc-call">금전운까지 덤으로 🍀</span>
+      <div class="sc-ctas"><span class="btn fill">퀴즈 풀기</span><span class="btn line">더 알아보기</span></div>
+      <div class="sc-trees" aria-hidden="true"><img src="/icons/tree/0.webp" alt="" width="64" height="64"><img src="/icons/tree/1.webp" alt="" width="84" height="84"><img src="/icons/tree/2.webp" alt="" width="104" height="104"><img src="/icons/tree/3.webp" alt="" width="124" height="124"><img src="/icons/tree/4.webp" alt="" width="148" height="148"><img src="/icons/tree/5.webp" alt="" width="176" height="176"></div>
+    </a>
+    <a class="sc-tile" href="/money-type/">
+      <h2>돈BTI</h2>
+      <p>12문제로 알아보는 나의 돈 성격.</p>
+      <span class="sc-call">16가지 동물 중 나는?</span>
+      <div class="sc-ctas"><span class="btn fill">테스트하기</span><span class="btn line">더 알아보기</span></div>
+      <div class="sc-animals" aria-hidden="true"><img src="/icons/dbti/owl.webp" alt="" width="96" height="96"><img src="/icons/dbti/fox.webp" alt="" width="96" height="96"><img src="/icons/dbti/chipmunk.webp" alt="" width="96" height="96"><img src="/icons/dbti/hamster.webp" alt="" width="96" height="96"><img src="/icons/dbti/panda.webp" alt="" width="96" height="96"><img src="/icons/dbti/rabbit.webp" alt="" width="96" height="96"><img src="/icons/dbti/cat.webp" alt="" width="96" height="96"></div>
+    </a>
+    <a class="sc-tile sc-dark sc-rank" href="/salary-rank/">
+      <h2>연봉 상위 %</h2>
+      <p>내 연봉, 우리나라 직장인 중 몇 등일까?</p>
+      <span class="sc-call">국세청 2,108만 명 자료 기준</span>
+      <div class="sc-ctas"><span class="btn fill">계산하기</span><span class="btn line">더 알아보기</span></div>
+      <div class="sc-rankvis" aria-hidden="true"><img src="/icons/salary-rank.webp" alt="" width="128" height="128"><b>상위 30%</b><div class="sc-bar"><i></i></div><span>연봉 5,000만 원이면</span></div>
+    </a>
+  </section>
+
+  <div id="daily"></div>
+
+  <section class="duo" aria-label="돈 관리와 절세">
+    <a class="duo-tile" href="/budget/"><h3>가계부</h3><p>쓴 돈을 바로 적고, 월말엔 결산 카드까지.</p><div class="duo-ctas"><span>기록하기 ›</span></div><img src="/icons/budget.webp" alt="" width="120" height="120"></a>
+    <a class="duo-tile duo-pink" href="/no-spend/"><h3>무지출 챌린지</h3><p>돈 안 쓴 날, 도장 쾅! 🐷</p><div class="duo-ctas"><span>도전하기 ›</span></div><img src="/icons/piggy-big.webp" alt="" width="120" height="120"></a>
+    <a class="duo-tile duo-dark" href="/pension/"><h3>연금저축·IRP</h3><p>900만 원 넣으면 최대 148만 5천 원 환급.</p><div class="duo-ctas"><span>환급액 보기 ›</span></div><img src="/icons/pension.webp" alt="" width="120" height="120"></a>
+    <a class="duo-tile" href="/year-end-tax/"><h3>연말정산 환급</h3><p>13월의 월급, 얼마나 돌려받을까?</p><div class="duo-ctas"><span>미리 계산하기 ›</span></div><img src="/icons/year-end-tax.webp" alt="" width="120" height="120"></a>
   </section>
 
   <section class="group bundles">
