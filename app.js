@@ -1832,12 +1832,14 @@ async function saveXlsx(name, url) {
 (() => {
   if (!document.body.classList.contains('home') || typeof QUIZ === 'undefined') return;
   const s = quizLoad(), id = quizToday(), done = s.days[quizDate()], streak = quizStreak(s);
+  const tree = treeOf(s), f = done ? fortuneToday(s) : null;
   const sec = document.createElement('section');
   sec.className = 'quiz-home';
-  sec.innerHTML = `<div class="qh-head"><b>${iconOf('/quiz/')}오늘의 돈 퀴즈</b>${streak ? `<span class="qz-fire">🔥 ${streak}일 연속</span>` : ''}</div>
+  sec.innerHTML = `<div class="qh-head"><b>${iconOf('/quiz/')}오늘의 돈 퀴즈</b><a class="qh-tree" href="/quiz/#tree"><img src="${tree.img}" alt="" width="28" height="28">${tree.name}${streak ? ` · 🔥${streak}` : ''}</a></div>
     <p class="qz-q">${QUIZ[id][0]}</p>
-    ${done ? `<a class="qh-done" href="/quiz/">${done.ok ? '✓ 맞혔어요' : '✓ 오늘 문제를 풀었어요'} · 해설 다시 보기 ›</a>`
-      : `<div class="qz-btns"><a class="qz-btn" href="/quiz/?a=o"><span class="qz-o" aria-hidden="true"></span>맞아요</a><a class="qz-btn" href="/quiz/?a=x"><span class="qz-x" aria-hidden="true"></span>아니에요</a></div>`}`;
+    ${done ? `<a class="qh-done" href="/quiz/"><span>${done.ok ? '✓ 맞혔어요' : '✓ 오늘 문제를 풀었어요'}</span><span>오늘의 금전운 ${'💰'.repeat(f.coins)} ${f.level} ›</span></a>`
+      : `<div class="qz-btns"><a class="qz-btn" href="/quiz/?a=o"><span class="qz-o" aria-hidden="true"></span>맞아요</a><a class="qz-btn" href="/quiz/?a=x"><span class="qz-x" aria-hidden="true"></span>아니에요</a></div>
+      <p class="qh-hint">풀면 오늘의 금전운이 열리고 돈나무가 자라요 🌱</p>`}`;
   const first = document.querySelector('.wrap > .group');
   if (first) first.before(sec);
 })();

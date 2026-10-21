@@ -84,7 +84,8 @@ function quizToday(d = new Date()) {
 function quizLoad() {
   let s = null;
   try { s = JSON.parse(localStorage.getItem(QUIZ_KEY)); } catch (e) { s = null; }
-  return s && typeof s === 'object' && s.days ? { days: s.days, solved: Array.isArray(s.solved) ? s.solved : [] } : { days: {}, solved: [] };
+  if (!s || typeof s !== 'object' || !s.days) return { days: {}, solved: [], prac: {}, seed: 0 };
+  return { days: s.days, solved: Array.isArray(s.solved) ? s.solved : [], prac: s.prac && typeof s.prac === 'object' ? s.prac : {}, seed: s.seed || 0 };
 }
 function quizSave(s) { try { localStorage.setItem(QUIZ_KEY, JSON.stringify(s)); } catch (e) { /* 저장이 막힌 환경 */ } }
 // 오늘(또는 어제)까지 하루도 빠짐없이 오늘의 퀴즈를 푼 날 수
@@ -94,4 +95,60 @@ function quizStreak(s) {
   let n = 0;
   while (s.days[quizDate(d)]) { n++; d.setDate(d.getDate() - 1); }
   return n;
+}
+
+// ── 오늘의 금전운: 오늘의 문제를 풀면 열려요. 재미로 보는 거라, 사람마다·날마다 다르게 뽑기만 해요 ──
+const FORTUNE = {
+  levels: [[5, '대박', 15], [4, '좋음', 35], [3, '무난', 35], [2, '조심', 15]], // [동전 수, 이름, 나올 확률 %]
+  msgs: {
+    5: ['생각지 못한 돈이 들어올 수 있는 날이에요. 들어온 돈은 바로 쓰지 말고 통장에 먼저 넣어 두세요.',
+      '오늘 고른 선택이 나중에 이자처럼 불어나요. 미뤄 둔 적금을 시작하기 좋은 날!',
+      '지갑이 두둑해지는 기운이 있어요. 잊고 있던 포인트나 환급금을 찾아보세요.',
+      '돈 복이 활짝 열린 날. 좋은 기운은 나눌수록 커지니 고마운 사람에게 커피 한 잔 어때요?',
+      '작은 아이디어가 돈이 되는 날이에요. 떠오르는 생각은 바로 메모해 두세요.'],
+    4: ['꾸준히 모은 돈이 빛을 보는 날이에요. 오늘은 통장 잔고를 보며 뿌듯해해도 좋아요.',
+      '계획한 대로만 쓰면 돈이 남는 하루예요. 장바구니는 한 번 더 확인하고 결제하세요.',
+      '할인과 행운이 함께하는 날. 사려던 물건이 있다면 단가 비교부터 해 보세요.',
+      '주변 사람에게서 쓸모 있는 돈 정보를 듣게 될 수 있어요. 귀를 열어 두세요.',
+      '나가는 돈보다 들어오는 돈이 반가운 날이에요. 이번 달 가계부를 정리하면 기분이 좋아질 거예요.'],
+    3: ['평범하지만 안정적인 하루예요. 큰 지출만 피하면 무난하게 지나가요.',
+      '오늘은 지키는 게 버는 거예요. 충동구매 대신 위시리스트에 담아 두기!',
+      '돈이 들어오고 나가는 흐름이 균형을 이루는 날이에요. 고정지출을 한 번 점검해 보세요.',
+      '천천히 가도 괜찮은 날. 오늘 아낀 커피값이 다음 달의 여유가 돼요.',
+      '작은 돈이 모이는 날이에요. 동전 한 닢도 소중히!'],
+    2: ['지갑이 쉽게 열리는 날이에요. 결제 버튼을 누르기 전에 10초만 고민해 보세요.',
+      '"1+1"과 "오늘만 할인"을 조심하세요. 필요한 것만 사면 오히려 이득인 날이에요.',
+      '돈을 빌려 달라는 부탁은 오늘만큼은 한 번 더 생각해 보세요.',
+      '배달 앱을 열기 전에 냉장고부터 열어 보세요. 그게 오늘의 재테크예요.',
+      '새는 구독료가 있을지 몰라요. 안 쓰는 구독을 하나 정리하면 운이 바뀌어요.'],
+  },
+  items: ['텀블러', '동전 지갑', '체크카드', '장바구니', '영수증', '저금통', '다이어리', '계산기', '에코백', '노란 우산', '볼펜', '운동화', '손거울', '열쇠고리', '머그컵', '포스트잇', '손목시계', '이어폰'],
+  colors: [['골드', '#e3b341'], ['민트', '#3dd6b5'], ['라벤더', '#a78bfa'], ['코랄', '#ff7a6b'], ['스카이블루', '#4ea8ff'], ['초록', '#34c759'], ['네이비', '#2c3e7a'], ['버터옐로', '#ffd85a'], ['핑크', '#ff8fb1'], ['오렌지', '#ff9f0a']],
+  todo: [['고정지출 점검하기', '/fixed/'], ['오늘 쓴 돈 가계부에 적기', '/budget/'], ['적금 이자 계산해 보기', '/savings/'], ['목표 저축 세워 보기', '/goals/'], ['내 자산 정리하기', '/assets/'], ['장보기 전 단가 비교하기', '/unit-price/']],
+};
+function fortuneToday(s, date = quizDate()) {
+  if (!s.seed) { s.seed = (Math.random() * 2147483647) | 0 || 1; quizSave(s); } // 이 기기만의 뽑기 번호
+  let h = s.seed;
+  for (const ch of date) h = Math.imul(h ^ ch.charCodeAt(0), 2654435761) >>> 0;
+  const next = n => { h = (Math.imul(h, 1103515245) + 12345) >>> 0; return (h >>> 8) % n; };
+  let r = next(100), lv = FORTUNE.levels[0];
+  for (const L of FORTUNE.levels) { if (r < L[2]) { lv = L; break; } r -= L[2]; }
+  const msgs = FORTUNE.msgs[lv[0]];
+  return { coins: lv[0], level: lv[1], msg: msgs[next(msgs.length)], item: FORTUNE.items[next(FORTUNE.items.length)],
+    color: FORTUNE.colors[next(FORTUNE.colors.length)], num: next(99) + 1, todo: FORTUNE.todo[next(FORTUNE.todo.length)] };
+}
+
+// ── 내 돈나무: 오늘의 문제를 풀면 +1, 맞히면 +1 더, 그날 '한 문제 더'를 하나라도 맞히면 +1 ──
+const TREE = [[0, '새싹'], [3, '떡잎'], [8, '화분'], [15, '어린 나무'], [25, '큰 나무'], [40, '돈나무']];
+const TREE_FRUIT = 6; // 돈나무가 된 뒤에는 6점마다 돈 열매가 하나씩 열려요
+function treeOf(s) {
+  let pts = 0;
+  for (const d in s.days) pts += 1 + (s.days[d].ok ? 1 : 0);
+  for (const d in s.prac) if (s.prac[d] > 0) pts += 1;
+  let lv = 0;
+  TREE.forEach(([min], i) => { if (pts >= min) lv = i; });
+  const next = TREE[lv + 1], top = TREE[TREE.length - 1][0];
+  return { pts, lv, name: TREE[lv][1], img: `/icons/tree/${lv}.webp`, next: next ? next[0] - pts : 0, nextName: next ? next[1] : '',
+    pct: next ? Math.round((pts - TREE[lv][0]) / (next[0] - TREE[lv][0]) * 100) : Math.round((pts - top) % TREE_FRUIT / TREE_FRUIT * 100),
+    fruit: next ? 0 : Math.floor((pts - top) / TREE_FRUIT) };
 }
