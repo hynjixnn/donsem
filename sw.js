@@ -1,7 +1,7 @@
 // 돈셈 서비스 워커: 인터넷이 끊겨도 가계부와 계산기가 열리게, 사이트 파일을 기기에 보관해요.
 // 사이트를 고쳐서 올릴 때 VERSION을 바꾸면, 예전 보관 파일을 지우고 새로 받아요.
-const VERSION = 'donsem-2026-10-21-28';
-const CORE = ['/', '/budget/', '/assets/', '/fixed/', '/goals/', '/calculators/', '/my/', '/quiz/', '/style.css', '/app.js', '/budget.js', '/assets.js', '/fixed.js', '/goals.js', '/vt.js', '/my.js', '/quiz.js', '/quiz-data.js', '/favicon.svg', '/icon-192.png', '/manifest.webmanifest'];
+const VERSION = 'donsem-2026-10-21-29';
+const CORE = ['/', '/budget/', '/assets/', '/fixed/', '/goals/', '/calculators/', '/my/', '/quiz/', '/money-type/', '/style.css', '/app.js', '/budget.js', '/assets.js', '/fixed.js', '/goals.js', '/vt.js', '/my.js', '/quiz.js', '/quiz-data.js', '/money-type.js', '/favicon.svg', '/icon-192.png', '/manifest.webmanifest'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
