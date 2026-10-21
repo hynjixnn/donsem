@@ -1474,6 +1474,23 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   window.updateSave();
 })();
 
+// ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals'];
+const iconOf = path => { const slug = String(path).replace(/\//g, ''); return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
+function addTileIcon(t) {
+  const img = iconOf(t.getAttribute('href'));
+  if (!img || t.querySelector('.ico')) return;
+  const badge = t.querySelector('.badge');
+  t.insertAdjacentHTML('afterbegin', `<div class="tile-top">${img}</div>`);
+  if (badge) t.querySelector('.tile-top').append(badge); // 배지는 아이콘 옆에
+}
+(() => {
+  document.querySelectorAll('.tiles a.tile').forEach(addTileIcon);
+  const card = document.querySelector('.wrap > .card');
+  const img = card && iconOf(location.pathname);
+  if (img && card.querySelector('h1')) card.querySelector('h1').insertAdjacentHTML('beforebegin', img.replace('class="ico"', 'class="page-ico"').replace(/width="44" height="44" loading="lazy" /, 'width="64" height="64" '));
+})();
+
 // ── 핵심 숫자: 계산기 카드에 그 계산기의 대표 숫자를 한 줄로 보여 줘요 (숫자는 각 계산기 안내와 같아요) ──
 (() => {
   const KEY_FACTS = {
@@ -1561,7 +1578,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     const favs = list.filter(p => info[p]);
     box.hidden = !favs.length;
     box.innerHTML = favs.length ? `<h2>내 즐겨찾기</h2><div class="tiles">${favs.map(p => `<a class="tile" href="${p}"><h3>${info[p].name}</h3><p>${info[p].desc}</p><span class="go">계산하기 ›</span></a>`).join('')}</div>` : '';
-    box.querySelectorAll('a.tile').forEach(t => t.append(starBtn(t.getAttribute('href'), info[t.getAttribute('href')].name)));
+    box.querySelectorAll('a.tile').forEach(t => { addTileIcon(t); t.append(starBtn(t.getAttribute('href'), info[t.getAttribute('href')].name)); });
     box.querySelectorAll('button.fav').forEach(b => { b.classList.add('on'); b.setAttribute('aria-pressed', 'true'); b.setAttribute('aria-label', `${b.dataset.name} 즐겨찾기에서 빼기`); });
   }
   sync();
