@@ -1293,88 +1293,6 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   bar.querySelector('.tab-add').addEventListener('click', open);
 })();
 
-// ── 홈 대시보드: 가계부·고정지출·내 자산·목표 기록이 있는 사람에게 첫 화면 맨 위에서 한눈에 ──
-(() => {
-  if (!document.body.classList.contains('home')) return;
-  const read = k => { try { return JSON.parse(localStorage.getItem(k)) || null; } catch (e) { return null; } };
-  const budget = read('donsem:budget'), fixed = read('donsem:fixed'), assets = read('donsem:assets'), goals = read('donsem:goals');
-  const has = {
-    budget: !!(budget && ((budget.entries || []).length || budget.budget)),
-    fixed: !!(fixed && (fixed.items || []).length),
-    assets: !!(assets && (assets.items || []).length),
-    goals: !!(goals && (goals.goals || []).length),
-  };
-  if (!Object.values(has).some(Boolean)) return; // 처음 온 사람에게는 원래 첫 화면 그대로
-
-  const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const month = iso(today).slice(0, 7), W = '일월화수목금토';
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const bar = (ratio, over) => `<div class="bar${over ? ' over' : ''}"><i style="width:${Math.max(0, Math.min(100, ratio * 100))}%"></i></div>`;
-  const cards = [];
-
-  if (has.budget) {
-    const list = (budget.entries || []).filter(e => String(e.date).startsWith(month));
-    const out = list.filter(e => e.type === 'out').reduce((s, e) => s + Number(e.amt || 0), 0);
-    const todayOut = list.filter(e => e.type === 'out' && e.date === iso(today)).reduce((s, e) => s + Number(e.amt || 0), 0);
-    let extra = `<p class="dash-sub">오늘 쓴 돈 ${won(todayOut)}</p>`;
-    if (budget.budget) {
-      const left = budget.budget - out, daysLeft = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate() - today.getDate() + 1;
-      extra = bar(out / budget.budget, left < 0) + `<p class="dash-sub">${left < 0 ? `예산을 ${won(-left)} 넘었어요` : `예산 ${Math.round(out / budget.budget * 100)}% 사용 · 하루 ${won(left / daysLeft)}씩 쓸 수 있어요`}</p>`;
-    }
-    const st = budgetStreak(budget.entries);
-    if (st.current) extra += `<p class="dash-sub streak-line">🔥 ${st.current}일 연속 기록 중${st.recordedToday ? '' : ' · 오늘도 기록해 주세요'}</p>`;
-    cards.push(`<a class="dash-card" href="/budget/"><span class="dash-label">이번 달 지출</span><b class="dash-big">${won(out)}</b>${extra}</a>`);
-  }
-
-  if (has.fixed) {
-    const dayIn = (y, m, d) => new Date(y, m, Math.min(d, new Date(y, m + 1, 0).getDate()));
-    const next = x => {
-      if (x.cycle === 'year') { let d = dayIn(today.getFullYear(), x.month - 1, x.day); if (d < today) d = dayIn(today.getFullYear() + 1, x.month - 1, x.day); return d; }
-      let d = dayIn(today.getFullYear(), today.getMonth(), x.day); if (d < today) d = dayIn(today.getFullYear(), today.getMonth() + 1, x.day); return d;
-    };
-    const up = fixed.items.map(x => ({ x, d: next(x) })).sort((a, b) => a.d - b.d)[0];
-    const n = Math.round((up.d - today) / 86400000);
-    const leftThisMonth = fixed.items.filter(x => x.cycle !== 'year' || x.month - 1 === today.getMonth())
-      .filter(x => dayIn(today.getFullYear(), today.getMonth(), x.day) >= today).reduce((s, x) => s + x.amt, 0);
-    cards.push(`<a class="dash-card" href="/fixed/"><span class="dash-label">다음 결제</span><b class="dash-big"><span class="dday${n <= 3 ? ' soon' : ''}">${n === 0 ? '오늘' : 'D-' + n}</span> ${esc(up.x.name)}</b>
-      <p class="dash-sub">${up.d.getMonth() + 1}월 ${up.d.getDate()}일 (${W[up.d.getDay()]}) · ${won(up.x.amt)}</p><p class="dash-sub">이번 달 남은 고정지출 ${won(leftThisMonth)}</p></a>`);
-  }
-
-  if (has.assets) {
-    const a = assets.items.filter(x => x.kind === 'asset').reduce((s, x) => s + x.amt, 0), d = assets.items.filter(x => x.kind === 'debt').reduce((s, x) => s + x.amt, 0);
-    const prevKey = Object.keys(assets.history || {}).filter(m => m < month).sort().pop();
-    let sub = '<p class="dash-sub">매달 잔액을 고치면 변화가 쌓여요</p>';
-    if (prevKey) { const p = assets.history[prevKey], diff = (a - d) - (p.a - p.d); sub = `<p class="dash-sub ${diff >= 0 ? 'up' : 'down'}">${Number(prevKey.slice(5))}월보다 ${diff >= 0 ? '▲' : '▼'} ${won(Math.abs(diff))}</p>`; }
-    cards.push(`<a class="dash-card" href="/assets/"><span class="dash-label">순자산</span><b class="dash-big${a - d < 0 ? ' minus' : ''}">${a - d < 0 ? '-' : ''}${won(Math.abs(a - d))}</b>${sub}</a>`);
-  }
-
-  if (has.goals) {
-    const assetAmt = id => { const it = assets && (assets.items || []).find(x => x.id === id); return it ? it.amt : 0; };
-    const rows = goals.goals.slice(0, 2).map(g => {
-      const saved = g.mode === 'assets' ? (g.assetIds || []).reduce((s, id) => s + assetAmt(id), 0) : (g.saved || 0), r = saved / g.target;
-      return `<div class="dash-goal"><div class="cat-top"><span>${esc(g.name)}</span><span>${Math.min(100, Math.floor(r * 100))}%</span></div>${bar(r)}</div>`;
-    }).join('');
-    cards.push(`<a class="dash-card" href="/goals/"><span class="dash-label">목표${goals.goals.length > 2 ? ` · ${goals.goals.length}개 중 2개` : ''}</span>${rows}</a>`);
-  }
-
-  const missing = [['budget', '/budget/', '가계부'], ['fixed', '/fixed/', '고정지출'], ['assets', '/assets/', '내 자산'], ['goals', '/goals/', '목표 저축']].filter(([k]) => !has[k]);
-  const sec = document.createElement('section');
-  sec.className = 'dash';
-  sec.innerHTML = `<div class="dash-head"><div><span class="dash-date">${today.getMonth() + 1}월 ${today.getDate()}일 (${W[today.getDay()]})</span><h1>오늘도 돈셈 해요</h1></div>
-      <button type="button" class="btn fill dash-add">＋ 기록하기</button></div>
-    <div class="dash-grid">${cards.join('')}</div>
-    ${missing.length ? `<p class="dash-more">이것도 써 보세요 · ${missing.map(([, h, t]) => `<a href="${h}">${t}</a>`).join(' · ')}</p>` : ''}`;
-  const hero = document.querySelector('.hero');
-  hero.before(sec);
-  document.body.classList.add('has-dash');
-  sec.querySelector('.dash-add').addEventListener('click', () => {
-    const add = document.querySelector('.tabbar .tab-add');
-    if (add && getComputedStyle(document.querySelector('.tabbar')).display !== 'none') add.click(); // 휴대폰: 아래에서 기록 창
-    else location.href = '/budget/'; // 컴퓨터: 가계부로
-  });
-})();
-
 // ── 다음에 많이 보는 계산: 결과 아래에 이어서 볼 계산기를, 지금 넣은 숫자를 채운 채로 추천해요 ──
 (() => {
   const res = document.querySelector('.card .result');
@@ -2015,6 +1933,7 @@ async function saveXlsx(name, url) {
 // ── 첫 화면: 오늘의 돈 퀴즈 카드 (O/X를 누르면 퀴즈 페이지에서 바로 정답을 보여 줘요) ──
 (() => {
   if (!document.body.classList.contains('home') || typeof QUIZ === 'undefined') return;
+  if (document.getElementById('daily')) return; // 새 첫 화면은 '오늘의 돈셈' 카드 안에서 퀴즈를 바로 풀어요
   const s = quizLoad(), id = quizTodayFor(s), done = s.days[quizDate()], streak = quizStreak(s);
   const tree = treeOf(s), f = done ? fortuneToday(s) : null;
   const sec = document.createElement('section');
@@ -2159,9 +2078,8 @@ function markDailyFull() {
     ['/compound/', '복리 계산기'], ['/unit-price/', '단가 비교 계산기'], ['/severance/', '퇴직금 계산기'], ['/year-end-tax/', '연말정산 환급 계산기'], ['/inflation/', '물가상승률 계산기']];
   const sec = document.createElement('section');
   sec.className = 'today-card';
-  const quizCard = document.querySelector('.quiz-home') || document.querySelector('.wrap > .group');
-  if (!quizCard) return;
-  quizCard.before(sec);
+  const host = document.getElementById('daily'), quizCard = document.querySelector('.quiz-home') || document.querySelector('.wrap > .group');
+  if (host) host.append(sec); else if (quizCard) quizCard.before(sec); else return;
   const openAdd = () => {
     const add = document.querySelector('.tabbar .tab-add');
     if (add && getComputedStyle(document.querySelector('.tabbar')).display !== 'none') add.click(); // 휴대폰: 아래에서 기록 창
@@ -2174,7 +2092,8 @@ function markDailyFull() {
     sec.innerHTML = `<div class="tc-head"><div><b>오늘의 돈셈</b><span>${n === 3 ? '오늘 할 일을 다 했어요! 🎉' : '3개를 다 하면 돈나무에 물 💧 하나 더'}</span></div>
         <a class="tc-tree" href="/quiz/#tree" aria-label="내 돈나무 보기"><img src="${tree.img}" alt="" width="40" height="40"><em>${n} / 3</em></a></div>
       <div class="bar"><i style="width:${n / 3 * 100}%"></i></div>
-      ${row(st.quiz, '돈 퀴즈 풀기', st.quiz ? `오늘의 금전운 ${'💰'.repeat(f.coins)} ${f.level}` : '풀면 오늘의 금전운이 열려요', `<a class="tc-go" href="/quiz/">${st.quiz ? '보기' : '풀기'} ›</a>`)}
+      ${row(st.quiz, '돈 퀴즈 풀기', st.quiz ? `오늘의 금전운 ${'💰'.repeat(f.coins)} ${f.level}` : '풀면 오늘의 금전운이 열려요', st.quiz ? '<a class="tc-go" href="/quiz/">보기 ›</a>' : '')}
+      ${st.quiz ? '' : `<div class="tc-quiz"><p>${QUIZ[quizTodayFor(quizLoad())][0]}</p><div class="qz-btns"><a class="qz-btn" href="/quiz/?a=o"><span class="qz-o" aria-hidden="true"></span>맞아요</a><a class="qz-btn" href="/quiz/?a=x"><span class="qz-x" aria-hidden="true"></span>아니에요</a></div></div>`}
       ${row(st.money, '오늘 쓴 돈 정리', st.stamped ? '무지출 도장 쾅! 🐷' : st.money ? '가계부에 기록했어요' : '썼으면 기록, 안 썼으면 무지출 도장', st.money ? `<a class="tc-go" href="${st.stamped ? '/no-spend/' : '/budget/'}">보기 ›</a>` : `<div class="tc-btns"><button type="button" class="tc-add">기록</button><button type="button" class="tc-ns">안 썼어요 🐷</button></div>`)}
       ${row(st.calc, '계산기로 하나 따져 보기', st.calc ? '오늘 계산 완료' : `오늘의 추천: ${pick[1]}`, `<a class="tc-go" href="${pick[0]}">${st.calc ? '더 보기' : '해 보기'} ›</a>`)}`;
     sec.querySelector('.tc-add')?.addEventListener('click', openAdd);
@@ -2227,4 +2146,33 @@ function countOnce(k, v) {
     requestAnimationFrame(step);
   }, { threshold: 0.6 });
   io.observe(n);
+})();
+
+// ── 첫 화면: 계산기 분류 5칸을 탭 하나로 (누른 분류만 보여 줘요, 고른 분류는 기억해요) ──
+(() => {
+  if (!document.body.classList.contains('home')) return;
+  const groups = [...document.querySelectorAll('.wrap > section.group')].filter(g => !g.matches('.recent, .bundles, .fav-group, .popular') && g.querySelector('h2'));
+  if (groups.length < 2) return;
+  const KEY = 'donsem:home-tab', names = groups.map(g => g.querySelector('h2').textContent.trim());
+  let pick = 1; // 기본: 두 번째 분류(저축·투자). 돈 관리는 위쪽 큰 카드에도 있어서요
+  try { const v = localStorage.getItem(KEY); if (names.includes(v)) pick = names.indexOf(v); } catch (e) { /* 기억 못 해도 괜찮아요 */ }
+  const box = document.createElement('section');
+  box.className = 'cat-tabs';
+  box.innerHTML = `<div class="ct-head"><h2>계산기 둘러보기</h2><a href="/calculators/">전체 보기 ›</a></div>
+    <div class="ct-chips" role="tablist" aria-label="계산기 분류">${names.map((n, i) => `<button type="button" role="tab" data-i="${i}">${n.replace(/\s*·\s*/g, '·')}</button>`).join('')}</div>`;
+  groups[0].before(box);
+  groups.forEach(g => g.classList.add('tabbed'));
+  const show = i => {
+    pick = i;
+    groups.forEach((g, k) => { g.hidden = k !== i; });
+    box.querySelectorAll('[data-i]').forEach(b => { const on = +b.dataset.i === i; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
+  };
+  box.querySelector('.ct-chips').addEventListener('click', e => {
+    const b = e.target.closest('[data-i]');
+    if (!b) return;
+    show(+b.dataset.i);
+    b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    try { localStorage.setItem(KEY, names[pick]); } catch (err) { /* 저장이 막힌 브라우저 */ }
+  });
+  show(pick);
 })();
