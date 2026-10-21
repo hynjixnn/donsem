@@ -1474,6 +1474,33 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   window.updateSave();
 })();
 
+// ── 핵심 숫자: 계산기 카드에 그 계산기의 대표 숫자를 한 줄로 보여 줘요 (숫자는 각 계산기 안내와 같아요) ──
+(() => {
+  const KEY_FACTS = {
+    '/salary/': '연봉 4천이면 월 <b>약 294만 원</b>',
+    '/year-end-tax/': '연금저축 넣으면 <b>최대 16.5%</b> 환급',
+    '/unemployment/': '하루 최대 <b>68,100원</b>',
+    '/loan/': '1억 · 연 4% · 30년이면 월 <b>약 47.7만 원</b>',
+    '/wage/': '2026 최저시급 <b>10,320원</b>',
+    '/holiday-pay/': '주 <b>15시간</b> 이상이면 받아요',
+    '/severance/': '1년 일하면 <b>약 한 달 치</b> 월급',
+    '/savings/': '월 50만 · 연 3.5% · 1년이면 세후 <b>약 9.6만 원</b>',
+    '/deposit/': '1천만 원 · 연 3% · 1년이면 세후 <b>약 25.4만 원</b>',
+    '/compound/': '연 7%면 <b>약 10년</b>에 2배',
+    '/goal/': '1억 · 5년 · 연 3.5%면 월 <b>약 152만 원</b>',
+    '/inflation/': '물가 2%면 10년 뒤 100만 원은 <b>약 82만 원</b> 가치',
+    '/prepayment/': '대출받고 <b>3년</b> 지나면 수수료 0원',
+    '/pyeong/': '1평은 <b>3.3058㎡</b>',
+    '/vat/': '부가세는 <b>10%</b>',
+    '/discount/': '20% 할인에 10% 쿠폰이면 <b>28%</b> 할인',
+    '/dividend/': '배당소득세 <b>15.4%</b>를 떼고 받아요',
+  };
+  document.querySelectorAll('.tiles a.tile').forEach(t => {
+    const fact = KEY_FACTS[t.getAttribute('href')], p = t.querySelector('p');
+    if (fact && p) p.insertAdjacentHTML('afterend', `<span class="key">${fact}</span>`);
+  });
+})();
+
 // ── 즐겨찾기: 계산기 카드와 계산기 화면의 ☆를 누르면, 홈과 '모든 계산기' 맨 위에 모아 보여 줘요 ──
 (() => {
   const KEY = 'donsem:favs';
@@ -1538,4 +1565,31 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     box.querySelectorAll('button.fav').forEach(b => { b.classList.add('on'); b.setAttribute('aria-pressed', 'true'); b.setAttribute('aria-label', `${b.dataset.name} 즐겨찾기에서 빼기`); });
   }
   sync();
+})();
+
+// ── 모든 계산기: 분류 버튼 (전체 · 즐겨찾기 · 저축·투자 …) ──
+(() => {
+  const list = document.getElementById('calc-list'), q = document.getElementById('calc-q');
+  if (!list || !q) return;
+  const groups = [...document.querySelectorAll('.group')], fav = document.querySelector('.fav-group');
+  const bar = document.createElement('div');
+  bar.className = 'cat-chips'; bar.setAttribute('role', 'tablist'); bar.setAttribute('aria-label', '계산기 분류');
+  const chips = [['all', '전체'], ['fav', '즐겨찾기'], ...groups.map((g, i) => [String(i), g.querySelector('h2').textContent.replace(/\s*·\s*/g, '·')])];
+  bar.innerHTML = chips.map(([v, t], i) => `<button type="button" role="tab" data-v="${v}" class="${i ? '' : 'on'}" aria-selected="${!i}">${t}</button>`).join('');
+  q.closest('.field').after(bar);
+  const pick = v => bar.querySelectorAll('button').forEach(b => { const on = b.dataset.v === v; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
+  bar.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const v = b.dataset.v;
+    if (q.value) { q.value = ''; q.dispatchEvent(new Event('input', { bubbles: true })); } // 검색어는 지우고 분류로 봐요
+    pick(v);
+    b.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    const hasFav = fav && fav.querySelector('.tile');
+    groups.forEach((g, i) => { g.hidden = !(v === 'all' || v === String(i)); });
+    if (fav) fav.hidden = !hasFav || !(v === 'all' || v === 'fav');
+    document.getElementById('calc-none').hidden = !(v === 'fav' && !hasFav);
+    if (v === 'fav' && !hasFav) document.getElementById('calc-none').textContent = '아직 즐겨찾기가 없어요. 계산기 카드의 ☆를 눌러 보세요.';
+  });
+  q.addEventListener('input', () => { pick('all'); document.getElementById('calc-none').textContent = '찾는 계산기가 없어요. 다른 말로 검색해 보세요.'; });
 })();

@@ -540,3 +540,16 @@ html { -webkit-tap-highlight-color: transparent; }
   .bundle h3 { font-size: 16px; margin: 8px 0 4px; }
   .bundle a { font-size: 13px; padding: 9px 0; }
 }
+
+/* 계산기 카드의 핵심 숫자 */
+.tile .key { display: block; font-size: 14px; color: var(--muted); margin: -8px 0 16px; }
+.tile .key b { color: var(--accent); font-weight: 700; white-space: nowrap; }
+.tile.feature .key, .tile.feature .key b { color: #fff; }
+@media (max-width: 640px) { .tile .key { font-size: 12px; margin: 8px 0 0; line-height: 1.4; } }
+
+/* 모든 계산기 분류 버튼 */
+.cat-chips { display: flex; gap: 8px; margin-top: 14px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.cat-chips::-webkit-scrollbar { display: none; }
+.cat-chips button { flex: none; border: 0; border-radius: 980px; background: var(--field); color: var(--text); font: inherit; font-size: 15px; font-weight: 500; padding: 9px 16px; cursor: pointer; }
+.cat-chips button:hover { background: var(--accent-soft); }
+.cat-chips button.on { background: var(--blue); color: #fff; }
