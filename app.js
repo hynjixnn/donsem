@@ -2101,10 +2101,13 @@ function markDailyFull() {
   function draw() {
     const st = dailyStatus(), pick = PICKS[quizToday() % PICKS.length], n = [st.quiz, st.money, st.calc].filter(Boolean).length;
     const tree = treeOf(quizLoad()), f = st.quiz ? fortuneToday(quizLoad()) : null;
-    const row = (done, title, sub, right) => `<div class="tc-row${done ? ' done' : ''}"><span class="tc-check" aria-hidden="true">${done ? '✓' : ''}</span><div class="tc-text"><b>${title}</b><span>${sub}</span></div>${right}</div>`;
-    sec.innerHTML = `<div class="tc-head"><div><b>오늘의 돈셈</b><span>${n === 3 ? '오늘 할 일을 다 했어요! 🎉' : '3개를 다 하면 돈나무에 물 💧 하나 더'}</span></div>
+    let k = 0;
+    const row = (done, title, sub, right) => `<div class="tc-row r${k++}${done ? ' done' : ''}"><span class="tc-check" aria-hidden="true">${done ? '✓' : ''}</span><div class="tc-text"><b>${title}</b><span>${sub}</span></div>${right}</div>`;
+    // 애플워치 링처럼: 바깥 = 퀴즈, 가운데 = 돈 정리, 안쪽 = 계산기
+    const rings = [[st.quiz, 28], [st.money, 19.5], [st.calc, 11]].map(([, r], i) => `<circle class="rg-track rg${i}" cx="32" cy="32" r="${r}"/><circle class="rg-fill rg${i}" cx="32" cy="32" r="${r}" pathLength="100"/>`).join('');
+    sec.innerHTML = `<div class="tc-head"><div class="tc-rings" role="img" aria-label="오늘의 돈셈 ${n}개 중 3개 완료"><svg viewBox="0 0 64 64">${rings}</svg><i class="tc-spark" aria-hidden="true"></i></div>
+        <div class="tc-title"><b>오늘의 돈셈</b><span>${n === 3 ? '링을 다 닫았어요! 🎉' : '링 3개를 채우면 물 💧 하나 더'}</span></div>
         <a class="tc-tree" href="/quiz/#tree" aria-label="내 돈나무 보기"><img src="${tree.img}" alt="" width="40" height="40"><em>${n} / 3</em></a></div>
-      <div class="bar"><i style="width:${n / 3 * 100}%"></i></div>
       ${row(st.quiz, '돈 퀴즈 풀기', st.quiz ? `오늘의 금전운 ${'💰'.repeat(f.coins)} ${f.level}` : '풀면 오늘의 금전운이 열려요', st.quiz ? '<a class="tc-go" href="/quiz/">보기 ›</a>' : '')}
       ${st.quiz ? '' : `<div class="tc-quiz"><p>${QUIZ[quizTodayFor(quizLoad())][0]}</p><div class="qz-btns"><a class="qz-btn" href="/quiz/?a=o"><span class="qz-o" aria-hidden="true"></span>맞아요</a><a class="qz-btn" href="/quiz/?a=x"><span class="qz-x" aria-hidden="true"></span>아니에요</a></div></div>`}
       ${row(st.money, '오늘 쓴 돈 정리', st.stamped ? '무지출 도장 쾅! 🐷' : st.money ? '가계부에 기록했어요' : '썼으면 기록, 안 썼으면 무지출 도장', st.money ? `<a class="tc-go" href="${st.stamped ? '/no-spend/' : '/budget/'}">보기 ›</a>` : `<div class="tc-btns"><button type="button" class="tc-add">기록</button><button type="button" class="tc-ns">안 썼어요 🐷</button></div>`)}
@@ -2121,7 +2124,20 @@ function markDailyFull() {
       markDailyFull();
       draw();
     });
+    // 링 채우기: 방금 그린 링은 지난번 상태에서 시작해서, 지금 상태까지 스르륵 채워져요
+    const now = [st.quiz, st.money, st.calc], before = drawn || [false, false, false], fills = sec.querySelectorAll('.rg-fill');
+    fills.forEach((c, i) => { c.style.strokeDashoffset = before[i] ? 0 : 100; c.style.opacity = before[i] || now[i] ? 1 : 0; }); // 빈 링은 둥근 끝이 점처럼 보여서 숨겨요
+    setTimeout(() => fills.forEach((c, i) => { c.style.strokeDashoffset = now[i] ? 0 : 100; }), 60);
+    const closedNow = n === 3 && (!drawn || drawn.some(x => !x));
+    drawn = now;
+    let seen = '';
+    try { seen = localStorage.getItem('donsem:rings-closed'); } catch (e) { seen = ''; }
+    if (closedNow && seen !== st.today) { // 링이 다 닫힌 순간(하루 한 번): 링이 통 튀고 반짝여요
+      try { localStorage.setItem('donsem:rings-closed', st.today); } catch (e) { /* 저장이 막힌 브라우저 */ }
+      setTimeout(() => sec.querySelector('.tc-rings')?.classList.add('closing'), 1100);
+    }
   }
+  let drawn = null;
   window.drawToday = draw; // ＋기록 창에서 저장하면 다시 그려요
   draw();
   if (markDailyFull()) draw();
