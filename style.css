@@ -1261,14 +1261,16 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
 .mm-tabs.has-pill a { position: relative; z-index: 1; transition: color .3s; }
 .mm-tabs.has-pill a.on, .mm-tabs.has-pill a.on:hover { background: transparent; }
 @media (prefers-reduced-motion: no-preference) {
-  /* 탭 줄은 그대로 두고 그 안의 파란 알약만 미끄러져요 (예전 탭 줄이 겹쳐 보여 알약이 두 개로 보이지 않게) */
-  ::view-transition-old(mm-tabs) { display: none; }
+  /* 누른 순간: 지금 내용이 누른 반대쪽으로 살짝 밀리며 사라져요 (탭 줄은 그대로) */
+  .mm-leaving .wrap > :not(.mm-tabs) { transition: opacity .16s ease-out, transform .2s cubic-bezier(.4, 0, 1, 1); opacity: 0; }
+  .mm-leaving.mm-go-next .wrap > :not(.mm-tabs) { transform: translateX(-14px); }
+  .mm-leaving.mm-go-prev .wrap > :not(.mm-tabs) { transform: translateX(14px); }
+  /* 새 화면: 누른 쪽에서 살짝 밀려 들어와요 */
+  .mm-in-next .wrap > :not(.mm-tabs) { animation: mm-in-right .42s cubic-bezier(.22, 1, .36, 1) both; }
+  .mm-in-prev .wrap > :not(.mm-tabs) { animation: mm-in-left .42s cubic-bezier(.22, 1, .36, 1) both; }
+  ::view-transition-old(mm-tabs) { display: none; } /* 뒤로 가기 등 브라우저 전환 때도 알약이 두 개로 겹쳐 보이지 않게 */
   ::view-transition-new(mm-tabs), ::view-transition-group(mm-tabs) { animation: none; }
-  /* 내용: 예전 화면은 금방 사라지고, 새 화면이 누른 쪽에서 살짝 밀려 들어와요 */
-  html:active-view-transition-type(tab-next)::view-transition-old(root), html:active-view-transition-type(tab-prev)::view-transition-old(root) { animation: vt-fade-out .16s ease-out both; }
-  html:active-view-transition-type(tab-next)::view-transition-new(root) { animation: vt-tab-in-right .4s cubic-bezier(.22, 1, .36, 1) both; }
-  html:active-view-transition-type(tab-prev)::view-transition-new(root) { animation: vt-tab-in-left .4s cubic-bezier(.22, 1, .36, 1) both; }
 }
 @media (prefers-reduced-motion: reduce) { .mm-pill { transition: none; } }
-@keyframes vt-tab-in-right { from { transform: translateX(22px); opacity: 0; } }
-@keyframes vt-tab-in-left { from { transform: translateX(-22px); opacity: 0; } }
+@keyframes mm-in-right { from { opacity: 0; transform: translateX(22px); } }
+@keyframes mm-in-left { from { opacity: 0; transform: translateX(-22px); } }

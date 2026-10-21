@@ -2393,13 +2393,25 @@ document.addEventListener('click', e => {
   const start = links[from] && links[from] !== on ? links[from] : on;
   pill.style.transition = 'none'; place(start); pill.offsetWidth; pill.style.transition = '';
   if (start !== on) setTimeout(() => place(on), 30); // 지난 탭 자리에서 출발
+  const root = document.documentElement, calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let leaving = 0;
   tabs.addEventListener('click', e => {
     const a = e.target.closest('a');
-    if (!a || a === on) return;
+    if (!a || a === on || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
     try { sessionStorage.setItem(KEY, String(links.indexOf(on))); } catch (err) { /* 기억 못 해도 괜찮아요 */ }
-    place(a); // 누른 쪽으로 먼저 움직이기 시작해요
+    if (calm) return; // 움직임 줄이기를 켠 사람은 바로 넘어가요
+    e.preventDefault();
+    root.classList.remove('mm-in-next', 'mm-in-prev');
+    root.classList.add('mm-leaving', links.indexOf(a) > links.indexOf(on) ? 'mm-go-next' : 'mm-go-prev');
+    clearTimeout(leaving);
+    leaving = setTimeout(() => { location.href = a.href; }, 170); // 지금 화면이 살짝 사라진 뒤 넘어가요 (알약은 새 화면에서 지난 자리부터 미끄러져요)
   });
   window.addEventListener('resize', () => place(on));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => place(on));
-  window.addEventListener('pageshow', e => { if (e.persisted) { pill.style.transition = 'none'; place(on); pill.offsetWidth; pill.style.transition = ''; } }); // 뒤로 가기로 돌아오면 제자리
+  window.addEventListener('pageshow', e => { // 뒤로 가기로 돌아오면 사라졌던 내용과 알약을 제자리로
+    if (!e.persisted) return;
+    clearTimeout(leaving);
+    root.classList.remove('mm-leaving', 'mm-go-next', 'mm-go-prev', 'mm-in-next', 'mm-in-prev');
+    pill.style.transition = 'none'; place(on); pill.offsetWidth; pill.style.transition = '';
+  });
 })();
