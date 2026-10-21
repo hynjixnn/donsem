@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>연봉 실수령액 계산기 2026 - 연봉·월급 세후 실수령액 표</title>
+<meta name="description" content="2026년 연봉 실수령액 계산기. 연봉이나 월급을 넣으면 국민연금, 건강보험, 고용보험, 소득세를 뺀 한 달 실수령액을 국세청 간이세액표 그대로 계산해요.">
+<link rel="canonical" href="https://doncalculator.com/salary/">
+<meta property="og:title" content="연봉 실수령액 계산기 2026 - 연봉·월급 세후 실수령액 표">
+<meta property="og:description" content="2026년 연봉 실수령액 계산기. 연봉이나 월급을 넣으면 국민연금, 건강보험, 고용보험, 소득세를 뺀 한 달 실수령액을 국세청 간이세액표 그대로 계산해요.">
+<meta property="og:url" content="https://doncalculator.com/salary/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="돈셈">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="/style.css">
+<script src="/vt.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" class="logo-bg"/><path d="M50 29H22v42h28" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M70 29L57 71M70 47l13 24" fill="none" stroke="#0a84ff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>돈셈</a>
+    <div class="top-right"><div class="top-links"><a class="all" href="/budget/">가계부</a><a class="all" href="/assets/">내 자산</a><a class="all" href="/calculators/">모든 계산기</a></div><button type="button" class="theme-btn" aria-label="화면 모드 바꾸기 (지금: 라이트)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/salary/">연봉 실수령액</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+    <a href="/unit-price/">단가 비교</a>
+    <a href="/fuel/">유류비</a>
+    <a href="/dutch-pay/">더치페이</a>
+    <a href="/date/">날짜</a>
+  </nav>
+
+  <section class="card" id="salary">
+    <h1>연봉 실수령액 계산기</h1>
+    <p class="sub">연봉이나 월급에서 4대보험과 세금을 빼고, 매달 통장에 들어오는 돈을 계산해요.</p>
+    <p class="trust">2026년 기준 · 2026.10.21 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
+    <label>내가 아는 금액</label>
+    <div class="seg" data-k="m_mode"><button data-v="year" class="on">연봉</button><button data-v="month">월급</button></div>
+    <label>금액 (세전)</label>
+    <div class="field"><input data-k="m_amt" inputmode="numeric" value="40,000,000"><span>원</span></div>
+    <label>비과세액 (식대 등, 한 달)</label>
+    <div class="field"><input data-k="m_free" inputmode="numeric" value="200,000"><span>원</span></div>
+    <label>부양가족 수 (나 포함)</label>
+    <div class="field"><input data-k="m_fam" inputmode="numeric" value="1"><span>명</span></div>
+    <label>8~20세 자녀 수</label>
+    <div class="field"><input data-k="m_kids" inputmode="numeric" value="0"><span>명</span></div>
+    <label>연봉에 퇴직금이 들어 있나요?</label>
+    <div class="seg" data-k="m_sev"><button data-v="out" class="on">따로 받아요</button><button data-v="in">포함이에요</button></div>
+    <div class="result" id="m_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>연봉 4,000만 원이면 실수령액은 얼마인가요?</h3>
+    <p>혼자 사는 직장인(부양가족 1명)이 식대 20만 원을 비과세로 받으면, 한 달 실수령액은 약 294만 원이에요. 세전 월급 333만 원에서 4대보험 약 30만 원, 소득세와 지방소득세 약 9만 원이 빠져요. 부양가족이 많을수록 세금이 줄어서 실수령액이 조금 늘어요.</p>
+    <h3>월급에서 빠지는 돈은 뭐가 있나요?</h3>
+    <p>국민연금 4.75%, 건강보험 3.595%, 장기요양보험(건강보험료의 약 13.1%), 고용보험 0.9%가 빠져요. 여기에 국세청 간이세액표에 따른 근로소득세와, 그 10%인 지방소득세가 더 빠져요. 회사도 같은 만큼(고용보험은 조금 더) 보험료를 따로 내요.</p>
+    <h3>매달 떼는 세금이 진짜 내 세금인가요?</h3>
+    <p>아니에요. 매달 떼는 소득세는 미리 내는 돈이고, 다음 해 2월 연말정산에서 실제 세금과 비교해 더 냈으면 돌려받고 덜 냈으면 더 내요. 카드 사용액, 의료비, 월세처럼 공제받을 게 많으면 돌려받을 가능성이 커요.</p>
+    <h3>함께 쓰면 좋은 계산기</h3>
+    <p>시급으로 치면 얼마인지는 <a href="/wage/">시급·월급·연봉 계산기</a>로, 그만둘 때 받을 돈은 <a href="/severance/">퇴직금 계산기</a>로 확인해 보세요. 실수령액 중 얼마를 모을지 정했다면 <a href="/goal/">목표 저축 계산기</a>도 좋아요.</p>
+    <h3 id="basis">계산 근거</h3>
+    <ul class="basis">
+      <li>국민연금 4.75% (2026년 보험료율 9.5%의 절반), 기준소득월액 하한 41만 원·상한 659만 원 (2026.7 ~ 2027.6)</li>
+      <li>건강보험 3.595% (보험료율 7.19%의 절반), 장기요양보험 = 건강보험료 × 0.9448% ÷ 7.19%</li>
+      <li>고용보험 근로자 부담 0.9%</li>
+      <li>근로소득세: 소득세법 시행령 [별표 2] 근로소득 간이세액표 (2026. 2. 27. 개정, 3월 지급분부터), 8~20세 자녀 공제 반영, 지방소득세는 소득세의 10%</li>
+      <li>비과세액을 뺀 월급에 보험료와 세금을 매기고, 10원 미만은 버려요</li>
+    </ul>
+    <p class="basis-note">2026.10.21에 마지막으로 확인했어요. 건강보험 보험료 상한, 회사별 정산, 간이세액 80%·120% 선택은 반영하지 않았어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
+  </article>
+
+  <footer>
+    계산 결과는 매달 같은 월급을 받는다고 가정한 참고용이에요. 실제 급여명세서는 수당, 상여금, 회사의 보험료 정산에 따라 조금 다를 수 있어요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/salary/table.js"></script>
+<script src="/app.js"></script>
+<!-- Cloudflare Web Analytics: 쿠키 없이 방문 수만 세요 --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4ddea5349bb94a689667508931ca47d8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
