@@ -2211,3 +2211,67 @@ function countOnce(k, v) {
   // 검색할 때는 장을 풀어서 찾은 계산기를 한곳에 모아 보여 줘요
   if (q) q.addEventListener('input', () => document.body.classList.toggle('calc-searching', !!q.value.trim()));
 })();
+
+// ── 아이폰 같은 손맛 ②: 아래에서 올라온 창(＋기록, 휴대폰 메뉴)을 손가락으로 끌어내리면 닫혀요 ──
+(() => {
+  let panel = null, startY = 0, dy = 0, t0 = 0;
+  const closeBtn = p => p.querySelector('.qa-x, .gnav-x');
+  document.addEventListener('touchstart', e => {
+    const p = e.target.closest('.qa-panel, .gnav-panel');
+    if (!p || !matchMedia('(max-width: 640px)').matches || p.scrollTop > 0 || e.target.closest('input, textarea, select, .qa-cats, .chips')) return;
+    panel = p; startY = e.touches[0].clientY; dy = 0; t0 = performance.now();
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!panel) return;
+    dy = Math.max(0, e.touches[0].clientY - startY);
+    if (panel.scrollTop > 0) { dy = 0; return; }
+    panel.style.transition = 'none';
+    panel.style.transform = `translateY(${dy}px)`;
+  }, { passive: true });
+  document.addEventListener('touchend', () => {
+    if (!panel) return;
+    const p = panel, fast = dy / Math.max(1, performance.now() - t0) > 0.6; // 빠르게 튕기듯 내려도 닫혀요
+    panel = null;
+    p.style.transition = '';
+    if (dy > 110 || (fast && dy > 40)) {
+      p.style.transform = 'translateY(100%)';
+      setTimeout(() => { const b = closeBtn(p); if (b) b.click(); p.style.transform = ''; }, 240);
+    } else p.style.transform = '';
+  });
+})();
+
+// ── 아이폰 같은 손맛 ④: 선택 버튼(연봉/월급 같은)의 파란 배경이 옆으로 미끄러져 움직여요 ──
+(() => {
+  const place = seg => {
+    const pill = seg.querySelector(':scope > .seg-pill'), on = seg.querySelector(':scope > button.on');
+    if (!pill) return;
+    if (!on || !on.offsetWidth) { pill.style.opacity = '0'; return; }
+    pill.style.opacity = '1';
+    pill.style.width = on.offsetWidth + 'px'; pill.style.height = on.offsetHeight + 'px';
+    pill.style.transform = `translate(${on.offsetLeft}px, ${on.offsetTop}px)`;
+  };
+  const setup = seg => {
+    if (seg.dataset.pill || !seg.querySelector(':scope > button')) return;
+    seg.dataset.pill = '1';
+    const pill = document.createElement('span');
+    pill.className = 'seg-pill'; pill.setAttribute('aria-hidden', 'true');
+    seg.prepend(pill);
+    seg.classList.add('has-pill');
+    pill.style.transition = 'none'; place(seg); pill.offsetWidth; pill.style.transition = ''; // 처음엔 그 자리에 바로
+    new MutationObserver(() => place(seg)).observe(seg, { attributes: true, subtree: true, attributeFilter: ['class'] });
+  };
+  const scan = root => root.querySelectorAll && root.querySelectorAll('.seg').forEach(setup);
+  scan(document);
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches('.seg')) setup(n); scan(n); } }))).observe(document.body, { childList: true, subtree: true });
+  let rt = 0;
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => document.querySelectorAll('.seg.has-pill').forEach(place), 80); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => document.querySelectorAll('.seg.has-pill').forEach(place)); // 글씨체가 늦게 오면 폭이 바뀌어요
+})();
+
+// ── 아이폰 같은 손맛 ⑤: 아래 탭에서 지금 화면의 탭을 한 번 더 누르면 맨 위로 스르륵 올라가요 ──
+document.addEventListener('click', e => {
+  const a = e.target.closest('.tabbar a.on');
+  if (!a || e.metaKey || e.ctrlKey || a.pathname !== location.pathname) return; // 계산기 화면 안에서 '계산기' 탭을 누르면 목록으로 가요 (아이폰처럼)
+  e.preventDefault();
+  window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+});

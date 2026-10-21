@@ -1131,3 +1131,26 @@ html:has(> body.home) { overflow-x: clip; } /* 히어로 뒤 빛 번짐 때문�
   .home .tiles.folded.paged .tile-more { display: flex; }
   .home .group.tabbed .more-btn { display: none; }
 }
+
+/* ── 아이폰 같은 손맛 ① 다이내믹 아일랜드 알림: 화면 위 검은 알약이 쭉 늘어났다 줄어들어요 ── */
+.toast { top: calc(10px + env(safe-area-inset-top)); bottom: auto !important; width: max-content; max-width: min(420px, calc(100% - 32px)); padding: 13px 22px; border-radius: 26px; background: #000; color: #fff;
+  font-size: 14px; font-weight: 600; line-height: 1.4; z-index: 70; box-shadow: 0 10px 30px -8px rgba(0, 0, 0, .45);
+  transform: translate(-50%, -6px) scale(.35, .55); transform-origin: 50% 0; opacity: 0; filter: blur(2px);
+  transition: transform .42s cubic-bezier(.34, 1.45, .64, 1), opacity .2s, filter .25s; }
+.toast.show { transform: translate(-50%, 0) scale(1); opacity: 1; filter: none; }
+:root[data-theme="dark"] .toast { box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 10px 30px -8px rgba(0, 0, 0, .6); }
+@media (prefers-color-scheme: dark) { :root[data-theme="auto"] .toast { box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 10px 30px -8px rgba(0, 0, 0, .6); } }
+@media (prefers-reduced-motion: reduce) { .toast { transition: opacity .2s; transform: translate(-50%, 0); filter: none; } }
+
+/* ② 끌어내리는 창: 손잡이를 보여 줘요 */
+@media (max-width: 640px) {
+  .gnav-in::before { content: ''; display: block; width: 36px; height: 5px; margin: -8px auto 12px; border-radius: 3px; background: var(--seg-bg); }
+}
+
+/* ④ 미끄러지는 선택 버튼 */
+.seg.has-pill { position: relative; }
+.seg-pill { position: absolute; left: 0; top: 0; z-index: 0; border-radius: 980px; background: var(--blue); pointer-events: none;
+  transition: transform .38s cubic-bezier(.34, 1.25, .64, 1), width .3s, height .3s, opacity .2s; }
+.seg.has-pill button { position: relative; z-index: 1; transition: color .25s; }
+.seg.has-pill button.on, .seg.has-pill button.on:hover { background: transparent; }
+@media (prefers-reduced-motion: reduce) { .seg-pill { transition: none; } }
