@@ -2289,17 +2289,27 @@ document.addEventListener('click', e => {
   window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 });
 
-// ── 아이폰 같은 손맛 ⑥: 계산기 큰 제목이 화면 위로 지나가면, 위 메뉴바 가운데에 작은 제목으로 쏙 들어가요 (휴대폰) ──
+// ── 아이폰 같은 손맛 ⑥: 큰 제목이 화면 위로 지나가면, 위 메뉴바 가운데에 작은 제목으로 쏙 들어가요 (휴대폰) ──
+// 가계부처럼 칸이 여러 개인 화면은 지금 보고 있는 칸 제목(기록하기, 내역 …)으로 바뀌어요
 (() => {
   const h1 = document.querySelector('.wrap > .card h1'), bar = document.querySelector('.topbar'), inner = bar && bar.querySelector('.topbar-in');
   if (!h1 || !inner || document.body.classList.contains('home')) return;
   const t = document.createElement('button');
   t.type = 'button'; t.className = 'top-title'; t.tabIndex = -1; t.setAttribute('aria-hidden', 'true');
-  t.textContent = h1.textContent.trim();
   t.addEventListener('click', () => window.scrollTo({ top: 0, behavior: calmMotion ? 'auto' : 'smooth' })); // 작은 제목을 누르면 맨 위로
   inner.append(t);
   let raf = 0;
-  const check = () => { raf = 0; bar.classList.toggle('titled', h1.getBoundingClientRect().bottom < bar.offsetHeight); }; // 휴대폰 메뉴바는 분류 줄까지 있어서 높이를 그때그때 재요
+  const check = () => {
+    raf = 0;
+    const h = bar.offsetHeight; // 휴대폰 메뉴바는 분류 줄까지 있어서 높이를 그때그때 재요
+    const passed = [h1, ...document.querySelectorAll('.wrap .card > h2, .wrap > section > h2')].filter(el => el.offsetParent && el.getBoundingClientRect().bottom < h);
+    const now = passed.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top).pop(); // 위로 지나간 제목 중 가장 아래 것
+    bar.classList.toggle('titled', !!now);
+    const text = now ? now.textContent.trim() : '';
+    if (!text || text === t.textContent) return;
+    if (t.textContent && !calmMotion) { t.classList.remove('swap'); void t.offsetWidth; t.classList.add('swap'); } // 바뀔 때 살짝 올라오며 바뀌어요
+    t.textContent = text;
+  };
   window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(check); }, { passive: true });
   check();
 })();
