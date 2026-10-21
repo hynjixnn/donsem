@@ -1154,3 +1154,47 @@ html:has(> body.home) { overflow-x: clip; } /* 히어로 뒤 빛 번짐 때문�
 .seg.has-pill button { position: relative; z-index: 1; transition: color .25s; }
 .seg.has-pill button.on, .seg.has-pill button.on:hover { background: transparent; }
 @media (prefers-reduced-motion: reduce) { .seg-pill { transition: none; } }
+
+/* 아이폰 같은 손맛 ⑥: 결과 숫자가 자리마다 또르르 굴러가요 */
+.roll { display: inline-block; position: relative; overflow: hidden; vertical-align: top; line-height: inherit; }
+.roll > span { display: inline-block; position: relative; animation: roll-up .42s cubic-bezier(.22, 1.2, .36, 1) both; }
+.roll > span.down { animation-name: roll-down; }
+.roll > span::before { content: attr(data-o); position: absolute; left: 0; right: 0; text-align: center; top: -100%; }
+.roll > span.down::before { top: 100%; }
+@keyframes roll-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes roll-down { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
+/* 아이폰 같은 손맛 ⑦: 큰 제목이 위 메뉴바로 접혀 들어가요 (휴대폰) */
+.top-title { display: none; }
+@media (max-width: 640px) {
+  .topbar-in { position: relative; }
+  .top-title { display: block; position: absolute; left: 50%; top: 50%; max-width: calc(100% - 190px); padding: 4px 6px; border: 0; background: none; font: inherit;
+    font-size: 16px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+    opacity: 0; transform: translate(-50%, -50%) translateY(8px); pointer-events: none; transition: opacity .22s, transform .32s cubic-bezier(.22, 1, .36, 1); }
+  .topbar.titled .top-title { opacity: 1; transform: translate(-50%, -50%); pointer-events: auto; }
+  .topbar .brand { transition: opacity .22s; }
+  .topbar.titled .brand { font-size: 0; gap: 0; } /* 제목 자리를 내주려고 '돈셈' 글자만 숨기고 로고는 남겨요 */
+}
+
+/* 아이폰 같은 손맛 ⑧: 카드를 꾹 누르면 미리보기 */
+a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+@media (prefers-reduced-motion: no-preference) { a.tile.pressing { transform: scale(.96); transition: transform .45s cubic-bezier(.22, 1, .36, 1); } }
+.peek { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.peek-dim { position: absolute; inset: 0; background: rgba(0, 0, 0, .22); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); opacity: 0; transition: opacity .25s; }
+.peek-card { position: relative; width: min(340px, 100%); background: var(--card); color: var(--text); border-radius: 26px; padding: 24px 22px 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .25); opacity: 0; transform: scale(.88); transition: opacity .2s, transform .38s cubic-bezier(.34, 1.4, .64, 1); }
+.peek.show .peek-dim { opacity: 1; }
+.peek.show .peek-card { opacity: 1; transform: none; }
+.peek-top { display: flex; align-items: center; gap: 12px; }
+.peek-top h3 { margin: 0; font-size: 21px; letter-spacing: -0.02em; }
+.peek-ico { width: 52px; height: 52px; flex: none; }
+.peek-desc { margin: 12px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.peek-key, .peek-last { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--seg-bg); font-size: 14px; }
+.peek-acts { display: flex; gap: 8px; margin-top: 18px; }
+.peek-acts .btn { flex: 1; text-align: center; font: inherit; font-size: 16px; font-weight: 600; padding: 11px 10px; cursor: pointer; background: transparent; }
+.peek-acts .btn.fill { background: var(--blue); color: #fff; }
+
+/* 아이폰 같은 손맛 ⑨: 복사·저장한 버튼은 잠깐 초록 체크 */
+.btn.done { color: #1a9a4b !important; border-color: #1a9a4b !important; background: rgba(26, 154, 75, .08) !important; }
+@media (prefers-reduced-motion: no-preference) { .btn.done { animation: done-pop .36s cubic-bezier(.34, 1.56, .64, 1); } }
+@keyframes done-pop { 40% { transform: scale(1.05); } }

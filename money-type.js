@@ -121,7 +121,7 @@ const mtClash = code => mtFlip(code, [0, 1, 2, 3]); // 환장의 조합: 모든 
     if (fr) fr.addEventListener('click', async () => {
       const url = `${location.origin}/money-type/?t=${code}`;
       if (navigator.share) { try { await navigator.share({ title: '돈BTI 테스트', text: `나는 "${name}"래! 너의 돈 성격은? 👀`, url }); } catch (e) { /* 닫은 경우 */ } }
-      else copyLink(url);
+      else copyLink(url, fr);
     });
     box.scrollIntoView({ block: 'start' });
   }

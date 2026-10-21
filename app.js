@@ -917,10 +917,18 @@ function toast(msg) {
   setTimeout(() => t.classList.add('show'), 10);
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2200);
 }
-async function copyLink(url) {
+async function copyLink(url, btn) {
   try { await navigator.clipboard.writeText(url); }
   catch (e) { const a = document.createElement('textarea'); a.value = url; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
   toast('링크를 복사했어요. 카톡이나 문자에 붙여 넣으세요.');
+  if (btn) doneMark(btn, '복사됨');
+}
+// 아이폰 같은 손맛 ⑧: 누른 버튼 글자가 잠깐 '✓ 복사됨'으로 바뀌었다가 돌아와요
+function doneMark(btn, text) {
+  if (btn.dataset.label === undefined) btn.dataset.label = btn.textContent;
+  clearTimeout(btn.doneT);
+  btn.textContent = '✓ ' + text; btn.classList.add('done');
+  btn.doneT = setTimeout(() => { btn.textContent = btn.dataset.label; delete btn.dataset.label; btn.classList.remove('done'); }, 1600);
 }
 // ── 토스처럼 편하게 ①: 하던 것 기억하기 (이 기기 브라우저에만 저장돼요) ──
 const store = {
@@ -1029,28 +1037,33 @@ document.querySelectorAll('.card label').forEach(label => {
   });
 });
 
-// ── 토스처럼 편하게 ⑤: 결과 숫자가 부드럽게 바뀌기 ──
+// ── 토스처럼 편하게 ⑤: 결과 숫자가 아이폰처럼 자리마다 또르르 굴러가며 바뀌기 ──
+// 바뀐 자리 숫자만 <span>으로 감싸 굴려요. 글자 자체는 그대로라 저장·공유·엑셀은 최종 숫자를 읽어요
 const calmMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-let lastBig = null, bigAnim = 0;
+let lastBig = null;
 function animateBig() {
   const big = document.querySelector('.card .result .big');
   if (!big) { lastBig = null; return; }
   const node = big.firstChild;
   const m = node && node.nodeType === 3 && node.textContent.match(/[\d,]+(\.\d+)?/);
   if (!m) { lastBig = null; return; }
-  big.dataset.final = node.textContent; // 숫자가 움직이는 동안에도 저장·추천은 최종 숫자를 읽게
-  const to = Number(m[0].replace(/,/g, '')), dec = m[1] ? m[1].length - 1 : 0, from = lastBig;
+  big.dataset.final = node.textContent;
+  const to = m[0], from = lastBig;
   lastBig = to;
-  cancelAnimationFrame(bigAnim);
   if (calmMotion || from === null || from === to || !ready) return;
-  const start = performance.now(), before = node.textContent.slice(0, m.index), after = node.textContent.slice(m.index + m[0].length);
-  const step = now => {
-    const k = Math.min(1, (now - start) / 350), ease = 1 - Math.pow(1 - k, 3), v = from + (to - from) * ease;
-    if (!node.isConnected) return;
-    node.textContent = before + v.toLocaleString('ko-KR', { minimumFractionDigits: dec, maximumFractionDigits: dec }) + after;
-    if (k < 1) bigAnim = requestAnimationFrame(step);
-  };
-  bigAnim = requestAnimationFrame(step);
+  const up = Number(to.replace(/,/g, '')) > Number(from.replace(/,/g, '')), frag = document.createDocumentFragment();
+  frag.append(node.textContent.slice(0, m.index));
+  [...to].forEach((ch, i) => {
+    const old = from[from.length - to.length + i]; // 오른쪽 끝(일의 자리)부터 자리를 맞춰 비교해요
+    if (!/\d/.test(ch) || ch === old) { frag.append(ch); return; }
+    const box = document.createElement('span'), d = document.createElement('span');
+    box.className = 'roll'; d.className = up ? 'up' : 'down'; d.textContent = ch;
+    d.dataset.o = /\d/.test(old || '') ? old : '';
+    d.style.animationDelay = Math.min(i, 8) * 18 + 'ms';
+    box.append(d); frag.append(box);
+  });
+  frag.append(node.textContent.slice(m.index + to.length));
+  node.replaceWith(frag);
 }
 
 // ── 토스처럼 편하게 ⑥: 휴대폰에서 결과가 화면 밖에 있으면 아래에 띄워 두기 ──
@@ -1109,10 +1122,10 @@ if (result) {
     const head = result.querySelector('div') ? result.querySelector('div').textContent.trim() : '';
     const big = result.querySelector('.big') ? result.querySelector('.big').textContent.trim() : '';
     const name = document.querySelector('.card h1').textContent.trim();
-    if (act === 'xlsx') return saveXlsx(name, url);
+    if (act === 'xlsx') { saveXlsx(name, url); return doneMark(e.target, '저장됨'); }
     if (act === 'share' && navigator.share) {
       try { await navigator.share({ title: `${name} - 돈셈`, text: `[돈셈 ${name}] ${head} ${big}`, url }); } catch (err) { /* 공유 창을 닫은 경우 */ }
-    } else copyLink(url);
+    } else copyLink(url, e.target);
   });
 }
 runAll();
@@ -2275,3 +2288,65 @@ document.addEventListener('click', e => {
   e.preventDefault();
   window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 });
+
+// ── 아이폰 같은 손맛 ⑥: 계산기 큰 제목이 화면 위로 지나가면, 위 메뉴바 가운데에 작은 제목으로 쏙 들어가요 (휴대폰) ──
+(() => {
+  const h1 = document.querySelector('.wrap > .card h1'), bar = document.querySelector('.topbar'), inner = bar && bar.querySelector('.topbar-in');
+  if (!h1 || !inner || document.body.classList.contains('home')) return;
+  const t = document.createElement('button');
+  t.type = 'button'; t.className = 'top-title'; t.tabIndex = -1; t.setAttribute('aria-hidden', 'true');
+  t.textContent = h1.textContent.trim();
+  t.addEventListener('click', () => window.scrollTo({ top: 0, behavior: calmMotion ? 'auto' : 'smooth' })); // 작은 제목을 누르면 맨 위로
+  inner.append(t);
+  let raf = 0;
+  const check = () => { raf = 0; bar.classList.toggle('titled', h1.getBoundingClientRect().bottom < bar.offsetHeight); }; // 휴대폰 메뉴바는 분류 줄까지 있어서 높이를 그때그때 재요
+  window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(check); }, { passive: true });
+  check();
+})();
+
+// ── 아이폰 같은 손맛 ⑦: 계산기 카드를 꾹 누르면, 들어가지 않고도 미리보기가 떠요 (휴대폰) ──
+(() => {
+  if (!('ontouchstart' in window)) return;
+  let timer = 0, sx = 0, sy = 0, fired = false, layer = null;
+  const recentOf = href => { try { const x = (JSON.parse(localStorage.getItem('donsem:recent')) || []).find(r => r.p === href); return x && x.big; } catch (e) { return ''; } };
+  function close() {
+    if (!layer) return;
+    const l = layer; layer = null;
+    l.classList.remove('show');
+    setTimeout(() => l.remove(), 260);
+  }
+  function open(tile) {
+    const href = tile.getAttribute('href'), h3 = tile.querySelector('h3'), p = tile.querySelector('p'), key = tile.querySelector('.key'), star = tile.querySelector('button.fav');
+    if (!h3) return;
+    const last = recentOf(href);
+    layer = document.createElement('div');
+    layer.className = 'peek';
+    layer.innerHTML = `<div class="peek-dim"></div><div class="peek-card" role="dialog" aria-label="${h3.textContent.trim()} 미리보기">
+      <div class="peek-top">${iconOf(href).replace('class="ico"', 'class="peek-ico"')}<h3></h3></div><p class="peek-desc"></p>
+      ${key ? `<p class="peek-key">${key.innerHTML}</p>` : ''}${last ? `<p class="peek-last">최근 결과 <b></b></p>` : ''}
+      <div class="peek-acts"><a class="btn fill" href="${href}">열기</a>${star ? `<button type="button" class="btn line peek-fav">${star.classList.contains('on') ? '★ 즐겨찾기 빼기' : '☆ 즐겨찾기'}</button>` : ''}</div></div>`;
+    layer.querySelector('h3').textContent = h3.textContent.trim();
+    layer.querySelector('.peek-desc').textContent = p ? p.textContent.trim() : '';
+    if (last) layer.querySelector('.peek-last b').textContent = last;
+    layer.querySelector('.peek-dim').addEventListener('click', close);
+    const fav = layer.querySelector('.peek-fav');
+    if (fav) fav.addEventListener('click', () => { star.click(); close(); });
+    document.body.append(layer);
+    requestAnimationFrame(() => layer && layer.classList.add('show'));
+  }
+  document.addEventListener('touchstart', e => {
+    const tile = e.target.closest('a.tile');
+    fired = false;
+    if (!tile || e.target.closest('button') || e.touches.length > 1) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    tile.classList.add('pressing');
+    timer = setTimeout(() => { fired = true; tile.classList.remove('pressing'); open(tile); }, 480);
+  }, { passive: true });
+  const cancel = () => { clearTimeout(timer); document.querySelectorAll('.tile.pressing').forEach(t => t.classList.remove('pressing')); };
+  document.addEventListener('touchmove', e => { if (Math.hypot(e.touches[0].clientX - sx, e.touches[0].clientY - sy) > 8) cancel(); }, { passive: true }); // 스크롤하면 취소
+  document.addEventListener('touchend', cancel);
+  document.addEventListener('touchcancel', cancel);
+  document.addEventListener('click', e => { if (fired && e.target.closest('a.tile')) { e.preventDefault(); fired = false; } }, true); // 꾹 누른 뒤 손을 떼도 들어가지 않게
+  document.addEventListener('contextmenu', e => { if (e.target.closest('a.tile')) e.preventDefault(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+})();
