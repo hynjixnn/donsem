@@ -951,7 +951,7 @@ if (result) {
   }
   const bar = document.createElement('div');
   bar.className = 'share';
-  bar.innerHTML = '<button type="button" class="btn fill" data-act="share">결과 공유하기</button><button type="button" class="btn line" data-act="copy">링크 복사</button>';
+  bar.innerHTML = '<button type="button" class="btn fill" data-act="share">결과 공유하기</button><button type="button" class="btn line" data-act="copy">링크 복사</button><button type="button" class="btn line" data-act="xlsx">엑셀로 저장</button>';
   result.after(bar);
   bar.addEventListener('click', async e => {
     const act = e.target.dataset && e.target.dataset.act;
@@ -960,6 +960,7 @@ if (result) {
     const head = result.querySelector('div') ? result.querySelector('div').textContent.trim() : '';
     const big = result.querySelector('.big') ? result.querySelector('.big').textContent.trim() : '';
     const name = document.querySelector('.card h1').textContent.trim();
+    if (act === 'xlsx') return saveXlsx(name, url);
     if (act === 'share' && navigator.share) {
       try { await navigator.share({ title: `${name} - 돈셈`, text: `[돈셈 ${name}] ${head} ${big}`, url }); } catch (err) { /* 공유 창을 닫은 경우 */ }
     } else copyLink(url);
@@ -1734,3 +1735,95 @@ const MENU = [
     tiles.after(b);
   });
 })();
+
+// ── 엑셀로 저장: 입력한 값과 결과를 .xlsx 파일 하나로 만들어 줘요 (서버로 보내지 않고 이 기기에서 만들어요) ──
+function calcSheet(name, url) {
+  const card = document.querySelector('.card'), result = card.querySelector('.result');
+  const clean = el => { const c = el.cloneNode(true); c.querySelectorAll('button, .krw').forEach(b => b.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };
+  const shown = el => el.getClientRects().length > 0;
+  const labelOf = el => {
+    if (el.getAttribute('aria-label')) return el.getAttribute('aria-label');
+    for (let n = el; n && n !== card; n = n.parentElement) // 가장 가까운 칸 이름부터 찾아요 (모드별 묶음 안쪽 먼저)
+      for (let p = n.previousElementSibling; p; p = p.previousElementSibling) if (p.tagName === 'LABEL') return clean(p);
+    return '';
+  };
+  const d = new Date(), today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const out = [[{ v: `돈셈 · ${name}`, s: 'title' }], ['계산한 날', today], ['다시 보기 링크', url], [], [{ v: '입력한 값', s: 'head' }]];
+  card.querySelectorAll('input[data-k], .seg[data-k]').forEach(el => {
+    if (!shown(el)) return;
+    if (el.classList.contains('seg')) { const on = el.querySelector('.on'); if (on) out.push([labelOf(el), on.textContent.trim()]); return; }
+    const unit = el.parentElement.querySelector('span:not(.krw)');
+    out.push([labelOf(el), el.value + (unit && el.value ? (unit.textContent.trim() === '원' ? '원' : ' ' + unit.textContent.trim()) : '')]);
+  });
+  out.push([], [{ v: '결과', s: 'head' }]);
+  const head = result.querySelector(':scope > div:not(.big):not(.rows)'), big = result.querySelector('.big');
+  if (big) out.push([head ? clean(head) : '결과', clean(big)]);
+  else if (clean(result)) out.push([clean(result)]);
+  result.querySelectorAll('.rows > div').forEach(r => { const a = r.querySelector('span'), b = r.querySelector('b'); if (a && b) out.push([clean(a), clean(b)]); });
+  result.querySelectorAll('.insight').forEach(p => out.push([], [{ v: '한 줄 정리', s: 'head' }], [clean(p).replace(/^한 줄 정리\s*/, '')]));
+  result.querySelectorAll('table').forEach(t => {
+    const sum = t.closest('details') && t.closest('details').querySelector('summary');
+    out.push([], [{ v: sum ? clean(sum).replace(/\s*보기$/, '') : '표', s: 'head' }]);
+    t.querySelectorAll('tr').forEach(tr => out.push([...tr.children].map(c => tr.querySelector('th') ? { v: clean(c), s: 'bold' } : clean(c))));
+  });
+  out.push([], ['계산 결과는 참고용이에요. 실제 금액은 상품 조건과 세금에 따라 달라질 수 있어요.'], ['출처', 'doncalculator.com']);
+  return out;
+}
+function xlsxBlob(rows, sheetName) {
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '');
+  const col = i => String.fromCharCode(65 + i);
+  const STY = { title: 1, head: 2, bold: 2 }; // 1 큰 굵은 글씨, 2 굵은 글씨, 3 숫자+원, 4 숫자
+  const cell = (c, r, i) => {
+    const o = c && typeof c === 'object' ? c : { v: c };
+    if (o.v === undefined || o.v === '') return '';
+    const ref = col(i) + r, v = String(o.v).trim(), m = !o.s && v.match(/^(-?[\d,]+(?:\.\d+)?)(원)?$/);
+    if (m && /\d/.test(m[1])) return `<c r="${ref}" s="${m[2] ? 3 : 4}"><v>${m[1].replace(/,/g, '')}</v></c>`;
+    return `<c r="${ref}" t="inlineStr"${o.s ? ` s="${STY[o.s]}"` : ''}><is><t xml:space="preserve">${esc(v)}</t></is></c>`;
+  };
+  const wide = Math.max(...rows.map(r => r.length), 2);
+  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols><col min="1" max="1" width="30" customWidth="1"/><col min="2" max="${wide}" width="20" customWidth="1"/></cols><sheetData>` +
+    rows.map((r, i) => `<row r="${i + 1}">${r.map((c, j) => cell(c, i + 1, j)).join('')}</row>`).join('') + '</sheetData></worksheet>';
+  const files = {
+    '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
+    '_rels/.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+    'xl/workbook.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${esc(sheetName.replace(/[\\/?*[\]:]/g, '').slice(0, 31))}" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+    'xl/_rels/workbook.xml.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+    'xl/worksheets/sheet1.xml': sheet,
+    'xl/styles.xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0&quot;원&quot;"/></numFmts><fonts count="3"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><sz val="14"/><name val="맑은 고딕"/></font><font><b/><sz val="11"/><name val="맑은 고딕"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="5"><xf/><xf fontId="1" applyFont="1"/><xf fontId="2" applyFont="1"/><xf numFmtId="164" applyNumberFormat="1"/><xf numFmtId="4" applyNumberFormat="1"/></cellXfs></styleSheet>',
+  };
+  return new Blob([zipStore(files)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+// 압축 없이 묶는 zip (xlsx 파일은 사실 zip이에요)
+function zipStore(files) {
+  const enc = new TextEncoder(), crcT = zipStore.t || (zipStore.t = Array.from({ length: 256 }, (_, n) => { for (let k = 0; k < 8; k++) n = n & 1 ? 0xedb88320 ^ (n >>> 1) : n >>> 1; return n >>> 0; }));
+  const crc = b => { let c = ~0; for (const x of b) c = crcT[(c ^ x) & 255] ^ (c >>> 8); return ~c >>> 0; };
+  const parts = [], dir = [];
+  let off = 0;
+  for (const [path, text] of Object.entries(files)) {
+    const name = enc.encode(path), data = enc.encode(text), c = crc(data);
+    const h = new DataView(new ArrayBuffer(30));
+    [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [12, 33, 2], [14, c, 4], [18, data.length, 4], [22, data.length, 4], [26, name.length, 2]].forEach(([o, v, n]) => n === 4 ? h.setUint32(o, v, true) : h.setUint16(o, v, true));
+    const d = new DataView(new ArrayBuffer(46));
+    [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [14, 33, 2], [16, c, 4], [20, data.length, 4], [24, data.length, 4], [28, name.length, 2], [42, off, 4]].forEach(([o, v, n]) => n === 4 ? d.setUint32(o, v, true) : d.setUint16(o, v, true));
+    parts.push(h, name, data); dir.push(d, name);
+    off += 30 + name.length + data.length;
+  }
+  const size = dir.reduce((a, x) => a + x.byteLength, 0), e = new DataView(new ArrayBuffer(22));
+  [[0, 0x06054b50, 4], [8, dir.length / 2, 2], [10, dir.length / 2, 2], [12, size, 4], [16, off, 4]].forEach(([o, v, n]) => n === 4 ? e.setUint32(o, v, true) : e.setUint16(o, v, true));
+  return new Blob([...parts, ...dir, e]);
+}
+async function saveXlsx(name, url) {
+  const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  const fileName = `돈셈_${name.replace(/\s*계산기$/, '').replace(/[\\/:*?"<>|]/g, '')}_${stamp}.xlsx`;
+  const blob = xlsxBlob(calcSheet(name, url), name.replace(/\s*계산기$/, ''));
+  const file = new File([blob], fileName, { type: blob.type });
+  // 휴대폰: 공유 창으로 넘겨서 '파일에 저장'·카톡 보내기를 고를 수 있게 해요
+  if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: fileName }); return; } catch (err) { if (err.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = fileName;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast('엑셀 파일로 저장했어요. 다운로드 폴더를 확인해 보세요.');
+}
