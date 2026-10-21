@@ -2415,3 +2415,41 @@ document.addEventListener('click', e => {
     pill.style.transition = 'none'; place(on); pill.offsetWidth; pill.style.transition = '';
   });
 })();
+
+// ── 아래 탭바: 누른 순간 하이라이트가 그 탭으로 쫀득하게 미끄러지고, 내용은 살짝 사라졌다가 새 화면에서 떠올라요 (돈 관리 탭과 같은 방식) ──
+(() => {
+  const bar = document.querySelector('.tabbar'), on = bar && bar.querySelector('a.on');
+  try { sessionStorage.removeItem('donsem:tb-nav'); } catch (e) { /* 기억 못 해도 괜찮아요 */ }
+  if (!bar || !on) return;
+  const links = [...bar.querySelectorAll('a')], root = document.documentElement;
+  const pill = document.createElement('span');
+  pill.className = 'tb-pill'; pill.setAttribute('aria-hidden', 'true');
+  bar.prepend(pill); bar.classList.add('has-pill');
+  const place = a => { pill.style.width = a.offsetWidth + 'px'; pill.style.height = a.offsetHeight + 'px'; pill.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`; };
+  const snap = () => { pill.style.transition = 'none'; place(bar.querySelector('a.on') || on); pill.offsetWidth; pill.style.transition = ''; };
+  snap();
+  let leaving = 0;
+  bar.addEventListener('click', e => {
+    const a = e.target.closest('a');
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; // 같은 탭 다시 누르기(맨 위로)는 위에서 처리해요
+    if (a === on && a.pathname === location.pathname) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    e.preventDefault();
+    place(a);
+    links.forEach(x => x.classList.toggle('on', x === a));
+    try { sessionStorage.setItem('donsem:tb-nav', '1'); } catch (err) { /* 기억 못 해도 괜찮아요 */ }
+    root.classList.remove('tb-in');
+    root.classList.add('tb-leaving');
+    clearTimeout(leaving);
+    leaving = setTimeout(() => { location.href = a.href; }, 200);
+  });
+  window.addEventListener('resize', snap);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(snap);
+  window.addEventListener('pageshow', e => { // 뒤로 가기로 돌아오면 제자리
+    if (!e.persisted) return;
+    clearTimeout(leaving);
+    root.classList.remove('tb-leaving', 'tb-in');
+    links.forEach(x => x.classList.toggle('on', x === on));
+    snap();
+  });
+})();

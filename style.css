@@ -1274,3 +1274,23 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
 @media (prefers-reduced-motion: reduce) { .mm-pill { transition: none; } }
 @keyframes mm-in-right { from { opacity: 0; transform: translateX(22px); } }
 @keyframes mm-in-left { from { opacity: 0; transform: translateX(-22px); } }
+
+/* 아래 탭바 하이라이트가 누른 탭으로 미끄러져요 (휴대폰) */
+.tb-pill { display: none; }
+@media (max-width: 640px) {
+  .tabbar.has-pill .tb-pill { display: block; position: absolute; left: 0; top: 0; z-index: 0; border-radius: 999px; pointer-events: none;
+    background: rgba(255, 255, 255, .5); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 2px 8px -3px rgba(0, 0, 0, .12);
+    transition: transform .3s cubic-bezier(.3, 1.15, .5, 1), width .3s cubic-bezier(.3, 1.15, .5, 1); }
+  :root[data-theme="dark"] .tabbar.has-pill .tb-pill { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
+  .tabbar.has-pill a, .tabbar.has-pill button { position: relative; z-index: 1; transition: color .2s; }
+  .tabbar.has-pill a.on { background: transparent; box-shadow: none; }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root[data-theme="auto"] .tabbar.has-pill .tb-pill { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tb-leaving .wrap { transition: opacity .16s ease-out, transform .2s ease-in; opacity: 0; transform: scale(.985); }
+  .tb-in .wrap { animation: tb-in .36s cubic-bezier(.22, 1, .36, 1) both; }
+}
+@media (prefers-reduced-motion: reduce) { .tb-pill { transition: none; } }
+@keyframes tb-in { from { opacity: 0; transform: translateY(8px); } }
