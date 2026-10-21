@@ -1231,3 +1231,21 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
 @media (prefers-reduced-motion: reduce) { .rg-fill { transition: none; } }
 @keyframes ring-pop { 0% { transform: rotate(-90deg) scale(1); } 40% { transform: rotate(-90deg) scale(1.14); } 100% { transform: rotate(-90deg) scale(1); } }
 @keyframes ring-spark { 0% { opacity: .9; transform: scale(.85); } 100% { opacity: 0; transform: scale(1.45); } }
+
+/* 아래 탭바 2탄: 더 투명한 리퀴드 글래스 · 완전한 알약 모양 · 양옆에 여유 (휴대폰) */
+@media (max-width: 640px) {
+  .tabbar { left: 16px; right: 16px; max-width: 460px; margin: 0 auto; padding: 5px; border-radius: 999px;
+    background: rgba(255, 255, 255, .22); border: 1px solid rgba(255, 255, 255, .55);
+    -webkit-backdrop-filter: blur(14px) saturate(190%) brightness(1.04); backdrop-filter: blur(14px) saturate(190%) brightness(1.04);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), inset 0 -1px 0 rgba(255, 255, 255, .18), 0 0 0 .5px rgba(0, 0, 0, .07), 0 10px 30px -8px rgba(0, 0, 0, .2); }
+  .tabbar a, .tabbar button { gap: 2px; padding: 6px 0 5px; border-radius: 999px; color: color-mix(in srgb, var(--text) 82%, transparent); font-size: 11.5px; font-weight: 600; letter-spacing: -0.01em; }
+  .tabbar svg { width: 25px; height: 25px; stroke-width: 1.7; }
+  .tabbar a.on { color: var(--blue); background: rgba(255, 255, 255, .5); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 2px 8px -3px rgba(0, 0, 0, .12); }
+  .tabbar .tab-add span { width: 44px; height: 25px; border-radius: 999px; } /* 다른 아이콘과 높이를 맞춰 글자 줄이 나란해요 */
+  :root[data-theme="dark"] .tabbar { background: rgba(28, 28, 30, .32); border-color: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 0 0 .5px rgba(0, 0, 0, .4), 0 10px 30px -8px rgba(0, 0, 0, .6); }
+  :root[data-theme="dark"] .tabbar a.on { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root[data-theme="auto"] .tabbar { background: rgba(28, 28, 30, .32); border-color: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 0 0 .5px rgba(0, 0, 0, .4), 0 10px 30px -8px rgba(0, 0, 0, .6); }
+  :root[data-theme="auto"] .tabbar a.on { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
+}
