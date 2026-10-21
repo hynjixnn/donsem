@@ -4,7 +4,7 @@
   if (!box || typeof QUIZ === 'undefined') return;
   const BADGES = [[3, '🌱', '3일 연속'], [7, '🔥', '7일 연속'], [14, '⭐', '14일 연속'], [30, '🏆', '30일 연속']];
   const q = new URLSearchParams(location.search);
-  const todayId = quizToday(), today = quizDate();
+  const todayId = quizTodayFor(quizLoad()), today = quizDate();
   let id = todayId, mode = 'today';
   const asked = parseInt(q.get('q'), 10);
   if (asked >= 0 && asked < QUIZ.length && asked !== todayId) { id = asked; mode = 'shared'; }

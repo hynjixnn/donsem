@@ -66,6 +66,8 @@ const QUIZ = [
   ['기름값이 같다면 연비가 높은 차일수록 같은 거리를 가는 데 기름값이 더 든다.', false, '연비가 높다는 건 1L로 더 멀리 간다는 뜻이에요. 그래서 같은 거리면 기름값이 덜 들어요.', '/fuel/', '유류비 계산해 보기'],
   ['대용량이 항상 더 싼 건 아니어서, 100g당 가격으로 비교해야 정확하다.', true, '마트에서 묶음·대용량이 오히려 비싼 경우도 꽤 있어요. 단위 가격으로 비교하면 바로 보여요.', '/unit-price/', '단가 비교해 보기'],
   ['근로장려금 정기 신청은 보통 매년 5월에 한다.', true, '소득이 적은 일하는 가구를 지원하는 제도로, 정기 신청은 5월, 반기 신청은 3월·9월에 해요.', '/salary/', '내 실수령액 계산해 보기'],
+  ['ISA(일반형)는 계좌에서 번 돈 200만 원까지 세금이 없다.', true, '3년 이상 유지하면 일반형은 200만 원, 서민형·농어민형은 400만 원까지 비과세예요. 넘는 부분도 15.4% 대신 9.9%만 내요.', '/isa/', 'ISA로 아끼는 세금 계산해 보기'],
+  ['연금저축을 중간에 해지해도 세금은 따로 없다.', false, '55세 전에 해지하면 세액공제 받은 돈과 수익에 16.5% 기타소득세가 붙어요. 그동안 돌려받은 세금을 거의 다시 내는 셈이에요.', '/pension/', '연금저축 환급액 계산해 보기'],
 ];
 
 // 오늘 날짜(이 기기 시간)로 오늘의 문제를 골라요. 모든 사람이 같은 날 같은 문제를 받아요.
@@ -77,6 +79,8 @@ const QUIZ_ORDER = (() => { // 정해진 순서로 섞어 둬서, 비슷한 주�
   for (let i = o.length - 1; i > 0; i--) { s = (Math.imul(s, 1103515245) + 12345) >>> 0; const j = s % (i + 1); [o[i], o[j]] = [o[j], o[i]]; }
   return o;
 })();
+// 오늘 이미 푼 사람은 문제가 추가돼 순서가 바뀌어도, 그날 푼 문제를 그대로 보여 줘요
+function quizTodayFor(s) { const done = s && s.days && s.days[quizDate()]; return done && QUIZ[done.id] ? done.id : quizToday(); }
 function quizToday(d = new Date()) {
   const day = Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(2026, 9, 21)) / 86400000);
   return QUIZ_ORDER[((day % QUIZ.length) + QUIZ.length) % QUIZ.length];

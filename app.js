@@ -531,11 +531,72 @@ function salaryRank() {
       ['평균 연봉 4,475만 원보다', `${korean(Math.abs(diff) * 10000) || '거의 같아요'} ${Math.abs(diff) < 1 ? '' : diff >= 0 ? '많아요' : '적어요'}`], ['가운데(중위) 연봉 3,388만 원보다', `${korean(Math.abs(year - SALARY_MID) * 10000) || '거의 같아요'} ${Math.abs(year - SALARY_MID) < 1 ? '' : year >= SALARY_MID ? '많아요' : '적어요'}`]]);
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank };
+// ── ISA 절세: 일반 계좌(이자·배당 15.4%)와 ISA(비과세 한도 뒤 9.9% 분리과세) 세금 비교. 2026년 현행 기준 ──
+const ISA_FREE = { general: 2000000, low: 4000000 }; // 비과세 한도: 일반형 200만, 서민형·농어민형 400만 원
+function isaCalc() {
+  const type = seg('is_type'), r = val('is_r') / 100, y = Math.max(1, Math.min(30, Math.round(val('is_y'))));
+  const want = val('is_amt'), yearly = Math.min(want, 20000000); // 납입 한도: 1년 2,000만 원, 총 1억 원
+  let bal = 0, paid = 0;
+  for (let i = 0; i < y; i++) { const add = Math.min(yearly, 100000000 - paid); paid += add; bal = (bal + add) * (1 + r); } // 해마다 초에 넣는다고 보고 계산
+  const gain = bal - paid, free = ISA_FREE[type] || ISA_FREE.general;
+  const normalTax = Math.max(0, gain) * 0.154, isaTax = Math.max(0, gain - free) * 0.099;
+  return { y, want, yearly, paid, bal, gain, free, normalTax, isaTax, saved: normalTax - isaTax };
+}
+function isa() {
+  const o = isaCalc(), out = document.getElementById('is_out');
+  if (!o.yearly) { out.innerHTML = '1년에 넣을 돈을 넣어 주세요.'; return; }
+  const note = t => `<p style="font-size:13px;color:var(--muted);margin:10px 0 0">${t}</p>`;
+  out.innerHTML = `<div>ISA로 아끼는 세금</div><div class="big">${won(o.saved)}</div>` +
+    rows([['넣은 돈 (원금)', won(o.paid)], [`${o.y}년 뒤 평가액 (세전)`, won(o.bal)], ['수익', won(o.gain)],
+      ['일반 계좌였다면 세금 (15.4%)', won(o.normalTax)], [`ISA 세금 (${o.free / 10000}만 원까지 0원, 넘는 부분 9.9%)`, won(o.isaTax)], ['ISA 세후 받는 돈', won(o.bal - o.isaTax)]]) +
+    (o.want > 20000000 ? note('ISA는 1년에 2,000만 원까지만 넣을 수 있어서 2,000만 원으로 계산했어요.') : '') +
+    (o.paid < o.yearly * o.y ? note('ISA는 모두 합쳐 1억 원까지만 넣을 수 있어서, 1억 원을 넘는 부분은 빼고 계산했어요.') : '') +
+    (o.y < 3 ? note('ISA는 3년 이상 유지해야 세금 혜택을 받아요. 3년 전에 해지하면 일반 계좌처럼 세금을 내요.') : '');
+}
+
+// ── 연금저축·IRP: 세액공제 환급액 + 모은 돈으로 받는 연금. 2026년 현행 기준 ──
+function pensionCalc() {
+  const pay = val('pn_pay'), ps = val('pn_ps'), irp = val('pn_irp'), r = val('pn_r') / 100;
+  const y = Math.max(1, Math.min(40, Math.round(val('pn_y')))), n = Math.max(1, Math.min(40, Math.round(val('pn_n'))));
+  const base = Math.min(Math.min(ps, 6000000) + irp, 9000000); // 공제 한도: 연금저축 600만, IRP 합쳐 900만 원
+  const rate = pay > 55000000 ? 0.132 : 0.165; // 총급여 5,500만 원 이하 16.5%, 넘으면 13.2% (지방소득세 포함)
+  const refund = Math.floor(base * rate);
+  let bal = 0;
+  for (let i = 0; i < y; i++) bal = (bal + ps + irp) * (1 + r);
+  const paid = (ps + irp) * y, mr = r / 12, m = n * 12;
+  const monthly = bal ? (mr ? bal * mr / (1 - Math.pow(1 + mr, -m)) : bal / m) : 0; // 받는 동안에도 같은 수익률로 굴린다고 봐요
+  const freeShare = bal ? Math.min(1, (ps + irp - base) * y / bal) : 0; // 세액공제를 안 받은 원금은 받을 때 세금이 없어요
+  const tax = monthly * (1 - freeShare) * 0.055; // 연금소득세: 55~69세 5.5% (70대 4.4%, 80세 이상 3.3%)
+  return { pay, ps, irp, y, n, base, rate, refund, bal, paid, monthly, net: monthly - tax, over: monthly * 12 * (1 - freeShare) > 15000000, room: Math.max(0, 9000000 - base), psOver: ps > 6000000 };
+}
+function pension() {
+  const o = pensionCalc(), out = document.getElementById('pn_out');
+  if (!o.ps && !o.irp) { out.innerHTML = '연금저축이나 IRP에 1년에 넣을 돈을 넣어 주세요.'; return; }
+  const note = t => `<p style="font-size:13px;color:var(--muted);margin:10px 0 0">${t}</p>`;
+  out.innerHTML = `<div>연말정산에서 매년 돌려받는 돈</div><div class="big">${won(o.refund)} <small>/ 년</small></div>` +
+    rows([['세액공제 받는 금액', won(o.base)], ['공제율', o.rate === 0.165 ? '16.5% (총급여 5,500만 원 이하)' : '13.2% (총급여 5,500만 원 초과)'], [`${o.y}년 동안 돌려받는 돈`, won(o.refund * o.y)],
+      ['넣은 돈 (원금)', won(o.paid)], [`${o.y}년 뒤 모인 돈 (세전)`, won(o.bal)], [`${o.n}년 동안 매달 받는 연금 (세전)`, won(o.monthly)], ['연금소득세 뺀 금액 (55~69세 기준)', won(o.net)]]) +
+    (o.psOver ? note('연금저축은 600만 원까지만 세액공제를 받아요. 넘는 돈은 IRP에 넣어야 900만 원까지 채울 수 있어요.') : '') +
+    (o.over ? note('세금이 붙는 연금이 1년에 1,500만 원을 넘으면, 16.5% 분리과세와 종합과세 중 하나를 골라야 해요. 받는 기간을 늘려 1년에 받는 금액을 줄이면 저율(3.3~5.5%)로 받을 수 있어요.') : '');
+}
+
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, is_out: isa, pn_out: pension };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
 const insights = {
+  is_out() {
+    const o = isaCalc();
+    if (!o.yearly || o.bal <= 0) return '';
+    const move = Math.min(o.bal * 0.1, 3000000);
+    return `만기 후 연금저축·IRP로 옮기면 옮긴 돈의 10%(최대 300만 원)를 연금 세액공제에 더 넣을 수 있어요. 다 옮기면 약 ${won(move * 0.132)}~${won(move * 0.165)}을 한 번 더 돌려받아요.`;
+  },
+  pn_out() {
+    const o = pensionCalc();
+    if (!o.ps && !o.irp) return '';
+    return o.room > 0 ? `IRP에 ${korean(o.room) || won(o.room)} 더 넣으면, 1년에 ${won(Math.floor(o.room * o.rate))}을 더 돌려받아요. (한도 900만 원)`
+      : '세액공제 한도 900만 원을 꽉 채웠어요. 55세 전에 중도 해지하면 공제받은 돈과 수익에 16.5% 세금이 붙으니 오래 두는 게 좋아요.';
+  },
   sr_out() {
     const year = (seg('sr_mode') === 'month' ? val('sr_amt') * 12 : val('sr_amt')) / 10000;
     if (!year) return '';
@@ -1340,6 +1401,16 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       ['savings', '실수령액의 20%를 적금에 넣으면?', '적금 이자 계산기', { s_amt: Math.max(10000, Math.round(bigNum() * 0.2 / 10000) * 10000), s_n: 12 }],
       ['severance', '이 월급이면 퇴직금은?', '퇴직금 계산기', { v_pay: R(rowNum('세전 월급')) }],
     ],
+    isa: () => [
+      ['pension', 'ISA 만기 후 연금계좌로 옮기면?', '연금저축·IRP 계산기', {}],
+      ['dividend', '배당 세금은 얼마나 나갈까?', '배당금 계산기', {}],
+      ['compound', '같은 돈을 더 오래 굴리면?', '복리 계산기', { c_init: R(val('is_amt')), c_add: 0, c_r: val('is_r'), c_y: Math.max(5, Math.round(val('is_y'))) }],
+    ],
+    pension: () => [
+      ['year-end-tax', '연말정산 전체로 보면 얼마 환급?', '연말정산 환급 계산기', { ys_pay: R(val('pn_pay')), ys_pension: R(val('pn_ps') + val('pn_irp')) }],
+      ['retirement', '노후에 얼마가 필요할까?', '노후자금 계산기', {}],
+      ['isa', 'ISA도 같이 하면 세금이 얼마나 줄까?', 'ISA 절세 계산기', {}],
+    ],
     'salary-rank': () => [
       ['salary', '이 연봉, 실수령액은 얼마?', '연봉 실수령액 계산기', { m_mode: 'year', m_amt: R(seg('sr_mode') === 'month' ? val('sr_amt') * 12 : val('sr_amt')) }],
       ['year-end-tax', '연말정산으로 얼마나 돌려받을까?', '연말정산 환급 계산기', { ys_pay: R(seg('sr_mode') === 'month' ? val('sr_amt') * 12 : val('sr_amt')) }],
@@ -1522,7 +1593,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection'];
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension'];
 const iconOf = path => { const slug = String(path).replace(/\//g, ''); return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -1557,6 +1628,8 @@ function addTileIcon(t) {
     '/compound/': '연 7%면 <b>약 10년</b>에 2배',
     '/goal/': '1억 · 5년 · 연 3.5%면 월 <b>약 152만 원</b>',
     '/inflation/': '물가 2%면 10년 뒤 100만 원은 <b>약 82만 원</b> 가치',
+    '/isa/': '수익 <b>200만 원까지 비과세</b>',
+    '/pension/': '1년 최대 <b>148만 5천 원</b> 환급',
     '/prepayment/': '대출받고 <b>3년</b> 지나면 수수료 0원',
     '/pyeong/': '1평은 <b>3.3058㎡</b>',
     '/vat/': '부가세는 <b>10%</b>',
@@ -1667,7 +1740,7 @@ const MENU = [
   ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표']]],
   ['챌린지 · 테스트', [['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제 금전운 돈나무'], ['/no-spend/', '무지출 챌린지', '절약 무지출 달력 도장'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti'],
     ['/collection/', '내 컬렉션', '돈나무 배지 기록 모음']]],
-  ['저축 · 투자', [['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/goal/', '목표 저축', '1억 모으기'],
+  ['저축 · 투자', [['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
     ['/dividend/', '배당금', '주식 배당 세금'], ['/avg-price/', '물타기', '평균 단가 주식'], ['/retirement/', '노후자금', '은퇴 연금'], ['/inflation/', '물가상승률', '화폐 가치']]],
   ['대출 · 집', [['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
@@ -1880,7 +1953,7 @@ async function saveXlsx(name, url) {
 // ── 첫 화면: 오늘의 돈 퀴즈 카드 (O/X를 누르면 퀴즈 페이지에서 바로 정답을 보여 줘요) ──
 (() => {
   if (!document.body.classList.contains('home') || typeof QUIZ === 'undefined') return;
-  const s = quizLoad(), id = quizToday(), done = s.days[quizDate()], streak = quizStreak(s);
+  const s = quizLoad(), id = quizTodayFor(s), done = s.days[quizDate()], streak = quizStreak(s);
   const tree = treeOf(s), f = done ? fortuneToday(s) : null;
   const sec = document.createElement('section');
   sec.className = 'quiz-home';
