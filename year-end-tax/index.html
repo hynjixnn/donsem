@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>연말정산 환급 계산기 - 13월의 월급 얼마나 돌려받을까</title>
+<meta name="description" content="연말정산 환급 계산기. 총급여, 카드 사용액, 연금저축, 월세, 의료비를 넣으면 연말정산에서 돌려받을 돈(또는 더 낼 세금)을 미리 계산해요. 지방소득세 포함.">
+<link rel="canonical" href="https://doncalculator.com/year-end-tax/">
+<meta property="og:title" content="연말정산 환급 계산기 - 13월의 월급 얼마나 돌려받을까">
+<meta property="og:description" content="연말정산 환급 계산기. 총급여, 카드 사용액, 연금저축, 월세, 의료비를 넣으면 연말정산에서 돌려받을 돈(또는 더 낼 세금)을 미리 계산해요. 지방소득세 포함.">
+<meta property="og:url" content="https://doncalculator.com/year-end-tax/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="돈셈">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="/style.css">
+<script src="/vt.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" class="logo-bg"/><path d="M50 29H22v42h28" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M70 29L57 71M70 47l13 24" fill="none" stroke="#0a84ff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>돈셈</a>
+    <div class="top-right"><div class="top-links"><a class="all" href="/budget/">가계부</a><a class="all" href="/assets/">내 자산</a><a class="all" href="/calculators/">모든 계산기</a></div><button type="button" class="theme-btn" aria-label="화면 모드 바꾸기 (지금: 라이트)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/unemployment/">실업급여</a>
+    <a href="/year-end-tax/">연말정산 환급</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/salary/">연봉 실수령액</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+    <a href="/unit-price/">단가 비교</a>
+    <a href="/fuel/">유류비</a>
+    <a href="/dutch-pay/">더치페이</a>
+    <a href="/date/">날짜</a>
+  </nav>
+
+  <section class="card" id="year-end-tax">
+    <h1>연말정산 환급 계산기</h1>
+    <p class="sub">1년 동안 미리 낸 세금과 실제 낼 세금을 비교해서, 연말정산에서 돌려받을 돈을 미리 계산해요.</p>
+    <p class="trust">2026년 기준 · 2026.10.21 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
+    <label>총급여 (1년, 비과세 제외)</label>
+    <div class="field"><input data-k="ys_pay" inputmode="numeric" value="40,000,000"><span>원</span></div>
+    <label>이미 낸 소득세 (모르면 비워 두세요)</label>
+    <div class="field"><input data-k="ys_paid" inputmode="numeric" value=""><span>원</span></div>
+    <label>부양가족 수 (나 포함)</label>
+    <div class="field"><input data-k="ys_fam" inputmode="numeric" value="1"><span>명</span></div>
+    <label>8세 이상 자녀 수</label>
+    <div class="field"><input data-k="ys_kids" inputmode="numeric" value="0"><span>명</span></div>
+    <label>신용카드 사용액 (1년)</label>
+    <div class="field"><input data-k="ys_credit" inputmode="numeric" value="15,000,000"><span>원</span></div>
+    <label>체크카드·현금영수증 사용액 (1년)</label>
+    <div class="field"><input data-k="ys_debit" inputmode="numeric" value="5,000,000"><span>원</span></div>
+    <label>연금저축·IRP 넣은 돈 (1년)</label>
+    <div class="field"><input data-k="ys_pension" inputmode="numeric" value="0"><span>원</span></div>
+    <label>월세 낸 돈 (1년, 무주택 세대주)</label>
+    <div class="field"><input data-k="ys_rent" inputmode="numeric" value="0"><span>원</span></div>
+    <label>의료비 (1년)</label>
+    <div class="field"><input data-k="ys_med" inputmode="numeric" value="0"><span>원</span></div>
+    <label>보장성 보험료 (1년)</label>
+    <div class="field"><input data-k="ys_ins" inputmode="numeric" value="0"><span>원</span></div>
+    <div class="result" id="ys_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>연말정산이 뭔가요?</h3>
+    <p>회사는 매달 월급을 줄 때 국세청 간이세액표대로 소득세를 미리 떼요. 다음 해 1~2월에 1년 동안 쓴 카드, 연금저축, 월세, 의료비 같은 공제를 반영해 진짜 세금을 다시 계산하고, 더 냈으면 돌려주고 덜 냈으면 더 걷어요. 보통 2~3월 월급과 함께 들어와서 '13월의 월급'이라고 불러요.</p>
+    <h3>환급을 늘리려면?</h3>
+    <p>가장 효과가 큰 건 연금저축·IRP예요. 총급여 5,500만 원 이하라면 넣은 돈의 16.5%(지방소득세 포함)를 돌려받아요. 카드는 총급여의 25%를 넘게 쓴 다음부터 공제되고, 그 뒤로는 신용카드(15%)보다 체크카드·현금영수증(30%)이 두 배 유리해요. 무주택 세대주라면 월세 공제도 꼭 챙기세요.</p>
+    <h3>12월 전에 할 수 있는 것</h3>
+    <p>지금 계산해 보고 카드 사용액이 25%에 못 미치면 신용카드로, 넘었다면 체크카드로 쓰는 게 좋아요. 연금저축·IRP는 12월 31일까지 넣은 돈만 올해 공제돼요. 국세청 홈택스의 '연말정산 미리보기'에서 내 카드 사용액을 확인할 수 있어요.</p>
+    <h3>함께 쓰면 좋은 계산기</h3>
+    <p>매달 들어오는 월급은 <a href="/salary/">연봉 실수령액 계산기</a>로, 연금저축을 오래 넣으면 얼마가 되는지는 <a href="/compound/">복리 계산기</a>로 확인해 보세요.</p>
+    <h3 id="basis">계산 근거</h3>
+    <ul class="basis">
+      <li>근로소득공제, 기본공제(1명당 150만 원), 국민연금·건강보험·고용보험료 공제, 종합소득세율 6~45%, 근로소득세액공제와 한도</li>
+      <li>신용카드 등: 총급여 25% 초과분의 신용카드 15%, 체크카드·현금영수증 30%, 한도 300만 원(총급여 7,000만 원 초과 250만 원) + 자녀 수에 따라 늘어남</li>
+      <li>자녀세액공제: 8세 이상 첫째 25만 원, 둘째 30만 원, 셋째부터 40만 원</li>
+      <li>연금계좌 900만 원 한도 15%(총급여 5,500만 원 초과 12%), 보장성 보험료 100만 원 한도 12%, 의료비 총급여 3% 초과분 15%, 월세 1,000만 원 한도 17%(5,500만 원 초과 15%, 8,000만 원 초과는 대상 아님)</li>
+      <li>보험료·의료비·월세 공제와 표준세액공제(13만 원) 중 세금이 적은 쪽으로 계산, 지방소득세는 소득세의 10%</li>
+    </ul>
+    <p class="basis-note">2026.10.21에 마지막으로 확인했어요. 2025년 귀속 연말정산 규칙으로 계산했고, 2026년 귀속분이 바뀌면 바로 고칠게요. 교육비, 기부금, 주택청약, 전통시장·대중교통·문화비 추가 공제는 넣지 않아서 실제 환급은 더 많을 수 있어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
+  </article>
+
+  <footer>
+    계산 결과는 미리 보는 참고용이에요. 실제 환급액은 회사의 연말정산 결과(원천징수영수증)로 정해져요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/salary/table.js"></script>
+<script src="/app.js"></script>
+<!-- Cloudflare Web Analytics: 쿠키 없이 방문 수만 세요 --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4ddea5349bb94a689667508931ca47d8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

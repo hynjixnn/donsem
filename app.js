@@ -260,6 +260,48 @@ function unemployment() {
     note.map(t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`).join('');
 }
 
+// ── 연말정산 환급: 지금 적용 중인 근로소득 연말정산 규칙으로 1년 세금을 다시 계산해서, 미리 낸 세금과 비교해요 ──
+const earnedDed = Y => Y <= 5e6 ? Y * 0.7 : Y <= 15e6 ? 3.5e6 + (Y - 5e6) * 0.4 : Y <= 45e6 ? 7.5e6 + (Y - 15e6) * 0.15 : Y <= 1e8 ? 12e6 + (Y - 45e6) * 0.05 : Math.min(2e7, 14.75e6 + (Y - 1e8) * 0.02);
+const TAX_BRACKETS = [[14e6, 0.06, 0], [5e7, 0.15, 1.26e6], [8.8e7, 0.24, 5.76e6], [1.5e8, 0.35, 15.44e6], [3e8, 0.38, 19.94e6], [5e8, 0.40, 25.94e6], [1e9, 0.42, 35.94e6], [Infinity, 0.45, 65.94e6]];
+const incomeTaxOf = tb => { const [, r, d] = TAX_BRACKETS.find(b => tb <= b[0]); return Math.max(0, tb * r - d); };
+function yearEndTax(o) { // o: pay, fam, kids, credit, debit, pension, rent, med, ins
+  const Y = o.pay, month = Y / 12, ins4 = takeHome(month, 0, o.fam, o.kids);
+  const npsYear = ins4.pension * 12, hiYear = (ins4.health + ins4.care + ins4.job) * 12; // 국민연금, 건강·장기요양·고용보험료
+  // 신용카드 등: 총급여의 25%를 넘게 쓴 돈부터, 신용카드를 먼저 채운 걸로 보고 신용 15% · 체크·현금 30%
+  const th = Y * 0.25, overCredit = Math.max(0, o.credit - th), overDebit = Math.max(0, o.debit - Math.max(0, th - o.credit));
+  const cardLimit = Y <= 7e7 ? 3e6 + Math.min(o.kids, 2) * 5e5 : 2.5e6 + Math.min(o.kids, 2) * 2.5e5;
+  const card = Math.min(overCredit * 0.15 + overDebit * 0.3, cardLimit);
+  const base = Y - earnedDed(Y) - 1.5e6 * o.fam - npsYear - card;
+  const kidCredit = o.kids <= 0 ? 0 : o.kids === 1 ? 25e4 : 55e4 + (o.kids - 2) * 40e4;
+  const pensionCredit = Math.min(o.pension, 9e6) * (Y <= 5.5e7 ? 0.15 : 0.12);
+  const special = Math.min(o.ins, 1e6) * 0.12 + Math.max(0, o.med - Y * 0.03) * 0.15 + (Y <= 8e7 ? Math.min(o.rent, 1e7) * (Y <= 5.5e7 ? 0.17 : 0.15) : 0);
+  const workLimit = Y <= 3.3e7 ? 74e4 : Y <= 7e7 ? Math.max(66e4, 74e4 - (Y - 3.3e7) * 0.008) : Y <= 1.2e8 ? Math.max(5e5, 66e4 - (Y - 7e7) * 0.5) : Math.max(2e5, 5e5 - (Y - 1.2e8) * 0.5);
+  const settle = (tb, extra) => {
+    const calc = incomeTaxOf(Math.max(0, tb));
+    const work = Math.min(calc <= 1.3e6 ? calc * 0.55 : 715000 + (calc - 1.3e6) * 0.3, workLimit);
+    return floor10(Math.max(0, calc - work - kidCredit - pensionCredit - extra));
+  };
+  // 보험료·의료비·월세 공제를 받는 쪽과, 대신 표준세액공제 13만 원을 받는 쪽 중 세금이 적은 쪽으로 정산돼요
+  const tax = Math.min(settle(base - hiYear, special), settle(base, 13e4));
+  return { tax, card, th, kidCredit, pensionCredit, special };
+}
+function yearEndInput() {
+  const kids = Math.max(0, Math.round(val('ys_kids')));
+  return { pay: val('ys_pay'), fam: Math.max(1, Math.round(val('ys_fam')), kids + 1), kids, credit: val('ys_credit'), debit: val('ys_debit'), pension: val('ys_pension'), rent: val('ys_rent'), med: val('ys_med'), ins: val('ys_ins') };
+}
+function yearEnd() {
+  const out = document.getElementById('ys_out'), o = yearEndInput();
+  if (!o.pay) { out.innerHTML = '총급여를 넣어 주세요.'; return; }
+  const paidEl = document.querySelector('input[data-k="ys_paid"]'), guessed = paidEl.value.trim() === '';
+  // 낸 세금을 모르면: 매달 간이세액표대로 뗐다고 보고 1년 치를 추정해요
+  const kidCut = o.kids <= 0 ? 0 : o.kids === 1 ? 20830 : 45830 + (o.kids - 2) * 33330;
+  const paid = guessed ? Math.max(0, floor10(tableTax(o.pay / 12, Math.min(o.fam, 11)) - kidCut)) * 12 : val('ys_paid');
+  const r = yearEndTax(o), paidAll = paid + floor10(paid * 0.1), taxAll = r.tax + floor10(r.tax * 0.1), diff = paidAll - taxAll;
+  out.innerHTML = `<div>${diff >= 0 ? '예상 환급액 (지방소득세 포함)' : '더 낼 세금 (지방소득세 포함)'}</div><div class="big">${won(Math.abs(diff))}</div>` +
+    rows([[`이미 낸 세금${guessed ? ' (추정)' : ''}`, won(paidAll)], ['실제 낼 세금', won(taxAll)], ['신용카드 등 소득공제', won(r.card)], ['연금저축·IRP 세액공제', won(r.pensionCredit)], ['자녀 세액공제', won(r.kidCredit)], ['보험료·의료비·월세 세액공제', won(r.special)]]) +
+    (guessed ? '<p style="font-size:12px;color:var(--muted);margin:10px 0 0">이미 낸 세금을 비워 둬서, 매달 국세청 간이세액표대로 뗐다고 보고 추정했어요. 급여명세서의 소득세 × 12를 넣으면 더 정확해요.</p>' : '');
+}
+
 function goal() {
   const G = val('g_goal'), S = val('g_now'), n = Math.round(val('g_y') * 12), i = val('g_r') / 100 / 12, out = document.getElementById('g_out');
   if (n <= 0) { out.innerHTML = '기간을 넣어 주세요.'; return; }
@@ -462,7 +504,7 @@ function dateCalc() {
 }
 
 // 페이지마다 계산기가 하나씩 있어서, 그 페이지에 있는 계산기만 계산해요
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
@@ -551,6 +593,15 @@ const insights = {
     if (!M || !big) return '';
     const month = Math.floor(num(big.dataset.final || big.textContent) / jobDays()) * 30;
     return `한 달에 약 ${won(month)}을 받아요. 그만두기 전 세전 월급의 ${pct(month / M * 100, 0)} 정도이고, 실업급여는 세금을 떼지 않아요.`;
+  },
+  ys_out() {
+    const o = yearEndInput();
+    if (!o.pay) return '';
+    const r = yearEndTax(o), used = o.credit + o.debit;
+    if (used < r.th) return `카드 공제는 총급여의 25%(${won(r.th)})를 넘게 쓴 돈부터 시작돼요. 아직 ${won(r.th - used)} 더 써야 공제가 시작돼요.`;
+    const more = r.tax - yearEndTax(Object.assign({}, o, { pension: o.pension + 1e6 })).tax;
+    if (more > 0 && o.pension + 1e6 <= 9e6) return `연금저축·IRP에 100만 원을 더 넣으면 세금이 약 ${won(Math.round(more * 1.1 / 100) * 100)} 더 줄어요 (지방소득세 포함).`;
+    return '25%를 넘게 쓴 다음부터는 신용카드(15%)보다 체크카드·현금영수증(30%)이 공제를 두 배 받아요.';
   },
   g_out() {
     const big = document.querySelector('#g_out .big');
@@ -771,6 +822,14 @@ const GLOSSARY = [
   ['그만두기 전 3개월 평균 월급', '세금 떼기 전(세전) 금액이에요. 기본급에 매달 받던 수당까지 더해서 넣어 주세요.'],
   ['고용보험 가입기간', '고용보험에 가입해 일한 기간이에요. 여러 회사를 다녔다면 합칠 수 있어요(예전 회사에서 실업급여를 받았다면 그 전 기간은 빠져요). 고용24에서 확인할 수 있어요.'],
   ['하루 근무시간', '근로계약서에 적힌 하루 일하는 시간(소정근로시간)이에요. 8시간보다 짧으면 하루 하한액도 그만큼 줄어요.'],
+  ['총급여', '1년 동안 받은 돈 중 비과세(식대 등)를 뺀 금액이에요. 상여금도 들어가요. 원천징수영수증의 "총급여"와 같아요.'],
+  ['이미 낸 소득세', '1년 동안 월급에서 미리 뗀 소득세 합계예요. 급여명세서의 소득세 × 12로 넣거나, 모르면 비워 두세요. 지방소득세는 빼고 넣어 주세요.'],
+  ['8세 이상 자녀 수', '기본공제를 받는 8세 이상(보통 20세 이하) 자녀예요. 첫째 25만 원, 둘째 30만 원, 셋째부터 40만 원씩 세금을 깎아 줘요.'],
+  ['체크카드', '체크카드와 현금영수증은 신용카드보다 공제율이 두 배(30%)예요. 대중교통, 전통시장은 여기에 넣어도 돼요.'],
+  ['연금저축', '연금저축과 IRP에 넣은 돈은 1년에 900만 원까지 세금을 돌려받아요 (총급여 5,500만 원 이하 15%, 넘으면 12%).'],
+  ['월세 낸 돈', '무주택 세대주가 총급여 8,000만 원 이하일 때 받아요. 주민등록 주소가 그 집이어야 해요.'],
+  ['의료비', '총급여의 3%를 넘게 쓴 의료비부터 15%를 돌려받아요. 실손보험으로 돌려받은 돈은 빼고 넣어 주세요.'],
+  ['보장성 보험료', '실손·암보험처럼 다치거나 아플 때 받는 보험이에요. 1년 100만 원까지 12%를 돌려받아요.'],
   ['일주일 근무시간', '쉬는 시간을 뺀, 일하기로 약속한 시간이에요. 하루 5시간씩 주 4일이면 20시간이에요.'],
   ['할부 금리', '할부로 낸 돈에 붙는 1년 이율이에요. 카드사나 캐피탈의 할부 조건에서 확인할 수 있어요.'],
   ['선수금', '차를 살 때 처음에 한 번에 내는 돈이에요. 많이 낼수록 할부 원금과 이자가 줄어요.'],
@@ -1216,6 +1275,11 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       ['severance', '퇴직금은 얼마일까?', '퇴직금 계산기', { v_pay: R(val('j_pay')), v_end: raw('j_end') }],
       ['date', '실업급여 받는 날수가 끝나는 날은?', '날짜 계산기', { z_mode: 'add', z_base: raw('j_end'), z_n: jobDays() }],
       ['salary', '다음 회사 월급, 실수령액은?', '연봉 실수령액 계산기', { m_mode: 'month', m_amt: R(val('j_pay')) }],
+    ],
+    'year-end-tax': () => [
+      ['salary', '내 월급, 실수령액은?', '연봉 실수령액 계산기', { m_mode: 'year', m_amt: R(val('ys_pay')) }],
+      ['compound', '연금저축에 매달 50만 원씩 넣으면?', '복리 계산기', { c_init: 0, c_add: 500000, c_y: 20 }],
+      ['deposit', '환급받은 돈을 예금에 넣으면?', '예금 이자 계산기', bigNum() ? { d_amt: R(bigNum()), d_n: 12 } : {}],
     ],
     goal: () => [
       ['savings', '적금으로 넣으면 세후 이자는?', '적금 이자 계산기', { s_amt: R(bigNum()), s_n: R(val('g_y') * 12), s_r: val('g_r') }],
