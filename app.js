@@ -915,7 +915,7 @@ function toast(msg) {
   const t = document.createElement('div');
   t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
   setTimeout(() => t.classList.add('show'), 10);
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 380); }, 2200);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2200);
 }
 async function copyLink(url, btn) {
   try { await navigator.clipboard.writeText(url); }
@@ -2134,7 +2134,7 @@ function markDailyFull() {
     try { seen = localStorage.getItem('donsem:rings-closed'); } catch (e) { seen = ''; }
     if (closedNow && seen !== st.today) { // 링이 다 닫힌 순간(하루 한 번): 링이 통 튀고 반짝여요
       try { localStorage.setItem('donsem:rings-closed', st.today); } catch (e) { /* 저장이 막힌 브라우저 */ }
-      setTimeout(() => sec.querySelector('.tc-rings')?.classList.add('closing'), 700); // 링 3개가 다 채워진 뒤 (0.38초 + 차례 0.24초)
+      setTimeout(() => sec.querySelector('.tc-rings')?.classList.add('closing'), 1100);
     }
   }
   let drawn = null;
@@ -2264,7 +2264,7 @@ function countOnce(k, v) {
     p.style.transition = '';
     if (dy > 110 || (fast && dy > 40)) {
       p.style.transform = 'translateY(100%)';
-      setTimeout(() => { const b = closeBtn(p); if (b) b.click(); p.style.transform = ''; }, 380);
+      setTimeout(() => { const b = closeBtn(p); if (b) b.click(); p.style.transform = ''; }, 240);
     } else p.style.transform = '';
   });
 })();
@@ -2341,7 +2341,7 @@ document.addEventListener('click', e => {
     if (!layer) return;
     const l = layer; layer = null;
     l.classList.remove('show');
-    setTimeout(() => l.remove(), 380);
+    setTimeout(() => l.remove(), 260);
   }
   function open(tile) {
     const href = tile.getAttribute('href'), h3 = tile.querySelector('h3'), p = tile.querySelector('p'), key = tile.querySelector('.key'), star = tile.querySelector('button.fav');
@@ -2379,50 +2379,40 @@ document.addEventListener('click', e => {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 })();
 
-// ── 돈 관리 탭: 누른 순간 파란 알약이 그 탭으로 미끄러지기 시작하고, 화면은 바로 넘어가요.
-//    새 화면은 알약이 있던 자리에서 이어서 끝까지 미끄러지고, 내용은 누른 쪽에서 들어와요 (모두 0.38초) ──
+// ── 돈 관리 탭: 누른 순간 파란 알약이 그 탭으로 쫀득하게 미끄러지고, 내용은 그 방향으로 넘어가요 ──
 (() => {
-  const tabs = document.querySelector('.mm-tabs'), on = tabs && tabs.querySelector('a.on'), PILL = 'donsem:mm-pill';
-  let from = null;
-  try { from = JSON.parse(sessionStorage.getItem(PILL)); sessionStorage.removeItem(PILL); sessionStorage.removeItem('donsem:mm-from'); } catch (e) { from = null; }
+  const tabs = document.querySelector('.mm-tabs'), on = tabs && tabs.querySelector('a.on');
   if (!tabs || !on) return;
-  const links = [...tabs.querySelectorAll('a')], KEY = 'donsem:mm-from', root = document.documentElement;
+  const links = [...tabs.querySelectorAll('a')], KEY = 'donsem:mm-from';
   const pill = document.createElement('span');
   pill.className = 'mm-pill'; pill.setAttribute('aria-hidden', 'true');
   tabs.prepend(pill); tabs.classList.add('has-pill');
   const place = a => { pill.style.width = a.offsetWidth + 'px'; pill.style.height = a.offsetHeight + 'px'; pill.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`; };
-  const snap = () => { pill.style.transition = 'none'; place(tabs.querySelector('a.on') || on); pill.offsetWidth; pill.style.transition = ''; };
-  if (from && typeof from.x === 'number') { // 지난 화면에서 알약이 있던 자리에서 출발
-    pill.style.transition = 'none';
-    pill.style.width = from.w + 'px'; pill.style.height = on.offsetHeight + 'px'; pill.style.transform = `translate(${from.x}px, ${on.offsetTop}px)`;
-    pill.offsetWidth; pill.style.transition = '';
-    requestAnimationFrame(() => place(on));
-  } else snap();
-  let going = false;
+  try { sessionStorage.removeItem(KEY); } catch (e) { /* 기억 못 해도 괜찮아요 */ }
+  pill.style.transition = 'none'; place(on); pill.offsetWidth; pill.style.transition = ''; // 알약은 누른 화면에서 이미 도착해 있어요
+  const root = document.documentElement, calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let leaving = 0;
   tabs.addEventListener('click', e => {
     const a = e.target.closest('a');
     if (!a || a === on || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
     try { sessionStorage.setItem(KEY, String(links.indexOf(on))); } catch (err) { /* 기억 못 해도 괜찮아요 */ }
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    place(a); // 누른 순간 미끄러지기 시작하고, 글자색도 바로 바뀌어요
+    if (calm) return; // 움직임 줄이기를 켠 사람은 바로 넘어가요
+    e.preventDefault();
+    place(a); // 누른 순간 알약이 바로 그쪽으로 미끄러지고, 글자색도 바로 바뀌어요
     links.forEach(x => x.classList.toggle('on', x === a));
     root.classList.remove('mm-in-next', 'mm-in-prev', 'mm-go-next', 'mm-go-prev');
     root.classList.add('mm-leaving', links.indexOf(a) > links.indexOf(on) ? 'mm-go-next' : 'mm-go-prev');
-    going = true; // 링크는 막지 않아요: 바로 다음 화면으로 넘어가요
+    clearTimeout(leaving);
+    leaving = setTimeout(() => { location.href = a.href; }, 200); // 알약이 거의 도착하고 지금 화면이 사라질 즈음 넘어가요
   });
-  window.addEventListener('pagehide', () => { // 떠나는 순간 알약이 어디까지 왔는지 기억해 둬요
-    if (!going) return;
-    const m = new DOMMatrixReadOnly(getComputedStyle(pill).transform);
-    try { sessionStorage.setItem(PILL, JSON.stringify({ x: m.m41, w: pill.getBoundingClientRect().width })); } catch (err) { /* 기억 못 해도 괜찮아요 */ }
-  });
-  window.addEventListener('resize', snap);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => place(tabs.querySelector('a.on') || on)); // 미끄러지는 중이면 끊지 않아요
+  window.addEventListener('resize', () => place(on));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => place(on));
   window.addEventListener('pageshow', e => { // 뒤로 가기로 돌아오면 사라졌던 내용과 알약을 제자리로
     if (!e.persisted) return;
-    going = false;
+    clearTimeout(leaving);
     root.classList.remove('mm-leaving', 'mm-go-next', 'mm-go-prev', 'mm-in-next', 'mm-in-prev');
     links.forEach(x => x.classList.toggle('on', x === on));
-    snap();
+    pill.style.transition = 'none'; place(on); pill.offsetWidth; pill.style.transition = '';
   });
 })();
 
