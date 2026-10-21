@@ -84,8 +84,8 @@ function quizToday(d = new Date()) {
 function quizLoad() {
   let s = null;
   try { s = JSON.parse(localStorage.getItem(QUIZ_KEY)); } catch (e) { s = null; }
-  if (!s || typeof s !== 'object' || !s.days) return { days: {}, solved: [], prac: {}, seed: 0 };
-  return { days: s.days, solved: Array.isArray(s.solved) ? s.solved : [], prac: s.prac && typeof s.prac === 'object' ? s.prac : {}, seed: s.seed || 0 };
+  if (!s || typeof s !== 'object' || !s.days) return { days: {}, solved: [], prac: {}, full: {}, seed: 0 };
+  return { days: s.days, solved: Array.isArray(s.solved) ? s.solved : [], prac: s.prac && typeof s.prac === 'object' ? s.prac : {}, full: s.full && typeof s.full === 'object' ? s.full : {}, seed: s.seed || 0 };
 }
 function quizSave(s) { try { localStorage.setItem(QUIZ_KEY, JSON.stringify(s)); } catch (e) { /* 저장이 막힌 환경 */ } }
 // 오늘(또는 어제)까지 하루도 빠짐없이 오늘의 퀴즈를 푼 날 수
@@ -138,13 +138,14 @@ function fortuneToday(s, date = quizDate()) {
     color: FORTUNE.colors[next(FORTUNE.colors.length)], num: next(99) + 1, todo: FORTUNE.todo[next(FORTUNE.todo.length)] };
 }
 
-// ── 내 돈나무: 오늘의 문제를 풀면 +1, 맞히면 +1 더, 그날 '한 문제 더'를 하나라도 맞히면 +1 ──
+// ── 내 돈나무: 오늘의 문제를 풀면 +1, 맞히면 +1 더, 그날 '한 문제 더'를 하나라도 맞히면 +1, '오늘의 돈셈' 3개를 다 하면 +1 ──
 const TREE = [[0, '새싹'], [3, '떡잎'], [8, '화분'], [15, '어린 나무'], [25, '큰 나무'], [40, '돈나무']];
 const TREE_FRUIT = 6; // 돈나무가 된 뒤에는 6점마다 돈 열매가 하나씩 열려요
 function treeOf(s) {
   let pts = 0;
   for (const d in s.days) pts += 1 + (s.days[d].ok ? 1 : 0);
   for (const d in s.prac) if (s.prac[d] > 0) pts += 1;
+  for (const d in s.full || {}) pts += 1;
   let lv = 0;
   TREE.forEach(([min], i) => { if (pts >= min) lv = i; });
   const next = TREE[lv + 1], top = TREE[TREE.length - 1][0];

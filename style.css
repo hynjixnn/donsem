@@ -875,3 +875,28 @@ html.gnav-open { overflow: hidden; }
 .ns-link span { flex: 1; }
 .ns-link i { font-style: normal; color: var(--muted); }
 .ns-page .page-ico { display: none; }
+
+/* ── 첫 화면: 오늘의 돈셈 체크리스트 ── */
+.today-card { margin-top: 40px; padding: 22px 20px 12px; border-radius: 24px; background: var(--card); }
+.today-card + .quiz-home { margin-top: 12px; }
+.tc-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.tc-head b { display: block; font-size: 20px; }
+.tc-head span { font-size: 13px; color: var(--muted); }
+.tc-tree { position: relative; flex: none; }
+.tc-tree img { width: 40px; height: 40px; }
+.tc-tree em { position: absolute; right: -8px; bottom: -4px; padding: 1px 6px; border-radius: 980px; background: var(--blue); color: #fff; font-size: 11px; font-style: normal; font-weight: 700; }
+.today-card .bar { margin: 14px 0 6px; }
+.tc-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.tc-row:first-of-type { border-top: 0; }
+.tc-check { flex: none; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 2px solid var(--line); border-radius: 50%; color: #fff; font-size: 14px; font-weight: 800; }
+.tc-row.done .tc-check { border-color: var(--blue); background: var(--blue); }
+.tc-text { flex: 1; min-width: 0; }
+.tc-text b { display: block; font-size: 15px; }
+.tc-row.done .tc-text b { color: var(--muted); text-decoration: line-through; }
+.tc-text span { font-size: 13px; color: var(--muted); }
+.tc-go { flex: none; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.tc-btns { display: flex; gap: 6px; flex: none; }
+.tc-btns button { padding: 7px 11px; border: 0; border-radius: 980px; background: var(--bg); color: var(--text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.tc-btns .tc-ns { background: rgba(255, 143, 177, .25); }
+@media (max-width: 640px) { .today-card { margin-top: 28px; } }
+@media (max-width: 640px) { .tc-row { flex-wrap: wrap; } .tc-btns { width: 100%; padding-left: 38px; } .tc-btns button { flex: 1; padding: 9px 11px; } }

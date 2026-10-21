@@ -822,6 +822,9 @@ let ready = false;
 function remember() {
   if (!ready || !result) return;
   store.set(SAVE_KEY, readState().toString());
+  const d0 = new Date();
+  store.set('donsem:daily-calc', `${d0.getFullYear()}-${String(d0.getMonth() + 1).padStart(2, '0')}-${String(d0.getDate()).padStart(2, '0')}`); // '오늘의 돈셈' ③ 계산기 하나 따져 보기
+  markDailyFull();
   const big = result.querySelector('.big');
   let list = [];
   try { list = JSON.parse(store.get(RECENT_KEY)) || []; } catch (e) { list = []; }
@@ -1172,6 +1175,8 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     amtEl.value = ''; sheet.querySelector('.qa-memo').value = ''; sheet.querySelector('.qa-kr').textContent = '';
     close();
     toast(streakCheer(before, b.entries) || `${cat} ${won(amt)}을 가계부에 기록했어요.`);
+    markDailyFull();
+    if (typeof window.drawToday === 'function') window.drawToday();
     if (path === '/budget/') setTimeout(() => location.reload(), 1200); // 가계부를 보고 있었다면 바로 반영
   }
   bar.querySelector('.tab-add').addEventListener('click', open);
@@ -1986,4 +1991,67 @@ function storyButton(label, make, fileName, link) {
   document.addEventListener('input', refresh);
   document.querySelectorAll('.seg').forEach(g => g.addEventListener('click', refresh));
   refresh();
+})();
+
+// ── 오늘의 돈셈: ① 돈 퀴즈 ② 오늘 쓴 돈 정리(가계부 기록 또는 무지출 도장) ③ 계산기 하나 — 셋 다 하면 돈나무에 💧 하나 더 ──
+function dailyStatus() {
+  const d = new Date(), today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const read = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const q = read('donsem:quiz') || {}, b = read('donsem:budget'), ns = read('donsem:nospend');
+  const entries = b && Array.isArray(b.entries) ? b.entries.filter(e => e.date === today && !String(e.id).startsWith('fx-')) : [];
+  const spent = entries.some(e => e.type === 'out'), stamped = !!(ns && Array.isArray(ns.days) && ns.days.includes(today)) && !spent;
+  let calc = false;
+  try { calc = localStorage.getItem('donsem:daily-calc') === today; } catch (e) { calc = false; }
+  return { today, quiz: !!(q.days && q.days[today]), money: entries.length > 0 || stamped, stamped, spent, calc, full: !!(q.full && q.full[today]) };
+}
+function markDailyFull() {
+  const st = dailyStatus();
+  if (!st.quiz || !st.money || !st.calc || st.full) return false;
+  let q = null;
+  try { q = JSON.parse(localStorage.getItem('donsem:quiz')); } catch (e) { q = null; }
+  if (!q || !q.days) return false;
+  q.full = Object.assign({}, q.full, { [st.today]: 1 });
+  try { localStorage.setItem('donsem:quiz', JSON.stringify(q)); } catch (e) { return false; }
+  setTimeout(() => toast('🎉 오늘의 돈셈 완료! 돈나무에 물을 한 번 더 줬어요 💧'), 900);
+  return true;
+}
+(() => {
+  if (!document.body.classList.contains('home') || typeof QUIZ === 'undefined') return;
+  const PICKS = [['/salary-rank/', '연봉 상위 % 계산기'], ['/savings/', '적금 이자 계산기'], ['/salary/', '연봉 실수령액 계산기'], ['/loan/', '대출 이자 계산기'], ['/discount/', '할인율 계산기'],
+    ['/compound/', '복리 계산기'], ['/unit-price/', '단가 비교 계산기'], ['/severance/', '퇴직금 계산기'], ['/year-end-tax/', '연말정산 환급 계산기'], ['/inflation/', '물가상승률 계산기']];
+  const sec = document.createElement('section');
+  sec.className = 'today-card';
+  const quizCard = document.querySelector('.quiz-home') || document.querySelector('.wrap > .group');
+  if (!quizCard) return;
+  quizCard.before(sec);
+  const openAdd = () => {
+    const add = document.querySelector('.tabbar .tab-add');
+    if (add && getComputedStyle(document.querySelector('.tabbar')).display !== 'none') add.click(); // 휴대폰: 아래에서 기록 창
+    else location.href = '/budget/';
+  };
+  function draw() {
+    const st = dailyStatus(), pick = PICKS[quizToday() % PICKS.length], n = [st.quiz, st.money, st.calc].filter(Boolean).length;
+    const tree = treeOf(quizLoad()), f = st.quiz ? fortuneToday(quizLoad()) : null;
+    const row = (done, title, sub, right) => `<div class="tc-row${done ? ' done' : ''}"><span class="tc-check" aria-hidden="true">${done ? '✓' : ''}</span><div class="tc-text"><b>${title}</b><span>${sub}</span></div>${right}</div>`;
+    sec.innerHTML = `<div class="tc-head"><div><b>오늘의 돈셈</b><span>${n === 3 ? '오늘 할 일을 다 했어요! 🎉' : '3개를 다 하면 돈나무에 물 💧 하나 더'}</span></div>
+        <a class="tc-tree" href="/quiz/#tree" aria-label="내 돈나무 보기"><img src="${tree.img}" alt="" width="40" height="40"><em>${n} / 3</em></a></div>
+      <div class="bar"><i style="width:${n / 3 * 100}%"></i></div>
+      ${row(st.quiz, '돈 퀴즈 풀기', st.quiz ? `오늘의 금전운 ${'💰'.repeat(f.coins)} ${f.level}` : '풀면 오늘의 금전운이 열려요', `<a class="tc-go" href="/quiz/">${st.quiz ? '보기' : '풀기'} ›</a>`)}
+      ${row(st.money, '오늘 쓴 돈 정리', st.stamped ? '무지출 도장 쾅! 🐷' : st.money ? '가계부에 기록했어요' : '썼으면 기록, 안 썼으면 무지출 도장', st.money ? `<a class="tc-go" href="${st.stamped ? '/no-spend/' : '/budget/'}">보기 ›</a>` : `<div class="tc-btns"><button type="button" class="tc-add">기록</button><button type="button" class="tc-ns">안 썼어요 🐷</button></div>`)}
+      ${row(st.calc, '계산기로 하나 따져 보기', st.calc ? '오늘 계산 완료' : `오늘의 추천: ${pick[1]}`, `<a class="tc-go" href="${pick[0]}">${st.calc ? '더 보기' : '해 보기'} ›</a>`)}`;
+    sec.querySelector('.tc-add')?.addEventListener('click', openAdd);
+    sec.querySelector('.tc-ns')?.addEventListener('click', () => { // 첫 화면에서 바로 무지출 도장
+      let ns = null;
+      try { ns = JSON.parse(localStorage.getItem('donsem:nospend')); } catch (e) { ns = null; }
+      if (!ns || !Array.isArray(ns.days)) ns = { days: [], goal: 10 };
+      if (!ns.days.includes(st.today)) ns.days = [...ns.days, st.today].sort();
+      try { localStorage.setItem('donsem:nospend', JSON.stringify(ns)); } catch (e) { return toast('이 브라우저에서는 저장할 수 없어요.'); }
+      toast('🐷 무지출 도장 쾅! 오늘은 돈을 안 썼어요.');
+      markDailyFull();
+      draw();
+    });
+  }
+  window.drawToday = draw; // ＋기록 창에서 저장하면 다시 그려요
+  draw();
+  if (markDailyFull()) draw();
 })();

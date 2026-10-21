@@ -40,6 +40,7 @@
     else if (ok) s.prac[today] = (s.prac[today] || 0) + 1;
     if (ok && !s.solved.includes(id)) s.solved.push(id);
     quizSave(s);
+    if (typeof markDailyFull === 'function') markDailyFull();
     show(choice, true);
     drawTree();
     const after = quizStreak(s), badge = BADGES.find(([n]) => before < n && after >= n), tree = treeOf(s);
@@ -113,7 +114,7 @@
         <p>${t.next ? `'${t.nextName}'까지 ${t.next}번 더 물 주면 돼요.` : `${TREE_FRUIT - (t.pts - TREE[TREE.length - 1][0]) % TREE_FRUIT}번 더 물 주면 열매가 하나 더 열려요.`}</p>
       </div>
     </div>
-    <p class="tree-how">오늘의 문제를 풀면 💧1, 맞히면 💧1 더, '한 문제 더'를 맞힌 날은 💧1 더 줘요.</p>`;
+    <p class="tree-how">오늘의 문제를 풀면 💧1, 맞히면 💧1 더, '한 문제 더'를 맞힌 날은 💧1, 첫 화면의 '오늘의 돈셈' 3개를 다 한 날도 💧1 더 줘요.</p>`;
   }
 
   // ── 인스타 스토리 크기(1080×1920) 금전운 이미지 ──

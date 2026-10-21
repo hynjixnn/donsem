@@ -74,6 +74,7 @@
     s.days = had ? s.days.filter(d => d !== day) : [...s.days, day].sort();
     save(s);
     draw();
+    if (!had && typeof markDailyFull === 'function') markDailyFull();
     if (!had) {
       const ok = valid(s, list), n = ok.filter(d => d.startsWith(today.slice(0, 7))).length, st = streak(ok);
       toast(n === s.goal && day.startsWith(today.slice(0, 7)) ? `🎉 이번 달 목표 ${s.goal}일 달성!` : st > 1 && day === today ? `🐷 ${st}일 연속 무지출!` : '🐷 무지출 도장 쾅!');

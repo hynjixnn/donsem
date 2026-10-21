@@ -61,6 +61,7 @@
     $('b-amt').focus();
     render();
     toast(streakCheer(before, data.entries) || `${cat} ${won(amt)}을 기록했어요.`);
+    markDailyFull();
   }
   $('b-save').addEventListener('click', addEntry);
   ['b-amt', 'b-memo'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addEntry(); } }));
