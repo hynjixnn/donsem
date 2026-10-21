@@ -580,11 +580,61 @@ function pension() {
     (o.over ? note('세금이 붙는 연금이 1년에 1,500만 원을 넘으면, 16.5% 분리과세와 종합과세 중 하나를 골라야 해요. 받는 기간을 늘려 1년에 받는 금액을 줄이면 저율(3.3~5.5%)로 받을 수 있어요.') : '');
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, is_out: isa, pn_out: pension };
+// ── 법인세: 2026년 1월 1일 이후 시작하는 사업연도부터 전 구간 1%p 인상 (2025년 12월 국회 통과) ──
+const CORP_BRACKETS = { // [구간 상한(원), 세율]
+  2026: [[2e8, 0.10], [2e10, 0.20], [3e11, 0.22], [Infinity, 0.25]],
+  2025: [[2e8, 0.09], [2e10, 0.19], [3e11, 0.21], [Infinity, 0.24]],
+};
+function corpTax(base, year) {
+  let tax = 0, low = 0;
+  for (const [top, r] of CORP_BRACKETS[year] || CORP_BRACKETS[2026]) { if (base > low) tax += (Math.min(base, top) - low) * r; low = top; }
+  return Math.floor(tax);
+}
+// 종합소득세는 연말정산 계산기와 같은 세율표(TAX_BRACKETS)와 incomeTaxOf()를 써요
+const marginalRate = base => TAX_BRACKETS.find(b => Math.max(base, 0) <= b[0])[1];
+function corporateTax() {
+  const base = val('ct_base'), year = seg('ct_year') === '2025' ? 2025 : 2026, out = document.getElementById('ct_out');
+  if (!base) { out.innerHTML = '과세표준(세금을 매기는 이익)을 넣어 주세요.'; return; }
+  const tax = corpTax(base, year), local = Math.floor(tax * 0.1), other = corpTax(base, year === 2026 ? 2025 : 2026);
+  out.innerHTML = `<div>내야 할 법인세 (지방소득세 포함)</div><div class="big">${won(tax + local)}</div>` +
+    rows([['법인세', won(tax)], ['법인 지방소득세 (10%)', won(local)], ['실제 세율', pct((tax + local) / base * 100, 2)],
+      [year === 2026 ? '2025년 세율이었다면' : '2026년 세율이면', `${won(Math.floor(other * 1.1))} (${year === 2026 ? '+' : '-'}${won(Math.abs(tax - other) * 1.1)})`]]) +
+    `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">중소기업 세액감면·공제, 최저한세는 빼고 계산했어요. 실제 신고는 세무사와 확인하세요.</p>`;
+}
+function incomeTaxCalc() {
+  const mode = seg('it_mode'), income = val('it_income'), cost = val('it_cost'), fam = Math.max(1, Math.round(val('it_fam'))), extra = val('it_extra');
+  const profit = Math.max(0, income - cost), base = Math.max(0, profit - 1500000 * fam - extra);
+  const calc = Math.floor(incomeTaxOf(base)), final = Math.max(0, calc - 70000); // 표준세액공제 7만 원
+  const owe = Math.floor(final * 1.1), paid = mode === 'free' ? Math.floor(income * 0.03) + Math.floor(income * 0.003) : 0; // 프리랜서: 3% + 지방 0.3% 원천징수
+  return { mode, income, cost, profit, base, calc, final, owe, paid, diff: paid - owe, rate: marginalRate(base) };
+}
+function incomeTax() {
+  const o = incomeTaxCalc(), out = document.getElementById('it_out');
+  if (!o.income) { out.innerHTML = '1년 수입을 넣어 주세요.'; return; }
+  const head = o.mode === 'free' ? (o.diff >= 0 ? ['5월에 돌려받는 돈', o.diff] : ['5월에 더 내야 할 돈', -o.diff]) : ['내야 할 종합소득세 (지방소득세 포함)', o.owe];
+  out.innerHTML = `<div>${head[0]}</div><div class="big">${won(head[1])}</div>` +
+    rows([['소득금액 (수입 - 경비)', won(o.profit)], ['과세표준 (공제 뺀 금액)', won(o.base)], ['적용 세율 구간', pct(o.rate * 100, 0)],
+      ['종합소득세', won(o.final)], ['지방소득세 (10%)', won(o.owe - o.final)], ...(o.mode === 'free' ? [['이미 떼인 세금 (3.3%)', won(o.paid)]] : [])]) +
+    `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">기본공제(1인 150만 원)와 표준세액공제 7만 원만 넣은 어림값이에요. 다른 소득이 있거나 감면을 받으면 달라져요.</p>`;
+}
+
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
 const insights = {
+  ct_out() {
+    const base = val('ct_base');
+    if (!base) return '';
+    const corp = corpTax(base, seg('ct_year') === '2025' ? 2025 : 2026) * 1.1, personal = Math.floor(incomeTaxOf(base)) * 1.1;
+    if (personal <= corp) return `같은 이익이면 개인사업자 종합소득세(약 ${won(personal)})가 더 적거나 비슷해요. 이익이 작을 때는 법인이 꼭 유리하진 않아요.`;
+    return `같은 이익을 개인사업자로 내면 종합소득세가 약 ${won(personal)}으로, 법인보다 ${won(personal - corp)} 많아요. 다만 법인 돈을 대표가 가져갈 때는 급여·배당 세금이 따로 붙어요.`;
+  },
+  it_out() {
+    const o = incomeTaxCalc();
+    if (!o.income || !o.base) return '';
+    return `경비 영수증을 100만 원 더 챙기면 세금이 약 ${won(Math.round(1000000 * o.rate * 1.1))} 줄어요. (지금 구간 세율 ${Math.round(o.rate * 100)}% 기준)`;
+  },
   is_out() {
     const o = isaCalc();
     if (!o.yearly || o.bal <= 0) return '';
@@ -1401,6 +1451,16 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       ['savings', '실수령액의 20%를 적금에 넣으면?', '적금 이자 계산기', { s_amt: Math.max(10000, Math.round(bigNum() * 0.2 / 10000) * 10000), s_n: 12 }],
       ['severance', '이 월급이면 퇴직금은?', '퇴직금 계산기', { v_pay: R(rowNum('세전 월급')) }],
     ],
+    'corporate-tax': () => [
+      ['income-tax', '개인사업자라면 세금은 얼마?', '종합소득세 계산기', { it_mode: 'biz', it_income: R(val('ct_base')), it_cost: 0 }],
+      ['vat', '부가세도 계산해 볼까?', '부가세 계산기', {}],
+      ['salary', '대표 월급, 실수령액은?', '연봉 실수령액 계산기', {}],
+    ],
+    'income-tax': () => [
+      ['corporate-tax', '법인으로 바꾸면 세금은?', '법인세 계산기', { ct_year: '2026', ct_base: R(Math.max(0, val('it_income') - val('it_cost'))) }],
+      ['pension', '연금저축으로 세금 더 줄이기', '연금저축·IRP 계산기', {}],
+      ['vat', '부가세도 계산해 볼까?', '부가세 계산기', {}],
+    ],
     isa: () => [
       ['pension', 'ISA 만기 후 연금계좌로 옮기면?', '연금저축·IRP 계산기', {}],
       ['dividend', '배당 세금은 얼마나 나갈까?', '배당금 계산기', {}],
@@ -1593,7 +1653,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension'];
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax'];
 const iconOf = path => { const slug = String(path).replace(/\//g, ''); return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -1629,6 +1689,8 @@ function addTileIcon(t) {
     '/goal/': '1억 · 5년 · 연 3.5%면 월 <b>약 152만 원</b>',
     '/inflation/': '물가 2%면 10년 뒤 100만 원은 <b>약 82만 원</b> 가치',
     '/isa/': '수익 <b>200만 원까지 비과세</b>',
+    '/corporate-tax/': '2026년부터 <b>10~25%</b>',
+    '/income-tax/': '프리랜서 <b>3.3% 환급</b> 미리 보기',
     '/pension/': '1년 최대 <b>148만 5천 원</b> 환급',
     '/prepayment/': '대출받고 <b>3년</b> 지나면 수수료 0원',
     '/pyeong/': '1평은 <b>3.3058㎡</b>',
@@ -1746,7 +1808,7 @@ const MENU = [
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
   ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
     ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
-  ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'],
+  ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/income-tax/', '종합소득세', '프리랜서 3.3% 환급 개인사업자 5월'], ['/corporate-tax/', '법인세', '법인 사업자 세율'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'],
     ['/fuel/', '유류비', '기름값 연비'], ['/dutch-pay/', '더치페이', 'n빵 정산'], ['/date/', '날짜', '디데이 d-day 며칠']]],
 ];
 (() => {
