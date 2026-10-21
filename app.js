@@ -710,6 +710,7 @@ function animateBig() {
   const node = big.firstChild;
   const m = node && node.nodeType === 3 && node.textContent.match(/[\d,]+(\.\d+)?/);
   if (!m) { lastBig = null; return; }
+  big.dataset.final = node.textContent; // 숫자가 움직이는 동안에도 저장·추천은 최종 숫자를 읽게
   const to = Number(m[0].replace(/,/g, '')), dec = m[1] ? m[1].length - 1 : 0, from = lastBig;
   lastBig = to;
   cancelAnimationFrame(bigAnim);
@@ -749,6 +750,7 @@ function afterRun() {
   updateDock();
   remember();
   if (window.updateNext) window.updateNext(); // 숫자를 바꾸면 추천 링크의 숫자도 같이
+  if (window.updateSave) window.updateSave(); // 저장하기 버튼의 금액도 같이
 }
 
 const result = document.querySelector('.card .result');
@@ -1047,7 +1049,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   const raw = k => { const el = document.querySelector(`input[data-k="${k}"]`); return el ? el.value : ''; };
   const R = n => Math.max(0, Math.round(n));
   const yrs = months => Math.round(months / 12 * 100) / 100;
-  const bigNum = () => { const b = res.querySelector('.big'); return b && b.firstChild ? num(String(b.firstChild.textContent).split(/[→/]/)[0]) : 0; };
+  const bigNum = () => { const b = res.querySelector('.big'); return b && b.firstChild ? num(String(b.dataset.final || b.firstChild.textContent).split(/[→/]/)[0]) : 0; };
   const rowNum = label => { const row = [...res.querySelectorAll('.rows div')].find(d => d.firstChild && d.firstChild.textContent.trim() === label); return row ? num(row.querySelector('b').textContent) : 0; };
   // [가는 곳, 제목, 이유, 넘길 숫자]
   const NEXT = {
@@ -1177,4 +1179,98 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     }).join('');
   };
   window.updateNext();
+})();
+
+// ── 저장하기: 계산 결과를 가계부·고정지출·내 자산·목표로 바로 보내요 ──
+(() => {
+  const res = document.querySelector('.card .result');
+  if (!res) return;
+  const slug = location.pathname.replace(/\//g, '');
+  const now = new Date();
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const after = months => { const d = new Date(now.getFullYear(), now.getMonth() + Math.round(months), now.getDate()); return iso(d); };
+  const R = n => Math.max(0, Math.round(n));
+  const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const bigNum = () => { const b = res.querySelector('.big'); return b && b.firstChild ? num(String(b.dataset.final || b.firstChild.textContent).split(/[→/×]/)[0]) : 0; };
+  const rowNum = label => { const row = [...res.querySelectorAll('.rows div')].find(d => d.firstChild && d.firstChild.textContent.trim() === label); return row ? num(row.querySelector('b').textContent) : 0; };
+  const monthlyPay = (L, n, i) => (i === 0 ? L / n : L * i / (1 - Math.pow(1 + i, -n)));
+
+  // 저장하는 곳: [저장 키, 목록 칸, 보러 가는 주소, 이름]
+  const DEST = {
+    budget: ['donsem:budget', 'entries', '/budget/', '가계부', { entries: [], budget: 0 }],
+    fixed: ['donsem:fixed', 'items', '/fixed/', '고정지출', { items: [] }],
+    assets: ['donsem:assets', 'items', '/assets/', '내 자산', { items: [], history: {} }],
+    goals: ['donsem:goals', 'goals', '/goals/', '목표', { goals: [] }],
+  };
+  function put(dest, item) {
+    const [key, list, , , empty] = DEST[dest];
+    let d;
+    try { d = JSON.parse(localStorage.getItem(key)); } catch (e) { d = null; }
+    if (!d || !Array.isArray(d[list])) d = JSON.parse(JSON.stringify(empty));
+    d[list].push(Object.assign({ id: id() }, item));
+    try { localStorage.setItem(key, JSON.stringify(d)); return true; } catch (e) { toast('이 브라우저에서는 저장할 수 없어요.'); return false; }
+  }
+  const day = now.getDate();
+  // 계산기마다 [저장하는 곳, 버튼 글자, 넣을 내용] — 숫자는 지금 결과에서 바로 읽어요
+  const SAVE = {
+    loan: () => {
+      const L = val('l_amt'), n = Math.max(1, Math.floor(val('l_n'))), i = val('l_r') / 1200, t = seg('l_type');
+      const m = t === 'equal' ? monthlyPay(L, n, i) : t === 'principal' ? L / n + L * i : L * i;
+      return [
+        ['fixed', `고정지출에 매달 ${won(m)} 추가`, { name: '대출 상환', cat: '대출 상환', amt: R(m), cycle: 'month', day }],
+        ['assets', `내 자산에 대출 ${won(L)}을 부채로 추가`, { kind: 'debt', cat: '기타 대출', name: '대출', amt: R(L) }],
+      ];
+    },
+    'car-loan': () => {
+      const L = val('k_price') - Math.min(val('k_down'), val('k_price')), n = num(seg('k_n')), i = val('k_r') / 1200;
+      if (L <= 0) return [];
+      return [
+        ['fixed', `고정지출에 매달 ${won(monthlyPay(L, n, i))} 추가`, { name: '자동차 할부', cat: '대출 상환', amt: R(monthlyPay(L, n, i)), cycle: 'month', day }],
+        ['assets', `내 자산에 할부 원금 ${won(L)}을 부채로 추가`, { kind: 'debt', cat: '기타 대출', name: '자동차 할부', amt: R(L) }],
+      ];
+    },
+    rent: () => seg('r_mode') === 'toMonthly' && bigNum() ? [['fixed', `고정지출에 월세 ${won(bigNum())} 추가`, { name: '월세', cat: '주거·관리비', amt: R(bigNum()), cycle: 'month', day }]] : [],
+    savings: () => [['goals', `만기 ${won(bigNum())}을 목표로 만들기`, { name: '적금 만기', target: R(bigNum()), date: after(val('s_n')), mode: 'manual', saved: 0 }]],
+    deposit: () => [['assets', `예금 ${won(val('d_amt'))}을 내 자산에 추가`, { kind: 'asset', cat: '예금·적금', name: '정기예금', amt: R(val('d_amt')) }]],
+    goal: () => [['goals', `${won(val('g_goal'))} 모으기를 목표로 만들기`, { name: `${korean(val('g_goal')).replace(/ 원$|원$/, '')} 모으기`, target: R(val('g_goal')), date: after(val('g_y') * 12), mode: 'manual', saved: R(val('g_now')) }]],
+    retirement: () => [['goals', `노후자금 ${won(bigNum())}을 목표로 만들기`, { name: '노후자금', target: R(bigNum()), date: after(val('t_until') * 12), mode: 'manual', saved: 0 }]],
+    dividend: () => seg('b_mode') === 'need' ? [['goals', `배당 투자금 ${won(bigNum())}을 목표로 만들기`, { name: `월 배당 ${korean(val('b_want')).replace(/ 원$|원$/, '')}`, target: R(bigNum()), date: '', mode: 'manual', saved: 0 }]] : [],
+    wage: () => { const m = rowNum('월급'); return m ? [['budget', `이번 달 월급 ${won(m)}을 가계부 수입으로 기록`, { type: 'in', amt: R(m), cat: '월급', date: iso(now), memo: '월급 (계산기에서 저장)' }]] : []; },
+    'holiday-pay': () => { const m = rowNum('한 달 예상 월급 (주휴수당 포함)'); return m ? [['budget', `한 달 예상 월급 ${won(m)}을 가계부 수입으로 기록`, { type: 'in', amt: R(m), cat: '월급', date: iso(now), memo: '주휴수당 포함 월급' }]] : []; },
+    severance: () => bigNum() ? [['assets', `퇴직금 ${won(bigNum())}을 내 자산에 추가`, { kind: 'asset', cat: '현금·입출금', name: '퇴직금', amt: R(bigNum()) }]] : [],
+    'dutch-pay': () => [['budget', `내 몫 ${won(bigNum())}을 가계부 지출로 기록`, { type: 'out', amt: R(bigNum()), cat: '식비', date: iso(now), memo: '더치페이' }]],
+    fuel: () => {
+      if (seg('e_mode') !== 'cost' || !bigNum()) return [];
+      const ppl = Math.max(1, Math.round(val('e_ppl'))), mine = bigNum() / ppl;
+      return [['budget', `기름값${ppl > 1 ? ' 내 몫' : ''} ${won(mine)}을 가계부 지출로 기록`, { type: 'out', amt: R(mine), cat: '교통', date: iso(now), memo: '유류비' }]];
+    },
+  };
+  if (!SAVE[slug]) return;
+  const box = document.createElement('section');
+  box.className = 'save';
+  box.setAttribute('aria-label', '내 돈 관리에 저장');
+  (document.querySelector('.card .share') || res).after(box);
+  const done = new Set(); // 이번에 저장한 버튼 (같은 숫자로 두 번 저장되지 않게)
+  let items = [];
+  window.updateSave = () => {
+    try { items = SAVE[slug]().filter(([, , it]) => (it.amt || it.target) > 0); } catch (e) { items = []; }
+    box.hidden = !items.length;
+    box.innerHTML = '<h2>내 돈 관리에 저장</h2>' + items.map(([dest, label, it], k) => {
+      const sig = dest + JSON.stringify(it);
+      return done.has(sig)
+        ? `<a class="save-btn saved" href="${DEST[dest][2]}">✓ ${DEST[dest][3]}에 저장했어요 · 보러 가기 ›</a>`
+        : `<button type="button" class="save-btn" data-k="${k}"><span class="save-to">${DEST[dest][3]}</span>${label}</button>`;
+    }).join('');
+  };
+  box.addEventListener('click', e => {
+    const b = e.target.closest('button.save-btn');
+    if (!b) return;
+    const [dest, , it] = items[Number(b.dataset.k)];
+    if (put(dest, it)) {
+      done.add(dest + JSON.stringify(it));
+      toast(`${DEST[dest][3]}에 저장했어요.`);
+      window.updateSave();
+    }
+  });
+  window.updateSave();
 })();

@@ -475,3 +475,13 @@ html { -webkit-tap-highlight-color: transparent; }
 .next-go { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 22px; color: var(--muted); }
 .carry { font-size: 11px; font-weight: 600; color: var(--blue); background: var(--accent-soft); padding: 2px 8px; border-radius: 980px; }
 @media (prefers-reduced-motion: no-preference) { .next-card { transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), background-color .15s; } .next-card:active { transform: scale(.98); transition-duration: .1s; } }
+
+/* ── 저장하기 ── */
+.save { margin-top: 24px; }
+.save h2 { font-size: 17px; font-weight: 700; margin: 0 0 10px; }
+.save-btn { display: block; width: 100%; margin-top: 8px; padding: 13px 16px; border: 1px solid var(--blue); border-radius: 16px; background: transparent;
+  color: var(--blue); font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; }
+.save-btn:hover { background: var(--accent-soft); text-decoration: none; }
+.save-to { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 2px; }
+.save-btn.saved { border-color: transparent; background: var(--accent-soft); }
+@media (prefers-reduced-motion: no-preference) { .save-btn { transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), background-color .15s; } .save-btn:active { transform: scale(.98); transition-duration: .1s; } .save-btn.saved { animation: drop-in .32s cubic-bezier(.22, 1, .36, 1) both; } }
