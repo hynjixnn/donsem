@@ -1749,7 +1749,7 @@ const MENU = [
   const short = t => t.replace(/\s*·\s*/g, '·');
   const item = ([href, name]) => `<a href="${href}"${href === path ? ' class="on" aria-current="page"' : ''}>${iconOf(href)}<span>${name}</span></a>`;
 
-  // 컴퓨터: 로고 옆 분류 메뉴 / 휴대폰: 메뉴바 아래 한 줄 버튼 (돈 관리는 아래 탭에 있어서 빼요)
+  // 컴퓨터: 로고 옆 분류 메뉴 / 휴대폰: 메뉴바 아래 한 줄 버튼 — 둘 다 같은 순서로 보여요 (돈 관리부터)
   const btn = (t, i) => `<button type="button" data-g="${i}" aria-expanded="false" aria-controls="gnav-panel"${i === here ? ' class="here"' : ''}>${short(t)}</button>`;
   const gnav = document.createElement('div');
   gnav.className = 'gnav'; gnav.setAttribute('role', 'navigation'); gnav.setAttribute('aria-label', '계산기 분류');
@@ -1757,7 +1757,7 @@ const MENU = [
   inner.querySelector('.brand').after(gnav);
   const chips = document.createElement('div');
   chips.className = 'gnav-chips'; chips.setAttribute('role', 'navigation'); chips.setAttribute('aria-label', '계산기 분류');
-  chips.innerHTML = MENU.map(([t], i) => i ? btn(t, i) : '').join('');
+  chips.innerHTML = MENU.map(([t], i) => btn(t, i)).join('');
   inner.after(chips);
   const sBtn = document.createElement('button');
   sBtn.type = 'button'; sBtn.className = 'search-btn'; sBtn.dataset.g = 'search'; sBtn.setAttribute('aria-label', '계산기 검색'); sBtn.setAttribute('aria-expanded', 'false');
