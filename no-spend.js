@@ -43,6 +43,7 @@
           : spentToday ? `<p class="ns-msg"><b>오늘은 ${won(spentToday)}을 썼어요</b>괜찮아요. 내일 다시 도전해요!</p>`
           : `<p class="ns-msg"><b>오늘 하루, 돈을 안 썼나요?</b>잠들기 전에 도장을 찍어 주세요.</p><button type="button" class="ns-stamp">오늘 무지출 도장 찍기 🐷</button>`}
       </div>
+      <p class="ns-crowd" hidden></p>
       <div class="ns-stats">
         <div><b>${thisMonth.length}일</b><span>이번 달 무지출</span></div>
         <div><b>${st}일</b><span>연속 무지출</span></div>
@@ -55,6 +56,12 @@
       <div class="ns-week">${[...'일월화수목금토'].map(w => `<span>${w}</span>`).join('')}</div>
       <div class="ns-cal">${cells}</div>
       <p class="ns-tip">날짜를 누르면 지난날에도 도장을 찍거나 지울 수 있어요. 🐷 무지출 · <b></b> 지출 기록 있음${mine.length ? ` · ${m}월 무지출 ${mine.length}일` : ''}</p>`;
+    (set.has(today) ? countOnce(`ns:${today}`, 'y') : counter(`ns:${today}`)).then(c => { // 오늘 무지출 도장을 찍은 사람 수
+      const n = c && c.y, el = box.querySelector('.ns-crowd');
+      if (!n || !el) return;
+      el.innerHTML = set.has(today) ? `🐷 오늘 나를 포함해 <b>${n.toLocaleString('ko-KR')}명</b>이 무지출 도장을 찍었어요` : `🐷 오늘 벌써 <b>${n.toLocaleString('ko-KR')}명</b>이 무지출 도장을 찍었어요`;
+      el.hidden = false;
+    });
     box.querySelector('.ns-stamp')?.addEventListener('click', () => toggle(today));
     box.querySelector('.ns-undo')?.addEventListener('click', () => toggle(today));
     box.querySelectorAll('.ns-day').forEach(b => b.addEventListener('click', () => toggle(b.dataset.d)));

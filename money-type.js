@@ -78,6 +78,7 @@ const mtClash = code => mtFlip(code, [0, 1, 2, 3]); // 환장의 조합: 모든 
     MT_QUESTIONS.forEach(([axis], i) => { votes[axis] += answers[i]; });
     const code = votes.map((v, i) => MT_AXES[i][v >= 2 ? 1 : 0]).join(''); // 축마다 3문제 중 2개 이상이면 뒤 글자
     try { localStorage.setItem(MT_KEY, code); } catch (e) { /* 저장이 막힌 환경 */ }
+    countOnce('mt:all', code); // 유형 비율 통계 (한 기기에서 처음 한 번만)
     history.replaceState(null, '', `/money-type/?t=${code}`);
     result(code, false);
   }
@@ -89,6 +90,7 @@ const mtClash = code => mtFlip(code, [0, 1, 2, 3]); // 환장의 조합: 모든 
       ${shared === 'friend' ? `<p class="mt-shared">친구의 돈BTI 결과예요. 나는 어떤 유형일까?</p>` : ''}
       <div class="mt-hero">${img(code, 168)}<span class="mt-cap">${shared === 'friend' ? '친구의 돈 성격은' : shared ? '돈BTI 유형 소개' : '나의 돈 성격은'}</span><h2>${name}</h2>
         <div class="mt-tags">${code.split('').map(ch => `<span>#${MT_TAGS[ch]}</span>`).join('')}</div></div>
+      <p class="mt-crowd" hidden></p>
       <p class="mt-desc">${desc}</p>
       <div class="mt-two"><div><b>👍 강점</b><p>${good}</p></div><div><b>⚠️ 조심할 점</b><p>${care}</p></div></div>
       <div class="mt-match">
@@ -102,6 +104,13 @@ const mtClash = code => mtFlip(code, [0, 1, 2, 3]); // 환장의 조합: 모든 
         <div class="mt-actions"><button type="button" class="btn line" data-act="friend">친구에게 보내기</button><button type="button" class="btn line mt-start">다시 하기</button></div>`}
       <a class="mt-quiz" href="/quiz/">${iconOf('/quiz/')}오늘의 돈 퀴즈도 풀어 보기 ›</a>
     </div>`;
+    counter('mt:all').then(c => { // 전체 참여자 중 이 유형 비율
+      const total = c ? Object.values(c).reduce((a, n) => a + n, 0) : 0, el = box.querySelector('.mt-crowd');
+      if (!total || !el) return;
+      const mineN = c[code] || 0, rank = Object.keys(MT_TYPES).sort((a, b) => (c[b] || 0) - (c[a] || 0)).indexOf(code) + 1;
+      el.innerHTML = `참여자 ${total.toLocaleString('ko-KR')}명 중 <b>${Math.round(mineN / total * 100)}%</b>가 이 유형이에요 · 16가지 중 ${rank}위`;
+      el.hidden = false;
+    });
     box.querySelectorAll('.mt-start').forEach(b => b.addEventListener('click', () => { answers = []; history.replaceState(null, '', '/money-type/'); ask(0); }));
     const st = box.querySelector('.mt-story');
     if (st) {

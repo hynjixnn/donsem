@@ -62,6 +62,7 @@
     const res = box.querySelector('.qz-res');
     res.innerHTML = `<div class="qz-verdict ${ok ? 'ok' : 'no'}">${ok ? '정답이에요! 🎉' : `아쉬워요. 정답은 ${answer ? 'O' : 'X'}예요`}</div>
       <p class="qz-exp">${exp}</p>
+      <div class="qz-crowd" hidden></div>
       <a class="btn fill qz-go" href="${href}">${label} ›</a>
       ${mode === 'today' ? fortuneHtml(fortuneToday(s)) : ''}
       <div class="qz-actions">
@@ -73,6 +74,7 @@
     if (fresh) res.classList.add('pop');
     res.querySelector('[data-act="share"]').addEventListener('click', share);
     res.querySelector('[data-act="more"]').addEventListener('click', more);
+    crowd(res.querySelector('.qz-crowd'), choice, answer);
     const st = res.querySelector('[data-act="story"]');
     if (st) {
       st.addEventListener('click', () => story(st));
@@ -82,6 +84,19 @@
 
   // 받침에 따라 '으로/로' (받침 없거나 ㄹ이면 '로')
   function ro(word) { const c = word.charCodeAt(word.length - 1) - 0xac00, jong = c >= 0 && c <= 11171 ? c % 28 : 0; return jong && jong !== 8 ? '으로' : '로'; }
+
+  // 다른 사람들은 O와 X를 얼마나 골랐을까 (이 문제를 푼 모든 사람, 날짜 상관없이)
+  function crowd(el, choice, answer) {
+    countOnce(`quiz:${id}`, choice ? 'o' : 'x').then(c => {
+      const o = (c && c.o) || 0, x = (c && c.x) || 0, total = o + x;
+      if (!el || !total) return;
+      const po = Math.round(o / total * 100), right = answer ? po : 100 - po;
+      el.innerHTML = `<div class="qz-crowd-top"><b>다른 사람들은?</b><span>지금까지 ${total.toLocaleString('ko-KR')}명이 풀었어요</span></div>
+        <div class="qz-crowd-bar"><i class="o" style="width:${po}%">${po >= 12 ? `O ${po}%` : ''}</i><i class="x" style="width:${100 - po}%">${100 - po >= 12 ? `X ${100 - po}%` : ''}</i></div>
+        <p>${right >= 70 ? `${right}%가 맞힌 쉬운 문제였어요.` : right <= 40 ? `${right}%만 맞힌 어려운 문제예요!` : `${right}%가 맞혔어요.`}</p>`;
+      el.hidden = false;
+    });
+  }
 
   // ── 오늘의 금전운 카드 ──
   function fortuneHtml(f) {

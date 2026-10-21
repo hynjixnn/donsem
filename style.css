@@ -940,3 +940,15 @@ html.gnav-open { overflow: hidden; }
 .col-badge.on span { color: var(--blue); font-weight: 600; }
 .col-story { margin-top: 18px; }
 @media (max-width: 640px) { .col-tree .tree-img { width: 88px; height: 88px; } .col-tree h2 { font-size: 22px; } .col-stages span { width: 42px; height: 42px; } }
+
+/* ── 같이 하는 숫자 ── */
+.qz-crowd { margin: -4px 0 18px; padding: 14px 16px; border-radius: 16px; background: var(--field); }
+.qz-crowd-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; }
+.qz-crowd-top span { color: var(--muted); }
+.qz-crowd-bar { display: flex; height: 26px; margin: 10px 0 6px; border-radius: 980px; overflow: hidden; background: var(--seg-bg); }
+.qz-crowd-bar i { display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; }
+.qz-crowd-bar .o { background: var(--blue); }
+.qz-crowd-bar .x { background: #ff453a; }
+.qz-crowd p { margin: 0; font-size: 13px; color: var(--muted); }
+.ns-crowd, .mt-crowd { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: var(--accent-soft); font-size: 14px; text-align: center; }
+.mt-crowd { margin: 14px 0 0; }

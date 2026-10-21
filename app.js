@@ -2049,6 +2049,7 @@ function markDailyFull() {
       if (!ns.days.includes(st.today)) ns.days = [...ns.days, st.today].sort();
       try { localStorage.setItem('donsem:nospend', JSON.stringify(ns)); } catch (e) { return toast('이 브라우저에서는 저장할 수 없어요.'); }
       toast('🐷 무지출 도장 쾅! 오늘은 돈을 안 썼어요.');
+      countOnce(`ns:${st.today}`, 'y');
       markDailyFull();
       draw();
     });
@@ -2057,3 +2058,24 @@ function markDailyFull() {
   draw();
   if (markDailyFull()) draw();
 })();
+
+// ── 같이 하는 숫자: 퀴즈 O/X 비율, 오늘 무지출한 사람 수, 돈BTI 유형 비율 ──
+// Cloudflare 워커(돈계산기/counter/worker.js)에 이름 없이 숫자만 보내고 받아요. 주소가 비어 있으면 아무것도 안 해요.
+const COUNTER_URL = 'https://donsem-counter.hjjung330.workers.dev';
+function counter(k, v) {
+  if (!COUNTER_URL) return Promise.resolve(null);
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 4000);
+  const opt = v ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ k, v }), signal: ctl.signal } : { signal: ctl.signal };
+  return fetch(`${COUNTER_URL}/?k=${encodeURIComponent(k)}`, opt).then(r => (r.ok ? r.json() : null)).catch(() => null).finally(() => clearTimeout(timer));
+}
+// 한 기기에서는 같은 것을 한 번만 세요 (두 번째부터는 숫자만 받아 와요)
+function countOnce(k, v) {
+  let done = {};
+  try { done = JSON.parse(localStorage.getItem('donsem:counted')) || {}; } catch (e) { done = {}; }
+  if (done[k] || !COUNTER_URL) return counter(k);
+  done[k] = 1;
+  const keys = Object.keys(done);
+  if (keys.length > 300) keys.slice(0, keys.length - 300).forEach(x => delete done[x]); // 오래된 날짜 기록은 정리해요
+  try { localStorage.setItem('donsem:counted', JSON.stringify(done)); } catch (e) { /* 저장이 막힌 브라우저 */ }
+  return counter(k, v);
+}
