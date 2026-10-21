@@ -464,3 +464,14 @@ html { -webkit-tap-highlight-color: transparent; }
   .dash-big { font-size: 24px; }
 }
 @media (prefers-reduced-motion: no-preference) { .dash-card { transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), background-color .15s; } .dash-card:active { transform: scale(.98); transition-duration: .1s; } }
+
+/* ── 다음에 많이 보는 계산 ── */
+.next { margin-top: 28px; }
+.next h2 { font-size: 17px; font-weight: 700; margin: 0 0 10px; }
+.next-card { position: relative; display: block; padding: 14px 40px 14px 16px; margin-top: 8px; border-radius: 16px; background: var(--field); color: var(--text); }
+.next-card:hover { text-decoration: none; background: color-mix(in srgb, var(--field) 85%, var(--line)); }
+.next-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.next-card b { display: block; font-size: 16px; font-weight: 600; margin-top: 2px; }
+.next-go { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 22px; color: var(--muted); }
+.carry { font-size: 11px; font-weight: 600; color: var(--blue); background: var(--accent-soft); padding: 2px 8px; border-radius: 980px; }
+@media (prefers-reduced-motion: no-preference) { .next-card { transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), background-color .15s; } .next-card:active { transform: scale(.98); transition-duration: .1s; } }

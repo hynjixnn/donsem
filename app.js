@@ -748,6 +748,7 @@ function afterRun() {
   animateBig();
   updateDock();
   remember();
+  if (window.updateNext) window.updateNext(); // 숫자를 바꾸면 추천 링크의 숫자도 같이
 }
 
 const result = document.querySelector('.card .result');
@@ -1036,4 +1037,144 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     if (add && getComputedStyle(document.querySelector('.tabbar')).display !== 'none') add.click(); // 휴대폰: 아래에서 기록 창
     else location.href = '/budget/'; // 컴퓨터: 가계부로
   });
+})();
+
+// ── 다음에 많이 보는 계산: 결과 아래에 이어서 볼 계산기를, 지금 넣은 숫자를 채운 채로 추천해요 ──
+(() => {
+  const res = document.querySelector('.card .result');
+  if (!res) return;
+  const slug = location.pathname.replace(/\//g, '');
+  const raw = k => { const el = document.querySelector(`input[data-k="${k}"]`); return el ? el.value : ''; };
+  const R = n => Math.max(0, Math.round(n));
+  const yrs = months => Math.round(months / 12 * 100) / 100;
+  const bigNum = () => { const b = res.querySelector('.big'); return b && b.firstChild ? num(String(b.firstChild.textContent).split(/[→/]/)[0]) : 0; };
+  const rowNum = label => { const row = [...res.querySelectorAll('.rows div')].find(d => d.firstChild && d.firstChild.textContent.trim() === label); return row ? num(row.querySelector('b').textContent) : 0; };
+  // [가는 곳, 제목, 이유, 넘길 숫자]
+  const NEXT = {
+    savings: () => [
+      ['deposit', '같은 돈을 목돈으로 맡기면?', '예금 이자 계산기', { d_amt: R(val('s_amt') * val('s_n')), d_n: R(val('s_n')), d_r: val('s_r') }],
+      ['goal', '목표 금액을 정하고 모으려면?', '목표 저축 계산기', { g_goal: R(bigNum()), g_now: 0, g_y: yrs(val('s_n')), g_r: val('s_r') }],
+      ['inflation', '만기에 받는 돈, 그때 가치는?', '물가상승률 계산기', { i_amt: R(bigNum()), i_y: Math.max(1, Math.round(val('s_n') / 12)) }],
+    ],
+    deposit: () => [
+      ['savings', '매달 나눠 넣으면 얼마 받을까?', '적금 이자 계산기', { s_amt: R(val('d_amt') / Math.max(1, val('d_n'))), s_n: R(val('d_n')), s_r: val('d_r') }],
+      ['compound', '오래 굴리면 얼마가 될까?', '복리 계산기', { c_init: R(val('d_amt')), c_add: 0, c_r: val('d_r'), c_y: 10 }],
+      ['inflation', '이 돈, 몇 년 뒤 가치는?', '물가상승률 계산기', { i_amt: R(val('d_amt')), i_y: 10 }],
+    ],
+    loan: () => [
+      ['refinance', '금리 낮은 대출로 갈아타면?', '대출 갈아타기 계산기', { f_amt: R(val('l_amt')), f_n: R(val('l_n')), f_old: val('l_r') }],
+      ['prepayment', '일찍 갚으면 수수료는?', '중도상환수수료 계산기', { p_amt: R(val('l_amt')) }],
+      ['wage', '월급 대비 부담은 얼마나?', '시급·월급·연봉 계산기', {}],
+    ],
+    compound: () => [
+      ['goal', '목표 금액을 정하면 매달 얼마씩?', '목표 저축 계산기', { g_now: R(val('c_init')), g_y: val('c_y'), g_r: val('c_r') }],
+      ['inflation', '그때 돈의 가치는?', '물가상승률 계산기', { i_amt: R(bigNum()), i_y: R(val('c_y')) }],
+      ['retirement', '노후에는 얼마가 필요할까?', '노후자금 계산기', {}],
+    ],
+    severance: () => [
+      ['deposit', '퇴직금을 예금에 넣으면?', '예금 이자 계산기', { d_amt: R(bigNum()), d_n: 12 }],
+      ['wage', '월급을 시급·연봉으로 보면?', '시급·월급·연봉 계산기', { w_mode: 'month', w_amt: R(val('v_pay')) }],
+      ['date', '1년 채우는 날은 언제?', '날짜 계산기', { z_mode: 'add', z_base: raw('v_start'), z_n: 365, z_inc1: 1 }],
+    ],
+    rent: () => [
+      ['pyeong', '이 집, 평당 얼마일까?', '평수 계산기', { y_price: R(val('r_jeonse')) }],
+      ['loan', '전세대출 이자는 매달 얼마?', '대출 이자 계산기', { l_amt: R(val('r_jeonse') * 0.8), l_n: 24, l_type: 'bullet' }],
+      ['goal', '보증금을 모으려면 매달 얼마?', '목표 저축 계산기', { g_goal: R(val('r_jeonse')) }],
+    ],
+    vat: () => [
+      ['discount', '할인받으면 얼마일까?', '할인율 계산기', { o_list: R(seg('x_mode') === 'total' ? val('x_amt') : val('x_amt') * 1.1) }],
+      ['percent', '몇 %인지 바로 계산하기', '퍼센트 계산기', {}],
+    ],
+    'holiday-pay': () => [
+      ['wage', '이 시급이면 월급은?', '시급·월급·연봉 계산기', { w_mode: 'hour', w_amt: R(val('h_wage')), w_hours: val('h_hours') }],
+      ['severance', '1년 넘게 일하면 퇴직금은?', '퇴직금 계산기', {}],
+      ['dutch-pay', '모임비 나누기', '더치페이 계산기', {}],
+    ],
+    prepayment: () => [
+      ['refinance', '갈아타면 수수료 내고도 이득일까?', '대출 갈아타기 계산기', { f_amt: R(val('p_amt')), f_fee: val('p_rate') }],
+      ['loan', '남은 대출의 이자는?', '대출 이자 계산기', { l_amt: R(val('p_amt')) }],
+    ],
+    inflation: () => [
+      ['compound', '물가보다 빨리 불리려면?', '복리 계산기', { c_init: R(val('i_amt')), c_y: R(val('i_y')) }],
+      ['retirement', '물가를 반영한 노후자금은?', '노후자금 계산기', { t_inf: val('i_rate') }],
+      ['deposit', '예금 이자로 지킬 수 있을까?', '예금 이자 계산기', { d_amt: R(val('i_amt')) }],
+    ],
+    discount: () => [
+      ['unit-price', '용량까지 따지면 어느 게 쌀까?', '단가 계산기', {}],
+      ['percent', '얼마에서 얼마로, 몇 % 내렸나?', '퍼센트 계산기', { q_mode: 'change', q_a: R(val('o_list')), q_b: R(seg('o_mode') === 'rate' ? val('o_sale') : val('o_list') * (1 - val('o_rate') / 100) * (1 - val('o_rate2') / 100)) }],
+      ['dutch-pay', '같이 산 거라면 한 사람당 얼마?', '더치페이 계산기', { n_total: R(seg('o_mode') === 'rate' ? val('o_sale') : val('o_list') * (1 - val('o_rate') / 100) * (1 - val('o_rate2') / 100)) }],
+    ],
+    wage: () => [
+      ['holiday-pay', '주휴수당은 얼마일까?', '주휴수당 계산기', { h_wage: R(rowNum('시급')), h_hours: val('w_hours') }],
+      ['severance', '이 월급이면 퇴직금은?', '퇴직금 계산기', { v_pay: R(rowNum('월급')) }],
+      ['goal', '월급으로 목표 모으기', '목표 저축 계산기', {}],
+    ],
+    goal: () => [
+      ['savings', '적금으로 넣으면 세후 이자는?', '적금 이자 계산기', { s_amt: R(bigNum()), s_n: R(val('g_y') * 12), s_r: val('g_r') }],
+      ['compound', '투자로 모으면?', '복리 계산기', { c_init: R(val('g_now')), c_add: R(bigNum()), c_y: Math.max(1, Math.round(val('g_y'))) }],
+      ['inflation', '목표 금액, 그때 가치는?', '물가상승률 계산기', { i_amt: R(val('g_goal')), i_y: Math.max(1, Math.round(val('g_y'))) }],
+    ],
+    pyeong: () => [
+      ['rent', '전세를 월세로 바꾸면?', '전월세 전환 계산기', val('y_price') ? { r_jeonse: R(val('y_price')) } : {}],
+      ['loan', '집 살 때 대출 이자는?', '대출 이자 계산기', val('y_price') ? { l_amt: R(val('y_price') * 0.6) } : {}],
+    ],
+    percent: () => [
+      ['discount', '할인가 바로 계산하기', '할인율 계산기', {}],
+      ['avg-price', '주식 평균 단가 계산하기', '물타기 계산기', {}],
+    ],
+    'avg-price': () => [
+      ['percent', '수익률 따로 계산하기', '퍼센트 계산기', { q_mode: 'change', q_a: R(rowNum('총 매수 금액')), q_b: R(num((([...res.querySelectorAll('.rows div')].find(d => d.firstChild && d.firstChild.textContent.includes('평가금액')) || {}).textContent || '').split('평가금액')[1] || '')) }],
+      ['dividend', '배당까지 받으면?', '배당금 계산기', { b_amt: R(rowNum('총 매수 금액')) }],
+    ],
+    dividend: () => [
+      ['compound', '배당을 다시 투자하면?', '복리 계산기', { c_init: R(seg('b_mode') === 'income' ? val('b_amt') : 0), c_r: val('b_rate') }],
+      ['goal', '필요한 투자금, 매달 얼마씩 모을까?', '목표 저축 계산기', seg('b_mode') === 'need' ? { g_goal: R(bigNum()) } : {}],
+      ['retirement', '노후에 필요한 돈은?', '노후자금 계산기', {}],
+    ],
+    retirement: () => [
+      ['goal', '이 돈을 모으려면 매달 얼마?', '목표 저축 계산기', { g_goal: R(bigNum()), g_now: 0, g_y: R(val('t_until')), g_r: 5 }],
+      ['dividend', '배당으로 월 생활비를 받으려면?', '배당금 계산기', { b_mode: 'need', b_want: R(val('t_month')) }],
+      ['compound', '꾸준히 투자하면 얼마가 될까?', '복리 계산기', { c_y: R(val('t_until')) }],
+    ],
+    'car-loan': () => [
+      ['fuel', '한 달 기름값은 얼마?', '유류비 계산기', {}],
+      ['loan', '할부 말고 대출로 사면?', '대출 이자 계산기', { l_amt: R(val('k_price') - val('k_down')), l_n: R(num(seg('k_n'))), l_r: val('k_r') }],
+      ['refinance', '할부 금리 바꾸면 얼마 아낄까?', '대출 갈아타기 계산기', { f_amt: R(val('k_price') - val('k_down')), f_n: R(num(seg('k_n'))), f_old: val('k_r') }],
+    ],
+    refinance: () => [
+      ['prepayment', '중도상환수수료 자세히 보기', '중도상환수수료 계산기', { p_amt: R(val('f_amt')), p_rate: val('f_fee') }],
+      ['loan', '새 대출의 월별 상환표 보기', '대출 이자 계산기', { l_amt: R(val('f_amt')), l_n: R(val('f_n')), l_r: val('f_new') }],
+    ],
+    'unit-price': () => [
+      ['discount', '할인까지 받으면?', '할인율 계산기', {}],
+      ['dutch-pay', '같이 사서 나누면 한 사람당?', '더치페이 계산기', {}],
+    ],
+    fuel: () => [
+      ['dutch-pay', '기름값, 같이 탄 사람끼리 나누기', '더치페이 계산기', seg('e_mode') === 'cost' ? { n_total: R(bigNum()) } : {}],
+      ['car-loan', '차 살 때 할부는 얼마?', '자동차 할부 계산기', {}],
+    ],
+    'dutch-pay': () => [
+      ['budget', '내 몫을 가계부에 적기', '가계부', null],
+      ['discount', '할인받은 금액으로 나누기', '할인율 계산기', { o_list: R(val('n_total')) }],
+    ],
+    date: () => [
+      ['savings', '적금 만기에 받는 돈은?', '적금 이자 계산기', {}],
+      ['severance', '퇴직금은 얼마일까?', '퇴직금 계산기', {}],
+    ],
+  };
+  if (!NEXT[slug]) return;
+  const box = document.createElement('section');
+  box.className = 'next';
+  box.setAttribute('aria-label', '다음에 많이 보는 계산');
+  (document.querySelector('.card .share') || res).after(box);
+  window.updateNext = () => {
+    let items;
+    try { items = NEXT[slug](); } catch (e) { return; }
+    box.innerHTML = '<h2>다음에 많이 보는 계산</h2>' + items.map(([to, title, name, params]) => {
+      const q = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v !== undefined && !Number.isNaN(v)).map(([k, v]) => [k, String(v)])).toString() : '';
+      const carry = q ? '<span class="carry">입력한 숫자 그대로</span>' : '';
+      return `<a class="next-card" href="/${to}/${q ? '?' + q : ''}"><span class="next-name">${name}${carry}</span><b>${title}</b><span class="next-go">›</span></a>`;
+    }).join('');
+  };
+  window.updateNext();
 })();
