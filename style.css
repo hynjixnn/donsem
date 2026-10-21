@@ -1257,8 +1257,8 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
 /* 돈 관리 탭(가계부·고정지출·내 자산·목표): 파란 알약이 옆으로 미끄러지고, 내용은 그 방향으로 쫀득하게 넘어가요 */
 .mm-tabs.has-pill { position: relative; }
 .mm-pill { position: absolute; left: 0; top: 0; z-index: 0; border-radius: 980px; background: var(--blue); pointer-events: none;
-  box-shadow: 0 4px 14px -6px color-mix(in srgb, var(--blue) 80%, transparent); transition: transform .45s cubic-bezier(.34, 1.15, .64, 1), width .35s cubic-bezier(.34, 1.15, .64, 1); }
-.mm-tabs.has-pill a { position: relative; z-index: 1; transition: color .3s; }
+  box-shadow: 0 4px 14px -6px color-mix(in srgb, var(--blue) 80%, transparent); transition: transform .3s cubic-bezier(.3, 1.15, .5, 1), width .3s cubic-bezier(.3, 1.15, .5, 1); }
+.mm-tabs.has-pill a { position: relative; z-index: 1; transition: color .2s; }
 .mm-tabs.has-pill a.on, .mm-tabs.has-pill a.on:hover { background: transparent; }
 @media (prefers-reduced-motion: no-preference) {
   /* 누른 순간: 지금 내용이 누른 반대쪽으로 살짝 밀리며 사라져요 (탭 줄은 그대로) */

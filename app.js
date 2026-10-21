@@ -2379,7 +2379,7 @@ document.addEventListener('click', e => {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 })();
 
-// ── 돈 관리 탭: 파란 알약이 지난 탭 자리에서 지금 탭으로 쫀득하게 미끄러져 와요 ──
+// ── 돈 관리 탭: 누른 순간 파란 알약이 그 탭으로 쫀득하게 미끄러지고, 내용은 그 방향으로 넘어가요 ──
 (() => {
   const tabs = document.querySelector('.mm-tabs'), on = tabs && tabs.querySelector('a.on');
   if (!tabs || !on) return;
@@ -2388,11 +2388,8 @@ document.addEventListener('click', e => {
   pill.className = 'mm-pill'; pill.setAttribute('aria-hidden', 'true');
   tabs.prepend(pill); tabs.classList.add('has-pill');
   const place = a => { pill.style.width = a.offsetWidth + 'px'; pill.style.height = a.offsetHeight + 'px'; pill.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`; };
-  let from = -1;
-  try { from = Number(sessionStorage.getItem(KEY)); sessionStorage.removeItem(KEY); } catch (e) { from = -1; }
-  const start = links[from] && links[from] !== on ? links[from] : on;
-  pill.style.transition = 'none'; place(start); pill.offsetWidth; pill.style.transition = '';
-  if (start !== on) setTimeout(() => place(on), 30); // 지난 탭 자리에서 출발
+  try { sessionStorage.removeItem(KEY); } catch (e) { /* 기억 못 해도 괜찮아요 */ }
+  pill.style.transition = 'none'; place(on); pill.offsetWidth; pill.style.transition = ''; // 알약은 누른 화면에서 이미 도착해 있어요
   const root = document.documentElement, calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let leaving = 0;
   tabs.addEventListener('click', e => {
@@ -2401,10 +2398,12 @@ document.addEventListener('click', e => {
     try { sessionStorage.setItem(KEY, String(links.indexOf(on))); } catch (err) { /* 기억 못 해도 괜찮아요 */ }
     if (calm) return; // 움직임 줄이기를 켠 사람은 바로 넘어가요
     e.preventDefault();
-    root.classList.remove('mm-in-next', 'mm-in-prev');
+    place(a); // 누른 순간 알약이 바로 그쪽으로 미끄러지고, 글자색도 바로 바뀌어요
+    links.forEach(x => x.classList.toggle('on', x === a));
+    root.classList.remove('mm-in-next', 'mm-in-prev', 'mm-go-next', 'mm-go-prev');
     root.classList.add('mm-leaving', links.indexOf(a) > links.indexOf(on) ? 'mm-go-next' : 'mm-go-prev');
     clearTimeout(leaving);
-    leaving = setTimeout(() => { location.href = a.href; }, 170); // 지금 화면이 살짝 사라진 뒤 넘어가요 (알약은 새 화면에서 지난 자리부터 미끄러져요)
+    leaving = setTimeout(() => { location.href = a.href; }, 200); // 알약이 거의 도착하고 지금 화면이 사라질 즈음 넘어가요
   });
   window.addEventListener('resize', () => place(on));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => place(on));
@@ -2412,6 +2411,7 @@ document.addEventListener('click', e => {
     if (!e.persisted) return;
     clearTimeout(leaving);
     root.classList.remove('mm-leaving', 'mm-go-next', 'mm-go-prev', 'mm-in-next', 'mm-in-prev');
+    links.forEach(x => x.classList.toggle('on', x === on));
     pill.style.transition = 'none'; place(on); pill.offsetWidth; pill.style.transition = '';
   });
 })();
