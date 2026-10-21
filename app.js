@@ -741,6 +741,30 @@ function applyState(q) {
   if (document.querySelector('.seg[data-k="q_mode"]')) percentMode = seg('q_mode'); // 퍼센트 계산기가 예시 숫자로 덮어쓰지 않게
   return used;
 }
+// ── 가계부 연속 기록: 기록이 있는 날이 오늘(또는 어제)까지 며칠 이어졌는지 세요. 따로 저장하지 않고 기록 날짜로 계산해요 ──
+const STREAK_BADGES = [[3, '🌱', '새싹'], [7, '🔥', '일주일'], [14, '⭐', '2주'], [30, '🏅', '한 달'], [100, '👑', '100일']];
+function budgetStreak(entries) {
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const days = new Set((entries || []).map(e => e.date)), d = new Date();
+  const recordedToday = days.has(ymd(d));
+  if (!recordedToday) d.setDate(d.getDate() - 1); // 오늘 아직 안 썼어도 어제까지 이어졌으면 끊긴 게 아니에요
+  let current = 0;
+  while (days.has(ymd(d))) { current++; d.setDate(d.getDate() - 1); }
+  let best = 0, run = 0, prev = null;
+  [...days].filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)).sort().forEach(x => {
+    const t = Date.parse(x + 'T00:00:00Z');
+    run = prev !== null && t - prev === 864e5 ? run + 1 : 1; prev = t; best = Math.max(best, run);
+  });
+  return { current, best, recordedToday, next: STREAK_BADGES.find(([n]) => n > current) };
+}
+// 방금 기록으로 배지를 새로 받았으면 축하 문구를, 아니면 ''를 돌려줘요
+function streakCheer(before, entries) {
+  const after = budgetStreak(entries);
+  if (after.current <= before.current || after.current <= before.best) return '';
+  const hit = STREAK_BADGES.find(([n]) => n === after.current);
+  return hit ? `${hit[1]} ${hit[0]}일 연속 기록! '${hit[2]}' 배지를 받았어요` : '';
+}
+
 function toast(msg) {
   const t = document.createElement('div');
   t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
@@ -1105,13 +1129,14 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     let b;
     try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
     if (!b || !Array.isArray(b.entries)) b = { entries: [], budget: (b && b.budget) || 0 };
+    const before = budgetStreak(b.entries);
     b.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, amt, cat, date: today(), memo: sheet.querySelector('.qa-memo').value.trim().slice(0, 40) });
     try { localStorage.setItem('donsem:budget', JSON.stringify(b)); }
     catch (e) { sheet.querySelector('.qa-err').textContent = '이 브라우저에서는 저장할 수 없어요.'; return; }
     amtEl.value = ''; sheet.querySelector('.qa-memo').value = ''; sheet.querySelector('.qa-kr').textContent = '';
     close();
-    toast(`${cat} ${won(amt)}을 가계부에 기록했어요.`);
-    if (path === '/budget/') setTimeout(() => location.reload(), 600); // 가계부를 보고 있었다면 바로 반영
+    toast(streakCheer(before, b.entries) || `${cat} ${won(amt)}을 가계부에 기록했어요.`);
+    if (path === '/budget/') setTimeout(() => location.reload(), 1200); // 가계부를 보고 있었다면 바로 반영
   }
   bar.querySelector('.tab-add').addEventListener('click', open);
 })();
@@ -1145,6 +1170,8 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       const left = budget.budget - out, daysLeft = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate() - today.getDate() + 1;
       extra = bar(out / budget.budget, left < 0) + `<p class="dash-sub">${left < 0 ? `예산을 ${won(-left)} 넘었어요` : `예산 ${Math.round(out / budget.budget * 100)}% 사용 · 하루 ${won(left / daysLeft)}씩 쓸 수 있어요`}</p>`;
     }
+    const st = budgetStreak(budget.entries);
+    if (st.current) extra += `<p class="dash-sub streak-line">🔥 ${st.current}일 연속 기록 중${st.recordedToday ? '' : ' · 오늘도 기록해 주세요'}</p>`;
     cards.push(`<a class="dash-card" href="/budget/"><span class="dash-label">이번 달 지출</span><b class="dash-big">${won(out)}</b>${extra}</a>`);
   }
 

@@ -50,6 +50,7 @@
     if (!amt) { err.textContent = '금액을 넣어 주세요.'; $('b-amt').focus(); return; }
     if (!date) { err.textContent = '날짜를 골라 주세요.'; return; }
     err.textContent = '';
+    const before = budgetStreak(data.entries);
     data.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, amt, cat, date, memo: $('b-memo').value.trim().slice(0, 40) });
     if (!save()) return;
     month = date.slice(0, 7);
@@ -57,7 +58,7 @@
     $('b-amt').dispatchEvent(new Event('input', { bubbles: true }));
     $('b-amt').focus();
     render();
-    toast(`${cat} ${won(amt)}을 기록했어요.`);
+    toast(streakCheer(before, data.entries) || `${cat} ${won(amt)}을 기록했어요.`);
   }
   $('b-save').addEventListener('click', addEntry);
   ['b-amt', 'b-memo'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addEntry(); } }));
@@ -81,8 +82,25 @@
     $('b-left').textContent = (sumIn - sumOut < 0 ? '-' : '') + won(Math.abs(sumIn - sumOut));
     $('b-left').classList.toggle('minus', sumIn - sumOut < 0);
     drawBudget(sumOut, y, m);
+    drawStreak();
     drawList(list);
     drawBreakdown(list, sumOut);
+  }
+
+  // ── 연속 기록 ──
+  function drawStreak() {
+    const st = budgetStreak(data.entries), box = $('b-streak');
+    let head, sub;
+    if (st.current) {
+      head = `<span class="streak-fire">🔥</span><b>${st.current}일 연속 기록 중</b>`;
+      sub = !st.recordedToday ? `오늘 기록하면 ${st.current + 1}일째예요. 놓치지 마세요!`
+        : st.next ? `'${st.next[2]}' 배지까지 ${st.next[0] - st.current}일 남았어요` : '모든 배지를 모았어요. 대단해요!';
+    } else {
+      head = `<span class="streak-fire">🌱</span><b>${data.entries.length ? '연속 기록을 다시 시작해요' : '오늘 첫 기록을 남겨 보세요'}</b>`;
+      sub = '매일 한 번만 기록해도 3일이면 첫 배지를 받아요';
+    }
+    box.innerHTML = `<div class="streak-head">${head}${st.best ? `<span class="streak-best">최고 ${st.best}일</span>` : ''}</div><p class="streak-sub">${sub}</p>
+      <div class="badges">${STREAK_BADGES.map(([n, icon, name]) => `<span class="badge-item${st.best >= n ? ' on' : ''}" title="${n}일 연속 기록"><i>${icon}</i><small>${name}</small></span>`).join('')}</div>`;
   }
 
   function drawBudget(used, y, m) {
