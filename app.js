@@ -1854,7 +1854,7 @@ const MENU = [
 // ── 엑셀로 저장: 입력한 값과 결과를 .xlsx 파일 하나로 만들어 줘요 (서버로 보내지 않고 이 기기에서 만들어요) ──
 function calcSheet(name, url) {
   const card = document.querySelector('.card'), result = card.querySelector('.result');
-  const clean = el => { const c = el.cloneNode(true); c.querySelectorAll('button, .krw').forEach(b => b.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };
+  const clean = el => { const c = el.cloneNode(true); c.querySelectorAll('button, .krw').forEach(b => b.remove()); return c.textContent.replace(/\s+/g, ' ').replace(/\s*·\s*/g, '·').replace(/\s*\(.*\)$/, '').trim(); }; // '물타기 계산기 (평균 단가)' → '물타기 계산기'
   const shown = el => el.getClientRects().length > 0;
   const labelOf = el => {
     if (el.getAttribute('aria-label')) return el.getAttribute('aria-label');
@@ -2298,14 +2298,16 @@ document.addEventListener('click', e => {
   t.type = 'button'; t.className = 'top-title'; t.tabIndex = -1; t.setAttribute('aria-hidden', 'true');
   t.addEventListener('click', () => window.scrollTo({ top: 0, behavior: calmMotion ? 'auto' : 'smooth' })); // 작은 제목을 누르면 맨 위로
   inner.append(t);
+  // 제목 안에 붙은 '10개', '옆으로 넘겨 보기', 배지 같은 덧붙임은 빼고 이름만 보여 줘요
+  const titleOf = el => { const c = el.cloneNode(true); c.querySelectorAll('span, small, a, button, img, i').forEach(x => x.remove()); return c.textContent.replace(/\s+/g, ' ').replace(/\s*·\s*/g, '·').replace(/\s*\(.*\)$/, '').trim(); }; // '물타기 계산기 (평균 단가)' → '물타기 계산기'
   let raf = 0;
   const check = () => {
     raf = 0;
     const h = bar.offsetHeight; // 휴대폰 메뉴바는 분류 줄까지 있어서 높이를 그때그때 재요
-    const passed = [h1, ...document.querySelectorAll('.wrap .card > h2, .wrap > section > h2')].filter(el => el.offsetParent && el.getBoundingClientRect().bottom < h);
+    const passed = [h1, ...document.querySelectorAll('.wrap .card > h2, .wrap > section > h2, .col-badge-head > h2')].filter(el => el.offsetParent && el.getBoundingClientRect().bottom < h);
     const now = passed.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top).pop(); // 위로 지나간 제목 중 가장 아래 것
     bar.classList.toggle('titled', !!now);
-    const text = now ? now.textContent.trim() : '';
+    const text = now ? titleOf(now) : '';
     if (!text || text === t.textContent) return;
     if (t.textContent && !calmMotion) { t.classList.remove('swap'); void t.offsetWidth; t.classList.add('swap'); } // 바뀔 때 살짝 올라오며 바뀌어요
     t.textContent = text;
