@@ -2176,3 +2176,38 @@ function countOnce(k, v) {
   });
   show(pick);
 })();
+
+// ── 모든 계산기 · 첫 화면 '계산기 둘러보기' (휴대폰): 분류마다 2칸×3줄씩 한 장, 나머지는 옆으로 넘겨 봐요. 컴퓨터에서는 그대로 보여요 ──
+(() => {
+  const all = !!document.getElementById('calc-list'), home = document.body.classList.contains('home');
+  if (!all && !home) return;
+  const q = document.getElementById('calc-q');
+  document.querySelectorAll(all ? 'section.group' : 'section.group.tabbed').forEach(g => {
+    const tiles = g.querySelector(':scope > .tiles'), cards = tiles ? [...tiles.querySelectorAll(':scope > .tile')] : [];
+    if (!cards.length) return;
+    const pages = [];
+    for (let i = 0; i < cards.length; i += 6) {
+      const page = document.createElement('div');
+      page.className = 'cp-page';
+      cards.slice(i, i + 6).forEach(c => page.append(c));
+      pages.push(page);
+    }
+    tiles.append(...pages);
+    tiles.classList.add('paged');
+    const h2 = g.querySelector('h2');
+    if (all) h2.insertAdjacentHTML('beforeend', `<span class="cp-count">${cards.length}개</span>`); // 첫 화면은 분류 이름이 위 탭에 있어요
+    if (pages.length < 2) return;
+    if (all) h2.insertAdjacentHTML('beforeend', '<span class="cp-hint">옆으로 넘겨 보기 ›</span>');
+    const dots = document.createElement('div');
+    dots.className = 'cp-dots'; dots.setAttribute('aria-hidden', 'true');
+    dots.innerHTML = pages.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('');
+    tiles.after(dots);
+    let t = 0;
+    tiles.addEventListener('scroll', () => { // 지금 보고 있는 장을 점으로 표시해요
+      clearTimeout(t);
+      t = setTimeout(() => { const i = Math.round(tiles.scrollLeft / tiles.clientWidth); dots.querySelectorAll('i').forEach((d, k) => d.classList.toggle('on', k === i)); }, 60);
+    }, { passive: true });
+  });
+  // 검색할 때는 장을 풀어서 찾은 계산기를 한곳에 모아 보여 줘요
+  if (q) q.addEventListener('input', () => document.body.classList.toggle('calc-searching', !!q.value.trim()));
+})();
