@@ -70,7 +70,7 @@ const mtClash = code => mtFlip(code, [0, 1, 2, 3]); // 환장의 조합: 모든 
     box.querySelectorAll('.mt-opt').forEach(btn => btn.addEventListener('click', () => {
       btn.classList.add('on');
       answers[i] = +btn.dataset.v;
-      setTimeout(() => { if (i + 1 < MT_QUESTIONS.length) ask(i + 1); else finish(); }, 180);
+      setTimeout(() => { if (i + 1 < MT_QUESTIONS.length) ask(i + 1); else finish(); }, 380);
     }));
   }
   function finish() {
