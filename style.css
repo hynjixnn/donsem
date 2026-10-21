@@ -125,7 +125,8 @@ footer a:hover { color: var(--text) !important; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
 .tile { display: flex; flex-direction: column; background: var(--card); border-radius: 20px; padding: 24px 22px 20px; color: var(--text);
   box-shadow: var(--shadow); transition: transform .2s, box-shadow .2s; }
-.tile:hover { text-decoration: none; transform: translateY(-2px); background: #ededf0; }
+.tile:hover { text-decoration: none; }
+@media (hover: hover) { .tile:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--card) 94%, var(--text)); } } /* 휴대폰은 누르면 hover가 남아서 마우스가 있을 때만, 다크 모드에서도 어둡게 */
 .tile h3 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; }
 .tile p { font-size: 15px; color: var(--muted); margin: 0 0 18px; line-height: 1.5; flex: 1; }
 .tile .go { color: var(--accent); font-size: 15px; font-weight: 500; }
@@ -1252,3 +1253,21 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
   :root[data-theme="auto"] .tabbar { background: rgba(28, 28, 30, .32); border-color: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 0 0 .5px rgba(0, 0, 0, .4), 0 10px 30px -8px rgba(0, 0, 0, .6); }
   :root[data-theme="auto"] .tabbar a.on { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
 }
+
+/* 돈 관리 탭(가계부·고정지출·내 자산·목표): 파란 알약이 옆으로 미끄러지고, 내용은 그 방향으로 쫀득하게 넘어가요 */
+.mm-tabs.has-pill { position: relative; }
+.mm-pill { position: absolute; left: 0; top: 0; z-index: 0; border-radius: 980px; background: var(--blue); pointer-events: none;
+  box-shadow: 0 4px 14px -6px color-mix(in srgb, var(--blue) 80%, transparent); transition: transform .5s cubic-bezier(.34, 1.3, .64, 1), width .4s cubic-bezier(.34, 1.3, .64, 1); }
+.mm-tabs.has-pill a { position: relative; z-index: 1; transition: color .3s; }
+.mm-tabs.has-pill a.on, .mm-tabs.has-pill a.on:hover { background: transparent; }
+@media (prefers-reduced-motion: no-preference) {
+  html:active-view-transition-type(tab-next)::view-transition-old(root) { animation: vt-tab-out-left .46s cubic-bezier(.32, .72, 0, 1) both; }
+  html:active-view-transition-type(tab-next)::view-transition-new(root) { animation: vt-tab-in-right .46s cubic-bezier(.32, .72, 0, 1) both; }
+  html:active-view-transition-type(tab-prev)::view-transition-old(root) { animation: vt-tab-out-right .46s cubic-bezier(.32, .72, 0, 1) both; }
+  html:active-view-transition-type(tab-prev)::view-transition-new(root) { animation: vt-tab-in-left .46s cubic-bezier(.32, .72, 0, 1) both; }
+}
+@media (prefers-reduced-motion: reduce) { .mm-pill { transition: none; } }
+@keyframes vt-tab-in-right { from { transform: translateX(28%); opacity: 0; } }
+@keyframes vt-tab-out-left { to { transform: translateX(-18%); opacity: 0; } }
+@keyframes vt-tab-in-left { from { transform: translateX(-28%); opacity: 0; } }
+@keyframes vt-tab-out-right { to { transform: translateX(18%); opacity: 0; } }

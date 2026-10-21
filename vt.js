@@ -18,7 +18,7 @@ window.addEventListener('pagereveal', e => {
   if (act.navigationType === 'reload') { e.viewTransition.skipTransition(); return; }
   const from = new URL(act.from.url).pathname, to = location.pathname;
   let type = 'forward';
-  if (MONEY_TABS.includes(from) && MONEY_TABS.includes(to)) type = 'tab';
+  if (MONEY_TABS.includes(from) && MONEY_TABS.includes(to)) type = MONEY_TABS.indexOf(to) > MONEY_TABS.indexOf(from) ? 'tab-next' : 'tab-prev'; // 오른쪽 탭이면 오른쪽에서, 왼쪽 탭이면 왼쪽에서
   else if (act.navigationType === 'traverse' ? act.from.index > act.entry.index : to === '/') type = 'back';
   e.viewTransition.types.add(type);
 });

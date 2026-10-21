@@ -2378,3 +2378,28 @@ document.addEventListener('click', e => {
   document.addEventListener('contextmenu', e => { if (e.target.closest('a.tile')) e.preventDefault(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 })();
+
+// ── 돈 관리 탭: 파란 알약이 지난 탭 자리에서 지금 탭으로 쫀득하게 미끄러져 와요 ──
+(() => {
+  const tabs = document.querySelector('.mm-tabs'), on = tabs && tabs.querySelector('a.on');
+  if (!tabs || !on) return;
+  const links = [...tabs.querySelectorAll('a')], KEY = 'donsem:mm-from';
+  const pill = document.createElement('span');
+  pill.className = 'mm-pill'; pill.setAttribute('aria-hidden', 'true');
+  tabs.prepend(pill); tabs.classList.add('has-pill');
+  const place = a => { pill.style.width = a.offsetWidth + 'px'; pill.style.height = a.offsetHeight + 'px'; pill.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`; };
+  let from = -1;
+  try { from = Number(sessionStorage.getItem(KEY)); sessionStorage.removeItem(KEY); } catch (e) { from = -1; }
+  const start = links[from] && links[from] !== on ? links[from] : on;
+  pill.style.transition = 'none'; place(start); pill.offsetWidth; pill.style.transition = '';
+  if (start !== on) setTimeout(() => place(on), 30); // 지난 탭 자리에서 출발
+  tabs.addEventListener('click', e => {
+    const a = e.target.closest('a');
+    if (!a || a === on) return;
+    try { sessionStorage.setItem(KEY, String(links.indexOf(on))); } catch (err) { /* 기억 못 해도 괜찮아요 */ }
+    place(a); // 누른 쪽으로 먼저 움직이기 시작해요
+  });
+  window.addEventListener('resize', () => place(on));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => place(on));
+  window.addEventListener('pageshow', e => { if (e.persisted) { pill.style.transition = 'none'; place(on); pill.offsetWidth; pill.style.transition = ''; } }); // 뒤로 가기로 돌아오면 제자리
+})();
