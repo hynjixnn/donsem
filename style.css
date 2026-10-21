@@ -720,7 +720,14 @@ html.gnav-open { overflow: hidden; }
 .ft-luck b { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 16px; }
 .ft-luck i { width: 12px; height: 12px; border-radius: 50%; }
 .ft-todo { display: block; margin: 14px 0 12px; font-size: 14px; font-weight: 600; }
-.ft-story { display: block; width: 100%; font: inherit; font-size: 16px; font-weight: 600; padding: 12px; cursor: pointer; }
+.ft-story { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border: 0; border-radius: 980px; cursor: pointer;
+  background: linear-gradient(90deg, #f58529, #dd2a7b 50%, #8134af); color: #fff; font: inherit; font-size: 16px; font-weight: 700; }
+.ft-story svg { width: 20px; height: 20px; }
+.ft-story:hover { filter: brightness(1.06); }
+.ft-story:disabled { opacity: .7; cursor: progress; }
+.ft-steps { margin: 12px 0 0; padding-left: 20px; font-size: 13px; color: var(--muted); line-height: 1.7; }
+.ft-steps b { color: var(--text); font-weight: 600; }
+.ft-steps span { font-size: 12px; }
 .ft-note { margin: 10px 0 0; font-size: 12px; color: var(--muted); text-align: center; }
 
 /* 내 돈나무 */

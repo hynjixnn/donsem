@@ -73,7 +73,10 @@
     res.querySelector('[data-act="share"]').addEventListener('click', share);
     res.querySelector('[data-act="more"]').addEventListener('click', more);
     const st = res.querySelector('[data-act="story"]');
-    if (st) st.addEventListener('click', () => story(st));
+    if (st) {
+      st.addEventListener('click', () => story(st));
+      setTimeout(() => { if (!storyBlob) storyBlob = makeStory(); }, 600); // 화면이 다 그려진 뒤 미리 만들어 둬요
+    }
   }
 
   // 받침에 따라 '으로/로' (받침 없거나 ㄹ이면 '로')
@@ -90,7 +93,8 @@
         <div><span>행운의 숫자</span><b>${f.num}</b></div>
       </div>
       <a class="ft-todo" href="${f.todo[1]}">오늘의 돈 할 일 · ${f.todo[0]} ›</a>
-      <button type="button" class="btn fill ft-story" data-act="story">금전운 이미지로 공유하기</button>
+      <button type="button" class="ft-story" data-act="story"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" fill="currentColor"/></svg>인스타 스토리에 올리기</button>
+      <ol class="ft-steps"><li>공유 창에서 <b>Instagram → 스토리</b>를 골라요</li><li><b>스티커 → 링크</b>를 누르고 붙여 넣어요 <span>(퀴즈 주소가 자동으로 복사돼요)</span></li></ol>
       <p class="ft-note">재미로 보는 금전운이에요. 실제 돈 결정은 계산기로 꼼꼼히!</p>
     </div>`;
   }
@@ -113,9 +117,10 @@
   }
 
   // ── 인스타 스토리 크기(1080×1920) 금전운 이미지 ──
-  async function story(btn) {
-    btn.disabled = true;
-    try {
+  // 버튼을 누르자마자 공유 창이 떠야 해서(휴대폰은 누른 직후에만 공유 창을 열어 줘요), 카드가 보일 때 미리 그려 둬요
+  let storyBlob = null;
+  async function makeStory() {
+    {
       const s = quizLoad(), f = fortuneToday(s), t = treeOf(s), W = 1080, H = 1920;
       const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
       const c = cv.getContext('2d'), FONT = '"Pretendard Variable", Pretendard, -apple-system, sans-serif';
@@ -160,16 +165,30 @@
       text(`${t.name}${t.fruit ? ` · 열매 ${t.fruit}개` : ''}${quizStreak(s) ? ` · 🔥${quizStreak(s)}일` : ''}`, 330, 1600, 52, 700, '#1d1d1f', 'left');
       text('doncalculator.com/quiz', W / 2, 1770, 40, 700, '#0071e3');
       text('매일 한 문제 돈 퀴즈 풀고 금전운 보기 · 재미로 봐 주세요', W / 2, 1830, 30, 500, '#6e6e73');
-      const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+      return new Promise(r => cv.toBlob(r, 'image/png'));
+    }
+  }
+  async function story(btn) {
+    const link = `${location.origin}/quiz/`;
+    // 스토리의 '링크 스티커'에 바로 붙여 넣을 수 있게 퀴즈 주소를 먼저 복사해 둬요
+    if (navigator.clipboard) navigator.clipboard.writeText(link).catch(() => {});
+    btn.disabled = true;
+    try {
+      const blob = await (storyBlob || (storyBlob = makeStory()));
       const file = new File([blob], `돈셈_금전운_${today}.png`, { type: 'image/png' });
       if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try { await navigator.share({ files: [file], title: '오늘의 금전운' }); } catch (e) { /* 공유 창을 닫은 경우 */ }
+        try {
+          await navigator.share({ files: [file] });
+          toast('퀴즈 주소를 복사해 뒀어요. 스토리에서 링크 스티커에 붙여 넣으세요!');
+        } catch (e) {
+          if (e.name !== 'AbortError') toast('공유 창을 열지 못했어요. 한 번 더 눌러 주세요.');
+        }
       } else {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob); a.download = file.name;
         document.body.append(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-        toast('금전운 이미지를 저장했어요. 인스타 스토리에 올려 보세요!');
+        toast('이미지를 저장했어요. 휴대폰에서 누르면 인스타 스토리에 바로 올릴 수 있어요.');
       }
     } finally { btn.disabled = false; }
   }
