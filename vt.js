@@ -11,8 +11,12 @@
 
 // ── 페이지를 오갈 때 방향 정하기 (화면이 처음 그려지기 전에 알아야 해서 <head>에서 읽어요): 들어가면 오른쪽에서, 뒤로 가거나 첫 화면으로 가면 왼쪽에서, 돈 관리 탭끼리는 겹쳐서 ──
 const MONEY_TABS = ['/budget/', '/fixed/', '/assets/', '/goals/'];
+let mmFrom = -1; // 돈 관리 탭을 눌러 왔으면 지난 탭 번호 (아이폰 사파리는 navigation.activation이 없어서 직접 기억해요)
+try { const v = sessionStorage.getItem('donsem:mm-from'); if (v !== null) mmFrom = Number(v); } catch (e) { mmFrom = -1; }
 window.addEventListener('pagereveal', e => {
   if (!e.viewTransition) return;
+  const here = MONEY_TABS.indexOf(location.pathname);
+  if (here >= 0 && mmFrom >= 0 && mmFrom !== here) { e.viewTransition.types.add(here > mmFrom ? 'tab-next' : 'tab-prev'); return; }
   const act = window.navigation && navigation.activation;
   if (!act || !act.from) return; // 방향을 알 수 없으면 브라우저 기본(겹쳐 바뀌기)
   if (act.navigationType === 'reload') { e.viewTransition.skipTransition(); return; }
