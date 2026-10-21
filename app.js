@@ -1077,7 +1077,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   let type = 'out', cat = CATS.out[0], sheet = null;
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   function drawCats() {
-    sheet.querySelector('.qa-cats').innerHTML = CATS[type].map(c => `<button type="button" class="${c === cat ? 'on' : ''}" data-cat="${c}">${c}</button>`).join('');
+    sheet.querySelector('.qa-cats').innerHTML = CATS[type].map(c => `<button type="button" class="${c === cat ? 'on' : ''}" data-cat="${c}">${catIcon(c)}${c}</button>`).join('');
   }
   function open() {
     if (!sheet) {
@@ -1477,6 +1477,9 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
 const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals'];
 const iconOf = path => { const slug = String(path).replace(/\//g, ''); return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
+// 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
+const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
+const catIcon = (cat, size = 20) => CAT_ICONS[cat] ? `<img class="cat-ico" src="/icons/cat/${CAT_ICONS[cat]}.webp" alt="" width="${size}" height="${size}">` : '';
 function addTileIcon(t) {
   const img = iconOf(t.getAttribute('href'));
   if (!img || t.querySelector('.ico')) return;

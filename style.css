@@ -564,3 +564,8 @@ html { -webkit-tap-highlight-color: transparent; }
   .tile-top .ico { width: 36px; height: 36px; }
   .page-ico { width: 52px; height: 52px; margin-bottom: 10px; }
 }
+
+/* 가계부 카테고리 아이콘 */
+.cat-ico { width: 20px; height: 20px; vertical-align: -4px; margin-right: 6px; pointer-events: none; }
+.chips button .cat-ico { width: 18px; height: 18px; margin-right: 5px; }
+.item-ico { width: 32px; height: 32px; flex: none; margin-right: 2px; }
