@@ -2455,3 +2455,18 @@ document.addEventListener('click', e => {
     snap();
   });
 })();
+
+// ── 끊김 없이 넘어가기: 탭을 손가락으로 누르는 순간(떼기 전) 다음 화면을 미리 받아 둬요 ──
+(() => {
+  const done = new Set([location.pathname]);
+  const warm = e => {
+    const a = e.target.closest && e.target.closest('.tabbar a, .mm-tabs a, a.tile, .gnav-in a');
+    if (!a || a.origin !== location.origin || done.has(a.pathname)) return;
+    done.add(a.pathname);
+    fetch(a.pathname, { credentials: 'same-origin' }).catch(() => {}); // 보관함에 넣어 두면 넘어갈 때 바로 떠요
+  };
+  document.addEventListener('touchstart', warm, { passive: true });
+  document.addEventListener('mousedown', warm);
+})();
+// 새 화면이 다 들어오면 '들어오는 중' 표시를 떼서, 그래픽 칩에 맡겼던 내용을 돌려놔요
+setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-prev', 'tb-in-next', 'tb-in-prev'), 600);

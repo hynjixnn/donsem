@@ -1297,3 +1297,8 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
   .tb-in-prev .wrap { animation: mm-in-left .42s cubic-bezier(.22, 1, .36, 1) both; }
 }
 @media (prefers-reduced-motion: reduce) { .tb-pill { transition: none; } }
+
+/* 끊김 줄이기: 화면이 넘어가는 동안만 내용 덩어리를 그래픽 칩(GPU)에 맡겨요 */
+.mm-leaving .wrap > :not(.mm-tabs), .mm-in-next .wrap > :not(.mm-tabs), .mm-in-prev .wrap > :not(.mm-tabs),
+.tb-leaving .wrap, .tb-in-next .wrap, .tb-in-prev .wrap { will-change: transform, opacity; }
+.mm-pill, .tb-pill { will-change: transform; }
