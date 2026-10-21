@@ -1280,7 +1280,7 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
 @media (max-width: 640px) {
   .tabbar.has-pill .tb-pill { display: block; position: absolute; left: 0; top: 0; z-index: 0; border-radius: 999px; pointer-events: none;
     background: rgba(255, 255, 255, .5); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 2px 8px -3px rgba(0, 0, 0, .12);
-    transition: transform .38s cubic-bezier(.22, 1, .36, 1), width .3s cubic-bezier(.22, 1, .36, 1); } /* 같은 0.38초, 도착할 때 지나쳤다 돌아오지 않고 부드럽게 멈춰요 */
+    transition: transform .3s cubic-bezier(.3, 1.15, .5, 1), width .3s cubic-bezier(.3, 1.15, .5, 1); } /* 돈 관리 탭 알약과 같은 감도 */
   :root[data-theme="dark"] .tabbar.has-pill .tb-pill { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
   .tabbar.has-pill a, .tabbar.has-pill button { position: relative; z-index: 1; transition: color .2s; }
   .tabbar.has-pill a.on { background: transparent; box-shadow: none; }
@@ -1289,8 +1289,11 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
   :root[data-theme="auto"] .tabbar.has-pill .tb-pill { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .tb-leaving .wrap { transition: opacity .3s ease, transform .3s ease; opacity: 0; transform: scale(.985); } /* 알약이 다 미끄러지는 동안 천천히 사라져요 */
-  .tb-in .wrap { animation: tb-in .36s cubic-bezier(.22, 1, .36, 1) both; }
+  /* 돈 관리 탭과 같은 값: 누르면 지금 내용이 반대쪽으로 살짝 밀리며 사라지고, 새 내용은 누른 쪽에서 들어와요 */
+  .tb-leaving .wrap { transition: opacity .16s ease-out, transform .2s cubic-bezier(.4, 0, 1, 1); opacity: 0; }
+  .tb-leaving.tb-go-next .wrap { transform: translateX(-14px); }
+  .tb-leaving.tb-go-prev .wrap { transform: translateX(14px); }
+  .tb-in-next .wrap { animation: mm-in-right .42s cubic-bezier(.22, 1, .36, 1) both; }
+  .tb-in-prev .wrap { animation: mm-in-left .42s cubic-bezier(.22, 1, .36, 1) both; }
 }
 @media (prefers-reduced-motion: reduce) { .tb-pill { transition: none; } }
-@keyframes tb-in { from { opacity: 0; transform: translateY(8px); } }

@@ -2416,12 +2416,11 @@ document.addEventListener('click', e => {
   });
 })();
 
-// ── 아래 탭바: 누른 순간 하이라이트가 그 탭으로 미끄러지기 시작하고, 화면은 기다리지 않고 바로 넘어가요.
-//    새 화면은 알약이 멈춘 그 자리에서 이어서 끝까지 미끄러져요 (마이 > 화면 모드 버튼과 같은 0.38초 튕김) ──
+// ── 아래 탭바: 돈 관리 탭(가계부 → 고정지출)과 똑같은 감도로 움직여요.
+//    누른 순간 알약이 그 탭으로 미끄러지고 → 지금 내용이 살짝 밀리며 사라지고 → 0.2초 뒤 넘어가서 → 새 내용이 누른 쪽에서 들어와요 ──
 (() => {
-  const bar = document.querySelector('.tabbar'), on = bar && bar.querySelector('a.on'), KEY = 'donsem:tb-pill';
-  let from = null;
-  try { from = JSON.parse(sessionStorage.getItem(KEY)); sessionStorage.removeItem(KEY); sessionStorage.removeItem('donsem:tb-nav'); } catch (e) { from = null; }
+  const bar = document.querySelector('.tabbar'), on = bar && bar.querySelector('a.on'), KEY = 'donsem:tb-nav';
+  try { sessionStorage.removeItem(KEY); sessionStorage.removeItem('donsem:tb-pill'); } catch (e) { /* 기억 못 해도 괜찮아요 */ }
   if (!bar || !on) return;
   const links = [...bar.querySelectorAll('a')], root = document.documentElement;
   const pill = document.createElement('span');
@@ -2429,36 +2428,29 @@ document.addEventListener('click', e => {
   bar.prepend(pill); bar.classList.add('has-pill');
   const place = a => { pill.style.width = a.offsetWidth + 'px'; pill.style.height = a.offsetHeight + 'px'; pill.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`; };
   const snap = () => { pill.style.transition = 'none'; place(bar.querySelector('a.on') || on); pill.offsetWidth; pill.style.transition = ''; };
-  if (from && typeof from.x === 'number' && on.offsetWidth) { // 지난 화면에서 알약이 있던 자리에서 출발
-    pill.style.transition = 'none';
-    pill.style.width = from.w + 'px'; pill.style.height = on.offsetHeight + 'px'; pill.style.transform = `translate(${from.x}px, ${on.offsetTop}px)`;
-    pill.offsetWidth; pill.style.transition = '';
-    requestAnimationFrame(() => place(on));
-  } else snap();
-  let going = false;
+  snap(); // 알약은 누른 화면에서 이미 도착해 있어요
+  let leaving = 0;
   bar.addEventListener('click', e => {
     const a = e.target.closest('a');
     if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; // 같은 탭 다시 누르기(맨 위로)는 위에서 처리해요
     if (a === on && a.pathname === location.pathname) return;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    place(a); // 누른 순간 미끄러지기 시작
+    e.preventDefault();
+    const dir = links.indexOf(a) >= links.indexOf(on) ? 'next' : 'prev';
+    place(a); // 누른 순간 알약이 바로 그쪽으로 미끄러지고, 글자색도 바로 바뀌어요
     links.forEach(x => x.classList.toggle('on', x === a));
-    try { sessionStorage.setItem('donsem:tb-nav', '1'); } catch (err) { /* 기억 못 해도 괜찮아요 */ }
-    root.classList.remove('tb-in');
-    root.classList.add('tb-leaving');
-    going = true; // 링크는 막지 않아요: 바로 다음 화면으로 넘어가요
-  });
-  window.addEventListener('pagehide', () => { // 떠나는 순간 알약이 어디까지 왔는지 기억해 둬요
-    if (!going) return;
-    const m = new DOMMatrixReadOnly(getComputedStyle(pill).transform);
-    try { sessionStorage.setItem(KEY, JSON.stringify({ x: m.m41, w: pill.getBoundingClientRect().width })); } catch (err) { /* 기억 못 해도 괜찮아요 */ }
+    try { sessionStorage.setItem(KEY, dir); } catch (err) { /* 기억 못 해도 괜찮아요 */ }
+    root.classList.remove('tb-in-next', 'tb-in-prev', 'tb-go-next', 'tb-go-prev');
+    root.classList.add('tb-leaving', 'tb-go-' + dir);
+    clearTimeout(leaving);
+    leaving = setTimeout(() => { location.href = a.href; }, 200); // 알약이 거의 도착하고 지금 화면이 사라질 즈음 넘어가요
   });
   window.addEventListener('resize', snap);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => place(bar.querySelector('a.on') || on)); // 미끄러지는 중이면 끊지 않고 목적지만 다시 맞춰요
-  window.addEventListener('pageshow', e => { // 뒤로 가기로 돌아오면 제자리
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(snap);
+  window.addEventListener('pageshow', e => { // 뒤로 가기로 돌아오면 사라졌던 내용과 알약을 제자리로
     if (!e.persisted) return;
-    going = false;
-    root.classList.remove('tb-leaving', 'tb-in');
+    clearTimeout(leaving);
+    root.classList.remove('tb-leaving', 'tb-go-next', 'tb-go-prev', 'tb-in-next', 'tb-in-prev');
     links.forEach(x => x.classList.toggle('on', x === on));
     snap();
   });

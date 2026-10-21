@@ -17,9 +17,9 @@ try { const v = sessionStorage.getItem('donsem:mm-from'); if (v !== null) mmFrom
 const mmHere = MONEY_TABS.indexOf(location.pathname), mmTab = mmHere >= 0 && mmFrom >= 0 && mmFrom !== mmHere;
 if (mmTab) document.documentElement.classList.add(mmHere > mmFrom ? 'mm-in-next' : 'mm-in-prev'); // 화면이 그려지기 전에 들어올 방향을 정해 둬요
 // 아래 탭바를 눌러 왔으면: 새 화면 내용만 살짝 떠오르듯 나타나요 (탭바 하이라이트는 누른 화면에서 이미 옮겨 왔어요)
-let tbNav = false;
-try { tbNav = sessionStorage.getItem('donsem:tb-nav') === '1'; } catch (e) { tbNav = false; }
-if (tbNav && !mmTab) document.documentElement.classList.add('tb-in');
+let tbNav = '';
+try { tbNav = sessionStorage.getItem('donsem:tb-nav') || ''; } catch (e) { tbNav = ''; }
+if ((tbNav === 'next' || tbNav === 'prev') && !mmTab) document.documentElement.classList.add('tb-in-' + tbNav);
 window.addEventListener('pagereveal', e => {
   if (!e.viewTransition) return;
   if (mmTab || tbNav) { e.viewTransition.skipTransition(); return; } // 브라우저 전환과 겹치지 않게
