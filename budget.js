@@ -87,6 +87,80 @@
     drawStreak();
     drawList(list);
     drawBreakdown(list, sumOut);
+    drawWrap(list, y, m, sumOut);
+  }
+
+  // ── 월말 돈 결산 카드 (스포티파이 연말 결산처럼) ──
+  const NICK = { '식비': '맛집 탐험가 🍚', '카페·간식': '카페 단골손님 ☕', '교통': '프로 이동러 🚌', '쇼핑': '쇼핑 요정 🛍️', '생활': '살림 고수 🧺', '주거·통신': '집이 최고 🏠',
+    '의료': '건강 지킴이 💊', '문화·여가': '문화생활 러버 🍿', '경조사': '의리파 💌', '기타': '자유로운 영혼 📦' };
+  let wrapCache = null, wrapBtn = null;
+  function wrapData(list, y, m, sumOut) {
+    const outs = list.filter(e => e.type === 'out'), by = {}, cnt = {}, days = {};
+    const free = outs.filter(e => !String(e.id).startsWith('fx-')); // 월세·구독 같은 고정지출은 빼고 '내가 고른 지출'로 별명을 정해요
+    (free.length ? free : outs).forEach(e => { by[e.cat] = (by[e.cat] || 0) + e.amt; cnt[e.cat] = (cnt[e.cat] || 0) + 1; days[e.date] = (days[e.date] || 0) + e.amt; });
+    const [topCat, topAmt] = Object.entries(by).sort((a, b) => b[1] - a[1])[0];
+    const [bigDay, bigAmt] = Object.entries(days).sort((a, b) => b[1] - a[1])[0];
+    const prevKey = iso(new Date(y, m - 2, 1)).slice(0, 7);
+    const isNow = month === iso(today).slice(0, 7), daysIn = isNow ? today.getDate() : new Date(y, m, 0).getDate();
+    // 진행 중인 달은 지난달의 같은 기간(1일~오늘 날짜)과 비교해요
+    const prev = data.entries.filter(e => e.type === 'out' && e.date.startsWith(prevKey) && (!isNow || Number(e.date.slice(8)) <= daysIn)).reduce((a, e) => a + e.amt, 0);
+    let ns = 0;
+    try {
+      const st = JSON.parse(localStorage.getItem('donsem:nospend'));
+      if (st && Array.isArray(st.days)) ns = st.days.filter(d => d.startsWith(month) && !data.entries.some(e => e.type === 'out' && e.date === d && !String(e.id).startsWith('fx-'))).length;
+    } catch (e) { ns = 0; }
+    return { topCat, topAmt, topCnt: cnt[topCat], bigDay, bigAmt, prev, isNow, daysIn, ns, avg: Math.round(sumOut / daysIn), sumOut, count: outs.length, nick: NICK[topCat] || '알뜰한 사람 🙂' };
+  }
+  function drawWrap(list, y, m, sumOut) {
+    const box = $('b-wrap');
+    if (!box) return;
+    $('b-wrap-title').textContent = `${m}월 돈 결산`;
+    wrapCache = null;
+    if (!sumOut) { box.innerHTML = '<p class="empty">지출을 기록하면 이번 달 결산 카드가 만들어져요.</p>'; if (wrapBtn) wrapBtn.hidden = true; return; }
+    const w = wrapData(list, y, m, sumOut), [, bm, bd] = w.bigDay.split('-').map(Number);
+    const change = w.prev ? Math.round((sumOut - w.prev) / w.prev * 100) : null;
+    box.innerHTML = `<div class="wrap-card">
+      <span class="wrap-cap">${y}년 ${m}월${w.isNow ? ` · 1일~${today.getDate()}일 (진행 중)` : ''}</span>
+      <p class="wrap-nick">이번 달 나는<br><b>${esc(w.nick)}</b></p>
+      <div class="wrap-total"><span>총 지출</span><b>${won(sumOut)}</b>${change === null ? '' : `<em class="${change > 0 ? 'up' : 'down'}">${w.isNow ? '지난달 같은 기간' : '지난달'}보다 ${change > 0 ? '▲' : '▼'} ${Math.abs(change)}%</em>`}</div>
+      <div class="wrap-grid">
+        <div><span>가장 많이 쓴 곳${list.some(e => String(e.id).startsWith('fx-')) ? ' (고정지출 빼고)' : ''}</span><b>${catIcon(w.topCat, 22)}${esc(w.topCat)}</b><small>${won(w.topAmt)} · ${w.topCnt}번</small></div>
+        <div><span>가장 많이 쓴 날</span><b>${bm}월 ${bd}일</b><small>${won(w.bigAmt)}</small></div>
+        <div><span>하루 평균</span><b>${won(w.avg)}</b><small>지출 ${w.count}건</small></div>
+        <div><span>무지출</span><b>${w.ns}일</b><small><a href="/no-spend/">챌린지 하러 가기 ›</a></small></div>
+      </div>
+    </div>`;
+    if (!wrapBtn) {
+      wrapBtn = storyButton('결산 카드 인스타 스토리에 올리기', () => wrapCache || (wrapCache = makeWrap()), '돈셈_월말결산.png', `${location.origin}/budget/`);
+      wrapBtn.classList.add('wrap-story');
+      box.after(wrapBtn);
+    }
+    wrapBtn.hidden = false;
+    clearTimeout(drawWrap.t); drawWrap.t = setTimeout(() => { wrapCache = makeWrap(); }, 700); // 누르자마자 공유 창이 뜨게 미리 그려 둬요
+  }
+  function makeWrap() {
+    const [y, m] = month.split('-').map(Number), list = data.entries.filter(e => e.date.startsWith(month));
+    const sumOut = list.filter(e => e.type === 'out').reduce((a, e) => a + e.amt, 0), w = wrapData(list, y, m, sumOut);
+    const icon = typeof CAT_ICONS !== 'undefined' && CAT_ICONS[w.topCat] ? `/icons/cat/${CAT_ICONS[w.topCat]}.webp` : '/icons/wrap.webp';
+    return storyCard({ kicker: `돈셈 · ${m}월 돈 결산`, title: '이번 달 나는', img: icon, color: '#7d7aff',
+      big: w.nick, sub: `총 지출 ${korean(sumOut) || won(sumOut)}${w.prev ? ` · ${w.isNow ? '지난달 같은 기간' : '지난달'}보다 ${sumOut > w.prev ? '▲' : '▼'} ${Math.abs(Math.round((sumOut - w.prev) / w.prev * 100))}%` : ''}`,
+      draw: (c, top, { text, round, W }) => { // 많이 쓴 곳 TOP 3 막대 (고정지출 빼고)
+        const by = {};
+        list.filter(e => e.type === 'out' && !String(e.id).startsWith('fx-')).forEach(e => { by[e.cat] = (by[e.cat] || 0) + e.amt; });
+        const r = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        if (!r.length) return 0;
+        round(90, top, W - 180, 80 + r.length * 110, 36, 'rgba(255,255,255,.85)');
+        text('많이 쓴 곳 TOP 3', 140, top + 64, 34, 700, '#1d1d1f', 'left');
+        r.forEach(([cat, amt], i) => {
+          const yy = top + 120 + i * 110;
+          text(`${i + 1}  ${cat}`, 140, yy + 12, 38, 600, '#1d1d1f', 'left');
+          text(korean(amt) || won(amt), W - 140, yy + 12, 34, 600, '#6e6e73', 'right');
+          round(140, yy + 34, (W - 280) * amt / r[0][1], 16, 8, '#7d7aff');
+        });
+        return 80 + r.length * 110;
+      },
+      boxes: [[`1위 ${w.topCat}`, `${w.topCnt}번`], ['무지출', `${w.ns}일`], ['하루 평균', korean(w.avg) || won(w.avg)]],
+      foot: '너의 이번 달 결산은? 👀', link: `${location.origin}/budget/` });
   }
 
   // ── 연속 기록 ──

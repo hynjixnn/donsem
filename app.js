@@ -504,11 +504,46 @@ function dateCalc() {
 }
 
 // 페이지마다 계산기가 하나씩 있어서, 그 페이지에 있는 계산기만 계산해요
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd };
+// ── 연봉 상위 몇 %: 국세청 근로소득 백분위(천분위) 자료, 2024년 귀속(2025년 신고) 2,107만 8,535명 ──
+// [상위 몇 % 지점(구간 가운데), 그 구간 1인당 평균 총급여(만 원)] — 구간 사이는 직선으로 이어서 계산해요. 해마다 새 자료가 나오면 바꿔 주세요.
+const SALARY_PCT = [[0.05,99937],[0.15,43898],[0.25,34951],[0.35,30162],[0.45,27054],[0.55,24747],[0.65,23086],[0.75,21763],[0.85,20752],[0.95,19953],[1.5,17332],[2.5,14717],[3.5,13117],[4.5,11984],[5.5,11136],[6.5,10456],[7.5,9925],[8.5,9498],[9.5,9117],[10.5,8770],[11.5,8454],[12.5,8162],[13.5,7887],[14.5,7626],[15.5,7377],[16.5,7148],[17.5,6932],[18.5,6727],[19.5,6534],[20.5,6352],[21.5,6180],[22.5,6022],[23.5,5874],[24.5,5727],[25.5,5583],[26.5,5446],[27.5,5314],[28.5,5186],[29.5,5063],[30.5,4947],[31.5,4837],[32.5,4737],[33.5,4634],[34.5,4537],[35.5,4443],[36.5,4350],[37.5,4263],[38.5,4182],[39.5,4101],[40.5,4021],[41.5,3945],[42.5,3870],[43.5,3799],[44.5,3728],[45.5,3660],[46.5,3601],[47.5,3543],[48.5,3480],[49.5,3417],[50.5,3358],[51.5,3299],[52.5,3239],[53.5,3179],[54.5,3121],[55.5,3064],[56.5,3009],[57.5,2964],[58.5,2905],[59.5,2853],[60.5,2797],[61.5,2749],[62.5,2696],[63.5,2645],[64.5,2597],[65.5,2543],[66.5,2508],[67.5,2475],[68.5,2430],[69.5,2384],[70.5,2311],[71.5,2243],[72.5,2168],[73.5,2090],[74.5,2008],[75.5,1922],[76.5,1838],[77.5,1763],[78.5,1671],[79.5,1584],[80.5,1499],[81.5,1412],[82.5,1320],[83.5,1236],[84.5,1170],[85.5,1079],[86.5,994],[87.5,913],[88.5,828],[89.5,767],[90.5,694],[91.5,616],[92.5,536],[93.5,456],[94.5,384],[95.5,305],[96.5,231],[97.5,165],[98.5,92],[99.5,21]];
+const SALARY_AVG = 4475, SALARY_MID = 3388; // 1인당 평균, 가운데(상위 50%) 총급여 (만 원)
+function salaryTop(man) { // 총급여(만 원) → 상위 몇 %
+  const P = SALARY_PCT;
+  if (man >= P[0][1]) return P[0][0];
+  for (let i = 0; i < P.length - 1; i++) if (man >= P[i + 1][1]) return P[i][0] + (P[i][1] - man) / (P[i][1] - P[i + 1][1]) * (P[i + 1][0] - P[i][0]);
+  return 99.9;
+}
+function salaryAt(top) { // 상위 몇 % → 그 지점 총급여(만 원)
+  const P = SALARY_PCT;
+  for (let i = 0; i < P.length - 1; i++) if (top <= P[i + 1][0]) return P[i][1] + (P[i + 1][1] - P[i][1]) * (Math.max(top, P[i][0]) - P[i][0]) / (P[i + 1][0] - P[i][0]);
+  return P[P.length - 1][1];
+}
+const topText = t => t < 0.1 ? '0.1% 이내' : t.toFixed(1).replace(/\.0$/, '') + '%';
+function salaryRank() {
+  const year = (seg('sr_mode') === 'month' ? val('sr_amt') * 12 : val('sr_amt')) / 10000, out = document.getElementById('sr_out');
+  if (!year) { out.innerHTML = '연봉이나 월급을 넣어 주세요.'; return; }
+  const t = salaryTop(year), people = 21078535, above = Math.round(people * t / 100 / 10000);
+  const diff = year - SALARY_AVG;
+  out.innerHTML = `<div>2024년 근로소득자 2,108만 명 중</div><div class="big">상위 ${topText(t)}</div>
+    <div class="rank-bar" aria-hidden="true"><i style="left:${Math.min(99, Math.max(1, 100 - t))}%"></i></div><div class="rank-ends"><span>하위</span><span>상위</span></div>` +
+    rows([['연봉 (세전 총급여)', won(year * 10000)], ['나보다 많이 버는 사람', t < 0.1 ? '약 2만 명 이내' : `약 ${above.toLocaleString('ko-KR')}만 명`],
+      ['평균 연봉 4,475만 원보다', `${korean(Math.abs(diff) * 10000) || '거의 같아요'} ${Math.abs(diff) < 1 ? '' : diff >= 0 ? '많아요' : '적어요'}`], ['가운데(중위) 연봉 3,388만 원보다', `${korean(Math.abs(year - SALARY_MID) * 10000) || '거의 같아요'} ${Math.abs(year - SALARY_MID) < 1 ? '' : year >= SALARY_MID ? '많아요' : '적어요'}`]]);
+}
+
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
 const insights = {
+  sr_out() {
+    const year = (seg('sr_mode') === 'month' ? val('sr_amt') * 12 : val('sr_amt')) / 10000;
+    if (!year) return '';
+    const t = salaryTop(year), goal = [50, 30, 20, 10, 5, 1].find(g => g < t - 0.05);
+    if (!goal) return '상위 1% 안이에요. 근로소득자 100명 중 가장 많이 버는 1명이에요.';
+    const need = salaryAt(goal) - year;
+    return `상위 ${goal}%에 들려면 연봉이 약 ${korean(Math.round(salaryAt(goal)) * 10000)}이어야 해요. 지금보다 ${korean(Math.round(need) * 10000) || '조금'} 더 필요해요.`;
+  },
   s_out() {
     const P = val('s_amt'), n = Math.floor(val('s_n')), r = val('s_r'), tax = num(seg('s_tax')) / 100;
     if (!P || !n || !r) return '';
@@ -1295,9 +1330,15 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       ['goal', '월급으로 목표 모으기', '목표 저축 계산기', {}],
     ],
     salary: () => [
+      ['salary-rank', '이 연봉, 상위 몇 %일까?', '연봉 상위 % 계산기', { sr_mode: 'year', sr_amt: R(seg('m_mode') === 'month' ? val('m_amt') * 12 : val('m_amt')) }],
       ['wage', '시급으로 치면 얼마일까?', '시급·월급·연봉 계산기', { w_mode: 'month', w_amt: R(rowNum('세전 월급')), w_hours: 40 }],
       ['savings', '실수령액의 20%를 적금에 넣으면?', '적금 이자 계산기', { s_amt: Math.max(10000, Math.round(bigNum() * 0.2 / 10000) * 10000), s_n: 12 }],
       ['severance', '이 월급이면 퇴직금은?', '퇴직금 계산기', { v_pay: R(rowNum('세전 월급')) }],
+    ],
+    'salary-rank': () => [
+      ['salary', '이 연봉, 실수령액은 얼마?', '연봉 실수령액 계산기', { m_mode: 'year', m_amt: R(seg('sr_mode') === 'month' ? val('sr_amt') * 12 : val('sr_amt')) }],
+      ['year-end-tax', '연말정산으로 얼마나 돌려받을까?', '연말정산 환급 계산기', { ys_pay: R(seg('sr_mode') === 'month' ? val('sr_amt') * 12 : val('sr_amt')) }],
+      ['money-type', '돈 성격도 궁금하다면?', '돈BTI 테스트', {}],
     ],
     unemployment: () => [
       ['severance', '퇴직금은 얼마일까?', '퇴직금 계산기', { v_pay: R(val('j_pay')), v_end: raw('j_end') }],
@@ -1476,7 +1517,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type'];
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend'];
 const iconOf = path => { const slug = String(path).replace(/\//g, ''); return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -1499,6 +1540,7 @@ function addTileIcon(t) {
 (() => {
   const KEY_FACTS = {
     '/salary/': '연봉 4천이면 월 <b>약 294만 원</b>',
+    '/salary-rank/': '연봉 5천이면 <b>상위 30%</b>',
     '/year-end-tax/': '연금저축 넣으면 <b>최대 16.5%</b> 환급',
     '/unemployment/': '하루 최대 <b>68,100원</b>',
     '/loan/': '1억 · 연 4% · 30년이면 월 <b>약 47.7만 원</b>',
@@ -1617,12 +1659,12 @@ function addTileIcon(t) {
 
 // ── 위쪽 메뉴: 분류를 누르면(컴퓨터는 올리기만 해도) 그 분류 계산기가 펼쳐져요 ──
 const MENU = [
-  ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표'], ['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti']]],
+  ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표'], ['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti'], ['/no-spend/', '무지출 챌린지', '절약 무지출 달력 도장']]],
   ['저축 · 투자', [['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/goal/', '목표 저축', '1억 모으기'],
     ['/dividend/', '배당금', '주식 배당 세금'], ['/avg-price/', '물타기', '평균 단가 주식'], ['/retirement/', '노후자금', '은퇴 연금'], ['/inflation/', '물가상승률', '화폐 가치']]],
   ['대출 · 집', [['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
-  ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
+  ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
     ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
   ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'],
     ['/fuel/', '유류비', '기름값 연비'], ['/dutch-pay/', '더치페이', 'n빵 정산'], ['/date/', '날짜', '디데이 d-day 며칠']]],
@@ -1852,4 +1894,96 @@ async function saveXlsx(name, url) {
   ban.innerHTML = `<div class="mt-imgs">${(animals[my] ? [animals[my]] : ['chipmunk', 'hamster', 'rabbit']).map(a => `<img src="/icons/dbti/${a}.webp" alt="" width="44" height="44">`).join('')}</div>
     <div><b>돈BTI 테스트</b><span>${animals[my] ? '내 결과 다시 보기 · 친구랑 비교해 보세요 ›' : '12문제로 알아보는 나의 돈 성격 ›'}</span></div>`;
   sec.after(ban);
+})();
+
+// ── 인스타 스토리 이미지(1080×1920) 공통: 무지출 챌린지·연봉 순위·월말 결산에서 같이 써요 ──
+// o: { kicker, title, big, sub, img, color, boxes: [[이름, 값]×3], draw(c, y): 추가로 그릴 것(높이 반환), link, foot }
+async function storyCard(o) {
+  const W = 1080, H = 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d'), FONT = '"Pretendard Variable", Pretendard, -apple-system, sans-serif';
+  try { await Promise.all([document.fonts.load(`800 96px ${FONT}`), document.fonts.load(`500 40px ${FONT}`)]); } catch (e) { /* 기본 글씨체로 그려요 */ }
+  const pic = o.img ? await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = o.img; }) : null;
+  const g = c.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, o.color || '#4ea8ff'); g.addColorStop(0.6, '#ffffff'); g.addColorStop(1, '#f5f5f7');
+  c.fillStyle = g; c.fillRect(0, 0, W, H); c.fillStyle = 'rgba(255,255,255,.4)'; c.fillRect(0, 0, W, H);
+  const text = (s, x, y, size, weight, col, align = 'center') => { c.font = `${weight} ${size}px ${FONT}`; c.fillStyle = col; c.textAlign = align; c.fillText(s, x, y); };
+  const fit = (s, max, size, weight) => { c.font = `${weight} ${size}px ${FONT}`; while (c.measureText(s).width > max && size > 40) { size -= 4; c.font = `${weight} ${size}px ${FONT}`; } return size; };
+  const round = (x, y, w, h, r, fill) => { c.beginPath(); if (c.roundRect) c.roundRect(x, y, w, h, r); else c.rect(x, y, w, h); c.fillStyle = fill; c.fill(); };
+  let y = 200;
+  text(o.kicker || '돈셈', W / 2, y, 40, 600, '#1d1d1f'); y += 70;
+  if (o.title) { text(o.title, W / 2, y, 46, 600, '#3a3a3c'); y += 40; }
+  if (pic) { // 차트·달력이 있으면 그림을 조금 작게 그려 자리를 내줘요
+    const R = o.draw ? 140 : 190, S = R * 1.58;
+    c.beginPath(); c.arc(W / 2, y + R, R, 0, Math.PI * 2); c.fillStyle = 'rgba(255,255,255,.75)'; c.fill(); c.drawImage(pic, W / 2 - S / 2, y + R - S / 2, S, S); y += R * 2 + 40;
+  }
+  else y += 60;
+  const bs = fit(o.big, 960, 120, 800); text(o.big, W / 2, y + 100, bs, 800, '#1d1d1f'); y += 150;
+  if (o.sub) { const ss = fit(o.sub, 940, 46, 600); text(o.sub, W / 2, y + 40, ss, 600, '#3a3a3c'); y += 90; }
+  if (o.draw) y += o.draw(c, y + 20, { text, round, W, FONT }) + 40;
+  if (o.boxes) {
+    o.boxes.slice(0, 3).forEach(([k, v], i) => {
+      const x = 90 + i * 310; round(x, y + 20, 280, 190, 32, '#ffffff');
+      text(k, x + 140, y + 88, 30, 500, '#6e6e73'); const vs = fit(String(v), 250, 46, 700); text(String(v), x + 140, y + 160, vs, 700, '#1d1d1f');
+    });
+  }
+  text(o.foot || '너는 어때? 👀', W / 2, 1680, 50, 700, '#1d1d1f');
+  text(o.link.replace(/^https?:\/\//, ''), W / 2, 1770, 40, 700, '#0071e3');
+  text('돈셈 · 무료 · 가입 없이 바로', W / 2, 1830, 30, 500, '#6e6e73');
+  return new Promise(r => cv.toBlob(r, 'image/png'));
+}
+// 버튼: 누르면 링크를 복사하고, (휴대폰) 공유 창 / (컴퓨터) 이미지 저장. make()는 미리 불러 둔 그림 약속을 돌려줘요
+function storyButton(label, make, fileName, link) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'ft-story';
+  b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" fill="currentColor"/></svg>' + label;
+  b.addEventListener('click', async () => {
+    if (navigator.clipboard) navigator.clipboard.writeText(link).catch(() => {}); // 스토리 링크 스티커에 붙여 넣을 주소
+    b.disabled = true;
+    try {
+      const blob = await make(), file = new File([blob], fileName, { type: 'image/png' });
+      if (matchMedia('(pointer: coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file] }); toast('주소를 복사해 뒀어요. 스토리에서 링크 스티커에 붙여 넣으세요!'); }
+        catch (e) { if (e.name !== 'AbortError') toast('공유 창을 열지 못했어요. 한 번 더 눌러 주세요.'); }
+      } else {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = fileName;
+        document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        toast('이미지를 저장했어요. 휴대폰에서 누르면 인스타 스토리에 바로 올릴 수 있어요.');
+      }
+    } finally { b.disabled = false; }
+  });
+  return b;
+}
+
+// ── 연봉 상위 %: 내 순위를 스토리 이미지로 ──
+(() => {
+  const out = document.getElementById('sr_out');
+  if (!out) return;
+  let cache = null, timer = 0;
+  const make = () => {
+    const year = (seg('sr_mode') === 'month' ? val('sr_amt') * 12 : val('sr_amt')) / 10000, t = salaryTop(year);
+    return storyCard({ kicker: '돈셈 · 연봉 상위 % 계산기', title: '내 연봉은 우리나라 직장인 중', img: '/icons/salary-rank.webp', color: '#ffd85a',
+      big: `상위 ${topText(t)}`, sub: '2024년 근로소득자 2,108만 명 기준',
+      draw: (c, top, { text, round, W }) => { // 하위 ↔ 상위 막대에 내 위치
+        const x0 = 140, w = W - 280, x = x0 + w * Math.min(0.99, Math.max(0.01, (100 - t) / 100)), y = top + 120;
+        round(90, top, W - 180, 260, 36, 'rgba(255,255,255,.85)');
+        const g = c.createLinearGradient(x0, 0, x0 + w, 0); g.addColorStop(0, '#e8e8ed'); g.addColorStop(1, '#0071e3');
+        c.beginPath(); if (c.roundRect) c.roundRect(x0, y - 14, w, 28, 14); else c.rect(x0, y - 14, w, 28); c.fillStyle = g; c.fill();
+        c.beginPath(); c.arc(x, y, 30, 0, Math.PI * 2); c.fillStyle = '#ffffff'; c.fill();
+        c.beginPath(); c.arc(x, y, 20, 0, Math.PI * 2); c.fillStyle = '#0071e3'; c.fill();
+        text('나', x, y - 50, 36, 800, '#0071e3');
+        text('하위', x0, y + 80, 30, 500, '#6e6e73', 'left'); text('상위', x0 + w, y + 80, 30, 500, '#6e6e73', 'right');
+        text(`100명 중 ${Math.max(1, Math.round(100 - t))}명보다 많이 벌어요`, W / 2, y + 80, 32, 600, '#1d1d1f');
+        return 260;
+      },
+      boxes: [['평균 연봉', '4,475만'], ['가운데 연봉', '3,388만'], ['상위 10%', '8,944만']], foot: '너의 연봉 순위는? 👀', link: `${location.origin}/salary-rank/` });
+  };
+  const btn = storyButton('내 순위 인스타 스토리에 올리기', () => cache || (cache = make()), '돈셈_연봉순위.png', `${location.origin}/salary-rank/`);
+  btn.classList.add('sr-story');
+  (document.querySelector('.card .share') || out).after(btn);
+  const refresh = () => { cache = null; clearTimeout(timer); timer = setTimeout(() => { cache = make(); }, 700); }; // 숫자를 바꾸면 그림도 미리 다시 그려 둬요
+  document.addEventListener('input', refresh);
+  document.querySelectorAll('.seg').forEach(g => g.addEventListener('click', refresh));
+  refresh();
 })();

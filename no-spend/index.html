@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>무지출 챌린지 - 무지출 달력·도장 찍기, 아낀 돈 계산 | 돈셈</title>
+<meta name="description" content="무지출 챌린지: 돈을 안 쓴 날 도장을 찍고, 달력에 쌓이는 무지출 기록과 아낀 돈을 확인해요. 가계부와 연결되고 인스타 스토리로 공유할 수 있어요.">
+<link rel="canonical" href="https://doncalculator.com/no-spend/">
+<meta property="og:title" content="무지출 챌린지 - 돈 안 쓴 날 도장 쾅! | 돈셈">
+<meta property="og:description" content="무지출 챌린지: 돈을 안 쓴 날 도장을 찍고, 달력에 쌓이는 무지출 기록과 아낀 돈을 확인해요. 가계부와 연결되고 인스타 스토리로 공유할 수 있어요.">
+<meta property="og:url" content="https://doncalculator.com/no-spend/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<meta property="og:image" content="https://doncalculator.com/og/no-spend.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="돈셈">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="/style.css">
+<script src="/vt.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body class="ns-page">
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><svg width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" class="logo-bg"/><path d="M50 29H22v42h28" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M70 29L57 71M70 47l13 24" fill="none" stroke="#0a84ff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>돈셈</a>
+    <div class="top-right"><div class="top-links"><a class="all" href="/budget/">가계부</a><a class="all" href="/assets/">내 자산</a><a class="all" href="/calculators/">모든 계산기</a></div><button type="button" class="theme-btn" aria-label="화면 모드 바꾸기 (지금: 라이트)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/unemployment/">실업급여</a>
+    <a href="/year-end-tax/">연말정산 환급</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/discount/">할인율</a>
+    <a href="/salary/">연봉 실수령액</a>
+    <a href="/salary-rank/">연봉 상위 %</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+    <a href="/unit-price/">단가 비교</a>
+    <a href="/fuel/">유류비</a>
+    <a href="/dutch-pay/">더치페이</a>
+    <a href="/date/">날짜</a>
+  </nav>
+
+  <section class="card ns-card" id="no-spend">
+    <h1>무지출 챌린지</h1>
+    <p class="sub">돈을 안 쓴 날, 도장을 쾅! 한 달 동안 몇 날이나 지켰는지 모아 봐요.</p>
+    <div id="ns" aria-live="polite"><noscript>도장을 찍으려면 자바스크립트를 켜 주세요.</noscript></div>
+  </section>
+
+  <article class="guide">
+    <h3>무지출 챌린지란?</h3>
+    <p>하루 동안 돈을 한 푼도 쓰지 않는 날을 정해 지켜 보는 절약 챌린지예요. 냉장고 파먹기, 도시락 싸기, 텀블러 들고 다니기처럼 작은 습관만 바꿔도 한 달에 몇 날은 충분히 지킬 수 있어요.</p>
+    <h3>규칙은 이렇게 정했어요</h3>
+    <ul>
+      <li>월세, 통신비, 구독료처럼 자동으로 나가는 고정지출은 지출로 치지 않아요.</li>
+      <li>교통카드 충전처럼 꼭 필요한 돈을 뺄지는 스스로 정해요. 중요한 건 꾸준함이에요.</li>
+      <li><a href="/budget/">가계부</a>에 그날 지출을 적으면 도장이 저절로 지워져요. 기록과 도장이 늘 맞게요.</li>
+      <li>아낀 돈은 "이번 달 돈을 쓴 날의 하루 평균 지출 × 무지출 일수"로 어림해요.</li>
+    </ul>
+    <h3>무지출 챌린지 성공 팁</h3>
+    <ul>
+      <li>한 주에 2~3일처럼 작은 목표부터 시작해요. 목표는 5일·10일·15일·20일 중에 고를 수 있어요.</li>
+      <li>무지출 날을 미리 정해 두면 약속을 피하고 장보기를 몰아서 하기 쉬워요.</li>
+      <li>달력을 인스타 스토리에 올려 친구와 같이 하면 오래 가요.</li>
+    </ul>
+    <p class="basis-note">기록은 이 기기에만 저장돼요. 가입하지 않아도 되고, 서버로 보내지 않아요.</p>
+  </article>
+
+  <footer>
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+<script src="/no-spend.js"></script>
+<!-- Cloudflare Web Analytics: 쿠키 없이 방문 수만 세요 --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4ddea5349bb94a689667508931ca47d8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
