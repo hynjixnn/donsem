@@ -1473,3 +1473,69 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   });
   window.updateSave();
 })();
+
+// ── 즐겨찾기: 계산기 카드와 계산기 화면의 ☆를 누르면, 홈과 '모든 계산기' 맨 위에 모아 보여 줘요 ──
+(() => {
+  const KEY = 'donsem:favs';
+  const read = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+  const write = list => { try { localStorage.setItem(KEY, JSON.stringify(list)); return true; } catch (e) { toast('이 브라우저에서는 저장할 수 없어요.'); return false; } };
+  const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>';
+  const isCalc = href => /^\/[a-z-]+\/$/.test(href) && !['/budget/', '/fixed/', '/assets/', '/goals/', '/calculators/', '/my/', '/about/', '/privacy/'].includes(href);
+  function toggle(path, name) {
+    const list = read(), on = !list.includes(path);
+    if (!write(on ? [path, ...list] : list.filter(p => p !== path))) return;
+    const c = name.charCodeAt(name.length - 1), j = c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? '을' : '를'; // 받침에 맞는 조사
+    toast(on ? `${name}${j} 즐겨찾기에 넣었어요. 홈 맨 위에서 바로 열 수 있어요.` : `${name}${j} 즐겨찾기에서 뺐어요.`);
+    sync();
+  }
+  function starBtn(path, name) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'fav'; b.dataset.path = path; b.dataset.name = name; b.innerHTML = STAR;
+    b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); toggle(path, name); });
+    return b;
+  }
+
+  // 계산기 카드마다 ☆ (홈, 모든 계산기)
+  const info = {};
+  document.querySelectorAll('.tiles:not(.mm-tiles) a.tile').forEach(t => {
+    const href = t.getAttribute('href');
+    if (!isCalc(href)) return;
+    const name = t.querySelector('h3').textContent.trim();
+    if (!info[href] || info[href].pop) info[href] = { name, desc: t.querySelector('p').textContent, pop: !!t.closest('.popular') }; // 짧은 '많이 찾는' 이름보다 원래 카드 이름을 써요
+    t.append(starBtn(href, name));
+  });
+  // 계산기 화면에서도 ☆
+  const card = document.querySelector('.card .result') && document.querySelector('.card');
+  if (card && isCalc(location.pathname)) {
+    const name = card.querySelector('h1').textContent.trim(), b = starBtn(location.pathname, name);
+    b.classList.add('fav-page'); b.insertAdjacentHTML('beforeend', '<span>즐겨찾기</span>');
+    card.prepend(b);
+  }
+
+  // 홈 · 모든 계산기 맨 위 "내 즐겨찾기"
+  const anchor = document.querySelector('.popular') || (location.pathname === '/calculators/' && document.querySelector('.group'));
+  let box = null;
+  if (anchor) {
+    box = document.createElement('section');
+    box.className = 'fav-group';
+    anchor.before(box);
+    const q = document.getElementById('calc-q');
+    if (q) q.addEventListener('input', () => { box.hidden = !!q.value.trim() || !read().some(p => info[p]); });
+  }
+  function sync() {
+    const list = read();
+    document.querySelectorAll('button.fav').forEach(b => {
+      const on = list.includes(b.dataset.path);
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+      b.setAttribute('aria-label', `${b.dataset.name} ${on ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기'}`);
+    });
+    if (!box) return;
+    const favs = list.filter(p => info[p]);
+    box.hidden = !favs.length;
+    box.innerHTML = favs.length ? `<h2>내 즐겨찾기</h2><div class="tiles">${favs.map(p => `<a class="tile" href="${p}"><h3>${info[p].name}</h3><p>${info[p].desc}</p><span class="go">계산하기 ›</span></a>`).join('')}</div>` : '';
+    box.querySelectorAll('a.tile').forEach(t => t.append(starBtn(t.getAttribute('href'), info[t.getAttribute('href')].name)));
+    box.querySelectorAll('button.fav').forEach(b => { b.classList.add('on'); b.setAttribute('aria-pressed', 'true'); b.setAttribute('aria-label', `${b.dataset.name} 즐겨찾기에서 빼기`); });
+  }
+  sync();
+})();

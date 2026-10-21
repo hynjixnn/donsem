@@ -506,3 +506,37 @@ html { -webkit-tap-highlight-color: transparent; }
 .badge-item.on i { filter: none; opacity: 1; }
 .badge-item.on small { color: var(--text); font-weight: 600; }
 .dash-sub.streak-line { color: var(--text); font-weight: 500; }
+
+/* 즐겨찾기 ☆ */
+.tile { position: relative; }
+.tile .fav { position: absolute; top: 12px; right: 12px; }
+.tile h3 { padding-right: 26px; }
+.fav { display: inline-flex; align-items: center; justify-content: center; gap: 4px; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; color: var(--muted); cursor: pointer; }
+.fav svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.fav:hover { background: var(--soft-hover); color: var(--text); }
+.fav.on { color: #ff9f0a; }
+.fav.on svg { fill: currentColor; }
+.tile.feature .fav { color: rgba(255, 255, 255, .8); }
+.card { position: relative; }
+.fav-page { position: absolute; top: 20px; right: 20px; width: auto; height: 34px; padding: 0 12px 0 10px; border-radius: 999px; background: var(--field); font-size: 13px; font-weight: 500; }
+.fav-page.on span { color: var(--text); }
+@media (max-width: 640px) { .fav-page span { display: none; } .fav-page { padding: 0; width: 34px; top: 14px; right: 14px; } .tile .fav { top: 6px; right: 6px; } }
+.fav-group h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.025em; margin: 56px 0 16px; }
+@media (max-width: 640px) { .fav-group h2 { font-size: 24px; margin: 40px 0 12px; } }
+
+/* 상황별 모음 */
+.bundle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.bundle { background: var(--card); border-radius: 20px; padding: 22px 20px 12px; box-shadow: var(--shadow); }
+.bundle-ico { font-size: 26px; line-height: 1; }
+.bundle h3 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; margin: 10px 0 8px; }
+.bundle a { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); color: var(--text); font-size: 15px; }
+.bundle a span { color: var(--muted); }
+.bundle a:hover { color: var(--accent); text-decoration: none; }
+@media (max-width: 640px) {
+  .bundle-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .bundle { padding: 16px 14px 6px; border-radius: 18px; }
+  .bundle-ico { font-size: 22px; }
+  .bundle h3 { font-size: 16px; margin: 8px 0 4px; }
+  .bundle a { font-size: 13px; padding: 9px 0; }
+}
