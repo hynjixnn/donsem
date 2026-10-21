@@ -238,6 +238,28 @@ function salary() {
     note.map(t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`).join('');
 }
 
+// ── 실업급여(구직급여): 2026년 1일 상한 68,100원, 하한 = 최저시급 × 80% × 하루 근무시간 ──
+const JOB_MAX_2026 = 68100;
+const JOB_DAYS = { under50: [120, 150, 180, 210, 240], over50: [120, 180, 210, 240, 270] }; // 가입기간 1년 미만, 1~3년, 3~5년, 5~10년, 10년 이상
+const jobDays = () => JOB_DAYS[seg('j_age')][num(seg('j_years'))];
+function unemployment() {
+  const out = document.getElementById('j_out'), M = val('j_pay'), h = Math.min(Math.max(val('j_hours'), 1), 8);
+  const endRaw = document.querySelector('input[data-k="j_end"]').value;
+  if (!M || !endRaw) { out.innerHTML = '월급과 퇴사일을 넣어 주세요.'; return; }
+  // 평균임금(하루) = 그만두기 전 3개월 동안 받은 임금 ÷ 그 3개월의 날수
+  const end = new Date(endRaw + 'T00:00:00Z'), from = new Date(end);
+  from.setUTCMonth(from.getUTCMonth() - 3);
+  const avg = M * 3 / Math.round((end - from) / 86400000), raw = avg * 0.6;
+  const min = Math.round(MIN_WAGE_2026 * 0.8 * h), day = Math.floor(Math.min(Math.max(raw, min), JOB_MAX_2026)), n = jobDays();
+  const note = [];
+  if (raw > JOB_MAX_2026) note.push(`평균임금의 60%가 하루 상한액(${won(JOB_MAX_2026)})보다 많아서 상한액으로 계산했어요.`);
+  else if (raw < min) note.push(`평균임금의 60%가 하루 하한액(${won(min)})보다 적어서 하한액으로 계산했어요.`);
+  if (seg('j_years') === '0') note.push('그만두기 전 18개월 동안 고용보험에 가입해 일한 날(유급일)이 180일 이상이어야 받을 수 있어요.');
+  out.innerHTML = `<div>받을 수 있는 실업급여 (총액)</div><div class="big">${won(day * n)}</div>` +
+    rows([['하루에 받는 돈', won(day)], ['받는 날수', `${n}일 (약 ${Math.round(n / 30)}개월)`], ['한 달(30일) 기준', won(day * 30)], ['평균임금 (하루)', won(avg)], ['평균임금의 60%', won(raw)]]) +
+    note.map(t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`).join('');
+}
+
 function goal() {
   const G = val('g_goal'), S = val('g_now'), n = Math.round(val('g_y') * 12), i = val('g_r') / 100 / 12, out = document.getElementById('g_out');
   if (n <= 0) { out.innerHTML = '기간을 넣어 주세요.'; return; }
@@ -440,7 +462,7 @@ function dateCalc() {
 }
 
 // 페이지마다 계산기가 하나씩 있어서, 그 페이지에 있는 계산기만 계산해요
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
@@ -523,6 +545,12 @@ const insights = {
     if (!s.month) return '';
     const r = takeHome(s.month, s.free, s.fam, s.kids), raise = takeHome(s.month + Math.round(10000000 / (s.sev ? 13 : 12)), s.free, s.fam, s.kids);
     return `세전 월급의 ${pct(r.net / s.month * 100)}를 받아요. 연봉이 1,000만 원 오르면 한 달 실수령액은 약 ${won(Math.round((raise.net - r.net) / 1000) * 1000)} 늘어요.`;
+  },
+  j_out() {
+    const M = val('j_pay'), big = document.querySelector('#j_out .big');
+    if (!M || !big) return '';
+    const month = Math.floor(num(big.dataset.final || big.textContent) / jobDays()) * 30;
+    return `한 달에 약 ${won(month)}을 받아요. 그만두기 전 세전 월급의 ${pct(month / M * 100, 0)} 정도이고, 실업급여는 세금을 떼지 않아요.`;
   },
   g_out() {
     const big = document.querySelector('#g_out .big');
@@ -740,6 +768,9 @@ const GLOSSARY = [
   ['부양가족 수', '나를 포함해서 세금 공제를 받는 가족 수예요. 혼자면 1, 배우자와 둘이면 2를 넣어요. 소득이 많은 가족(1년 소득 100만 원 초과, 월급만 받으면 총급여 500만 원 초과)은 빼요.'],
   ['8~20세 자녀 수', '부양가족 중 8세 이상 20세 이하 자녀 수예요. 한 명이면 매달 떼는 세금이 20,830원 줄어요.'],
   ['연봉에 퇴직금', '"퇴직금 포함" 연봉이면 1년 치를 13으로 나눠 매달 주고, 남은 1/13은 퇴직금으로 쌓아요. 근로계약서에 퇴직금 포함이라고 적혀 있을 때만 바꾸세요.'],
+  ['그만두기 전 3개월 평균 월급', '세금 떼기 전(세전) 금액이에요. 기본급에 매달 받던 수당까지 더해서 넣어 주세요.'],
+  ['고용보험 가입기간', '고용보험에 가입해 일한 기간이에요. 여러 회사를 다녔다면 합칠 수 있어요(예전 회사에서 실업급여를 받았다면 그 전 기간은 빠져요). 고용24에서 확인할 수 있어요.'],
+  ['하루 근무시간', '근로계약서에 적힌 하루 일하는 시간(소정근로시간)이에요. 8시간보다 짧으면 하루 하한액도 그만큼 줄어요.'],
   ['일주일 근무시간', '쉬는 시간을 뺀, 일하기로 약속한 시간이에요. 하루 5시간씩 주 4일이면 20시간이에요.'],
   ['할부 금리', '할부로 낸 돈에 붙는 1년 이율이에요. 카드사나 캐피탈의 할부 조건에서 확인할 수 있어요.'],
   ['선수금', '차를 살 때 처음에 한 번에 내는 돈이에요. 많이 낼수록 할부 원금과 이자가 줄어요.'],
@@ -1181,6 +1212,11 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       ['savings', '실수령액의 20%를 적금에 넣으면?', '적금 이자 계산기', { s_amt: Math.max(10000, Math.round(bigNum() * 0.2 / 10000) * 10000), s_n: 12 }],
       ['severance', '이 월급이면 퇴직금은?', '퇴직금 계산기', { v_pay: R(rowNum('세전 월급')) }],
     ],
+    unemployment: () => [
+      ['severance', '퇴직금은 얼마일까?', '퇴직금 계산기', { v_pay: R(val('j_pay')), v_end: raw('j_end') }],
+      ['date', '실업급여 받는 날수가 끝나는 날은?', '날짜 계산기', { z_mode: 'add', z_base: raw('j_end'), z_n: jobDays() }],
+      ['salary', '다음 회사 월급, 실수령액은?', '연봉 실수령액 계산기', { m_mode: 'month', m_amt: R(val('j_pay')) }],
+    ],
     goal: () => [
       ['savings', '적금으로 넣으면 세후 이자는?', '적금 이자 계산기', { s_amt: R(bigNum()), s_n: R(val('g_y') * 12), s_r: val('g_r') }],
       ['compound', '투자로 모으면?', '복리 계산기', { c_init: R(val('g_now')), c_add: R(bigNum()), c_y: Math.max(1, Math.round(val('g_y'))) }],
@@ -1307,6 +1343,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     dividend: () => seg('b_mode') === 'need' ? [['goals', `배당 투자금 ${won(bigNum())}을 목표로 만들기`, { name: `월 배당 ${korean(val('b_want')).replace(/ 원$|원$/, '')}`, target: R(bigNum()), date: '', mode: 'manual', saved: 0 }]] : [],
     wage: () => { const m = rowNum('월급'); return m ? [['budget', `이번 달 월급 ${won(m)}을 가계부 수입으로 기록`, { type: 'in', amt: R(m), cat: '월급', date: iso(now), memo: '월급 (계산기에서 저장)' }]] : []; },
     salary: () => bigNum() ? [['budget', `이번 달 실수령액 ${won(bigNum())}을 가계부 수입으로 기록`, { type: 'in', amt: R(bigNum()), cat: '월급', date: iso(now), memo: '월급 실수령액 (계산기에서 저장)' }]] : [],
+    unemployment: () => bigNum() ? [['budget', `한 달 실업급여 ${won(Math.floor(bigNum() / jobDays()) * 30)}을 가계부 수입으로 기록`, { type: 'in', amt: R(Math.floor(bigNum() / jobDays()) * 30), cat: '기타', date: iso(now), memo: '실업급여 (계산기에서 저장)' }]] : [],
     'holiday-pay': () => { const m = rowNum('한 달 예상 월급 (주휴수당 포함)'); return m ? [['budget', `한 달 예상 월급 ${won(m)}을 가계부 수입으로 기록`, { type: 'in', amt: R(m), cat: '월급', date: iso(now), memo: '주휴수당 포함 월급' }]] : []; },
     severance: () => bigNum() ? [['assets', `퇴직금 ${won(bigNum())}을 내 자산에 추가`, { kind: 'asset', cat: '현금·입출금', name: '퇴직금', amt: R(bigNum()) }]] : [],
     'dutch-pay': () => [['budget', `내 몫 ${won(bigNum())}을 가계부 지출로 기록`, { type: 'out', amt: R(bigNum()), cat: '식비', date: iso(now), memo: '더치페이' }]],
