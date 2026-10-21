@@ -86,6 +86,7 @@
     drawUpcoming();
     drawList();
     drawSync();
+    drawCal();
   }
 
   function budgetIncomeThisMonth() {
@@ -142,6 +143,45 @@
       ed.addEventListener('keydown', e => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') { editing = null; render(); } });
     }
   }
+  // ── 내 캘린더에 넣기: 서버 없이 캘린더 파일(.ics)을 만들거나, 구글 캘린더 '일정 만들기' 화면을 열어요 ──
+  const ymd = d => iso(d).replace(/-/g, '');
+  // 29~31일처럼 없는 달이 있는 날은, 그 달 마지막 날로 (위 dayIn과 같은 규칙)
+  const rrule = x => x.cycle === 'year' ? `FREQ=YEARLY;BYMONTH=${x.month};BYMONTHDAY=${Math.min(x.day, [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][x.month - 1])}`
+    : x.day > 28 ? `FREQ=MONTHLY;BYMONTHDAY=${Array.from({ length: x.day - 27 }, (_, i) => 28 + i).join(',')};BYSETPOS=-1` : `FREQ=MONTHLY;BYMONTHDAY=${x.day}`;
+  const icsText = t => String(t).replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n');
+  const title = x => `${x.name} 결제 ${won(x.amt)}`;
+  const memo = x => `돈셈 고정지출 · ${x.cycle === 'year' ? `매년 ${x.month}월 ${x.day}일` : `매달 ${x.day}일`}\nhttps://doncalculator.com/fixed/`;
+  function drawCal() {
+    const has = data.items.length;
+    $('f-ics').disabled = !has;
+    $('f-gcal').innerHTML = has ? data.items.map(x => {
+      const d = nextDate(x), end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+      const q = new URLSearchParams({ action: 'TEMPLATE', text: title(x), dates: `${ymd(d)}/${ymd(end)}`, recur: `RRULE:${rrule(x)}`, details: memo(x) });
+      return `<a class="gcal" href="https://calendar.google.com/calendar/render?${q}" target="_blank" rel="noopener">${esc(x.name)} +</a>`;
+    }).join('') : '<p class="empty">고정지출을 추가하면 여기서 캘린더에 넣을 수 있어요.</p>';
+  }
+  $('f-ics').addEventListener('click', () => {
+    if (!data.items.length) return;
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    const ev = data.items.map(x => [
+      'BEGIN:VEVENT', `UID:${x.id}@doncalculator.com`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${ymd(nextDate(x))}`, `RRULE:${rrule(x)}`,
+      `SUMMARY:${icsText(title(x))}`, `DESCRIPTION:${icsText(memo(x))}`, 'URL:https://doncalculator.com/fixed/', 'TRANSP:TRANSPARENT',
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsText(`내일 ${x.name} ${won(x.amt)}이 나가요`)}`, 'TRIGGER:-PT15H', 'END:VALARM', 'END:VEVENT',
+    ].join('\r\n')).join('\r\n');
+    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//doncalculator.com//donsem fixed//KO', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:돈셈 고정지출', ev, 'END:VCALENDAR'].join('\r\n') + '\r\n';
+    // 아이폰·아이패드는 파일을 바로 열어야 '모두 추가' 화면이 떠요. 그 밖에는 파일로 저장해요
+    if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+      location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+    a.download = '돈셈-결제일.ics';
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast('캘린더 파일을 저장했어요. 파일을 열면 캘린더에 들어가요.');
+  });
+
   function commitEdit() {
     const it = data.items.find(x => x.id === editing), v = num($('f-edit').value);
     editing = null;

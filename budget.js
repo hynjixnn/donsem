@@ -26,6 +26,8 @@
   const today = new Date();
   let month = iso(today).slice(0, 7); // 보고 있는 달 (YYYY-MM)
   let type = 'out', cat = CATS.out[0], editingBudget = false;
+  let view = 'cal', selDay = iso(today); // 내역을 달력으로 볼지 목록으로 볼지, 달력에서 고른 날
+  try { if (localStorage.getItem('donsem:budget-view') === 'list') view = 'list'; } catch (e) { /* 기본은 달력 */ }
 
   // ── 기록하기 ──
   function drawCats() {
@@ -53,7 +55,7 @@
     const before = budgetStreak(data.entries);
     data.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, amt, cat, date, memo: $('b-memo').value.trim().slice(0, 40) });
     if (!save()) return;
-    month = date.slice(0, 7);
+    month = date.slice(0, 7); selDay = date; // 방금 기록한 날을 달력에서 보여 줘요
     $('b-amt').value = ''; $('b-memo').value = '';
     $('b-amt').dispatchEvent(new Event('input', { bubbles: true }));
     $('b-amt').focus();
@@ -67,7 +69,7 @@
   // ── 달 넘기기 ──
   document.querySelectorAll('.month-nav [data-m]').forEach(b => b.addEventListener('click', () => {
     const [y, m] = month.split('-').map(Number), d = new Date(y, m - 1 + Number(b.dataset.m), 1);
-    month = iso(d).slice(0, 7); editingBudget = false; render();
+    month = iso(d).slice(0, 7); selDay = month === iso(today).slice(0, 7) ? iso(today) : null; editingBudget = false; render();
   }));
 
   // ── 그리기 ──
@@ -133,8 +135,43 @@
     $('b-budget-edit').addEventListener('click', () => { editingBudget = true; render(); });
   }
 
+  // ── 달력 ──
+  const short = n => n < 1e4 ? n.toLocaleString('ko-KR') : (n < 1e5 ? Math.round(n / 1e3) / 10 : Math.round(n / 1e4)).toLocaleString('ko-KR') + '만';
+  function drawCal(list) {
+    const [y, m] = month.split('-').map(Number), first = new Date(y, m - 1, 1).getDay(), last = new Date(y, m, 0).getDate();
+    const by = {};
+    list.forEach(e => { const d = by[e.date] = by[e.date] || { in: 0, out: 0 }; d[e.type] += e.amt; });
+    let cells = '';
+    for (let i = 0; i < first; i++) cells += '<span class="cal-blank"></span>';
+    for (let d = 1; d <= last; d++) {
+      const key = `${month}-${String(d).padStart(2, '0')}`, t = by[key];
+      cells += `<button type="button" class="cal-day${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${m}월 ${d}일${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
+        <span class="cal-n">${d}</span>${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}</button>`;
+    }
+    $('b-cal').innerHTML = `<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div>`;
+  }
+  $('b-cal').addEventListener('click', e => {
+    const b = e.target.closest('[data-day]');
+    if (!b) return;
+    selDay = b.dataset.day; render();
+  });
+  $('b-view').addEventListener('click', e => {
+    const v = e.target.dataset && e.target.dataset.v;
+    if (!v) return;
+    view = v;
+    try { localStorage.setItem('donsem:budget-view', v); } catch (err) { /* 저장 안 돼도 괜찮아요 */ }
+    render();
+  });
   function drawList(list) {
-    const ul = $('b-items');
+    const ul = $('b-items'), cal = view === 'cal';
+    $('b-cal').hidden = !cal;
+    $('b-view').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
+    if (cal) {
+      drawCal(list);
+      if (!selDay || !selDay.startsWith(month)) { ul.innerHTML = '<li class="empty">날짜를 누르면 그날 내역이 보여요.</li>'; return; }
+      list = list.filter(e => e.date === selDay);
+      if (!list.length) { ul.innerHTML = `<li class="empty">${Number(selDay.slice(5, 7))}월 ${Number(selDay.slice(8))}일에는 기록이 없어요.</li>`; return; }
+    }
     if (!list.length) {
       ul.innerHTML = `<li class="empty">${month === iso(today).slice(0, 7) ? '이번 달 첫 기록을 남겨 보세요. 위에서 금액과 카테고리만 고르면 돼요.' : '이 달에는 기록이 없어요.'}</li>`;
       return;
