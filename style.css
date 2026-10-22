@@ -1421,5 +1421,9 @@ html.ai-open { overflow: hidden; }
 @media (max-width: 640px) {
   .ai { bottom: auto; height: 100%; }
   .ai::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 100vh; background: var(--bg); }
-  html.ai-open .tabbar, html.ai-open .dock { visibility: hidden; }
+  /* 아이폰 자판(특히 iOS 26 유리 자판) 주변으로 뒤 화면이 비치지 않게, 도우미가 열려 있는 동안은 뒤 화면을 아예 감춰요 */
+  html.ai-open body > *:not(.ai) { visibility: hidden; }
+  html.ai-open, html.ai-open body { background: var(--bg); }
+  .ai.kb .ai-note { display: none; }
+  .ai.kb .ai-foot { padding-bottom: 64px; }
 }

@@ -2593,6 +2593,10 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       if (e.target.closest('.ai-x')) close();
     });
     box.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    // 휴대폰 자판이 열려 있을 때: 자판 위 ∧∨✓ 막대에 가리지 않게 입력칸을 살짝 올리고, 아래 안내 문구는 잠깐 숨겨요
+    const touch = matchMedia('(pointer: coarse)');
+    input.addEventListener('focus', () => { if (touch.matches) box.classList.add('kb'); });
+    input.addEventListener('blur', () => box.classList.remove('kb'));
     box.offsetHeight; // 처음 열 때도 아래에서 부드럽게 올라오게
   }
   function open() {
