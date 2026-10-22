@@ -2500,7 +2500,7 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   const check = () => {
     raf = 0;
     const y = Math.max(0, window.scrollY), dy = y - lastY;
-    if (!phone.matches || root.classList.contains('qa-open') || root.classList.contains('gnav-open')) { set(false); lastY = y; return; }
+    if (!phone.matches || root.classList.contains('qa-open') || root.classList.contains('gnav-open') || root.classList.contains('ai-open')) { set(false); lastY = y; return; }
     if (y < 80) set(false);                       // 맨 위 근처에서는 항상 보여요
     else if (dy > 6) set(true);                   // 내리는 중 → 숨기기
     else if (dy < -6) set(false);                 // 올리는 중 → 다시 보이기
@@ -2508,4 +2508,92 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   };
   window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(check); }, { passive: true });
   window.addEventListener('pageshow', () => { set(false); lastY = window.scrollY; });
+})();
+
+// ── 돈셈 도우미: 오른쪽 위 알록달록한 버튼 → 궁금한 걸 물으면, 돈셈에 이미 정리된 설명(kb.json)에서 찾아 답해요 ──
+// 진짜 AI가 아니라 '찾아 주는' 도우미라 돈이 들지 않고, 확인된 내용만 보여 줘서 틀린 답을 지어내지 않아요
+(() => {
+  const right = document.querySelector('.topbar .top-right');
+  if (!right) return;
+  let uid = 0;
+  const spark = size => { const id = 'aig' + (++uid); return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="${id}" x1="6" y1="5" x2="17" y2="18" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#34d399"/><stop offset=".5" stop-color="#38bdf8"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><path fill="url(#${id})" d="M11 3c.5 4.6 3.4 7.5 8 8-4.6.5-7.5 3.4-8 8-.5-4.6-3.4-7.5-8-8 4.6-.5 7.5-3.4 8-8z"/><path fill="url(#${id})" d="M19 1.5c.2 1.6 1 2.4 2.5 2.5-1.5.2-2.3 1-2.5 2.5-.2-1.5-1-2.3-2.5-2.5 1.5-.1 2.3-.9 2.5-2.5z" opacity=".85"/></svg>`; };
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'ai-btn'; btn.setAttribute('aria-label', '돈셈 도우미에게 물어보기'); btn.innerHTML = spark(24);
+  right.prepend(btn);
+
+  const SUGGEST = ['연말정산 월세 공제 조건', 'ISA랑 연금저축 차이', '주휴수당 받는 조건', '실업급여 자진퇴사', '백업은 어떻게 해?', '적금 이자가 생각보다 적은 이유'];
+  let box = null, kb = null;
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  // 한국어 검색: 조사·말끝을 떼고, 두 글자씩 겹쳐 비교해서 '월세공제'와 '월세 세액공제'도 맞춰요
+  const ENDS = ['으로는', '에서는', '이라는', '하려면', '인가요', '할까요', '이에요', '에서', '으로', '까지', '부터', '하나요', '나요', '가요', '어요', '에요', '예요', '이란', '란', '은', '는', '이', '가', '을', '를', '에', '의', '로', '도', '만', '요', '랑', '와', '과', '해'];
+  const STOP = new Set(['뭐', '뭔', '뭐야', '뭐예요', '어떻게', '알려', '알려줘', '줘', '좀', '궁금', '궁금해', '방법', '무엇', '어떤', '돈셈', '하는', '되나', '건가', '있나', '되', '하', '수', '것']);
+  const words = t => t.toLowerCase().replace(/[^0-9a-z가-힣%\s]/g, ' ').split(/\s+/).map(w => { for (const e of ENDS) if (w.length > e.length + 1 && w.endsWith(e)) return w.slice(0, -e.length); return w; }).filter(w => w && !STOP.has(w));
+  const grams = t => { const c = t.replace(/\s+/g, ''), g = new Set(); for (let i = 0; i < c.length - 1; i++) g.add(c.slice(i, i + 2)); return g; };
+  // 같은 뜻 다른 말: 질문에 이런 말이 있으면 설명 속 말로도 찾아봐요
+  const SYN = { '자진퇴사': ['그만두', '스스로'], '자발적': ['그만두', '스스로'], '퇴사': ['그만두'], '홈화면': ['홈 화면'], '차이': ['다른', '다르'], '공제': ['돌려받'], '월세공제': ['월세', '돌려받'], '연말정산': ['환급'], '알바': ['아르바이트'] };
+  function search(q) {
+    let ws = words(q); if (!ws.length) return [];
+    const qg = grams(ws.join(''));
+    ws = ws.concat(...ws.map(w => SYN[w] || []));
+    return kb.map(k => {
+      const Q = (k.q + ' ' + (k.k || '')).toLowerCase(), Qn = Q.replace(/\s+/g, ''), A = k.a.toLowerCase(), T = k.t.toLowerCase(); let sc = 0;
+      ws.forEach(w => { if (Q.includes(w) || Qn.includes(w)) sc += 3 + w.length; else if (T.includes(w)) sc += 2 + w.length / 2; if (A.includes(w)) sc += 1 + w.length / 3; });
+      const kg = grams(Q); let hit = 0; qg.forEach(g => { if (kg.has(g)) hit++; }); sc += qg.size ? 6 * hit / qg.size : 0;
+      return [sc, k];
+    }).filter(([sc]) => sc >= 4).sort((a, b) => b[0] - a[0]).slice(0, 4).map(([, k]) => k);
+  }
+  // 맞는 계산기 버튼 (메뉴 이름·찾기 단어에서)
+  function calcFor(q) {
+    if (typeof MENU === 'undefined') return null;
+    const ws = words(q); let best = null, bs = 0;
+    MENU.forEach(([, items]) => items.forEach(([href, name, kw]) => { const t = (name + ' ' + (kw || '')).toLowerCase(); const sc = ws.filter(w => w.length > 1 && t.includes(w)).length; if (sc > bs) { bs = sc; best = [href, name]; } }));
+    return best;
+  }
+
+  function build() {
+    box = document.createElement('div');
+    box.className = 'ai'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '돈셈 도우미');
+    box.innerHTML = `<div class="ai-head"><button type="button" class="ai-x" aria-label="닫기">×</button><div class="ai-title"><b>돈셈 도우미</b><span>Beta</span></div><span class="ai-sp"></span></div>
+      <div class="ai-body"><div class="ai-hello">${spark(44)}<b>무엇이 궁금하세요?</b><p>계산 방법, 세금·금융 상식, 돈셈 쓰는 법을<br>돈셈에 정리된 설명에서 찾아 드려요.</p></div><div class="ai-log" aria-live="polite"></div></div>
+      <div class="ai-foot"><div class="ai-chips">${SUGGEST.map(t => `<button type="button">${t}</button>`).join('')}</div>
+        <form class="ai-form"><input type="text" placeholder="궁금한 점을 물어보세요" aria-label="질문" enterkeyhint="send" autocomplete="off"><button type="submit" aria-label="보내기">↑</button></form>
+        <p class="ai-note">돈셈에 정리된 내용으로 답해요. 세금·투자 결정 전에는 국세청 등 공식 안내도 확인하세요.</p></div>`;
+    document.body.append(box);
+    const log = box.querySelector('.ai-log'), input = box.querySelector('input'), body = box.querySelector('.ai-body');
+    const ask = async q => {
+      q = q.trim(); if (!q) return;
+      box.classList.add('chatting');
+      log.insertAdjacentHTML('beforeend', `<div class="ai-q">${esc(q)}</div>`);
+      if (!kb) { try { kb = await fetch('/kb.json').then(r => r.json()); } catch (e) { kb = []; } }
+      const hits = search(q), calc = calcFor(q);
+      let html = '';
+      if (hits.length) {
+        const k = hits[0];
+        html = `<div class="ai-a"><span class="ai-src">${esc(k.t)}</span><b>${esc(k.q)}</b><p>${esc(k.a)}</p>`;
+        const link = k.u || (calc && calc[0]), label = k.u ? (k.n || `${k.t} 열기`) : calc && `${calc[1]} 계산기 열기`;
+        if (link && link !== location.pathname) html += `<a class="ai-go" href="${link}">${esc(label)} ›</a>`;
+        if (hits.length > 1) html += `<div class="ai-more"><span>이것도 볼까요?</span>${hits.slice(1).map(h => `<button type="button" data-q="${esc(h.q)}">${esc(h.q)}</button>`).join('')}</div>`;
+        html += '</div>';
+      } else {
+        html = `<div class="ai-a"><p>아직 그 질문에 맞는 설명을 찾지 못했어요. 다른 말로 물어봐 주세요.${calc ? '' : ' 계산이 필요하면 모든 계산기에서 찾아볼 수 있어요.'}</p>${calc ? `<a class="ai-go" href="${calc[0]}">${esc(calc[1])} 계산기 열기 ›</a>` : '<a class="ai-go" href="/calculators/">모든 계산기 보기 ›</a>'}</div>`;
+      }
+      log.insertAdjacentHTML('beforeend', html);
+      requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
+    };
+    box.querySelector('.ai-form').addEventListener('submit', e => { e.preventDefault(); ask(input.value); input.value = ''; });
+    box.addEventListener('click', e => {
+      const b = e.target.closest('.ai-chips button, .ai-more button'); if (b) ask(b.dataset.q || b.textContent);
+      if (e.target.closest('.ai-x')) close();
+    });
+    box.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    box.offsetHeight; // 처음 열 때도 아래에서 부드럽게 올라오게
+  }
+  function open() {
+    if (!box) build();
+    box.classList.add('show'); document.documentElement.classList.add('ai-open');
+    if (!kb) fetch('/kb.json').then(r => r.json()).then(d => { kb = d; }).catch(() => {});
+  }
+  function close() { if (!box) return; box.classList.remove('show'); document.documentElement.classList.remove('ai-open'); btn.focus({ preventScroll: true }); }
+  btn.addEventListener('click', open);
 })();

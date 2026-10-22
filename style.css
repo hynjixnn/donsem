@@ -1374,3 +1374,45 @@ html { background: var(--bg); }
   .bars-min .tabbar a, .bars-min .tabbar button { gap: 0; padding-top: 8px; padding-bottom: 8px; }
 }
 @media (max-width: 640px) and (prefers-reduced-motion: reduce) { .topbar, .tabbar, .tabbar .tab-label { transition: none; } }
+
+/* 돈셈 도우미: 오른쪽 위 알록달록한 버튼 + 위버스 AI처럼 전체 화면 대화 */
+.ai-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; flex: none; }
+.ai-btn:hover { background: var(--soft-hover); }
+@media (prefers-reduced-motion: no-preference) { .ai-btn svg { animation: ai-twinkle 3.2s ease-in-out infinite; } }
+@keyframes ai-twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.08) rotate(8deg); } }
+html.ai-open { overflow: hidden; }
+.ai { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; background: var(--bg); color: var(--text);
+  transform: translateY(100%); opacity: 0; visibility: hidden; transition: transform .45s cubic-bezier(.22, 1, .36, 1), opacity .3s, visibility 0s .45s; }
+.ai.show { transform: none; opacity: 1; visibility: visible; transition: transform .45s cubic-bezier(.22, 1, .36, 1), opacity .25s, visibility 0s; }
+@media (min-width: 641px) { .ai { inset: 40px calc(50% - 300px); border-radius: 24px; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .38), 0 30px 80px -20px rgba(0, 0, 0, .35); } } /* 컴퓨터: 가운데 창 + 뒤는 어둡게 */
+.ai-head { display: flex; align-items: center; justify-content: space-between; padding: calc(10px + env(safe-area-inset-top)) 14px 10px; }
+.ai-x, .ai-sp { width: 40px; height: 40px; flex: none; }
+.ai-x { border: 0; border-radius: 50%; background: var(--seg-bg); color: var(--text); font-size: 26px; line-height: 1; cursor: pointer; }
+.ai-title { text-align: center; }
+.ai-title b { display: block; font-size: 17px; }
+.ai-title span { font-size: 12px; color: var(--muted); }
+.ai-body { flex: 1; overflow-y: auto; padding: 8px 18px 18px; -webkit-overflow-scrolling: touch; }
+.ai-hello { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; margin: 18vh 0 10px; transition: margin .4s cubic-bezier(.22, 1, .36, 1); }
+.ai.chatting .ai-hello { margin-top: 12px; }
+.ai-hello b { font-size: 22px; letter-spacing: -0.02em; }
+.ai-hello p { margin: 0; font-size: 15px; color: var(--muted); line-height: 1.5; }
+.ai-log { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+.ai-q { align-self: flex-end; max-width: 80%; padding: 10px 14px; border-radius: 18px 18px 4px 18px; background: var(--blue); color: #fff; font-size: 15px; }
+.ai-a { align-self: flex-start; max-width: 92%; padding: 14px 16px; border-radius: 18px 18px 18px 4px; background: var(--card); font-size: 15px; line-height: 1.6; }
+.ai-a b { display: block; margin: 2px 0 6px; font-size: 15px; }
+.ai-a p { margin: 0; }
+.ai-src { display: inline-block; padding: 2px 8px; border-radius: 980px; background: var(--accent-soft); color: var(--blue); font-size: 12px; font-weight: 600; }
+.ai-go { display: inline-block; margin-top: 10px; padding: 8px 14px; border-radius: 980px; background: var(--blue); color: #fff; font-size: 14px; font-weight: 600; }
+.ai-go:hover { text-decoration: none; }
+.ai-more { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.ai-more span { font-size: 12px; color: var(--muted); }
+.ai-more button { text-align: left; padding: 8px 12px; border: 1px solid color-mix(in srgb, var(--line) 80%, transparent); border-radius: 12px; background: var(--bg); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+.ai-foot { padding: 8px 14px calc(10px + env(safe-area-inset-bottom)); }
+.ai-chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; scrollbar-width: none; }
+.ai-chips::-webkit-scrollbar { display: none; }
+.ai-chips button { flex: none; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--line) 80%, transparent); border-radius: 16px; background: var(--bg); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+.ai.chatting .ai-chips { display: none; }
+.ai-form { display: flex; gap: 8px; align-items: center; padding: 6px 6px 6px 16px; border: 1px solid color-mix(in srgb, var(--line) 90%, transparent); border-radius: 999px; background: var(--card); }
+.ai-form input { flex: 1; min-width: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 16px; outline: none; }
+.ai-form button { width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--blue); color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; }
+.ai-note { margin: 8px 4px 0; font-size: 11.5px; color: var(--muted); text-align: center; }
