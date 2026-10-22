@@ -1219,7 +1219,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   const active = path === '/' ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : 'calc';
   const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const tabs = [
-    ['home', '/', '홈', ic('<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>')],
+    ['home', '/', '홈', '<span class="tab-logo" aria-hidden="true"></span>'], // 위버스처럼 홈 버튼에는 집 모양 대신 돈셈 아이콘
     ['calc', '/calculators/', '계산기', ic('<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/>')],
     ['add', '', '기록', ic('<path d="M12 6v12M6 12h12"/>')],
     ['money', '/budget/', '돈 관리', ic('<path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M16 12h.01M4 9h16"/>')],
