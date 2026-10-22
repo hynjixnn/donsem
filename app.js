@@ -1301,6 +1301,18 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       });
       sheet.querySelector('.qa-save').addEventListener('click', save);
       sheet.addEventListener('keydown', e => { if (e.key === 'Escape') close(); if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); save(); } });
+      // 자판이 열린 채로 지출/수입·분류를 누르면 자판이 닫히며 버튼이 미끄러져 엉뚱한 걸 누르게 돼요 → 누르는 순간 입력칸을 붙잡아 둬요
+      sheet.addEventListener('pointerdown', e => { if (sheet.contains(document.activeElement) && document.activeElement.tagName === 'INPUT' && e.target.closest('.qa-type button, .qa-cats button')) e.preventDefault(); });
+      // 아이폰 자판이 올라오면 '기록하기' 버튼이 자판 뒤에 숨었어요 → 창을 자판 위 보이는 부분에 맞추고, 버튼은 창 아래에 붙여 둬요
+      const vv = window.visualViewport;
+      const fit = () => {
+        if (!vv || !sheet.classList.contains('show')) return;
+        const kb = vv.height < document.documentElement.clientHeight - 120;
+        sheet.style.top = vv.offsetTop + 'px'; sheet.style.height = vv.height + 'px'; sheet.style.bottom = 'auto';
+        sheet.classList.toggle('kb', !!kb);
+      };
+      if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
+      sheet.addEventListener('focusin', fit); sheet.addEventListener('focusout', () => setTimeout(fit, 50));
       drawCats();
       sheet.offsetHeight; // 처음 만든 창도 '아래에 숨은 모습'을 한 번 그린 뒤에 올려야 주르륵 올라와요 (안 그러면 처음엔 띡 하고 나타나요)
     }
@@ -1310,7 +1322,8 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   }
   function close() {
     if (!sheet) return;
-    sheet.classList.remove('show');
+    sheet.classList.remove('show', 'kb');
+    sheet.style.top = sheet.style.height = sheet.style.bottom = '';
     document.documentElement.classList.remove('qa-open');
   }
   function save() {
@@ -2604,6 +2617,8 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
     const touch = matchMedia('(pointer: coarse)');
     input.addEventListener('focus', () => { if (touch.matches) box.classList.add('kb'); });
     input.addEventListener('blur', () => box.classList.remove('kb'));
+    // 자판이 열린 채로 추천 질문·보내기를 누르면, 자판이 먼저 닫히며 버튼이 손가락 밑에서 미끄러져 눌리지 않았어요 → 누르는 순간 입력칸을 붙잡아 둬요
+    box.addEventListener('pointerdown', e => { if (document.activeElement === input && e.target.closest('.ai-chips button, .ai-more button, .ai-form button')) e.preventDefault(); });
     box.offsetHeight; // 처음 열 때도 아래에서 부드럽게 올라오게
   }
   function open() {

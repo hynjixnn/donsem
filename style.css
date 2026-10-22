@@ -434,6 +434,11 @@ html { -webkit-tap-highlight-color: transparent; }
   .qa-cats { margin-top: 10px; }
   .qa-link { display: block; text-align: center; margin-top: 14px; font-size: 14px; }
   html.qa-open { overflow: hidden; }
+  /* 자판이 열렸을 때: 창은 자판 위까지만, '기록하기' 버튼은 창 아래쪽에 붙어 늘 보이게 */
+  .qa.kb .qa-panel { max-height: calc(100% - 12px); padding-bottom: var(--kb-gap); }
+  .qa.kb .qa-save { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 -12px 16px 4px var(--bg); }
+  .qa.kb .qa-link { display: none; }
+  .qa.kb::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 100vh; background: var(--bg); } /* 창 아래로 뒤 화면이 비치지 않게 */
 }
 @media (max-width: 640px) and (prefers-reduced-motion: reduce) { .qa-panel, .qa-dim { transition: none; } }
 .search input { text-align: left; font-size: 17px; }
@@ -1425,5 +1430,10 @@ html.ai-open { overflow: hidden; }
   html.ai-open body > *:not(.ai) { visibility: hidden; }
   html.ai-open, html.ai-open body { background: var(--bg); }
   .ai.kb .ai-note { display: none; }
-  .ai.kb .ai-foot { padding-bottom: 10px; }
+  .ai.kb .ai-foot { padding-bottom: var(--kb-gap); }
+  .ai.kb .ai-hello { margin-top: 8px; } /* 자판이 올라와 좁아져도 인사말이 반쯤 잘리지 않게 */
 }
+
+/* 자판 위 ∧∨✓ 막대: 홈 화면 앱에서는 아이폰이 막대를 피해 창을 맞춰 주고, 사파리에서는 막대가 창 위에 겹쳐요 → 사파리일 때만 막대만큼 띄워요 */
+:root { --kb-gap: 10px; }
+@media (display-mode: browser) { :root { --kb-gap: 58px; } }
