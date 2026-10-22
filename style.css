@@ -1425,5 +1425,5 @@ html.ai-open { overflow: hidden; }
   html.ai-open body > *:not(.ai) { visibility: hidden; }
   html.ai-open, html.ai-open body { background: var(--bg); }
   .ai.kb .ai-note { display: none; }
-  .ai.kb .ai-foot { padding-bottom: 64px; }
+  .ai.kb .ai-foot { padding-bottom: 10px; }
 }
