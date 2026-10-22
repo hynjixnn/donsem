@@ -411,8 +411,8 @@ html { -webkit-tap-highlight-color: transparent; }
   .tabbar svg { width: 24px; height: 24px; }
   .tabbar a.on { color: var(--blue); }
   .tabbar .tab-add { color: var(--text); }
-  .tabbar .tab-add span { display: flex; align-items: center; justify-content: center; width: 40px; height: 28px; border-radius: 10px; background: var(--blue); color: #fff; }
-  .tabbar .tab-add span svg { width: 20px; height: 20px; stroke-width: 2.4; }
+  .tabbar .tab-add span:not(.tab-label) { display: flex; align-items: center; justify-content: center; width: 40px; height: 28px; border-radius: 10px; background: var(--blue); color: #fff; }
+  .tabbar .tab-add span:not(.tab-label) svg { width: 20px; height: 20px; stroke-width: 2.4; }
   .dock { bottom: calc(76px + env(safe-area-inset-bottom)); }
   .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
 
@@ -1066,7 +1066,7 @@ html:has(> body.home) { overflow-x: clip; } /* 히어로 뒤 빛 번짐 때문�
     box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 -1px 0 rgba(255, 255, 255, .12), 0 12px 32px -10px var(--glass-shade); }
   .tabbar a, .tabbar button { padding: 6px 0; border-radius: 24px; transition: background .2s, color .2s; }
   .tabbar a.on { background: color-mix(in srgb, var(--blue) 13%, transparent); }
-  .tabbar .tab-add span { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 4px 12px -4px color-mix(in srgb, var(--blue) 70%, transparent); }
+  .tabbar .tab-add span:not(.tab-label) { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 4px 12px -4px color-mix(in srgb, var(--blue) 70%, transparent); }
   .dock { bottom: calc(92px + env(safe-area-inset-bottom)); transform: translateY(calc(100% + 110px + env(safe-area-inset-bottom))); opacity: 0; transition: transform .25s ease, opacity .2s; }
   .dock.show { transform: translateY(0); opacity: 1; } /* 떠 있는 탭바 위로 올라와요. 숨을 땐 탭바 뒤로 비치지 않게 화면 밖까지 내려가요 */
   .toast { bottom: calc(100px + env(safe-area-inset-bottom)); }
@@ -1245,7 +1245,7 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
   .tabbar a, .tabbar button { gap: 2px; padding: 6px 0 5px; border-radius: 999px; color: color-mix(in srgb, var(--text) 82%, transparent); font-size: 11.5px; font-weight: 600; letter-spacing: -0.01em; }
   .tabbar svg { width: 25px; height: 25px; stroke-width: 1.7; }
   .tabbar a.on { color: var(--blue); background: rgba(255, 255, 255, .5); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 2px 8px -3px rgba(0, 0, 0, .12); }
-  .tabbar .tab-add span { width: 44px; height: 25px; border-radius: 999px; } /* 다른 아이콘과 높이를 맞춰 글자 줄이 나란해요 */
+  .tabbar .tab-add span:not(.tab-label) { width: 44px; height: 25px; border-radius: 999px; } /* 다른 아이콘과 높이를 맞춰 글자 줄이 나란해요 */
   :root[data-theme="dark"] .tabbar { background: rgba(28, 28, 30, .32); border-color: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 0 0 .5px rgba(0, 0, 0, .4), 0 10px 30px -8px rgba(0, 0, 0, .6); }
   :root[data-theme="dark"] .tabbar a.on { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
 }
@@ -1278,7 +1278,7 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
 /* 아래 탭바 하이라이트가 누른 탭으로 미끄러져요 (휴대폰) */
 .tb-pill { display: none; }
 @media (max-width: 640px) {
-  .tabbar.has-pill .tb-pill { display: block; position: absolute; left: 0; top: 0; z-index: 0; border-radius: 999px; pointer-events: none;
+  .tabbar.has-pill .tb-pill { display: block; position: absolute; left: 0; top: 5px; bottom: 5px; z-index: 0; border-radius: 999px; pointer-events: none;
     background: rgba(255, 255, 255, .5); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 2px 8px -3px rgba(0, 0, 0, .12);
     transition: transform .3s cubic-bezier(.3, 1.15, .5, 1), width .3s cubic-bezier(.3, 1.15, .5, 1); } /* 돈 관리 탭 알약과 같은 감도 */
   :root[data-theme="dark"] .tabbar.has-pill .tb-pill { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
@@ -1360,3 +1360,17 @@ html { background: var(--bg); }
 .my-links .item:last-child { border-bottom: 0; }
 .my-links .item a { display: flex; align-items: center; }
 .my-links .item a::after { content: '›'; margin-left: auto; padding-left: 12px; color: var(--muted); font-size: 20px; line-height: 1; }
+
+/* 인스타그램처럼 내리면 위 메뉴바는 위로 사라지고, 아래 탭바는 글자가 접히며 작아져요 (휴대폰) */
+.tab-label { display: block; }
+@media (max-width: 640px) {
+  .topbar { transition: transform .4s cubic-bezier(.22, 1, .36, 1); will-change: transform; }
+  .bars-min .topbar { transform: translateY(calc(-100% - 2px)); }
+  .tabbar { transition: transform .4s cubic-bezier(.22, 1, .36, 1); transform-origin: 50% 100%; }
+  .tabbar .tab-label { max-height: 16px; overflow: hidden; transition: max-height .4s cubic-bezier(.22, 1, .36, 1), opacity .25s ease; }
+  .tabbar a, .tabbar button { transition: padding .4s cubic-bezier(.22, 1, .36, 1), gap .4s cubic-bezier(.22, 1, .36, 1), color .2s; }
+  .bars-min .tabbar { transform: translateY(8px) scale(.9); }
+  .bars-min .tabbar .tab-label { max-height: 0; opacity: 0; }
+  .bars-min .tabbar a, .bars-min .tabbar button { gap: 0; padding-top: 8px; padding-bottom: 8px; }
+}
+@media (max-width: 640px) and (prefers-reduced-motion: reduce) { .topbar, .tabbar, .tabbar .tab-label { transition: none; } }

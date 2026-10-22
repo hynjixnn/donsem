@@ -1249,8 +1249,8 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   bar.setAttribute('role', 'navigation');
   bar.setAttribute('aria-label', '아래 메뉴');
   bar.innerHTML = tabs.map(([id, href, label, svg]) => id === 'add'
-    ? `<button type="button" class="tab-add" aria-label="지출이나 수입 바로 기록하기"><span>${svg}</span>${label}</button>`
-    : `<a href="${href}" class="${id === active ? 'on' : ''}"${id === active ? ' aria-current="page"' : ''}>${svg}${label}</a>`).join('');
+    ? `<button type="button" class="tab-add" aria-label="지출이나 수입 바로 기록하기"><span>${svg}</span><span class="tab-label">${label}</span></button>`
+    : `<a href="${href}" class="${id === active ? 'on' : ''}"${id === active ? ' aria-current="page"' : ''}>${svg}<span class="tab-label">${label}</span></a>`).join(''); // 글자는 따로 감싸서, 내릴 때 글자만 접혀 작아져요
   document.body.append(bar);
   document.body.classList.add('has-tabbar');
 
@@ -2447,7 +2447,7 @@ document.addEventListener('click', e => {
   const pill = document.createElement('span');
   pill.className = 'tb-pill'; pill.setAttribute('aria-hidden', 'true');
   bar.prepend(pill); bar.classList.add('has-pill');
-  const place = a => { pill.style.width = a.offsetWidth + 'px'; pill.style.height = a.offsetHeight + 'px'; pill.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`; };
+  const place = a => { pill.style.width = a.offsetWidth + 'px'; pill.style.transform = `translateX(${a.offsetLeft}px)`; }; // 높이는 CSS가 탭바에 맞춰요 (탭바가 작아질 때 같이 줄어요)
   const snap = () => { pill.style.transition = 'none'; place(bar.querySelector('a.on') || on); pill.offsetWidth; pill.style.transition = ''; };
   snap(); // 알약은 누른 화면에서 이미 도착해 있어요
   let leaving = 0;
@@ -2491,3 +2491,21 @@ document.addEventListener('click', e => {
 })();
 // 새 화면이 다 들어오면 '들어오는 중' 표시를 떼서, 그래픽 칩에 맡겼던 내용을 돌려놔요
 setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-prev', 'tb-in-next', 'tb-in-prev'), 600);
+
+// ── 인스타그램처럼: 내리면 위 메뉴바는 위로 스르륵 사라지고 아래 탭바는 작아져서 화면이 넓어져요. 올리면 둘 다 돌아와요 (휴대폰) ──
+(() => {
+  const root = document.documentElement, phone = matchMedia('(max-width: 640px)');
+  let lastY = window.scrollY, min = false, raf = 0;
+  const set = on => { if (on !== min) { min = on; root.classList.toggle('bars-min', on); } };
+  const check = () => {
+    raf = 0;
+    const y = Math.max(0, window.scrollY), dy = y - lastY;
+    if (!phone.matches || root.classList.contains('qa-open') || root.classList.contains('gnav-open')) { set(false); lastY = y; return; }
+    if (y < 80) set(false);                       // 맨 위 근처에서는 항상 보여요
+    else if (dy > 6) set(true);                   // 내리는 중 → 숨기기
+    else if (dy < -6) set(false);                 // 올리는 중 → 다시 보이기
+    if (Math.abs(dy) > 6 || y < 80) lastY = y;    // 손가락이 살짝 떨리는 정도로는 바뀌지 않게
+  };
+  window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(check); }, { passive: true });
+  window.addEventListener('pageshow', () => { set(false); lastY = window.scrollY; });
+})();
