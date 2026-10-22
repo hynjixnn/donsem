@@ -39,10 +39,10 @@
   // ── 화면 모드 ──
   function drawTheme() {
     const now = document.documentElement.dataset.theme || 'light';
-    document.querySelectorAll('#my-theme button').forEach(b => b.classList.toggle('on', b.dataset.v === now));
+    document.querySelectorAll('#my-theme [data-v]').forEach(b => { const on = b.dataset.v === now; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
   }
   $('my-theme').addEventListener('click', e => {
-    const v = e.target.dataset && e.target.dataset.v;
+    const b = e.target.closest('[data-v]'), v = b && b.dataset.v; // 그림·글자 어디를 눌러도 그 줄이 골라져요
     if (!v) return;
     store.set('donsem:theme', v);
     applyTheme(v, true);

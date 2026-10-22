@@ -1327,3 +1327,30 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
 
 /* 화면 맨 위·맨 아래 바깥(시계 줄 뒤, 당겨서 튕길 때 보이는 곳)도 지금 화면 모드 색으로 */
 html { background: var(--bg); }
+
+/* 마이 > 화면 모드: 위버스처럼 작은 화면 그림 + 이름 + 동그라미 선택 */
+.theme-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.theme-list > button { display: flex; align-items: center; gap: 16px; width: 100%; padding: 12px 6px; border: 0; border-radius: 16px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.theme-list > button:active { background: var(--soft-hover); }
+.tm-text { flex: 1; min-width: 0; }
+.tm-text b { display: block; font-size: 17px; font-weight: 700; letter-spacing: -0.02em; transition: color .2s; }
+.tm-text small { display: block; margin-top: 3px; font-size: 13px; color: var(--muted); line-height: 1.4; }
+.theme-list > button.on .tm-text b { color: var(--blue); }
+/* 동그라미 선택 표시 */
+.tm-radio { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--muted) 60%, transparent); position: relative; transition: border-color .2s; }
+.tm-radio::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--blue); transform: scale(0); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1); }
+.theme-list > button.on .tm-radio { border-color: var(--blue); }
+.theme-list > button.on .tm-radio::after { transform: scale(1); }
+/* 작은 화면 그림 */
+.tm-pic { flex: none; display: flex; flex-direction: column; width: 56px; height: 78px; border-radius: 11px; overflow: hidden; box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 80%, transparent); }
+.tm-half { flex: 1; display: flex; flex-direction: column; gap: 4px; padding: 7px 7px 0; background: #fff; overflow: hidden; }
+.tm-dark .tm-half, .tm-half.tm-dark { background: #1c1c1e; }
+.tm-auto .tm-half { gap: 3px; padding-top: 5px; }
+.tm-logo { display: block; width: 26px; height: 8px; margin: 0 auto; background: #1d1d1f; -webkit-mask: url(/logo-donsam.png) center / contain no-repeat; mask: url(/logo-donsam.png) center / contain no-repeat; }
+.tm-dark .tm-logo, .tm-half.tm-dark .tm-logo { background: #f5f5f7; }
+.tm-dots { display: block; height: 5px; background: radial-gradient(circle, #e5e5ea 2.5px, transparent 3px) 0 0 / 10px 5px repeat-x; }
+.tm-dark .tm-dots, .tm-half.tm-dark .tm-dots { background-image: radial-gradient(circle, #3a3a3c 2.5px, transparent 3px); }
+.tm-box { display: block; flex: none; height: 14px; border-radius: 4px; }
+.tm-box.a { background: #dff5ec; } .tm-box.b { background: #e3ecff; }
+.tm-dark .tm-box.a, .tm-half.tm-dark .tm-box.a { background: #1f4a3f; } .tm-dark .tm-box.b, .tm-half.tm-dark .tm-box.b { background: #26387a; }
+.tm-auto .tm-box { height: 6px; } .tm-auto .tm-box.b { display: none; }
