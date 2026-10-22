@@ -1354,3 +1354,9 @@ html { background: var(--bg); }
 .tm-box.a { background: #dff5ec; } .tm-box.b { background: #e3ecff; }
 .tm-dark .tm-box.a, .tm-half.tm-dark .tm-box.a { background: #1f4a3f; } .tm-dark .tm-box.b, .tm-half.tm-dark .tm-box.b { background: #26387a; }
 .tm-auto .tm-box { height: 6px; } .tm-auto .tm-box.b { display: none; }
+
+/* 마이: 설치됨 표시 + 목록 화살표, 마지막 줄 밑줄 없애기 */
+.my-installed { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-right: 4px; border-radius: 50%; background: #30d158; color: #fff; font-size: 12px; font-weight: 800; vertical-align: -3px; }
+.my-links .item:last-child { border-bottom: 0; }
+.my-links .item a { display: flex; align-items: center; }
+.my-links .item a::after { content: '›'; margin-left: auto; padding-left: 12px; color: var(--muted); font-size: 20px; line-height: 1; }

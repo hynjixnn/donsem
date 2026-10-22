@@ -1233,8 +1233,9 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 // ── 휴대폰 하단 탭: 홈 · 계산기 · ＋기록 · 돈 관리 · 마이 ──
 (() => {
   const path = location.pathname;
-  const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/'], MY = ['/my/', '/about/', '/privacy/'];
-  const active = path === '/' ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : 'calc';
+  const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/'], MY = ['/my/', '/about/', '/privacy/', '/collection/'];
+  const HOME = ['/', '/quiz/', '/money-type/', '/no-spend/']; // 퀴즈·돈BTI·무지출은 홈에서 들어가는 곳이라 '홈'이 켜져요 (예전엔 '계산기'가 켜졌어요)
+  const active = HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : 'calc';
   const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const tabs = [
     ['home', '/', '홈', '<span class="tab-logo" aria-hidden="true"></span>'], // 위버스처럼 홈 버튼에는 집 모양 대신 돈셈 아이콘

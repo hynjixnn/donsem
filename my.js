@@ -106,6 +106,6 @@
 
   // 이미 홈 화면 앱으로 열었다면 설치 안내 대신 확인 문구
   if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) {
-    $('my-install').textContent = '지금 홈 화면에 설치한 돈셈 앱으로 쓰고 있어요. ✓';
+    $('my-install').innerHTML = '<span class="my-installed">✓</span> 지금 홈 화면에 설치한 돈셈 앱으로 쓰고 있어요.'; // 체크 표시가 줄 끝에 홀로 떨어지지 않게 앞에 둬요
   }
 })();
