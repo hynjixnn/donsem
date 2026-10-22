@@ -911,11 +911,20 @@ function streakCheer(before, entries) {
   return hit ? `${hit[1]} ${hit[0]}일 연속 기록! '${hit[2]}' 배지를 받았어요` : '';
 }
 
+// 알림은 한 번에 하나만: 이미 떠 있으면 새 글자로 바꿔 끼우고 시간을 다시 세요 (빠르게 여러 번 눌러도 겹치지 않게)
+let toastEl = null, toastHide = 0, toastGone = 0;
 function toast(msg) {
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
-  setTimeout(() => t.classList.add('show'), 10);
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2200);
+  clearTimeout(toastHide); clearTimeout(toastGone);
+  if (toastEl && toastEl.isConnected) {
+    toastEl.textContent = msg;
+    toastEl.classList.remove('bump'); void toastEl.offsetWidth; toastEl.classList.add('bump', 'show'); // 살짝 통 튀며 글자만 바뀌어요
+  } else {
+    toastEl = document.createElement('div');
+    toastEl.className = 'toast'; toastEl.setAttribute('role', 'status'); toastEl.textContent = msg; document.body.appendChild(toastEl);
+    const t = toastEl; setTimeout(() => t.classList.add('show'), 10);
+  }
+  const t = toastEl;
+  toastHide = setTimeout(() => { t.classList.remove('show'); toastGone = setTimeout(() => { t.remove(); if (toastEl === t) toastEl = null; }, 300); }, 2200);
 }
 async function copyLink(url, btn) {
   try { await navigator.clipboard.writeText(url); }
@@ -1192,11 +1201,18 @@ const THEME_ICON = {
   auto: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/>',
 };
 const THEME_NAME = { light: '라이트', dark: '다크', auto: '기기 설정 따라가기' };
+// 휴대폰 맨 위(시계·배터리 줄) 색: 아이폰은 이 값이 '바뀐' 것을 잘 알아채지 못해서, 표시를 통째로 새로 갈아 끼워요
+function setThemeColor(color) {
+  const old = document.querySelector('meta[name="theme-color"]');
+  if (old && old.content === color) return;
+  const meta = document.createElement('meta');
+  meta.name = 'theme-color'; meta.content = color;
+  if (old) old.replaceWith(meta); else document.head.append(meta);
+}
 function applyTheme(t, announce) {
   document.documentElement.dataset.theme = t;
   const dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = dark ? '#000000' : '#ffffff';
+  setThemeColor(dark ? '#000000' : '#ffffff');
   document.querySelectorAll('.theme-btn').forEach(b => {
     b.querySelector('svg').innerHTML = THEME_ICON[t];
     b.setAttribute('aria-label', `화면 모드 바꾸기 (지금: ${THEME_NAME[t]})`);

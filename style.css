@@ -1320,3 +1320,10 @@ a.tile { -webkit-touch-callout: none; -webkit-user-select: none; user-select: no
 .tab-logo { position: relative; display: block; width: 25px; height: 25px; border-radius: 7px; background: currentColor; }
 .tab-logo::after { content: ''; position: absolute; inset: 4px 5px 4px 4px; background: var(--bg);
   -webkit-mask: url(/logo-d.png) center / contain no-repeat; mask: url(/logo-d.png) center / contain no-repeat; }
+
+/* 알림 글자가 바뀔 때 살짝 통 튀어요 */
+@media (prefers-reduced-motion: no-preference) { .toast.show.bump { animation: toast-bump .32s cubic-bezier(.34, 1.56, .64, 1); } }
+@keyframes toast-bump { 40% { transform: translate(-50%, 0) scale(1.04); } }
+
+/* 화면 맨 위·맨 아래 바깥(시계 줄 뒤, 당겨서 튕길 때 보이는 곳)도 지금 화면 모드 색으로 */
+html { background: var(--bg); }
