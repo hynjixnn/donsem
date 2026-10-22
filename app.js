@@ -2522,7 +2522,8 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   right.prepend(btn);
 
   const SUGGEST = ['연말정산 월세 공제 조건', 'ISA랑 연금저축 차이', '주휴수당 받는 조건', '실업급여 자진퇴사', '백업은 어떻게 해?', '적금 이자가 생각보다 적은 이유'];
-  let box = null, kb = null;
+  let box = null, kb = null, kbWait = null;
+  const loadKb = () => kbWait || (kbWait = fetch('/kb.json').then(r => r.json()).then(d => (kb = d)).catch(() => { kbWait = null; return (kb = []); }));
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
   // 한국어 검색: 조사·말끝을 떼고, 두 글자씩 겹쳐 비교해서 '월세공제'와 '월세 세액공제'도 맞춰요
@@ -2533,12 +2534,17 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   // 같은 뜻 다른 말: 질문에 이런 말이 있으면 설명 속 말로도 찾아봐요
   const SYN = { '자진퇴사': ['그만두', '스스로'], '자발적': ['그만두', '스스로'], '퇴사': ['그만두'], '홈화면': ['홈 화면'], '차이': ['다른', '다르'], '공제': ['돌려받'], '월세공제': ['월세', '돌려받'], '연말정산': ['환급'], '알바': ['아르바이트'] };
   function search(q) {
-    let ws = words(q); if (!ws.length) return [];
+    let ws = words(q).filter(w => w.length > 1 || /[가-힣]/.test(w)); if (!ws.length) return [];
+    ws = ws.concat(ws.filter(w => w.length >= 4 && /[가-힣]$/.test(w)).map(w => w.slice(0, -1))); // '건강보험료' → '건강보험'도
     const qg = grams(ws.join(''));
     ws = ws.concat(...ws.map(w => SYN[w] || []));
     return kb.map(k => {
       const Q = (k.q + ' ' + (k.k || '')).toLowerCase(), Qn = Q.replace(/\s+/g, ''), A = k.a.toLowerCase(), T = k.t.toLowerCase(); let sc = 0;
-      ws.forEach(w => { if (Q.includes(w) || Qn.includes(w)) sc += 3 + w.length; else if (T.includes(w)) sc += 2 + w.length / 2; if (A.includes(w)) sc += 1 + w.length / 3; });
+      ws.forEach(w => {
+        // 두 글자 말은 낱말 맨 앞에서만 맞춰요 ('환율'이 '전환율'에 걸리지 않게)
+        const inQ = w.length <= 2 ? new RegExp('(^|[^가-힣])' + w).test(Q) : Q.includes(w) || Qn.includes(w);
+        if (inQ) sc += 3 + w.length; else if (T.includes(w)) sc += 2 + w.length / 2; if (A.includes(w)) sc += 1 + w.length / 3;
+      });
       const kg = grams(Q); let hit = 0; qg.forEach(g => { if (kg.has(g)) hit++; }); sc += qg.size ? 6 * hit / qg.size : 0;
       return [sc, k];
     }).filter(([sc]) => sc >= 4).sort((a, b) => b[0] - a[0]).slice(0, 4).map(([, k]) => k);
@@ -2565,7 +2571,7 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       q = q.trim(); if (!q) return;
       box.classList.add('chatting');
       log.insertAdjacentHTML('beforeend', `<div class="ai-q">${esc(q)}</div>`);
-      if (!kb) { try { kb = await fetch('/kb.json').then(r => r.json()); } catch (e) { kb = []; } }
+      if (!kb || !kb.length) await loadKb();
       const hits = search(q), calc = calcFor(q);
       let html = '';
       if (hits.length) {
@@ -2592,8 +2598,15 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   function open() {
     if (!box) build();
     box.classList.add('show'); document.documentElement.classList.add('ai-open');
-    if (!kb) fetch('/kb.json').then(r => r.json()).then(d => { kb = d; }).catch(() => {});
+    loadKb(); fit();
   }
-  function close() { if (!box) return; box.classList.remove('show'); document.documentElement.classList.remove('ai-open'); btn.focus({ preventScroll: true }); }
+  function close() { if (!box) return; box.classList.remove('show'); document.documentElement.classList.remove('ai-open'); box.style.top = box.style.height = ''; btn.focus({ preventScroll: true }); }
   btn.addEventListener('click', open);
+  // 아이폰에서 자판이 올라오면 화면이 위로 밀리면서 아래가 비어 보였어요 → 도우미 창을 '자판 위 보이는 부분'에 딱 맞춰요
+  const vv = window.visualViewport, desk = matchMedia('(min-width: 641px)');
+  function fit() {
+    if (!vv || !box || !box.classList.contains('show') || desk.matches) return;
+    box.style.top = vv.offsetTop + 'px'; box.style.height = vv.height + 'px';
+  }
+  if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
 })();
