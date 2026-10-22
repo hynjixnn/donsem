@@ -2315,9 +2315,10 @@ function countOnce(k, v) {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => document.querySelectorAll('.seg.has-pill').forEach(place)); // 글씨체가 늦게 오면 폭이 바뀌어요
 })();
 
-// ── 아이폰 같은 손맛 ⑤: 아래 탭에서 지금 화면의 탭을 한 번 더 누르면 맨 위로 스르륵 올라가요 ──
+// ── 아이폰 같은 손맛 ⑤: 아래 탭에서 지금 화면의 탭을 한 번 더 누르거나, 홈에서 맨 위 Donsam 로고를 누르면 맨 위로 스르륵 올라가요 ──
+// (예전엔 로고가 홈을 처음부터 다시 열어서 뚝 끊기며 올라갔어요)
 document.addEventListener('click', e => {
-  const a = e.target.closest('.tabbar a.on');
+  const a = e.target.closest('.tabbar a.on, a.brand');
   if (!a || e.metaKey || e.ctrlKey || a.pathname !== location.pathname) return; // 계산기 화면 안에서 '계산기' 탭을 누르면 목록으로 가요 (아이폰처럼)
   e.preventDefault();
   window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
