@@ -1,11 +1,13 @@
-const won = n => Math.round(n).toLocaleString('ko-KR') + '원';
+const won = n => (Number.isFinite(n) ? Math.round(n).toLocaleString('ko-KR') + '원' : '계산할 수 없을 만큼 큰 금액'); // 숫자를 너무 크게 넣어도 '∞원'이 아니라 말로 알려 줘요
+const minus = n => (Math.round(n) ? '-' : '') + won(n); // 빼는 돈이 0원이면 '-0원' 대신 '0원'
 const num = s => parseFloat(String(s).replace(/[^0-9.]/g, '')) || 0;
 const val = k => num(document.querySelector(`input[data-k="${k}"]`).value);
 const seg = k => document.querySelector(`.seg[data-k="${k}"] .on`).dataset.v;
 const rows = list => '<div class="rows">' + list.map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('') + '</div>';
 
+// 기간은 현실적인 최대치까지만 계산해요 (자릿수를 잘못 넣어도 화면이 멈추지 않게): 개월 600(50년), 년 100
 function savings() {
-  const P = val('s_amt'), n = Math.floor(val('s_n')), r = val('s_r') / 100, tax = num(seg('s_tax')) / 100;
+  const P = val('s_amt'), n = Math.min(600, Math.floor(val('s_n'))), r = val('s_r') / 100, tax = num(seg('s_tax')) / 100;
   const principal = P * n;
   let interest;
   if (seg('s_type') === 'simple') interest = P * (r / 12) * n * (n + 1) / 2;
@@ -13,20 +15,20 @@ function savings() {
   const t = Math.floor(interest * tax / 10) * 10;
   document.getElementById('s_out').innerHTML =
     `<div>만기 수령액 (세후)</div><div class="big">${won(principal + interest - t)}</div>` +
-    rows([['원금 합계', won(principal)], ['세전 이자', won(interest)], ['이자 과세', '-' + won(t)], ['세후 이자', won(interest - t)]]);
+    rows([['원금 합계', won(principal)], ['세전 이자', won(interest)], ['이자 과세', minus(t)], ['세후 이자', won(interest - t)]]);
 }
 
 function deposit() {
-  const A = val('d_amt'), n = Math.floor(val('d_n')), r = val('d_r') / 100, tax = num(seg('d_tax')) / 100;
+  const A = val('d_amt'), n = Math.min(600, Math.floor(val('d_n'))), r = val('d_r') / 100, tax = num(seg('d_tax')) / 100;
   const interest = seg('d_type') === 'simple' ? A * r * n / 12 : A * (Math.pow(1 + r / 12, n) - 1);
   const t = Math.floor(interest * tax / 10) * 10;
   document.getElementById('d_out').innerHTML =
     `<div>만기 수령액 (세후)</div><div class="big">${won(A + interest - t)}</div>` +
-    rows([['원금', won(A)], ['세전 이자', won(interest)], ['이자 과세', '-' + won(t)], ['세후 이자', won(interest - t)]]);
+    rows([['원금', won(A)], ['세전 이자', won(interest)], ['이자 과세', minus(t)], ['세후 이자', won(interest - t)]]);
 }
 
 function loan() {
-  const L = val('l_amt'), n = Math.max(1, Math.floor(val('l_n'))), i = val('l_r') / 100 / 12, type = seg('l_type');
+  const L = val('l_amt'), n = Math.max(1, Math.min(600, Math.floor(val('l_n')))), i = val('l_r') / 100 / 12, type = seg('l_type');
   let bal = L, total = 0, sched = [];
   const M = i === 0 ? L / n : L * i / (1 - Math.pow(1 + i, -n));
   for (let m = 1; m <= n; m++) {
@@ -46,7 +48,7 @@ function loan() {
 }
 
 function compound() {
-  const init = val('c_init'), add = val('c_add'), r = val('c_r') / 100, y = Math.floor(val('c_y'));
+  const init = val('c_init'), add = val('c_add'), r = val('c_r') / 100, y = Math.min(100, Math.floor(val('c_y')));
   const mr = Math.pow(1 + r, 1 / 12) - 1;
   let v = init, paid = init, tr = '';
   for (let yr = 1; yr <= y; yr++) {
@@ -55,7 +57,7 @@ function compound() {
   }
   document.getElementById('c_out').innerHTML =
     `<div>${y}년 후 예상 자산</div><div class="big">${won(v)}</div>` +
-    rows([['내가 넣은 돈', won(paid)], ['불어난 수익', won(v - paid)], ['수익률', paid ? ((v / paid - 1) * 100).toFixed(1) + '%' : '-']]) +
+    rows([['내가 넣은 돈', won(paid)], ['불어난 수익', won(v - paid)], ['수익률', paid && Number.isFinite(v) ? ((v / paid - 1) * 100).toFixed(1) + '%' : '-']]) +
     `<details><summary>연도별 보기</summary><div class="tbl"><table><tr><th>기간</th><th>투자 원금</th><th>수익</th><th>총 자산</th></tr>${tr}</table></div></details>` +
     `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">세금·수수료·물가는 반영하지 않은 단순 계산이에요.</p>`;
 }
@@ -143,7 +145,7 @@ function prepayment() {
 }
 
 function inflation() {
-  const A = val('i_amt'), i = val('i_rate') / 100, y = Math.floor(val('i_y'));
+  const A = val('i_amt'), i = val('i_rate') / 100, y = Math.min(100, Math.floor(val('i_y')));
   let tr = '';
   for (let k = 1; k <= y; k++) tr += `<tr><td>${k}년 뒤</td><td>${won(A * Math.pow(1 + i, k))}</td><td>${won(A / Math.pow(1 + i, k))}</td></tr>`;
   const need = A * Math.pow(1 + i, y), worth = A / Math.pow(1 + i, y);
@@ -233,8 +235,8 @@ function salary() {
   if (s.sev) note.push('퇴직금 포함 연봉이라 13으로 나눠 한 달 월급을 계산했어요.');
   if (s.fam > s.famIn) note.push(`자녀도 부양가족에 들어가서 부양가족을 ${s.fam}명으로 계산했어요.`);
   out.innerHTML = `<div>한 달 실수령액</div><div class="big">${won(r.net)}</div>` +
-    rows([['세전 월급', won(s.month)], ['국민연금 (4.75%)', '-' + won(r.pension)], ['건강보험 (3.595%)', '-' + won(r.health)], ['장기요양보험', '-' + won(r.care)],
-      ['고용보험 (0.9%)', '-' + won(r.job)], ['근로소득세', '-' + won(r.tax)], ['지방소득세', '-' + won(r.local)], ['빠지는 돈 합계', '-' + won(r.cut)], ['1년 실수령액', won(r.net * 12)]]) +
+    rows([['세전 월급', won(s.month)], ['국민연금 (4.75%)', minus(r.pension)], ['건강보험 (3.595%)', minus(r.health)], ['장기요양보험', minus(r.care)],
+      ['고용보험 (0.9%)', minus(r.job)], ['근로소득세', minus(r.tax)], ['지방소득세', minus(r.local)], ['빠지는 돈 합계', minus(r.cut)], ['1년 실수령액', won(r.net * 12)]]) +
     note.map(t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`).join('');
 }
 
@@ -662,7 +664,7 @@ const insights = {
     return `연 ${pct(r, 2)} 적금이지만, 넣은 돈 대비 실제로 받는 이자는 ${pct(net / (P * n) * 100, 2)}예요. 매달 나눠 넣어서 늦게 넣은 돈은 이자를 덜 받기 때문이에요.`;
   },
   d_out() {
-    const A = val('d_amt'), n = Math.floor(val('d_n')), r = val('d_r') / 100, tax = num(seg('d_tax')) / 100;
+    const A = val('d_amt'), n = Math.min(600, Math.floor(val('d_n'))), r = val('d_r') / 100, tax = num(seg('d_tax')) / 100;
     if (!A || !n || !r) return '';
     return `세금을 떼면 한 달에 약 ${won(A * r / 12 * (1 - tax))}씩 이자가 생기는 셈이에요.`;
   },
