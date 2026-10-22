@@ -1294,6 +1294,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       sheet.querySelector('.qa-save').addEventListener('click', save);
       sheet.addEventListener('keydown', e => { if (e.key === 'Escape') close(); if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); save(); } });
       drawCats();
+      sheet.offsetHeight; // 처음 만든 창도 '아래에 숨은 모습'을 한 번 그린 뒤에 올려야 주르륵 올라와요 (안 그러면 처음엔 띡 하고 나타나요)
     }
     sheet.classList.add('show');
     document.documentElement.classList.add('qa-open');
