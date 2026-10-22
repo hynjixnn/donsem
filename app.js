@@ -1164,7 +1164,14 @@ if (document.body.classList.contains('home')) {
 }
 
 // ── 앱처럼 쓰기: 홈 화면에 추가하면 주소창 없이 열리고, 인터넷이 끊겨도 열려요 ──
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => { /* 지원하지 않는 환경 */ }));
+if ('serviceWorker' in navigator) {
+  // 사이트를 새로 올리면 처음 한 번은 기기에 보관된 옛 화면이 떠요 → 새 파일을 다 받으면(열고 10초 안이면) 한 번 새로 고쳐서 바로 새 화면을 보여 줘요
+  const had = !!navigator.serviceWorker.controller, t0 = Date.now();
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (had && Date.now() - t0 < 10000 && !document.querySelector('input:focus, textarea:focus')) location.reload();
+  });
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => { /* 지원하지 않는 환경 */ }));
+}
 const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const INSTALL_KEY = 'donsem:install-dismissed';
