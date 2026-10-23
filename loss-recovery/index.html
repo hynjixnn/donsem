@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>손실 회복 수익률 계산기 - -30%면 몇 % 올라야 본전?</title>
+<meta name="description" content="손실 회복 수익률 계산기. 손실률이나 매수가·현재가를 넣으면 본전까지 몇 % 올라야 하는지, 연 수익률로 몇 년이 걸리는지 계산해요.">
+<link rel="canonical" href="https://doncalculator.com/loss-recovery/">
+<meta property="og:title" content="손실 회복 수익률 계산기 - -30%면 몇 % 올라야 본전?">
+<meta property="og:description" content="손실 회복 수익률 계산기. 손실률이나 매수가·현재가를 넣으면 본전까지 몇 % 올라야 하는지, 연 수익률로 몇 년이 걸리는지 계산해요.">
+<meta property="og:url" content="https://doncalculator.com/loss-recovery/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<meta property="og:image" content="https://doncalculator.com/og/loss-recovery.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/favicon-96.png" sizes="96x96" type="image/png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="돈셈">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="/style.css">
+<script src="/vt.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/"><span class="brand-word" aria-hidden="true"></span><span class="sr-only">돈셈</span></a>
+    <div class="top-right"><div class="top-links"><a class="all" href="/budget/">가계부</a><a class="all" href="/assets/">내 자산</a><a class="all" href="/calculators/">모든 계산기</a></div><button type="button" class="theme-btn" aria-label="화면 모드 바꾸기 (지금: 라이트)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button></div>
+  </div>
+</header>
+<div class="wrap">
+  <nav>
+    <a href="/savings/">적금 이자</a>
+    <a href="/deposit/">예금 이자</a>
+    <a href="/loan/">대출 이자</a>
+    <a href="/compound/">복리 투자</a>
+    <a href="/isa/">ISA 절세</a>
+    <a href="/pension/">연금저축·IRP</a>
+    <a href="/severance/">퇴직금</a>
+    <a href="/unemployment/">실업급여</a>
+    <a href="/year-end-tax/">연말정산 환급</a>
+    <a href="/rent/">전월세 전환</a>
+    <a href="/vat/">부가세</a>
+    <a href="/income-tax/">종합소득세</a>
+    <a href="/corporate-tax/">법인세</a>
+    <a href="/holiday-pay/">주휴수당</a>
+    <a href="/prepayment/">중도상환수수료</a>
+    <a href="/inflation/">물가상승률</a>
+    <a href="/invest/">투자 계산 모음</a>
+    <a href="/overseas-stock-tax/">해외주식 양도세</a>
+    <a href="/etf-fee/">ETF 보수 비교</a>
+    <a href="/loss-recovery/">손실 회복 수익률</a>
+    <a href="/financial-income-tax/">금융소득종합과세</a>
+    <a href="/discount/">할인율</a>
+    <a href="/salary/">연봉 실수령액</a>
+    <a href="/salary-rank/">연봉 상위 %</a>
+    <a href="/wage/">시급·월급·연봉</a>
+    <a href="/goal/">목표 저축</a>
+    <a href="/pyeong/">평수</a>
+    <a href="/percent/">퍼센트</a>
+    <a href="/avg-price/">물타기</a>
+    <a href="/dividend/">배당금</a>
+    <a href="/retirement/">노후자금</a>
+    <a href="/car-loan/">자동차 할부</a>
+    <a href="/refinance/">대출 갈아타기</a>
+    <a href="/unit-price/">단가 비교</a>
+    <a href="/fuel/">유류비</a>
+    <a href="/dutch-pay/">더치페이</a>
+    <a href="/date/">날짜</a>
+  </nav>
+
+  <section class="card" id="loss-recovery">
+    <h1>손실 회복 수익률 계산기</h1>
+    <p class="sub">떨어진 주식, 몇 % 올라야 본전인지 계산해요.</p>
+    <p class="trust">2026년 기준 · 2026.10.23 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
+    <label>무엇으로 계산할까요?</label>
+    <div class="seg" data-k="lr_mode"><button data-v="pct" class="on">손실률</button><button data-v="price">매수가·현재가</button></div>
+    <div data-mode="pct">
+      <label>지금 손실률</label>
+      <div class="field"><input data-k="lr_loss" inputmode="decimal" value="30"><span>% 손실</span></div>
+    </div>
+    <div data-mode="price" hidden>
+      <label>평균 매수가</label>
+      <div class="field"><input data-k="lr_buy" inputmode="numeric" value="50,000"><span>원</span></div>
+      <label>현재가</label>
+      <div class="field"><input data-k="lr_now" inputmode="numeric" value="35,000"><span>원</span></div>
+    </div>
+    <label>기대 수익률 (연, 몇 년 걸리는지 볼 때)</label>
+    <div class="field"><input data-k="lr_r" inputmode="decimal" value="7"><span>%</span></div>
+    <div class="result" id="lr_out"></div>
+  </section>
+
+  <article class="guide">
+    <h3>왜 30% 떨어지면 30%가 아니라 43% 올라야 하나요?</h3>
+    <p>떨어진 뒤에는 줄어든 금액에서 다시 올라야 하기 때문이에요. 100만 원이 30% 떨어지면 70만 원이고, 70만 원이 100만 원이 되려면 30만 원 ÷ 70만 원 = 약 43%가 올라야 해요. 50% 떨어지면 100%, 즉 두 배가 되어야 본전이에요.</p>
+    <h3>물타기를 하면 더 빨리 본전이 되나요?</h3>
+    <p>더 사면 평균 단가가 내려가서 본전까지 필요한 상승률은 줄어요. 대신 투자금이 커져서 더 떨어지면 손실도 커져요. <a href="/avg-price/">물타기 계산기</a>로 평균 단가를 먼저 확인해 보세요.</p>
+    <h3 id="basis">계산 근거</h3>
+    <ul class="basis">
+      <li>필요한 상승률 = 1 ÷ (1 - 손실률) - 1</li>
+      <li>걸리는 시간 = ln(1 ÷ (1 - 손실률)) ÷ ln(1 + 연 수익률)</li>
+      <li>세금과 수수료는 빼고 계산했어요</li>
+    </ul>
+    <p class="basis-note">2026.10.23에 마지막으로 확인했어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
+  </article>
+
+  <footer>
+    참고용 계산이에요. 주가는 오른다는 보장이 없고, 이 계산기는 투자를 권유하지 않아요.
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+  </footer>
+</div>
+<script src="/app.js"></script>
+<!-- Cloudflare Web Analytics: 쿠키 없이 방문 수만 세요 --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4ddea5349bb94a689667508931ca47d8"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

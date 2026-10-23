@@ -620,11 +620,117 @@ function incomeTax() {
     `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">기본공제(1인 150만 원)와 표준세액공제 7만 원만 넣은 어림값이에요. 다른 소득이 있거나 감면을 받으면 달라져요.</p>`;
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax };
+// ── 투자 계산: 해외주식 양도세 · ETF 보수 비교 · 손실 회복 수익률 · 금융소득종합과세 ──
+const smallNote = t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`;
+function overseasTaxCalc() {
+  const gain = val('os_gain'), loss = val('os_loss'), fee = val('os_fee'), net = gain - loss - fee, base = Math.max(0, net - 2500000);
+  const tax = Math.floor(base * 0.2), local = Math.floor(base * 0.02);
+  return { gain, loss, fee, net, base, tax, local, total: tax + local };
+}
+function overseasTax() {
+  const o = overseasTaxCalc(), out = document.getElementById('os_out');
+  if (!o.gain && !o.loss) { out.innerHTML = '올해 판 종목의 수익을 넣어 주세요.'; return; }
+  out.innerHTML = `<div>내야 할 양도소득세 (지방소득세 포함)</div><div class="big">${won(o.total)}</div>` +
+    rows([['순수익 (수익 - 손실 - 경비)', (o.net < 0 ? '-' : '') + won(Math.abs(o.net))], ['기본공제', o.net > 0 ? '-' + won(Math.min(2500000, o.net)) : '0원'], ['과세표준', won(o.base)],
+      ['양도소득세 (20%)', won(o.tax)], ['지방소득세 (2%)', won(o.local)]]) +
+    (o.net < 0 ? smallNote('손실이 더 커서 세금이 없어요. 해외주식 손실은 다음 해로 넘어가지 않아요.') : '') + smallNote('다음 해 5월 1~31일에 홈택스에서 신고해요.');
+}
+const fvMonthly = (init, add, yearRate, years) => {
+  const n = Math.round(years * 12), i = Math.pow(1 + yearRate, 1 / 12) - 1;
+  return i === 0 ? init + add * n : init * Math.pow(1 + i, n) + add * (Math.pow(1 + i, n) - 1) / i;
+};
+function etfFeeCalc() {
+  const init = val('ef_init'), add = val('ef_add'), r = val('ef_r') / 100, y = Math.min(60, Math.max(0, val('ef_y'))), a = val('ef_a') / 100, b = val('ef_b') / 100;
+  const put = init + add * Math.round(y * 12), A = fvMonthly(init, add, r - a, y), B = fvMonthly(init, add, r - b, y), zero = fvMonthly(init, add, r, y);
+  return { init, add, r, y, a, b, put, A, B, zero };
+}
+function etfFee() {
+  const o = etfFeeCalc(), out = document.getElementById('ef_out');
+  if (!o.y || !(o.init + o.add)) { out.innerHTML = '투자금과 기간을 넣어 주세요.'; return; }
+  const lo = Math.min(o.a, o.b), cheap = o.a <= o.b ? 'A' : 'B', diff = Math.abs(o.A - o.B), p = n => pct(n * 100, 2);
+  out.innerHTML = `<div>${o.a === o.b ? '두 ETF의 차이' : `${o.y}년 뒤 보수 낮은 ${cheap} ETF가 더 받는 돈`}</div><div class="big">${won(diff)}</div>` +
+    rows([[`A ETF (보수 ${p(o.a)})`, won(o.A)], [`B ETF (보수 ${p(o.b)})`, won(o.B)], ['넣은 돈 합계', won(o.put)],
+      [`보수 ${p(lo)}로 덜 불어난 돈`, won(o.zero - Math.max(o.A, o.B))], [`보수 ${p(Math.max(o.a, o.b))}로 덜 불어난 돈`, won(o.zero - Math.min(o.A, o.B))]]);
+}
+function lossRecoveryCalc() {
+  const mode = seg('lr_mode'), buy = val('lr_buy'), now = val('lr_now');
+  const loss = mode === 'price' ? (buy > 0 ? Math.max(0, 1 - now / buy) : 0) : Math.min(99.99, Math.max(0, val('lr_loss'))) / 100;
+  const need = loss >= 1 ? Infinity : 1 / (1 - loss) - 1, r = val('lr_r') / 100;
+  const years = r > 0 && loss > 0 ? Math.log(1 / (1 - loss)) / Math.log(1 + r) : 0;
+  return { mode, buy, now, loss, need, r, years };
+}
+function lossRecovery() {
+  const o = lossRecoveryCalc(), out = document.getElementById('lr_out');
+  document.querySelectorAll('#loss-recovery [data-mode]').forEach(d => d.hidden = d.dataset.mode !== o.mode);
+  if (o.mode === 'price' && (!o.buy || !o.now)) { out.innerHTML = '매수가와 현재가를 넣어 주세요.'; return; }
+  if (o.mode === 'price' && o.now >= o.buy) { out.innerHTML = `<div>지금 수익 중이에요</div><div class="big">+${pct((o.now / o.buy - 1) * 100, 2)}</div>`; return; }
+  if (!o.loss) { out.innerHTML = '손실률을 넣어 주세요.'; return; }
+  const yr = o.years ? (o.years < 1 ? `약 ${Math.max(1, Math.round(o.years * 12))}개월` : `약 ${o.years.toFixed(1).replace(/\.0$/, '')}년`) : '-';
+  const table = [10, 20, 30, 50, 70, 90].map(l => [`-${l}%`, `+${pct((1 / (1 - l / 100) - 1) * 100, 1)}`]);
+  out.innerHTML = `<div>본전까지 올라야 하는 비율</div><div class="big">+${pct(o.need * 100, 2)}</div>` +
+    rows([['지금 손실률', '-' + pct(o.loss * 100, 2)], ...(o.mode === 'price' ? [['본전 가격', won(o.buy)], ['올라야 하는 금액 (1주)', won(o.buy - o.now)]] : []),
+      [`연 ${pct(o.r * 100, 1)}씩 오르면 걸리는 시간`, yr]]) +
+    `<p style="font-size:13px;font-weight:600;margin:16px 0 0">손실률별 본전 상승률</p>` + rows(table);
+}
+function finIncomeCalc() {
+  const I = val('fi_int'), D = val('fi_div'), F = I + D, mode = seg('fi_mode'), Y = mode === 'pay' ? val('fi_pay') : 0;
+  // 직장인 과세표준 어림: 총급여 - 근로소득공제 - 본인 기본공제 - 4대보험료(국민연금 4.75%·건강 약 3.94%·고용 0.9%)
+  const B = Y ? Math.max(0, Y - earnedDed(Y) - 1.5e6 - Y * 0.0959) : 0, TH = 2e7;
+  const withheld = Math.floor(F * 0.14), base = incomeTaxOf(B);
+  let total = base + withheld, over = F > TH, gen = 0, cmp = 0;
+  if (over) {
+    gen = TH * 0.14 + incomeTaxOf(B + F - TH);   // ① 2천만 원까지 14%, 넘는 부분은 다른 소득과 합쳐 누진세율
+    cmp = F * 0.14 + base;                        // ② 금융소득 전부 14% + 다른 소득 누진세율
+    total = Math.max(gen, cmp);
+  }
+  const extra = Math.max(0, Math.floor((total - base - withheld) * 1.1));
+  return { I, D, F, Y, B, mode, over, withheld, extra, gen, cmp, rateAll: F ? (F * 0.154 + extra) / F : 0 };
+}
+function finIncome() {
+  const o = finIncomeCalc(), out = document.getElementById('fi_out');
+  document.querySelectorAll('#financial-income-tax [data-mode]').forEach(d => d.hidden = d.dataset.mode !== o.mode);
+  if (!o.F) { out.innerHTML = '1년 이자나 배당을 넣어 주세요.'; return; }
+  if (!o.over) {
+    out.innerHTML = `<div>종합과세 대상이 아니에요</div><div class="big">더 낼 세금 0원</div>` +
+      rows([['금융소득 합계', won(o.F)], ['2,000만 원까지 남은 금액', won(2e7 - o.F)], ['받을 때 뗀 세금 (15.4%)', won(Math.floor(o.F * 0.154))]]) +
+      smallNote('받을 때 15.4%를 떼는 것으로 끝나요. 다른 사람과 합치지 않고 한 사람씩 계산해요.');
+    return;
+  }
+  out.innerHTML = `<div>5월에 더 낼 세금 (지방소득세 포함, 어림)</div><div class="big">${won(o.extra)}</div>` +
+    rows([['금융소득 합계', won(o.F)], ['2,000만 원을 넘은 금액', won(o.F - 2e7)], ['받을 때 이미 뗀 세금 (15.4%)', won(Math.floor(o.F * 0.154))],
+      ['금융소득 실제 세율', pct(o.rateAll * 100, 1)], ...(o.Y ? [['다른 소득 과세표준 (어림)', won(o.B)]] : [])]) +
+    (o.extra ? '' : smallNote('넘는 부분의 세율이 14%보다 높지 않아서, 이미 뗀 세금 말고 더 낼 돈이 없어요.')) +
+    (o.Y ? smallNote('직장인은 월급 말고 다른 소득이 2,000만 원을 넘으면 건강보험료(소득월액보험료)가 따로 붙어요.') : smallNote('피부양자는 금융소득이 많으면 건강보험 피부양자에서 빠질 수 있어요.'));
+}
+
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
 const insights = {
+  os_out() {
+    const o = overseasTaxCalc();
+    if (o.net <= 0) return '';
+    if (o.net <= 2500000) return `수익이 기본공제 250만 원 안이라 세금이 없어요. 올해 ${won(2500000 - o.net)}까지는 더 팔아도 세금이 0원이에요.`;
+    return `손실 난 종목을 올해 안에 100만 원어치 정리하면 세금이 약 ${won(Math.min(o.base, 1000000) * 0.22)} 줄어요. 수익을 해마다 250만 원씩 나눠 팔면 매년 공제를 받아요.`;
+  },
+  ef_out() {
+    const o = etfFeeCalc();
+    if (!o.y || o.a === o.b) return '';
+    const hi = Math.max(o.a, o.b), lo = Math.min(o.a, o.b), d = Math.abs(o.A - o.B);
+    return `보수 차이는 ${pct((hi - lo) * 100, 2)}p뿐이지만, ${o.y}년 동안 쌓이면 넣은 돈의 ${pct(d / o.put * 100, 1)}만큼 차이가 나요.`;
+  },
+  lr_out() {
+    const o = lossRecoveryCalc();
+    if (!o.loss || o.loss >= 1) return '';
+    return `손실이 ${pct(o.loss * 100, 0)}일 때 본전까지는 ${pct(o.need * 100, 0)}가 필요해요. 손실이 커질수록 필요한 상승률은 훨씬 빨리 커져요.`;
+  },
+  fi_out() {
+    const o = finIncomeCalc();
+    if (!o.F) return '';
+    if (!o.over) return o.F > 1.5e7 ? `2,000만 원까지 ${won(2e7 - o.F)} 남았어요. 넘을 것 같으면 ISA나 연금저축 계좌로 나눠 보세요.` : '';
+    return `ISA·연금저축 계좌 안에서 생긴 이자·배당은 2,000만 원 계산에 들어가지 않아요. 넘는 ${won(o.F - 2e7)} 중 일부라도 옮기면 종합과세되는 금액이 줄어요.`;
+  },
   ct_out() {
     const base = val('ct_base');
     if (!base) return '';
@@ -1505,6 +1611,25 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       ['budget', '내 몫을 가계부에 적기', '가계부', null],
       ['discount', '할인받은 금액으로 나누기', '할인율 계산기', { o_list: R(val('n_total')) }],
     ],
+    'overseas-stock-tax': () => [
+      ['loss-recovery', '손실 난 종목, 본전까지 얼마나?', '손실 회복 수익률 계산기', {}],
+      ['dividend', '배당 세금은 얼마나 나갈까?', '배당금 계산기', {}],
+      ['isa', '국내 주식은 ISA로 하면?', 'ISA 절세 계산기', {}],
+    ],
+    'etf-fee': () => [
+      ['compound', '보수 없이 복리로 굴리면?', '복리 계산기', { c_init: R(val('ef_init')), c_add: R(val('ef_add')), c_r: val('ef_r'), c_y: R(val('ef_y')) }],
+      ['isa', 'ISA로 하면 세금은?', 'ISA 절세 계산기', {}],
+      ['pension', '연금저축으로 ETF를 사면?', '연금저축·IRP 계산기', {}],
+    ],
+    'loss-recovery': () => [
+      ['avg-price', '더 사서 평균 단가를 낮추면?', '물타기 계산기', seg('lr_mode') === 'price' ? { a_p1: R(val('lr_buy')), a_p2: R(val('lr_now')), a_now: R(val('lr_now')) } : {}],
+      ['overseas-stock-tax', '손실을 팔면 세금이 줄까?', '해외주식 양도세 계산기', {}],
+    ],
+    'financial-income-tax': () => [
+      ['dividend', '배당금은 얼마나 받을까?', '배당금 계산기', {}],
+      ['isa', 'ISA로 옮기면 세금은?', 'ISA 절세 계산기', {}],
+      ['salary', '내 월급 실수령액은?', '연봉 실수령액 계산기', {}],
+    ],
     date: () => [
       ['savings', '적금 만기에 받는 돈은?', '적금 이자 계산기', {}],
       ['severance', '퇴직금은 얼마일까?', '퇴직금 계산기', {}],
@@ -1624,7 +1749,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar'];
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax'];
 const iconOf = path => { const slug = String(path).replace(/\//g, ''); return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -1668,6 +1793,10 @@ function addTileIcon(t) {
     '/vat/': '부가세는 <b>10%</b>',
     '/discount/': '20% 할인에 10% 쿠폰이면 <b>28%</b> 할인',
     '/dividend/': '배당소득세 <b>15.4%</b>를 떼고 받아요',
+    '/overseas-stock-tax/': '<b>250만 원</b> 넘는 수익에 <b>22%</b>',
+    '/etf-fee/': '보수 0.5% 차이, 20년이면 <b>1,000만 원+</b>',
+    '/loss-recovery/': '-50%면 <b>+100%</b> 올라야 본전',
+    '/financial-income-tax/': '이자·배당 <b>2,000만 원</b> 넘으면 합산',
   };
   document.querySelectorAll('.tiles a.tile').forEach(t => {
     const fact = KEY_FACTS[t.getAttribute('href')], p = t.querySelector('p');
@@ -1773,8 +1902,9 @@ const MENU = [
   ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금']]],
   ['챌린지 · 테스트', [['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제 금전운 돈나무'], ['/no-spend/', '무지출 챌린지', '절약 무지출 달력 도장'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti'],
     ['/collection/', '내 컬렉션', '돈나무 배지 기록 모음']]],
-  ['저축 · 투자', [['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
-    ['/dividend/', '배당금', '주식 배당 세금'], ['/avg-price/', '물타기', '평균 단가 주식'], ['/retirement/', '노후자금', '은퇴 연금'], ['/inflation/', '물가상승률', '화폐 가치']]],
+  ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
+    ['/dividend/', '배당금', '주식 배당 세금'], ['/avg-price/', '물타기', '평균 단가 주식'], ['/retirement/', '노후자금', '은퇴 연금'], ['/inflation/', '물가상승률', '화폐 가치'],
+    ['/overseas-stock-tax/', '해외주식 양도세', '미국 주식 양도소득세 250만 원 공제 22% 손익통산'], ['/etf-fee/', 'ETF 보수 비교', '총보수 수수료 운용보수 장기 투자'], ['/loss-recovery/', '손실 회복 수익률', '본전 주식 하락 마이너스 손절'], ['/financial-income-tax/', '금융소득종합과세', '이자 배당 2천만 원 종합과세 건강보험료']]],
   ['대출 · 집', [['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
   ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
