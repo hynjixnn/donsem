@@ -1631,3 +1631,13 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .sr-edit .field i { font-style: normal; color: var(--muted); margin-left: 3px; font-size: 13px; }
 .sr-edit button { padding: 7px 12px; border: 0; border-radius: 980px; background: var(--blue); color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .sr-tip { margin: 10px 2px 0; font-size: 12.5px; color: var(--muted); }
+
+/* 휴대폰 검색 창: 자판이 열리면 자판 위를 꽉 채우고, 결과는 창 안에서 스크롤 */
+@media (max-width: 640px) {
+  .gnav-layer.kb .gnav-panel { top: 10px; max-height: none; display: flex; flex-direction: column; }
+  .gnav-layer.kb .gnav-in { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; padding-bottom: 12px; }
+  .gnav-layer.kb .gnav-list { flex: 1; min-height: 0; overflow-y: auto; align-content: start; -webkit-overflow-scrolling: touch; }
+  .gnav-layer.kb .gnav-q, .gnav-layer.kb .gnav-head { flex: none; }
+  .gnav-layer.kb::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 100vh; background: var(--bg); } /* 창 아래로 뒤 화면이 비치지 않게 */
+  html.gnav-open .tabbar { visibility: hidden; }
+}

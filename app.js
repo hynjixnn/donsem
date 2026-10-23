@@ -2032,9 +2032,12 @@ const MENU = [
         <div class="field gnav-q"><input type="search" placeholder="예: 주휴, 대출, 퇴직금" autocomplete="off" aria-label="계산기 검색"></div><div class="gnav-list" aria-live="polite"></div>`;
       const q = panel.querySelector('input'), list = panel.querySelector('.gnav-list');
       const all = MENU.flatMap(([t, items]) => items.map(it => [...it, t]));
+      // 초성 검색: 'ㅌㅈ'만 쳐도 '퇴직금'을 찾아요 (한글을 치는 중에 'ㅇ'만 보여도 바로 결과가 나와요)
+      const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+      const cho = t => [...t].map(c => { const k = c.charCodeAt(0) - 0xac00; return k >= 0 && k < 11172 ? CHO[Math.floor(k / 588)] : c; }).join('');
       const find = () => {
-        const s = q.value.replace(/\s/g, '').toLowerCase();
-        const hits = s ? all.filter(([, name, kw, t]) => (name + kw + t).replace(/[\s·]/g, '').toLowerCase().includes(s)) : all.filter(([href]) => ['/salary/', '/loan/', '/year-end-tax/', '/unemployment/', '/severance/', '/budget/'].includes(href));
+        const s = q.value.replace(/\s/g, '').toLowerCase(), onlyCho = /^[ㄱ-ㅎ]+$/.test(s);
+        const hits = s ? all.filter(([, name, kw, t]) => { const h = (name + kw + t).replace(/[\s·]/g, '').toLowerCase(); return h.includes(s) || (onlyCho && cho(name.replace(/[\s·]/g, '')).includes(s)); }) : all.filter(([href]) => ['/salary/', '/loan/', '/year-end-tax/', '/unemployment/', '/severance/', '/budget/'].includes(href));
         list.innerHTML = (s ? '' : '<p class="gnav-cap">많이 찾는 것</p>') + (hits.length ? hits.map(item).join('') : '<p class="gnav-none">찾는 계산기가 없어요. 다른 말로 찾아보세요.</p>');
       };
       q.addEventListener('input', e => { e.stopPropagation(); find(); });
@@ -2054,11 +2057,22 @@ const MENU = [
     if (g !== null && String(g) === String(open)) return;
     open = g;
     document.querySelectorAll('[data-g]').forEach(b => { const on = g !== null && b.dataset.g === String(g); b.classList.toggle('open', on); b.setAttribute('aria-expanded', String(on)); });
-    if (g === null) { wrap.classList.remove('show'); document.documentElement.classList.remove('gnav-open'); return; }
+    if (g === null) { wrap.classList.remove('show', 'kb'); wrap.style.top = wrap.style.height = wrap.style.bottom = ''; document.documentElement.classList.remove('gnav-open'); return; }
     draw(g);
     wrap.classList.add('show');
     document.documentElement.classList.add('gnav-open');
+    fitKb();
   }
+  // 휴대폰에서 검색창에 자판이 올라오면: 창을 '자판 위 보이는 부분'에 딱 맞추고, 검색창은 위에 · 결과는 그 아래에서 스크롤돼요
+  // (예전엔 창이 자판 쪽으로 밀려 내려가서 결과가 안 보이고, 창 아래로 뒤 화면이 비쳤어요)
+  const vv = window.visualViewport, phone = matchMedia('(max-width: 640px)');
+  function fitKb() {
+    if (!vv || !phone.matches || open === null) return;
+    const kb = vv.height < document.documentElement.clientHeight - 120;
+    wrap.style.top = vv.offsetTop + 'px'; wrap.style.height = vv.height + 'px'; wrap.style.bottom = 'auto';
+    wrap.classList.toggle('kb', kb);
+  }
+  if (vv) { vv.addEventListener('resize', fitKb); vv.addEventListener('scroll', fitKb); }
   const toggle = g => show(String(open) === String(g) ? null : g);
   top.addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (b) toggle(b.dataset.g === 'search' ? 'search' : +b.dataset.g); });
   wrap.querySelector('.gnav-dim').addEventListener('click', () => show(null));
