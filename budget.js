@@ -10,12 +10,14 @@
   const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const W = '일월화수목금토';
 
+  // 분류별 예산: { 식비: 400000, ... } (지출 분류만, 0원은 빼요)
+  const cleanCats = c => { const o = {}; if (c && typeof c === 'object') CATS.out.forEach(k => { const v = Math.round(Number(c[k])); if (v > 0) o[k] = v; }); return o; };
   function load() {
     try {
       const d = JSON.parse(localStorage.getItem(KEY));
-      if (d && Array.isArray(d.entries)) return { entries: d.entries, budget: Number(d.budget) || 0 };
+      if (d && Array.isArray(d.entries)) return { entries: d.entries, budget: Number(d.budget) || 0, cats: cleanCats(d.cats) };
     } catch (e) { /* 저장된 게 없거나 망가진 경우 */ }
-    return { entries: [], budget: 0 };
+    return { entries: [], budget: 0, cats: {} };
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(data)); return true; }
@@ -25,7 +27,7 @@
   let data = load();
   const today = new Date();
   let month = iso(today).slice(0, 7); // 보고 있는 달 (YYYY-MM)
-  let type = 'out', cat = CATS.out[0], editingBudget = false;
+  let type = 'out', cat = CATS.out[0], editingBudget = false, editingCats = false;
   let view = 'cal', selDay = iso(today); // 내역을 달력으로 볼지 목록으로 볼지, 달력에서 고른 날
   try { if (localStorage.getItem('donsem:budget-view') === 'list') view = 'list'; } catch (e) { /* 기본은 달력 */ }
 
@@ -84,10 +86,13 @@
     $('b-out').textContent = won(sumOut);
     $('b-left').textContent = (sumIn - sumOut < 0 ? '-' : '') + won(Math.abs(sumIn - sumOut));
     $('b-left').classList.toggle('minus', sumIn - sumOut < 0);
-    drawBudget(sumOut, y, m);
+    drawBudget(sumOut, y, m, list);
     drawStreak();
+    drawUpcoming();
     drawList(list);
     drawBreakdown(list, sumOut);
+    drawCatBudget(list);
+    drawTrend(y, m);
     drawWrap(list, y, m, sumOut);
   }
 
@@ -180,7 +185,7 @@
       <div class="badges">${STREAK_BADGES.map(([n, icon, name]) => `<span class="badge-item${st.best >= n ? ' on' : ''}" title="${n}일 연속 기록"><i>${icon}</i><small>${name}</small></span>`).join('')}</div>`;
   }
 
-  function drawBudget(used, y, m) {
+  function drawBudget(used, y, m, list) {
     const box = $('b-budget');
     if (editingBudget) {
       box.innerHTML = `<label for="b-budget-in">한 달 예산</label>
@@ -200,14 +205,107 @@
       const isNow = month === iso(today).slice(0, 7);
       const daysLeft = new Date(y, m, 0).getDate() - today.getDate() + 1;
       let tip;
-      if (left < 0) tip = `예산을 ${won(-left)} 넘었어요.`;
-      else if (isNow) tip = `남은 ${daysLeft}일 동안 하루에 약 ${won(left / daysLeft)}씩 쓸 수 있어요.`;
-      else tip = `예산에서 ${won(left)}이 남았어요.`;
+      if (left < 0) tip = `<p class="budget-tip">예산을 ${won(-left)} 넘었어요.</p>`;
+      else if (isNow) {
+        // ① 오늘 쓸 수 있는 돈: 오늘 이미 쓴 돈은 빼고, 남은 예산을 오늘 포함 남은 날로 나눠요
+        const todayKey = iso(today), spentToday = list.filter(e => e.type === 'out' && e.date === todayKey).reduce((a, e) => a + e.amt, 0);
+        const perDay = Math.floor((left + spentToday) / daysLeft), canToday = Math.max(0, perDay - spentToday);
+        tip = `<div class="today-card"><div><span>오늘 쓸 수 있는 돈</span><b>${won(canToday)}</b></div><em>남은 예산 ${won(left)}<br>÷ 남은 ${daysLeft}일${spentToday ? `<br>오늘 ${won(spentToday)} 썼어요` : ''}</em></div>`;
+        tip += pace(list, used, y, m);
+      } else tip = `<p class="budget-tip">예산에서 ${won(left)}이 남았어요.</p>`;
       box.innerHTML = `<div class="budget-head"><span>한 달 예산 ${won(data.budget)} 중 <b>${Math.round(ratio * 100)}%</b> 썼어요</span><button type="button" class="link" id="b-budget-edit">바꾸기</button></div>
         <div class="bar${left < 0 ? ' over' : ''}"><i style="width:${Math.min(100, ratio * 100)}%"></i></div>
-        <p class="budget-tip">${tip}</p>`;
+        ${tip}`;
     }
     $('b-budget-edit').addEventListener('click', () => { editingBudget = true; render(); });
+  }
+
+  // ① 이 속도면 이번 달 지출은? (고정지출은 한 번 나가는 돈이라 속도 계산에서 빼요)
+  function pace(list, used, y, m) {
+    const day = today.getDate(), last = new Date(y, m, 0).getDate();
+    if (day < 3 || day >= last) return ''; // 초반 이틀은 너무 들쭉날쭉해서, 마지막 날은 의미가 없어서 안 보여요
+    const fixed = list.filter(e => e.type === 'out' && String(e.id).startsWith('fx-')).reduce((a, e) => a + e.amt, 0);
+    const guess = Math.round(fixed + (used - fixed) / day * last), diff = guess - data.budget;
+    const big = n => korean(Math.round(n / 1e4) * 1e4) || won(n);
+    return `<p class="pace">지금 속도면 이번 달 지출 <b class="${diff > 0 ? 'over' : 'ok'}">약 ${big(guess)}</b> · ${Math.abs(diff) < 1e4 ? '예산과 비슷해요' : `예산보다 ${big(Math.abs(diff))} ${diff > 0 ? '많아요' : '적어요'}`}</p>`;
+  }
+
+  // ② 다가오는 결제: 고정지출(donsem:fixed)에서 앞으로 35일 안에 나갈 것
+  const dayIn = (yy, mm, dd) => new Date(yy, mm, Math.min(dd, new Date(yy, mm + 1, 0).getDate()));
+  const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  function nextPay(x) {
+    let d;
+    if (x.cycle === 'year') { d = dayIn(t0.getFullYear(), x.month - 1, x.day); if (d < t0) d = dayIn(t0.getFullYear() + 1, x.month - 1, x.day); }
+    else { d = dayIn(t0.getFullYear(), t0.getMonth(), x.day); if (d < t0) d = dayIn(t0.getFullYear(), t0.getMonth() + 1, x.day); }
+    return d;
+  }
+  function drawUpcoming() {
+    const card = $('b-up-card');
+    let items = [];
+    try { const f = JSON.parse(localStorage.getItem('donsem:fixed')); items = f && Array.isArray(f.items) ? f.items : []; } catch (e) { items = []; }
+    const soon = items.filter(x => x && Number(x.amt) > 0 && Number(x.day) > 0).map(x => ({ x, d: nextPay(x) }))
+      .map(o => ({ ...o, n: Math.round((o.d - t0) / 864e5) })).filter(o => o.n <= 35).sort((a, b) => a.n - b.n).slice(0, 5);
+    card.hidden = !soon.length;
+    if (!soon.length) return;
+    $('b-up').innerHTML = soon.map(({ x, d, n }) => `<li class="up${n <= 2 ? ' soon' : ''}"><span class="up-d"><b>${d.getDate()}</b>${W[d.getDay()]}</span>
+      <span class="up-n">${esc(x.name || x.cat || '고정지출')}<small>${n === 0 ? '오늘' : n === 1 ? '내일' : `${n}일 뒤`}${x.cycle === 'year' ? ' · 1년에 한 번' : ''}</small></span><b class="up-a">${won(Number(x.amt))}</b></li>`).join('');
+  }
+
+  // ③ 분류별 예산
+  function drawCatBudget(list) {
+    const box = $('b-catbud'), by = {};
+    list.filter(e => e.type === 'out').forEach(e => { by[e.cat] = (by[e.cat] || 0) + e.amt; });
+    if (editingCats) {
+      box.innerHTML = `<p class="sub small">쓰고 싶은 분류만 넣으세요. 비워 두면 그 분류는 예산 없이 기록만 해요.</p>
+        <div class="cb-edit">${CATS.out.map(c => `<label class="cb-in"><span>${catIcon(c)}${esc(c)}</span><span class="field"><input inputmode="numeric" data-c="${esc(c)}" value="${data.cats[c] ? data.cats[c].toLocaleString('ko-KR') : ''}" placeholder="0" aria-label="${esc(c)} 예산"><i>원</i></span></label>`).join('')}</div>
+        <div class="row-btns"><button type="button" class="btn fill" id="b-cb-ok">저장</button><button type="button" class="btn line" id="b-cb-cancel">취소</button></div>`;
+      box.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { const d = inp.value.replace(/[^0-9]/g, '').slice(0, 12); inp.value = d ? Number(d).toLocaleString('ko-KR') : ''; }));
+      $('b-cb-ok').addEventListener('click', () => {
+        const c = {}; box.querySelectorAll('input').forEach(inp => { c[inp.dataset.c] = num(inp.value); });
+        data.cats = cleanCats(c); editingCats = false; save(); render(); toast('분류별 예산을 저장했어요.');
+      });
+      $('b-cb-cancel').addEventListener('click', () => { editingCats = false; render(); });
+      return;
+    }
+    const keys = CATS.out.filter(c => data.cats[c]);
+    if (!keys.length) {
+      box.innerHTML = '<p class="sub small">식비 40만 원, 카페 8만 원처럼 분류마다 예산을 정하면, 얼마나 썼는지 막대로 보여 드려요.</p><button type="button" class="btn line wide" id="b-cb-edit">분류별 예산 정하기</button>';
+    } else {
+      const rows = keys.map(c => ({ c, b: data.cats[c], u: by[c] || 0 })).sort((a, b) => b.u / b.b - a.u / a.b);
+      box.innerHTML = rows.map(({ c, b, u }) => {
+        const r = u / b, cls = r > 1 ? 'over' : r >= .8 ? 'warn' : '';
+        return `<div class="cat-row cb-row"><div class="cat-top"><span>${catIcon(c)}${esc(c)}</span>${r > 1 ? `<span class="cb-over">${won(u - b)} 넘었어요</span>` : `<span>${u.toLocaleString('ko-KR')} / ${won(b)}</span>`}</div><div class="bar ${cls}"><i style="width:${Math.min(100, r * 100)}%"></i></div></div>`;
+      }).join('') + '<button type="button" class="link cb-edit-link" id="b-cb-edit">분류별 예산 바꾸기</button>';
+    }
+    $('b-cb-edit').addEventListener('click', () => { editingCats = true; render(); });
+  }
+
+  // ④ 6개월 흐름: 보고 있는 달까지 6달 지출 막대 + 평균선
+  function drawTrend(y, m) {
+    const box = $('b-trend'), months = [];
+    for (let i = 5; i >= 0; i--) { const d = new Date(y, m - 1 - i, 1); months.push({ k: iso(d).slice(0, 7), m: d.getMonth() + 1 }); }
+    months.forEach(o => { o.v = data.entries.filter(e => e.type === 'out' && e.date.startsWith(o.k)).reduce((a, e) => a + e.amt, 0); });
+    const cur = months[5], past = months.slice(0, 5).filter(o => o.v), max = Math.max(...months.map(o => o.v));
+    if (!max) { box.innerHTML = '<p class="empty">지출을 기록하면 달마다 얼마나 썼는지 막대로 보여 드려요.</p>'; return; }
+    const avg = past.length ? past.reduce((a, o) => a + o.v, 0) / past.length : 0;
+    const isNow = cur.k === iso(today).slice(0, 7);
+    let line;
+    if (!avg) line = '기록이 두 달 넘게 쌓이면 평균과 비교해 드려요.';
+    else {
+      // 진행 중인 달은 지금 속도로 한 달을 채웠을 때와 비교해요
+      let full = cur.v;
+      if (isNow) { // 고정지출은 한 번 나가는 돈이라 그대로 두고, 나머지만 지금 속도로 한 달을 채워요
+        const fx = data.entries.filter(e => e.type === 'out' && e.date.startsWith(cur.k) && String(e.id).startsWith('fx-')).reduce((a, e) => a + e.amt, 0);
+        full = fx + (cur.v - fx) / today.getDate() * new Date(y, m, 0).getDate();
+      }
+      const p = Math.round((full - avg) / avg * 100);
+      line = Math.abs(p) < 3 ? `${isNow ? '이번 달은' : `${cur.m}월은`} 평균과 비슷하게 ${isNow ? '쓰고 있어요' : '썼어요'}`
+        : `${isNow ? '이번 달은' : `${cur.m}월은`} 지난 ${past.length}달 평균보다 <b class="${p > 0 ? 'over' : 'ok'}">${Math.abs(p)}% ${p > 0 ? '많이' : '적게'}</b> ${isNow ? '쓰는 속도예요' : '썼어요'}`;
+    }
+    const top = Math.max(max, avg);
+    box.innerHTML = `<p class="pace">${line}</p><div class="trend" role="img" aria-label="${months.map(o => `${o.m}월 ${won(o.v)}`).join(', ')}">
+      ${avg ? `<span class="trend-avg" style="bottom:calc(26px + ${avg / top} * (100% - 52px))"></span>` : ''}
+      ${months.map((o, i) => `<span class="trend-col${i === 5 ? ' now' : ''}"><small>${o.v ? short(o.v) : ''}</small><i style="height:calc(${o.v / top} * (100% - 52px))"></i><span>${o.m}월</span></span>`).join('')}</div>${avg ? `<p class="trend-key">지난 ${past.length}달 평균 ${won(Math.round(avg))}</p>` : ''}`;
   }
 
   // ── 달력 ──
@@ -313,6 +411,7 @@
       if (!confirm(`백업 파일에서 새 기록 ${fresh.length}개를 찾았어요. 지금 가계부에 합칠까요?`)) return;
       data.entries = data.entries.concat(fresh);
       if (!data.budget && d.budget) data.budget = Number(d.budget) || 0;
+      if (!Object.keys(data.cats).length) data.cats = cleanCats(d.cats);
       save(); render();
       toast(`기록 ${fresh.length}개를 불러왔어요.`);
     } catch (err) {
@@ -322,7 +421,7 @@
   $('b-reset').addEventListener('click', () => {
     if (!data.entries.length && !data.budget) return toast('지울 기록이 없어요.');
     if (!confirm(`가계부 기록 ${data.entries.length}개와 예산을 모두 지울까요? 지우면 되돌릴 수 없어요. 먼저 백업 파일을 저장해 두는 걸 추천해요.`)) return;
-    data = { entries: [], budget: 0 };
+    data = { entries: [], budget: 0, cats: {} };
     save(); render();
     toast('가계부를 모두 지웠어요.');
   });

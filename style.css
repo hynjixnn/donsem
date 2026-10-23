@@ -1437,3 +1437,51 @@ html.ai-open { overflow: hidden; }
 /* 자판 위 ∧∨✓ 막대: 홈 화면 앱에서는 아이폰이 막대를 피해 창을 맞춰 주고, 사파리에서는 막대가 창 위에 겹쳐요 → 사파리일 때만 막대만큼 띄워요 */
 :root { --kb-gap: 10px; }
 @media (display-mode: browser) { :root { --kb-gap: 58px; } }
+
+/* 가계부 키우기: ① 오늘 쓸 수 있는 돈 ② 다가오는 결제 ③ 분류별 예산 ④ 6개월 흐름 */
+.today-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; padding: 16px 18px; border-radius: 18px; background: var(--accent-soft); }
+.today-card span { font-size: 13px; color: var(--muted); }
+.today-card b { display: block; margin-top: 2px; font-size: 26px; letter-spacing: -0.02em; color: var(--blue); font-variant-numeric: tabular-nums; }
+.today-card em { font-style: normal; font-size: 12px; line-height: 1.5; color: var(--muted); text-align: right; }
+.pace { margin: 10px 2px 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.pace b.over, .cat-top span.cb-over { color: #e5342b; font-weight: 700; }
+.pace b.ok { color: #1a8a3a; }
+.h2-note { margin-left: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.up-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.up { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.up:first-child { border-top: 0; }
+.up-d { width: 40px; flex: none; text-align: center; font-size: 12px; color: var(--muted); }
+.up-d b { display: block; font-size: 18px; color: var(--text); }
+.up-n { flex: 1; min-width: 0; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.up-n small { display: block; font-size: 12px; color: var(--muted); }
+.up-a { font-variant-numeric: tabular-nums; }
+.up.soon .up-a, .up.soon .up-n small { color: #e5342b; }
+.up-more { display: inline-block; margin-top: 6px; font-size: 14px; }
+.bar.warn i { background: #ff9f0a; }
+.cb-edit-link { margin-top: 14px; }
+.cb-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 12px 0 14px; }
+.cb-in { display: flex; flex-direction: column; gap: 4px; font-size: 14px; margin: 0; }
+.cb-in .field { margin: 0; padding: 0 12px; min-height: 44px; }
+.cb-in .field input { font-size: 16px; text-align: right; }
+.cb-in .field i { font-style: normal; color: var(--muted); margin-left: 4px; }
+@media (max-width: 360px) { .cb-edit { grid-template-columns: 1fr; } }
+.trend { position: relative; display: flex; align-items: flex-end; gap: 10px; height: 180px; margin-top: 14px; }
+.trend-col { position: relative; flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; font-size: 12px; color: var(--muted); }
+.trend-col i { width: 100%; max-width: 48px; min-height: 2px; border-radius: 8px 8px 4px 4px; background: color-mix(in srgb, var(--blue) 30%, transparent); }
+.trend-col small { position: relative; z-index: 2; font-size: 11px; margin-bottom: 2px; padding: 0 3px; border-radius: 4px; background: var(--card); font-variant-numeric: tabular-nums; }
+.trend-col > span { height: 22px; line-height: 22px; margin-top: 4px; }
+.trend-col.now i { background: var(--blue); }
+.trend-col.now, .trend-col.now small { color: var(--text); font-weight: 700; }
+.trend-avg { position: absolute; left: 0; right: 0; z-index: 1; border-top: 1.5px dashed #ff9f0a; pointer-events: none; }
+.trend-key { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.trend-key::before { content: ''; width: 18px; border-top: 1.5px dashed #ff9f0a; }
+/* 휴대폰: 수입·지출·남은 돈이 '3,000,00 / 0원'처럼 두 줄로 끊기지 않게 */
+@media (max-width: 480px) {
+  .sum:not(.two) { grid-template-columns: 1fr; gap: 0; background: var(--field); border-radius: 14px; padding: 4px 14px; }
+  .sum:not(.two) > div { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-radius: 0; background: none; }
+  .sum:not(.two) > div + div { border-top: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+  .sum:not(.two) span { font-size: 14px; }
+  .sum:not(.two) b { white-space: nowrap; }
+}
+.cb-edit { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cb-in .field input { min-width: 0; width: 100%; }
