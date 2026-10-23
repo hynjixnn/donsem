@@ -2850,7 +2850,8 @@ const MONEY_CHANGES = [
 // 오늘 기준 D-day (날짜만 비교해요)
 const mcDays = d => { const t = new Date(), a = new Date(t.getFullYear(), t.getMonth(), t.getDate()), [y, m, dd] = d.split('-').map(Number); return Math.round((new Date(y, m - 1, dd) - a) / 864e5); };
 const mcUpcoming = () => MONEY_CAL.filter(e => mcDays(e.d) >= 0).sort((a, b) => a.d.localeCompare(b.d));
-const mcBadge = e => { const n = mcDays(e.d); return e.when && e.soft ? e.when : n === 0 ? 'D-DAY' : `D-${n}`; };
+const esc2h = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+const mcBadge = e => { const n = mcDays(e.d); return e.soft ? '예정' : n === 0 ? 'D-DAY' : `D-${n}`; }; // 날짜가 아직 발표 전이면 '예정' (날짜 칸에 '11월 중'이 따로 보여요)
 // 내 달력에 넣기(.ics): 마감일 하루짜리 일정 + 하루 전 오전 9시 알림
 function mcIcs(list, name) {
   const esc2 = t => String(t).replace(/[\;,]/g, m => '\\' + m).replace(/\n/g, '\\n'), ymd = d => d.replace(/-/g, '');
@@ -2875,7 +2876,7 @@ function mcIcs(list, name) {
   sec.className = 'group mc-home';
   sec.innerHTML = `<div class="mc-home-in"><h2><img src="/icons/money-calendar.webp" alt="" width="28" height="28">다가오는 돈 일정</h2>${list.map(e => {
     const n = mcDays(e.d), [, m, dd] = e.d.split('-').map(Number);
-    return `<a class="mc-row" href="/money-calendar/"><em class="${e.soft ? 'soft' : n <= 7 ? 'near' : ''}">${mcBadge(e)}</em><span>${e.t}</span><small>${e.soft ? '' : `${m}/${dd}`}</small></a>`;
+    return `<a class="mc-row" href="/money-calendar/"><em class="${e.soft ? 'soft' : n <= 7 ? 'near' : ''}">${mcBadge(e)}</em><span>${e.t}</span><small>${e.soft ? esc2h(e.when || '') : `${m}/${dd}`}</small></a>`;
   }).join('')}<a class="mc-more" href="/money-calendar/">돈 달력 전체 보기 ›</a></div>`;
   anchor.after(sec);
 })();

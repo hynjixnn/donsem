@@ -1550,3 +1550,6 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .ins-ic { flex: none; width: 26px; height: 26px; padding: 4px; border-radius: 8px; background: var(--bg); color: var(--blue); }
 .ins-steps small { display: block; font-size: 12px; color: var(--muted); }
 .mc-home { margin-top: 40px; } /* 위아래 다른 칸들과 같은 40px 간격 */
+
+/* 백업 버튼: 한쪽만 두 줄로 커지지 않게 모두 같은 모양으로 */
+.row-btns button.btn, .row-btns label.btn { margin: 0; height: 44px; box-sizing: border-box; font-size: 15px; line-height: 1.4; padding: 10px 14px; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; }
