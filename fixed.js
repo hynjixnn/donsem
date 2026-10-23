@@ -88,7 +88,41 @@
     drawList();
     drawSync();
     drawCal();
+    drawSubs();
   }
+
+  // 구독 정리 리포트: 구독만 모아 1년 합계를 보여 주고, '안 써요'를 고르면 끊었을 때 아끼는 돈을 계산해요
+  const cutSet = new Set();
+  let subEdit = null; // 리포트에서 금액을 고치고 있는 구독
+  function drawSubs() {
+    const subs = data.items.filter(x => x.cat === '구독').map(x => ({ x, m: monthly(x) })).sort((a, b) => b.m - a.m);
+    $('f-subs-card').hidden = !subs.length;
+    if (!subs.length) return;
+    const tm = subs.reduce((a, o) => a + o.m, 0), top = subs[0].m, cut = subs.filter(o => cutSet.has(o.x.id)).reduce((a, o) => a + o.m, 0);
+    $('f-subs').innerHTML = `<div class="sr-head"><div><span>구독 ${subs.length}개 · 1년이면</span><b>${won(tm * 12)}</b></div><em>한 달 ${won(tm)} · 하루 약 ${won(Math.round(tm * 12 / 365 / 10) * 10)}</em></div>
+      <ul class="sr-list">${subs.map(({ x, m }) => `<li class="${cutSet.has(x.id) ? 'cut' : ''}"><div class="sr-top"><b>${esc(x.name)}</b>${subEdit === x.id ? `<span class="sr-edit"><span class="field"><input inputmode="numeric" value="${x.amt.toLocaleString('ko-KR')}" aria-label="${esc(x.name)} ${x.cycle === 'year' ? '1년' : '한 달'} 구독료"><i>원</i></span><button type="button" data-sub-ok="${esc(x.id)}">저장</button></span>` : `<button type="button" class="sr-amt" data-sub-edit="${esc(x.id)}" aria-label="${esc(x.name)} 구독료 고치기">${x.cycle === 'year' ? '1년 ' + won(x.amt) : '월 ' + won(m)}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>`}</div><div class="bar"><i style="width:${m / top * 100}%"></i></div>
+        <div class="sr-bot"><small>1년 ${won(m * 12)}</small><button type="button" data-cut="${esc(x.id)}" aria-pressed="${cutSet.has(x.id)}">${cutSet.has(x.id) ? '✓ 안 써요' : '안 써요'}</button></div></li>`).join('')}</ul>
+      <p class="sr-tip">구독료가 올랐다면 금액을 눌러 바로 고칠 수 있어요.</p>
+      <p class="sr-save">${cut ? `체크한 구독을 끊으면 <b>1년 ${won(cut * 12)}</b>을 아껴요.` : '요즘 안 쓰는 구독에 「안 써요」를 눌러 보세요. 끊으면 얼마를 아끼는지 알려 드려요.'}</p>`;
+  }
+  $('f-subs').addEventListener('click', e => {
+    const ed = e.target.closest('[data-sub-edit]'), ok = e.target.closest('[data-sub-ok]');
+    if (ed) { subEdit = ed.dataset.subEdit; drawSubs(); const i = $('f-subs').querySelector('.sr-edit input'); i.focus(); i.select(); return; }
+    if (ok) { saveSub(ok.dataset.subOk); return; }
+    const b = e.target.closest('[data-cut]');
+    if (!b) return;
+    cutSet.has(b.dataset.cut) ? cutSet.delete(b.dataset.cut) : cutSet.add(b.dataset.cut);
+    drawSubs();
+  });
+
+  function saveSub(id) {
+    const it = data.items.find(x => x.id === id), inp = $('f-subs').querySelector('.sr-edit input'), v = inp ? num(inp.value) : 0;
+    subEdit = null;
+    if (it && v && v <= MAX_REC && v !== it.amt) { const was = it.amt; it.amt = v; save(); toast(`${it.name} 구독료를 ${won(was)} → ${won(v)}으로 고쳤어요.`); }
+    render();
+  }
+  $('f-subs').addEventListener('input', e => { if (!e.target.matches('.sr-edit input')) return; const d = e.target.value.replace(/[^0-9]/g, '').slice(0, 12); e.target.value = d ? Number(d).toLocaleString('ko-KR') : ''; });
+  $('f-subs').addEventListener('keydown', e => { if (!e.target.matches('.sr-edit input')) return; if (e.key === 'Enter') { e.preventDefault(); saveSub(subEdit); } if (e.key === 'Escape') { subEdit = null; drawSubs(); } });
 
   function budgetIncomeThisMonth() {
     try {

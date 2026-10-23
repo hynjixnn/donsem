@@ -1429,6 +1429,19 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   function drawCats() {
     sheet.querySelector('.qa-cats').innerHTML = CATS[type].map(c => `<button type="button" class="${c === cat ? 'on' : ''}" data-cat="${c}">${catIcon(c)}${c}</button>`).join('');
   }
+  // 자주 쓰는 기록: 최근 90일 동안 같은 분류·금액·메모로 두 번 넘게 적은 지출을 위에 띄워서, 누르면 칸이 바로 채워져요
+  function favList() {
+    let b; try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
+    const es = b && Array.isArray(b.entries) ? b.entries : [], since = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10), cnt = {};
+    es.forEach(e => { if (e.type !== 'out' || String(e.id).startsWith('fx-') || e.date < since) return; const k = `${e.cat}|${e.amt}|${e.memo || ''}`; cnt[k] = cnt[k] || { n: 0, last: '', cat: e.cat, amt: e.amt, memo: e.memo || '' }; cnt[k].n++; if (e.date > cnt[k].last) cnt[k].last = e.date; });
+    return Object.values(cnt).filter(x => x.n >= 2).sort((a, b) => b.n - a.n || b.last.localeCompare(a.last)).slice(0, 4);
+  }
+  function drawFav() {
+    const box = sheet.querySelector('.qa-fav'), list = favList();
+    box.hidden = !list.length;
+    const e = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    box.querySelector('.qa-fav-list').innerHTML = list.map(x => `<button type="button" data-fav="${e(JSON.stringify([x.cat, x.amt, x.memo]))}">${catIcon(x.cat)}<span>${e(x.memo || x.cat)}</span><b>${x.amt.toLocaleString('ko-KR')}원</b></button>`).join('');
+  }
   function open() {
     if (!sheet) {
       sheet = document.createElement('div');
@@ -1437,6 +1450,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
         <div class="qa-panel" role="dialog" aria-modal="true" aria-labelledby="qa-title">
           <div class="qa-grip"></div>
           <div class="qa-head"><b id="qa-title">바로 기록하기</b><button type="button" class="qa-x" data-close="1" aria-label="닫기">×</button></div>
+          <div class="qa-fav" hidden><span class="qa-fav-cap">자주 쓰는 기록 · 누르면 채워져요</span><div class="qa-fav-list"></div></div>
           <div class="seg qa-type"><button type="button" data-v="out" class="on">지출</button><button type="button" data-v="in">수입</button></div>
           <div class="field qa-amt"><input inputmode="numeric" placeholder="0" aria-label="금액" autocomplete="off"><span>원</span></div>
           <p class="qa-kr"></p>
@@ -1456,6 +1470,17 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       });
       sheet.addEventListener('click', e => {
         const t = e.target;
+        const fv = t.closest && t.closest('[data-fav]');
+        if (fv) {
+          const [c, m, memo] = JSON.parse(fv.dataset.fav), amtEl = sheet.querySelector('.qa-amt input');
+          type = 'out'; cat = c; drawCats();
+          sheet.querySelectorAll('.qa-type button').forEach(x => x.classList.toggle('on', x.dataset.v === 'out'));
+          sheet.querySelector('.qa-save').textContent = '지출 기록하기';
+          amtEl.value = Number(m).toLocaleString('ko-KR'); amtEl.dispatchEvent(new Event('input', { bubbles: true }));
+          sheet.querySelector('.qa-memo').value = memo;
+          sheet.querySelectorAll('.qa-fav button').forEach(x => x.classList.toggle('on', x === fv));
+          return;
+        }
         if (t.dataset.close) close();
         else if (t.dataset.v) { type = t.dataset.v; cat = CATS[type][0]; drawCats(); sheet.querySelector('.qa-save').textContent = type === 'out' ? '지출 기록하기' : '수입 기록하기'; }
         else if (t.dataset.cat) { cat = t.dataset.cat; drawCats(); }
@@ -1477,6 +1502,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       drawCats();
       sheet.offsetHeight; // 처음 만든 창도 '아래에 숨은 모습'을 한 번 그린 뒤에 올려야 주르륵 올라와요 (안 그러면 처음엔 띡 하고 나타나요)
     }
+    drawFav();
     sheet.classList.add('show');
     document.documentElement.classList.add('qa-open');
     setTimeout(() => sheet.querySelector('.qa-amt input').focus(), 60);
@@ -2894,4 +2920,39 @@ function mcIcs(list, name) {
     e.target.classList.add('in');
   }), { rootMargin: '0px 0px -8% 0px' });
   items.forEach(el => io.observe(el));
+})();
+
+// ── 월급날 D-day: donsem:budget.payday = { day: 1~31 (32는 말일), early: 주말이면 금요일로 앞당겨요 } ──
+function paydayInfo(b) {
+  const p = b && b.payday;
+  if (!p || !(p.day >= 1 && p.day <= 32)) return null;
+  const n = new Date(), t0 = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  const dateFor = (y, m) => {
+    const last = new Date(y, m + 1, 0).getDate(), d = new Date(y, m, p.day === 32 ? last : Math.min(p.day, last));
+    if (p.early !== false) while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
+    return d;
+  };
+  let next = dateFor(t0.getFullYear(), t0.getMonth());
+  if (next < t0) next = dateFor(t0.getFullYear(), t0.getMonth() + 1);
+  const prev = dateFor(next.getFullYear(), next.getMonth() - 1);
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const from = ymd(prev), days = Math.round((next - t0) / 864e5), es = Array.isArray(b.entries) ? b.entries : [];
+  const inc = es.filter(e => e.type === 'in' && e.date >= from).reduce((a, e) => a + e.amt, 0);
+  const out = es.filter(e => e.type === 'out' && e.date >= from).reduce((a, e) => a + e.amt, 0);
+  // 지난 월급날부터 들어온 수입이 있으면 그 돈으로, 없으면 한 달 예산으로 계산해요
+  const how = inc > 0 ? 'income' : b.budget ? 'budget' : '', left = how === 'income' ? inc - out : how === 'budget' ? b.budget - out : null;
+  return { next, prev, days, inc, out, how, left, perDay: left != null && days > 0 ? Math.floor(Math.max(0, left) / days) : null };
+}
+const paydayLabel = d => `${d.getMonth() + 1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]})`;
+// 첫 화면: 월급날을 정해 두면 '오늘의 돈셈' 위에 한 줄로 보여 줘요
+(() => {
+  const daily = document.getElementById('daily');
+  if (!daily) return;
+  let b; try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
+  const pi = paydayInfo(b);
+  if (!pi) return;
+  const a = document.createElement('a');
+  a.className = 'pd-home'; a.href = '/budget/';
+  a.innerHTML = `<span class="pd-home-ico" aria-hidden="true">💰</span><span class="pd-home-t">${pi.days ? `월급날까지 <b>D-${pi.days}</b>` : '<b>오늘 월급날</b>이에요 🎉'}<small>${paydayLabel(pi.next)}</small></span>${pi.perDay != null ? `<span class="pd-home-r"><small>하루 쓸 수 있는 돈</small><b>${won(pi.perDay)}</b></span>` : '<span class="pd-home-r"><small>가계부에서 보기</small><b>›</b></span>'}`;
+  daily.before(a);
 })();

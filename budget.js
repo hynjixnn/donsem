@@ -12,10 +12,11 @@
 
   // 분류별 예산: { 식비: 400000, ... } (지출 분류만, 0원은 빼요)
   const cleanCats = c => { const o = {}; if (c && typeof c === 'object') CATS.out.forEach(k => { const v = Math.round(Number(c[k])); if (v > 0) o[k] = v; }); return o; };
+  const cleanPay = p => (p && p.day >= 1 && p.day <= 32 ? { day: Math.round(p.day), early: p.early !== false } : null);
   function load() {
     try {
       const d = JSON.parse(localStorage.getItem(KEY));
-      if (d && Array.isArray(d.entries)) return { entries: d.entries, budget: Number(d.budget) || 0, cats: cleanCats(d.cats) };
+      if (d && Array.isArray(d.entries)) return { entries: d.entries, budget: Number(d.budget) || 0, cats: cleanCats(d.cats), payday: cleanPay(d.payday) };
     } catch (e) { /* 저장된 게 없거나 망가진 경우 */ }
     return { entries: [], budget: 0, cats: {} };
   }
@@ -27,7 +28,7 @@
   let data = load();
   const today = new Date();
   let month = iso(today).slice(0, 7); // 보고 있는 달 (YYYY-MM)
-  let type = 'out', cat = CATS.out[0], editingBudget = false, editingCats = false;
+  let type = 'out', cat = CATS.out[0], editingBudget = false, editingCats = false, editingPay = false;
   let view = 'cal', selDay = iso(today); // 내역을 달력으로 볼지 목록으로 볼지, 달력에서 고른 날
   try { if (localStorage.getItem('donsem:budget-view') === 'list') view = 'list'; } catch (e) { /* 기본은 달력 */ }
 
@@ -88,6 +89,7 @@
     setRoll($('b-left'), (sumIn - sumOut < 0 ? '-' : '') + won(Math.abs(sumIn - sumOut)));
     $('b-left').classList.toggle('minus', sumIn - sumOut < 0);
     drawBudget(sumOut, y, m, list);
+    drawPayday();
     drawStreak();
     drawUpcoming();
     drawList(list);
@@ -231,6 +233,33 @@
     return `<p class="pace">지금 속도면 이번 달 지출 <b class="${diff > 0 ? 'over' : 'ok'}">약 ${big(guess)}</b> · ${Math.abs(diff) < 1e4 ? '예산과 비슷해요' : `예산보다 ${big(Math.abs(diff))} ${diff > 0 ? '많아요' : '적어요'}`}</p>`;
   }
 
+  // 월급날 D-day와 다음 월급까지 하루 쓸 돈
+  function drawPayday() {
+    const box = $('b-payday');
+    if (editingPay) {
+      const p = data.payday || { day: 25, early: true };
+      box.innerHTML = `<label for="b-pd-day">월급날</label>
+        <div class="field"><select id="b-pd-day">${Array.from({ length: 31 }, (_, i) => `<option value="${i + 1}"${p.day === i + 1 ? ' selected' : ''}>매달 ${i + 1}일</option>`).join('')}<option value="32"${p.day === 32 ? ' selected' : ''}>매달 말일</option></select></div>
+        <label class="pd-check"><input type="checkbox" id="b-pd-early"${p.early !== false ? ' checked' : ''}> 주말이면 금요일에 미리 받아요</label>
+        <div class="row-btns"><button type="button" class="btn fill" id="b-pd-ok">저장</button><button type="button" class="btn line" id="b-pd-cancel">취소</button></div>
+        ${data.payday ? '<button type="button" class="link danger" id="b-pd-del">월급날 지우기</button>' : ''}`;
+      $('b-pd-ok').addEventListener('click', () => { data.payday = cleanPay({ day: Number($('b-pd-day').value), early: $('b-pd-early').checked }); editingPay = false; save(); render(); toast('월급날을 저장했어요.'); });
+      $('b-pd-cancel').addEventListener('click', () => { editingPay = false; render(); });
+      if ($('b-pd-del')) $('b-pd-del').addEventListener('click', () => { data.payday = null; editingPay = false; save(); render(); });
+      return;
+    }
+    const pi = paydayInfo(data);
+    if (!pi) {
+      box.innerHTML = '<button type="button" class="pd-set" id="b-pd-edit"><span aria-hidden="true">💰</span><span><b>월급날 정하기</b><small>월급날까지 며칠 남았는지, 하루에 얼마 쓸 수 있는지 알려 드려요</small></span><i aria-hidden="true">›</i></button>';
+    } else {
+      const right = pi.perDay != null
+        ? `<div class="pd-r"><span>하루 쓸 수 있는 돈</span><b>${won(pi.perDay)}</b><em>${pi.left < 0 ? `${won(-pi.left)} 넘게 썼어요` : `${pi.how === 'income' ? '월급 받고 남은 돈' : '예산에서 남은 돈'} ${won(pi.left)} ÷ ${pi.days}일`}</em></div>`
+        : pi.days ? '<div class="pd-r"><em>월급을 수입으로 기록하거나 한 달 예산을 정하면, 하루 쓸 돈을 알려 드려요</em></div>' : '<div class="pd-r"><b>🎉</b><em>오늘 들어온 월급을 수입으로 기록해 보세요</em></div>';
+      box.innerHTML = `<div class="pd-card"><div class="pd-l"><span>월급날까지</span><b>${pi.days ? `D-${pi.days}` : 'D-DAY'}</b><em>${paydayLabel(pi.next)}</em></div>${right}</div><button type="button" class="link pd-edit" id="b-pd-edit">월급날 바꾸기</button>`;
+    }
+    $('b-pd-edit').addEventListener('click', () => { editingPay = true; render(); });
+  }
+
   // ② 다가오는 결제: 고정지출(donsem:fixed)에서 앞으로 35일 안에 나갈 것
   const dayIn = (yy, mm, dd) => new Date(yy, mm, Math.min(dd, new Date(yy, mm + 1, 0).getDate()));
   const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -336,8 +365,25 @@
     try { localStorage.setItem('donsem:budget-view', v); } catch (err) { /* 저장 안 돼도 괜찮아요 */ }
     render();
   });
+  // 내역 검색: 메모·분류·금액으로 모든 달에서 찾아요
+  let query = '';
+  $('b-q').addEventListener('input', e => { query = e.target.value.trim(); render(); });
+  function searchHits() {
+    const q = query.toLowerCase(), qn = q.replace(/[^0-9]/g, '');
+    return data.entries.filter(e => (e.memo || '').toLowerCase().includes(q) || e.cat.toLowerCase().includes(q) || (qn && String(e.amt).includes(qn)));
+  }
   function drawList(list) {
-    const ul = $('b-items'), cal = view === 'cal';
+    const ul = $('b-items');
+    if (query) {
+      $('b-cal').hidden = true; $('b-view').hidden = true;
+      list = searchHits();
+      const out = list.filter(e => e.type === 'out').reduce((a, e) => a + e.amt, 0), inn = list.filter(e => e.type === 'in').reduce((a, e) => a + e.amt, 0);
+      if (!list.length) { ul.innerHTML = `<li class="empty">'${esc(query)}'에 맞는 기록이 없어요.</li>`; return; }
+      ul.innerHTML = `<li class="bq-sum"><b>'${esc(query)}' ${list.length}건</b><span>${out ? `지출 ${won(out)}` : ''}${out && inn ? ' · ' : ''}${inn ? `수입 ${won(inn)}` : ''}</span></li>` + itemsHTML(list, true);
+      return;
+    }
+    $('b-view').hidden = false;
+    const cal = view === 'cal';
     $('b-cal').hidden = !cal;
     $('b-view').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
     if (cal) {
@@ -350,12 +396,15 @@
       ul.innerHTML = `<li class="empty">${month === iso(today).slice(0, 7) ? '이번 달 첫 기록을 남겨 보세요. 위에서 금액과 카테고리만 고르면 돼요.' : '이 달에는 기록이 없어요.'}</li>`;
       return;
     }
+    ul.innerHTML = itemsHTML(list);
+  }
+  function itemsHTML(list, withYear) {
     const days = {};
     list.forEach(e => (days[e.date] = days[e.date] || []).push(e));
-    ul.innerHTML = Object.keys(days).sort().reverse().map(d => {
+    return Object.keys(days).sort().reverse().map(d => {
       const items = days[d].slice().reverse(), dt = new Date(d + 'T00:00:00');
       const out = items.filter(e => e.type === 'out').reduce((s, e) => s + e.amt, 0);
-      return `<li class="day"><span>${dt.getMonth() + 1}월 ${dt.getDate()}일 (${W[dt.getDay()]})</span><span>${out ? '지출 ' + won(out) : ''}</span></li>` +
+      return `<li class="day"><span>${withYear && dt.getFullYear() !== today.getFullYear() ? `${dt.getFullYear()}년 ` : ''}${dt.getMonth() + 1}월 ${dt.getDate()}일 (${W[dt.getDay()]})</span><span>${out ? '지출 ' + won(out) : ''}</span></li>` +
         items.map(e => `<li class="item">${catIcon(e.cat, 32).replace('cat-ico', 'item-ico')}<div><b>${esc(e.cat)}</b>${e.memo ? `<span>${esc(e.memo)}</span>` : ''}</div>
           <b class="amt ${e.type}">${e.type === 'in' ? '+' : '-'}${won(e.amt)}</b>
           <button type="button" class="del" data-id="${esc(e.id)}" aria-label="${esc(e.cat)} ${won(e.amt)} 기록 지우기">×</button></li>`).join('');
@@ -413,6 +462,7 @@
       data.entries = data.entries.concat(fresh);
       if (!data.budget && d.budget) data.budget = Number(d.budget) || 0;
       if (!Object.keys(data.cats).length) data.cats = cleanCats(d.cats);
+      if (!data.payday) data.payday = cleanPay(d.payday);
       save(); render();
       toast(`기록 ${fresh.length}개를 불러왔어요.`);
     } catch (err) {
@@ -422,7 +472,7 @@
   $('b-reset').addEventListener('click', () => {
     if (!data.entries.length && !data.budget) return toast('지울 기록이 없어요.');
     if (!confirm(`가계부 기록 ${data.entries.length}개와 예산을 모두 지울까요? 지우면 되돌릴 수 없어요. 먼저 백업 파일을 저장해 두는 걸 추천해요.`)) return;
-    data = { entries: [], budget: 0, cats: {} };
+    data = { entries: [], budget: 0, cats: {}, payday: null };
     save(); render();
     toast('가계부를 모두 지웠어요.');
   });
