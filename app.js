@@ -1187,6 +1187,9 @@ function animateBig() {
   });
   frag.append(node.textContent.slice(m.index + to.length));
   node.replaceWith(frag);
+  // 다 굴러가면 원래 글자로 되돌려요 (기기마다 글자 위치가 어긋나 보이는 일이 없게)
+  clearTimeout(animateBig.t);
+  animateBig.t = setTimeout(() => { big.querySelectorAll('.roll').forEach(r => r.replaceWith(r.textContent)); big.normalize(); }, 700);
 }
 
 // ── 토스처럼 편하게 ⑥: 휴대폰에서 결과가 화면 밖에 있으면 아래에 띄워 두기 ──

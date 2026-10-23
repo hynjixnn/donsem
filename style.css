@@ -1162,8 +1162,8 @@ html:has(> body.home) { overflow-x: clip; } /* 히어로 뒤 빛 번짐 때문�
 @media (prefers-reduced-motion: reduce) { .seg-pill { transition: none; } }
 
 /* 아이폰 같은 손맛 ⑥: 결과 숫자가 자리마다 또르르 굴러가요 */
-.roll { display: inline-block; position: relative; overflow: hidden; vertical-align: top; line-height: inherit; }
-.roll > span { display: inline-block; position: relative; animation: roll-up .42s cubic-bezier(.22, 1.2, .36, 1) both; }
+.roll { display: inline-block; position: relative; vertical-align: top; height: 1.2em; line-height: 1.2em; clip-path: inset(0 -0.1em); } /* 숫자 칸 높이를 글자 줄(1.2em)과 똑같이 맞춰서, 굴러가는 숫자가 아래로 처지지 않게 */
+.roll > span { display: block; position: relative; height: 1.2em; line-height: 1.2em; animation: roll-up .42s cubic-bezier(.22, 1.2, .36, 1) both; }
 .roll > span.down { animation-name: roll-down; }
 .roll > span::before { content: attr(data-o); position: absolute; left: 0; right: 0; text-align: center; top: -100%; }
 .roll > span.down::before { top: 100%; }
