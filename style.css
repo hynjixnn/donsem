@@ -70,9 +70,9 @@ label { display: block; font-size: 14px; font-weight: 600; margin: 22px 0 8px; }
 .seg button { flex: 1 1 0; min-width: max-content; white-space: nowrap; padding: 10px 14px; border: 1px solid var(--blue); border-radius: 980px;
   background: transparent; color: var(--blue); font: inherit; font-size: 15px; font-weight: 500; line-height: 1.3; cursor: pointer;
   transition: background .15s, color .15s; }
-.seg button:hover { background: var(--accent-soft); }
+@media (hover: hover) { .seg button:hover { background: var(--accent-soft); } }
 .seg button.on { background: var(--blue); color: #fff; }
-.seg button.on:hover { background: var(--blue-hover); }
+@media (hover: hover) { .seg button.on:hover { background: var(--blue-hover); } }
 @media (max-width: 640px) { .seg { gap: 6px; } .seg button { padding: 9px 4px; font-size: 13px; } }
 
 /* 첫 화면 큰 버튼 */
@@ -80,9 +80,9 @@ label { display: block; font-size: 14px; font-weight: 600; margin: 22px 0 8px; }
 .btn { display: inline-block; padding: 12px 24px; border-radius: 980px; font-size: 17px; font-weight: 500; border: 1px solid var(--blue); transition: background .15s; }
 .btn:hover { text-decoration: none; }
 .btn.fill { background: var(--blue); color: #fff; }
-.btn.fill:hover { background: var(--blue-hover); }
+@media (hover: hover) { .btn.fill:hover { background: var(--blue-hover); } }
 .btn.line { color: var(--blue); }
-.btn.line:hover { background: var(--accent-soft); }
+@media (hover: hover) { .btn.line:hover { background: var(--accent-soft); } }
 
 /* 계산 결과 */
 .result { margin-top: 32px; background: var(--field); border-radius: 18px; padding: 24px; }
@@ -111,7 +111,7 @@ th { color: var(--muted); font-weight: 600; }
 
 footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.7; }
 footer a { color: var(--muted) !important; }
-footer a:hover { color: var(--text) !important; }
+@media (hover: hover) { footer a:hover { color: var(--text) !important; } }
 
 /* 첫 화면 */
 .home .wrap { max-width: 1024px; }
@@ -173,7 +173,7 @@ footer a:hover { color: var(--text) !important; }
 .below:not(:has(.quick)) { justify-content: flex-end; }
 .quick { display: flex; gap: 6px; flex-wrap: wrap; }
 .quick button { border: 0; border-radius: 980px; background: var(--seg-bg); color: var(--text); font: inherit; font-size: 13px; font-weight: 500; padding: 6px 11px; cursor: pointer; }
-.quick button:hover { background: var(--chip-hover); }
+@media (hover: hover) { .quick button:hover { background: var(--chip-hover); } }
 .quick button[data-add="clear"] { background: transparent; color: var(--muted); }
 .krw { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1em; }
 .krw:empty { display: none; }
@@ -242,7 +242,7 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 .items .amt { font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .items .amt.in { color: var(--blue); }
 .items .del { width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; flex: none; }
-.items .del:hover { background: var(--seg-bg); }
+@media (hover: hover) { .items .del:hover { background: var(--seg-bg); } }
 .items .empty, #b-breakdown .empty { color: var(--muted); font-size: 15px; padding: 12px 0; list-style: none; }
 .cat-row { margin-top: 14px; }
 .cat-top { display: flex; justify-content: space-between; font-size: 15px; }
@@ -251,7 +251,7 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 .tile.feature { background: var(--blue); color: #fff; }
 .tile.feature p { color: rgba(255, 255, 255, .85); }
 .tile.feature .go { color: #fff; }
-.tile.feature:hover { background: var(--blue-hover); }
+@media (hover: hover) { .tile.feature:hover { background: var(--blue-hover); } }
 @media (max-width: 640px) { .top-links { gap: 14px; } .sum b { font-size: 15px; } .tile.feature .go { display: inline; } }
 .sub-card h2 + .seg { margin-top: 16px; }
 .tile.feature { grid-column: 1 / -1; }
@@ -265,7 +265,7 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 .sum.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 #a-insight .insight { background: var(--field); }
 .amt-btn { border: 0; background: none; font: inherit; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); cursor: pointer; padding: 4px 6px; border-radius: 8px; white-space: nowrap; }
-.amt-btn:hover { background: var(--seg-bg); }
+@media (hover: hover) { .amt-btn:hover { background: var(--seg-bg); } }
 .amt-btn.debt { color: #d70015; }
 .items .item.editing { flex-wrap: wrap; }
 .field.mini { flex: 0 1 170px; padding: 0 10px; }
@@ -274,7 +274,7 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 .cat-top small.up { color: var(--blue); }
 .cat-top small.down { color: #d70015; }
 .tile.feature.dark { background: var(--ink-tile); }
-.tile.feature.dark:hover { background: var(--ink-tile-hover); }
+@media (hover: hover) { .tile.feature.dark:hover { background: var(--ink-tile-hover); } }
 @media (min-width: 641px) { .tile.feature { grid-column: span 2; } }
 @media (max-width: 640px) { .net b { font-size: 32px; } }
 .sub-card .insight { background: var(--field); }
@@ -288,7 +288,7 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 .install-text span b { color: var(--text); font-weight: 600; }
 .install .install-go { flex: none; border: 0; font: inherit; font-size: 15px; font-weight: 600; padding: 9px 18px; cursor: pointer; }
 .install-x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; }
-.install-x:hover { background: var(--seg-bg); }
+@media (hover: hover) { .install-x:hover { background: var(--seg-bg); } }
 @media (display-mode: standalone) { .topbar { padding-top: env(safe-area-inset-top); } }
 
 /* ── 돈 관리 탭 (가계부 · 고정지출 · 내 자산) ── */
@@ -332,7 +332,7 @@ button.btn.line { background: transparent; color: var(--blue); font: inherit; cu
 .add-row .btn.fill { border: 0; font: inherit; font-size: 14px; padding: 8px 14px; color: #fff; cursor: pointer; }
 .chips.multi button { font-size: 13px; }
 .goal-head .del { width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; flex: none; }
-.goal-head .del:hover { background: var(--seg-bg); }
+@media (hover: hover) { .goal-head .del:hover { background: var(--seg-bg); } }
 
 /* ── 부드러운 움직임 (아이폰처럼) ── */
 html { -webkit-tap-highlight-color: transparent; }
@@ -390,7 +390,7 @@ html { -webkit-tap-highlight-color: transparent; }
 }
 .theme-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin-left: 6px; flex: none;
   border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; padding: 0; }
-.theme-btn:hover { background: var(--seg-bg); color: var(--text); }
+@media (hover: hover) { .theme-btn:hover { background: var(--seg-bg); color: var(--text); } }
 .theme-btn svg { width: 18px; height: 18px; }
 .topbar-in > .top-right { display: flex; align-items: center; }
 @media (max-width: 640px) { .top-links { gap: 12px; } .theme-btn { margin-left: 4px; } }
@@ -493,7 +493,7 @@ html { -webkit-tap-highlight-color: transparent; }
 .fav { display: inline-flex; align-items: center; justify-content: center; gap: 4px; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%;
   background: transparent; color: var(--muted); cursor: pointer; }
 .fav svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
-.fav:hover { background: var(--soft-hover); color: var(--text); }
+@media (hover: hover) { .fav:hover { background: var(--soft-hover); color: var(--text); } }
 .fav.on { color: #ff9f0a; }
 .fav.on svg { fill: currentColor; }
 .tile.feature .fav { color: rgba(255, 255, 255, .8); }
@@ -530,7 +530,7 @@ html { -webkit-tap-highlight-color: transparent; }
 .cat-chips { display: flex; gap: 8px; margin-top: 14px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .cat-chips::-webkit-scrollbar { display: none; }
 .cat-chips button { flex: none; border: 0; border-radius: 980px; background: var(--field); color: var(--text); font: inherit; font-size: 15px; font-weight: 500; padding: 9px 16px; cursor: pointer; }
-.cat-chips button:hover { background: var(--accent-soft); }
+@media (hover: hover) { .cat-chips button:hover { background: var(--accent-soft); } }
 .cat-chips button.on { background: var(--blue); color: #fff; }
 
 /* 3D 아이콘 */
@@ -556,7 +556,7 @@ html { -webkit-tap-highlight-color: transparent; }
 .cal-week span { text-align: center; font-size: 12px; color: var(--muted); padding: 4px 0; }
 .cal-day { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 60px; padding: 6px 2px; border: 0; border-radius: 12px;
   background: var(--field); color: var(--text); font: inherit; cursor: pointer; }
-.cal-day:hover { background: var(--accent-soft); }
+@media (hover: hover) { .cal-day:hover { background: var(--accent-soft); } }
 .cal-n { font-size: 14px; font-weight: 600; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; }
 .cal-day.today .cal-n { background: var(--blue); color: #fff; }
 .cal-day.sel { box-shadow: inset 0 0 0 2px var(--blue); }
@@ -634,7 +634,7 @@ html.gnav-open { overflow: hidden; }
 .tiles.folded .tile-more { display: none; }
 .more-btn { display: block; margin: 16px auto 0; padding: 9px 20px; border: 1px solid var(--blue); border-radius: 980px; background: transparent;
   color: var(--blue); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
-.more-btn:hover { background: var(--accent-soft); }
+@media (hover: hover) { .more-btn:hover { background: var(--accent-soft); } }
 .group { scroll-margin-top: 72px; }
 
 /* ── 오늘의 돈 퀴즈 ── */
@@ -645,7 +645,7 @@ html.gnav-open { overflow: hidden; }
 .qz-btns { display: grid; gap: 10px; }
 .qz-btn { display: flex; align-items: center; gap: 14px; width: 100%; padding: 18px 20px; border: 2px solid transparent; border-radius: 18px; background: var(--field);
   color: var(--text); font: inherit; font-size: 18px; font-weight: 600; text-align: left; cursor: pointer; transition: border-color .15s, background .15s; }
-.qz-btn:hover:not(:disabled) { border-color: var(--line); }
+@media (hover: hover) { .qz-btn:hover:not(:disabled) { border-color: var(--line); } }
 .qz-btn:disabled { cursor: default; }
 .qz-btn.picked { border-color: var(--text); }
 .qz-btn.right { border-color: var(--blue); background: var(--accent-soft); }
@@ -702,7 +702,7 @@ html.gnav-open { overflow: hidden; }
 .ft-story { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border: 0; border-radius: 980px; cursor: pointer;
   background: linear-gradient(90deg, #f58529, #dd2a7b 50%, #8134af); color: #fff; font: inherit; font-size: 16px; font-weight: 700; }
 .ft-story svg { width: 20px; height: 20px; }
-.ft-story:hover { filter: brightness(1.06); }
+@media (hover: hover) { .ft-story:hover { filter: brightness(1.06); } }
 .ft-story:disabled { opacity: .7; cursor: progress; }
 .ft-steps { margin: 12px 0 0; padding-left: 20px; font-size: 13px; color: var(--muted); line-height: 1.7; }
 .ft-steps b { color: var(--text); font-weight: 600; }
@@ -746,7 +746,7 @@ html.gnav-open { overflow: hidden; }
 .mt-qt { margin: 0 0 22px; font-size: 24px; font-weight: 700; line-height: 1.45; letter-spacing: -0.02em; word-break: keep-all; }
 .mt-opts { display: grid; gap: 10px; }
 .mt-opt { padding: 20px; border: 2px solid transparent; border-radius: 18px; background: var(--field); color: var(--text); font: inherit; font-size: 17px; font-weight: 600; text-align: left; cursor: pointer; transition: border-color .15s, background .15s; word-break: keep-all; }
-.mt-opt:hover { border-color: var(--line); }
+@media (hover: hover) { .mt-opt:hover { border-color: var(--line); } }
 .mt-opt.on { border-color: var(--blue); background: var(--accent-soft); }
 .mt-shared { margin: 16px 0 0; padding: 10px 14px; border-radius: 12px; background: var(--accent-soft); color: var(--blue); font-size: 14px; text-align: center; }
 .mt-hero { margin: 16px -12px 0; padding: 24px 12px 22px; border-radius: 24px; text-align: center; background: linear-gradient(180deg, color-mix(in srgb, var(--mt) 35%, transparent), transparent); }
@@ -806,7 +806,7 @@ html.gnav-open { overflow: hidden; }
 .ns-msg { flex: 1; min-width: 160px; margin: 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
 .ns-msg b { display: block; margin-bottom: 2px; font-size: 18px; color: var(--text); }
 .ns-stamp { flex: 1 1 100%; padding: 15px; border: 0; border-radius: 980px; background: #ff5c8a; color: #fff; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
-.ns-stamp:hover { filter: brightness(1.05); }
+@media (hover: hover) { .ns-stamp:hover { filter: brightness(1.05); } }
 .ns-undo { margin-left: auto; }
 .ns-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .ns-stats div { padding: 14px 8px; border-radius: 14px; background: var(--field); text-align: center; }
@@ -983,7 +983,7 @@ html:has(> body.home) { overflow-x: clip; } /* 히어로 뒤 빛 번짐 때문�
 .sc-card h2 { margin: 14px 0 8px; font-size: 40px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.1; }
 .sc-card p { margin: 0; font-size: 17px; line-height: 1.6; color: color-mix(in srgb, var(--text) 75%, transparent); }
 .sc-go { display: inline-block; margin-top: 20px; padding: 11px 18px; border-radius: 980px; background: var(--text); color: var(--bg); font-size: 15px; font-weight: 700; transition: transform .2s; }
-.sc-card:hover .sc-go { transform: translateX(4px); }
+@media (hover: hover) { .sc-card:hover .sc-go { transform: translateX(4px); } }
 .sc-mint { background: linear-gradient(135deg, #e3f7ec, #c9eedb); }
 .sc-peach { background: linear-gradient(135deg, #fff1e4, #ffdcc4); }
 .sc-sky { background: linear-gradient(135deg, #e7f0ff, #cfe0ff); }
@@ -1162,13 +1162,6 @@ html:has(> body.home) { overflow-x: clip; } /* 히어로 뒤 빛 번짐 때문�
 @media (prefers-reduced-motion: reduce) { .seg-pill { transition: none; } }
 
 /* 아이폰 같은 손맛 ⑥: 결과 숫자가 자리마다 또르르 굴러가요 */
-.roll { display: inline-block; position: relative; vertical-align: top; height: 1.2em; line-height: 1.2em; clip-path: inset(0 -0.1em); } /* 숫자 칸 높이를 글자 줄(1.2em)과 똑같이 맞춰서, 굴러가는 숫자가 아래로 처지지 않게 */
-.roll > span { display: block; position: relative; height: 1.2em; line-height: 1.2em; animation: roll-up .42s cubic-bezier(.22, 1.2, .36, 1) both; }
-.roll > span.down { animation-name: roll-down; }
-.roll > span::before { content: attr(data-o); position: absolute; left: 0; right: 0; text-align: center; top: -100%; }
-.roll > span.down::before { top: 100%; }
-@keyframes roll-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes roll-down { from { transform: translateY(-100%); } to { transform: translateY(0); } }
 
 /* 아이폰 같은 손맛 ⑦: 큰 제목이 위 메뉴바로 접혀 들어가요 (휴대폰) */
 .top-title { display: none; }
@@ -1382,7 +1375,7 @@ html { background: var(--bg); }
 
 /* 돈셈 도우미: 오른쪽 위 알록달록한 버튼 + 위버스 AI처럼 전체 화면 대화 */
 .ai-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; flex: none; }
-.ai-btn:hover { background: var(--soft-hover); }
+@media (hover: hover) { .ai-btn:hover { background: var(--soft-hover); } }
 @media (prefers-reduced-motion: no-preference) { .ai-btn svg { animation: ai-twinkle 3.2s ease-in-out infinite; } }
 @keyframes ai-twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.08) rotate(8deg); } }
 html.ai-open { overflow: hidden; }

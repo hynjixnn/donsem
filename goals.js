@@ -59,6 +59,7 @@
     const name = $('g-name').value.trim().slice(0, 30), target = num($('g-target').value), date = $('g-date').value, err = $('g-err');
     if (!name) { err.textContent = '목표 이름을 넣어 주세요. 예: 결혼자금'; $('g-name').focus(); return; }
     if (!target) { err.textContent = '목표 금액을 넣어 주세요.'; $('g-target').focus(); return; }
+    if (target > MAX_REC) { err.textContent = '1,000억 원보다 큰 금액은 넣을 수 없어요. 숫자를 다시 확인해 주세요.'; $('g-target').focus(); return; }
     if (date && new Date(date + 'T00:00:00') <= today) { err.textContent = '목표 날짜는 내일 이후로 골라 주세요.'; return; }
     if (mode === 'assets' && !picked.size) { err.textContent = '연결할 자산을 하나 이상 골라 주세요.'; return; }
     err.textContent = '';

@@ -1,3 +1,4 @@
+const MAX_REC = 1e11; // 가계부·고정지출·자산·목표에 넣을 수 있는 가장 큰 금액 (1,000억 원) — 실수로 0을 많이 눌러도 화면이 망가지지 않게
 const won = n => (Number.isFinite(n) ? Math.round(n).toLocaleString('ko-KR') + '원' : '계산할 수 없을 만큼 큰 금액'); // 숫자를 너무 크게 넣어도 '∞원'이 아니라 말로 알려 줘요
 const minus = n => (Math.round(n) ? '-' : '') + won(n); // 빼는 돈이 0원이면 '-0원' 대신 '0원'
 const num = s => parseFloat(String(s).replace(/[^0-9.]/g, '')) || 0;
@@ -1173,23 +1174,12 @@ function animateBig() {
   big.dataset.final = node.textContent;
   const to = m[0], from = lastBig;
   lastBig = to;
-  if (calmMotion || from === null || from === to || !ready) return;
-  const up = Number(to.replace(/,/g, '')) > Number(from.replace(/,/g, '')), frag = document.createDocumentFragment();
-  frag.append(node.textContent.slice(0, m.index));
-  [...to].forEach((ch, i) => {
-    const old = from[from.length - to.length + i]; // 오른쪽 끝(일의 자리)부터 자리를 맞춰 비교해요
-    if (!/\d/.test(ch) || ch === old) { frag.append(ch); return; }
-    const box = document.createElement('span'), d = document.createElement('span');
-    box.className = 'roll'; d.className = up ? 'up' : 'down'; d.textContent = ch;
-    d.dataset.o = /\d/.test(old || '') ? old : '';
-    d.style.animationDelay = Math.min(i, 8) * 18 + 'ms';
-    box.append(d); frag.append(box);
-  });
-  frag.append(node.textContent.slice(m.index + to.length));
-  node.replaceWith(frag);
-  // 다 굴러가면 원래 글자로 되돌려요 (기기마다 글자 위치가 어긋나 보이는 일이 없게)
-  clearTimeout(animateBig.t);
-  animateBig.t = setTimeout(() => { big.querySelectorAll('.roll').forEach(r => r.replaceWith(r.textContent)); big.normalize(); }, 700);
+  if (calmMotion || from === null || from === to || !ready || !big.animate) return;
+  // 숫자가 바뀌면 글자를 쪼개지 않고, 결과 숫자 전체를 살짝 밀어 올리며 바로 보여 줘요
+  // (예전엔 바뀐 자리만 따로 굴려서, 아이폰에서 잠깐 아래로 처졌다가 제자리로 튀었어요)
+  const up = Number(to.replace(/,/g, '')) > Number(from.replace(/,/g, ''));
+  big.getAnimations().forEach(x => x.cancel());
+  big.animate([{ transform: `translateY(${up ? 6 : -6}px)`, opacity: 0.35 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'cubic-bezier(.22, 1, .36, 1)' });
 }
 
 // ── 토스처럼 편하게 ⑥: 휴대폰에서 결과가 화면 밖에 있으면 아래에 띄워 두기 ──
@@ -1444,6 +1434,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   function save() {
     const amtEl = sheet.querySelector('.qa-amt input'), amt = num(amtEl.value);
     if (!amt) { sheet.querySelector('.qa-err').textContent = '금액을 넣어 주세요.'; amtEl.focus(); return; }
+    if (amt > MAX_REC) { sheet.querySelector('.qa-err').textContent = '1,000억 원보다 큰 금액은 넣을 수 없어요. 숫자를 다시 확인해 주세요.'; amtEl.focus(); return; }
     let b;
     try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
     if (!b || !Array.isArray(b.entries)) b = { entries: [], budget: (b && b.budget) || 0 };

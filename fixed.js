@@ -62,6 +62,7 @@
     const amt = num($('f-amt').value), name = $('f-name').value.trim().slice(0, 30), err = $('f-err');
     if (!name) { err.textContent = '이름을 넣어 주세요. 예: 넷플릭스'; $('f-name').focus(); return; }
     if (!amt) { err.textContent = '금액을 넣어 주세요.'; $('f-amt').focus(); return; }
+    if (amt > MAX_REC) { err.textContent = '1,000억 원보다 큰 금액은 넣을 수 없어요. 숫자를 다시 확인해 주세요.'; $('f-amt').focus(); return; }
     err.textContent = '';
     const item = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, cat, amt, cycle, day: Number($('f-day').value) };
     if (cycle === 'year') item.month = Number($('f-month').value);

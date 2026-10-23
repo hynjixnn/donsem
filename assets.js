@@ -50,6 +50,7 @@
   function addItem() {
     const amt = num($('a-amt').value), err = $('a-err');
     if (!amt) { err.textContent = '금액을 넣어 주세요.'; $('a-amt').focus(); return; }
+    if (amt > MAX_REC) { err.textContent = '1,000억 원보다 큰 금액은 넣을 수 없어요. 숫자를 다시 확인해 주세요.'; $('a-amt').focus(); return; }
     err.textContent = '';
     const name = $('a-name').value.trim().slice(0, 30) || cat;
     data.items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), kind, cat, name, amt });

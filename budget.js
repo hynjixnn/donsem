@@ -52,6 +52,7 @@
   function addEntry() {
     const amt = num($('b-amt').value), date = $('b-date').value, err = $('b-err');
     if (!amt) { err.textContent = '금액을 넣어 주세요.'; $('b-amt').focus(); return; }
+    if (amt > MAX_REC) { err.textContent = '1,000억 원보다 큰 금액은 넣을 수 없어요. 숫자를 다시 확인해 주세요.'; $('b-amt').focus(); return; }
     if (!date) { err.textContent = '날짜를 골라 주세요.'; return; }
     err.textContent = '';
     const before = budgetStreak(data.entries);
@@ -194,7 +195,7 @@
       const inp = $('b-budget-in');
       inp.addEventListener('input', () => { const d = inp.value.replace(/[^0-9]/g, ''); inp.value = d ? Number(d).toLocaleString('ko-KR') : ''; });
       inp.focus();
-      $('b-budget-ok').addEventListener('click', () => { data.budget = num(inp.value); editingBudget = false; save(); render(); });
+      $('b-budget-ok').addEventListener('click', () => { data.budget = Math.min(num(inp.value), MAX_REC); editingBudget = false; save(); render(); });
       $('b-budget-cancel').addEventListener('click', () => { editingBudget = false; render(); });
       return;
     }
@@ -261,7 +262,7 @@
         <div class="row-btns"><button type="button" class="btn fill" id="b-cb-ok">저장</button><button type="button" class="btn line" id="b-cb-cancel">취소</button></div>`;
       box.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { const d = inp.value.replace(/[^0-9]/g, '').slice(0, 12); inp.value = d ? Number(d).toLocaleString('ko-KR') : ''; }));
       $('b-cb-ok').addEventListener('click', () => {
-        const c = {}; box.querySelectorAll('input').forEach(inp => { c[inp.dataset.c] = num(inp.value); });
+        const c = {}; box.querySelectorAll('input').forEach(inp => { c[inp.dataset.c] = Math.min(num(inp.value), MAX_REC); });
         data.cats = cleanCats(c); editingCats = false; save(); render(); toast('분류별 예산을 저장했어요.');
       });
       $('b-cb-cancel').addEventListener('click', () => { editingCats = false; render(); });
