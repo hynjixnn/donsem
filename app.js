@@ -212,12 +212,12 @@ function tableTax(pay, fam) {
   if (pay <= 87000000) return base + 13394600 + (pay - 45000000) * 0.42;
   return base + 31034600 + (pay - 87000000) * 0.45;
 }
-function takeHome(month, free, fam, kids) {
+function takeHome(month, free, fam, kids, rate = 1) { // rate: 매달 떼는 소득세 비율 (80%·100%·120% 중 직원이 골라요)
   const pay = Math.max(0, month - free); // 세금·보험료는 비과세를 뺀 돈에만 붙어요
   const pension = pay > 0 ? floor10(Math.min(Math.max(Math.floor(pay / 1000) * 1000, INS_2026.penMin), INS_2026.penMax) * INS_2026.pension) : 0;
   const health = floor10(pay * INS_2026.health), care = floor10(health * INS_2026.care), job = floor10(pay * INS_2026.job);
   const kidCut = kids <= 0 ? 0 : kids === 1 ? 20830 : 45830 + (kids - 2) * 33330;
-  const tax = Math.max(0, floor10(tableTax(pay, fam) - kidCut)), local = floor10(tax * 0.1);
+  const tax = Math.max(0, floor10((tableTax(pay, fam) - kidCut) * rate)), local = floor10(tax * 0.1);
   const cut = pension + health + care + job + tax + local;
   return { pension, health, care, job, tax, local, cut, net: month - cut };
 }
@@ -226,17 +226,23 @@ function salaryInput() {
   const A = val('m_amt'), byYear = seg('m_mode') === 'year', sev = byYear && seg('m_sev') === 'in';
   const month = Math.floor(byYear ? A / (sev ? 13 : 12) : A);
   const kids = Math.max(0, Math.round(val('m_kids'))), famIn = Math.max(1, Math.round(val('m_fam')));
-  return { month, sev, kids, famIn, fam: Math.max(famIn, kids + 1), free: Math.min(val('m_free'), month) };
+  const rateEl = document.querySelector('.seg[data-k="m_rate"] .on'), rate = rateEl ? Number(rateEl.dataset.v) / 100 : 1;
+  return { month, sev, kids, famIn, fam: Math.max(famIn, kids + 1), free: Math.min(val('m_free'), month), rate };
 }
 function salary() {
   const out = document.getElementById('m_out'), s = salaryInput();
   if (!s.month) { out.innerHTML = '금액을 넣어 주세요.'; return; }
-  const r = takeHome(s.month, s.free, s.fam, s.kids), note = [];
+  const r = takeHome(s.month, s.free, s.fam, s.kids, s.rate), note = [];
   if (s.sev) note.push('퇴직금 포함 연봉이라 13으로 나눠 한 달 월급을 계산했어요.');
+  if (s.rate !== 1) {
+    const base = takeHome(s.month, s.free, s.fam, s.kids), gap = Math.abs(base.tax + base.local - r.tax - r.local) * 12;
+    note.push(s.rate < 1 ? `소득세를 80%만 떼서 100%보다 매달 ${won(r.net - base.net)} 더 받아요. 대신 1년에 약 ${won(gap)}을 덜 떼서, 연말정산 때 그만큼 덜 돌려받거나 더 낼 수 있어요.`
+      : `소득세를 120% 떼서 100%보다 매달 ${won(base.net - r.net)} 덜 받아요. 대신 1년에 약 ${won(gap)}을 더 떼서, 연말정산 때 그만큼 더 돌려받아요.`);
+  }
   if (s.fam > s.famIn) note.push(`자녀도 부양가족에 들어가서 부양가족을 ${s.fam}명으로 계산했어요.`);
   out.innerHTML = `<div>한 달 실수령액</div><div class="big">${won(r.net)}</div>` +
     rows([['세전 월급', won(s.month)], ['국민연금 (4.75%)', minus(r.pension)], ['건강보험 (3.595%)', minus(r.health)], ['장기요양보험', minus(r.care)],
-      ['고용보험 (0.9%)', minus(r.job)], ['근로소득세', minus(r.tax)], ['지방소득세', minus(r.local)], ['빠지는 돈 합계', minus(r.cut)], ['1년 실수령액', won(r.net * 12)]]) +
+      ['고용보험 (0.9%)', minus(r.job)], [s.rate === 1 ? '근로소득세' : `근로소득세 (${Math.round(s.rate * 100)}%)`, minus(r.tax)], ['지방소득세', minus(r.local)], ['빠지는 돈 합계', minus(r.cut)], ['1년 실수령액', won(r.net * 12)]]) +
     note.map(t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`).join('');
 }
 
@@ -839,7 +845,7 @@ const insights = {
   m_out() {
     const s = salaryInput();
     if (!s.month) return '';
-    const r = takeHome(s.month, s.free, s.fam, s.kids), raise = takeHome(s.month + Math.round(10000000 / (s.sev ? 13 : 12)), s.free, s.fam, s.kids);
+    const r = takeHome(s.month, s.free, s.fam, s.kids, s.rate), raise = takeHome(s.month + Math.round(10000000 / (s.sev ? 13 : 12)), s.free, s.fam, s.kids, s.rate);
     return `세전 월급의 ${pct(r.net / s.month * 100)}를 받아요. 연봉이 1,000만 원 오르면 한 달 실수령액은 약 ${won(Math.round((raise.net - r.net) / 1000) * 1000)} 늘어요.`;
   },
   j_out() {

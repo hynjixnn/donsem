@@ -1531,3 +1531,5 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .mc-row small { color: var(--muted); font-variant-numeric: tabular-nums; }
 .mc-row em { min-width: 48px; text-align: center; }
 .mc-more { display: inline-block; margin-top: 6px; font-size: 14px; }
+
+.label-note { margin-left: 6px; font-size: 12px; font-weight: 500; color: var(--muted); }
