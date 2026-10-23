@@ -211,7 +211,7 @@
         // ① 오늘 쓸 수 있는 돈: 오늘 이미 쓴 돈은 빼고, 남은 예산을 오늘 포함 남은 날로 나눠요
         const todayKey = iso(today), spentToday = list.filter(e => e.type === 'out' && e.date === todayKey).reduce((a, e) => a + e.amt, 0);
         const perDay = Math.floor((left + spentToday) / daysLeft), canToday = Math.max(0, perDay - spentToday);
-        tip = `<div class="today-card"><div><span>오늘 쓸 수 있는 돈</span><b>${won(canToday)}</b></div><em>남은 예산 ${won(left)}<br>÷ 남은 ${daysLeft}일${spentToday ? `<br>오늘 ${won(spentToday)} 썼어요` : ''}</em></div>`;
+        tip = `<div class="budget-today"><div><span>오늘 쓸 수 있는 돈</span><b>${won(canToday)}</b></div><em>남은 예산 ${won(left)}<br>÷ 남은 ${daysLeft}일${spentToday ? `<br>오늘 ${won(spentToday)} 썼어요` : ''}</em></div>`;
         tip += pace(list, used, y, m);
       } else tip = `<p class="budget-tip">예산에서 ${won(left)}이 남았어요.</p>`;
       box.innerHTML = `<div class="budget-head"><span>한 달 예산 ${won(data.budget)} 중 <b>${Math.round(ratio * 100)}%</b> 썼어요</span><button type="button" class="link" id="b-budget-edit">바꾸기</button></div>
@@ -248,7 +248,7 @@
       .map(o => ({ ...o, n: Math.round((o.d - t0) / 864e5) })).filter(o => o.n <= 35).sort((a, b) => a.n - b.n).slice(0, 5);
     card.hidden = !soon.length;
     if (!soon.length) return;
-    $('b-up').innerHTML = soon.map(({ x, d, n }) => `<li class="up${n <= 2 ? ' soon' : ''}"><span class="up-d"><b>${d.getDate()}</b>${W[d.getDay()]}</span>
+    $('b-up').innerHTML = soon.map(({ x, d, n }) => `<li class="up-row${n <= 2 ? ' soon' : ''}"><span class="up-d"><b>${d.getDate()}</b>${W[d.getDay()]}</span>
       <span class="up-n">${esc(x.name || x.cat || '고정지출')}<small>${n === 0 ? '오늘' : n === 1 ? '내일' : `${n}일 뒤`}${x.cycle === 'year' ? ' · 1년에 한 번' : ''}</small></span><b class="up-a">${won(Number(x.amt))}</b></li>`).join('');
   }
 

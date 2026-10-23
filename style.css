@@ -1432,23 +1432,23 @@ html.ai-open { overflow: hidden; }
 @media (display-mode: browser) { :root { --kb-gap: 58px; } }
 
 /* 가계부 키우기: ① 오늘 쓸 수 있는 돈 ② 다가오는 결제 ③ 분류별 예산 ④ 6개월 흐름 */
-.today-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; padding: 16px 18px; border-radius: 18px; background: var(--accent-soft); }
-.today-card span { font-size: 13px; color: var(--muted); }
-.today-card b { display: block; margin-top: 2px; font-size: 26px; letter-spacing: -0.02em; color: var(--blue); font-variant-numeric: tabular-nums; }
-.today-card em { font-style: normal; font-size: 12px; line-height: 1.5; color: var(--muted); text-align: right; }
+.budget-today { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; padding: 16px 18px; border-radius: 18px; background: var(--accent-soft); }
+.budget-today span { font-size: 13px; color: var(--muted); }
+.budget-today b { display: block; margin-top: 2px; font-size: 26px; letter-spacing: -0.02em; color: var(--blue); font-variant-numeric: tabular-nums; }
+.budget-today em { font-style: normal; font-size: 12px; line-height: 1.5; color: var(--muted); text-align: right; }
 .pace { margin: 10px 2px 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
 .pace b.over, .cat-top span.cb-over { color: #e5342b; font-weight: 700; }
 .pace b.ok { color: #1a8a3a; }
 .h2-note { margin-left: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
 .up-list { list-style: none; margin: 8px 0 0; padding: 0; }
-.up { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
-.up:first-child { border-top: 0; }
+.up-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.up-row:first-child { border-top: 0; }
 .up-d { width: 40px; flex: none; text-align: center; font-size: 12px; color: var(--muted); }
 .up-d b { display: block; font-size: 18px; color: var(--text); }
 .up-n { flex: 1; min-width: 0; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .up-n small { display: block; font-size: 12px; color: var(--muted); }
 .up-a { font-variant-numeric: tabular-nums; }
-.up.soon .up-a, .up.soon .up-n small { color: #e5342b; }
+.up-row.soon .up-a, .up-row.soon .up-n small { color: #e5342b; }
 .up-more { display: inline-block; margin-top: 6px; font-size: 14px; }
 .bar.warn i { background: #ff9f0a; }
 .cb-edit-link { margin-top: 14px; }
@@ -1549,3 +1549,4 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .ins-steps i { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--blue); color: #fff; font-style: normal; font-size: 12px; font-weight: 700; display: grid; place-items: center; }
 .ins-ic { flex: none; width: 26px; height: 26px; padding: 4px; border-radius: 8px; background: var(--bg); color: var(--blue); }
 .ins-steps small { display: block; font-size: 12px; color: var(--muted); }
+.mc-home { margin-top: 40px; } /* 위아래 다른 칸들과 같은 40px 간격 */
