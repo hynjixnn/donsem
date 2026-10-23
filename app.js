@@ -1359,7 +1359,7 @@ window.addEventListener('beforeinstallprompt', e => {
     if (choice.outcome === 'accepted') toast('홈 화면에 돈셈을 추가했어요.');
   });
 });
-if (isIOS && !standalone) installCard('<div class="install-text"><b>돈셈을 앱처럼 쓰세요</b><span><b>공유 버튼</b>(네모에 화살표)을 누르고 <b>홈 화면에 추가</b>를 고르세요. 공유 버튼이 안 보이면 주소창의 <b>≡</b> 또는 <b>⋯</b> 메뉴 안에 있어요.</span></div>');
+if (isIOS && !standalone) installCard('<div class="install-text"><b>돈셈을 앱처럼 쓰세요</b><ol class="ins-steps"><li><i>1</i><svg class="ins-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg><span><b>공유</b> 버튼 누르기 <small>(안 보이면 주소창 ≡ 또는 ⋯ 안에 있어요)</small></span></li><li><i>2</i><svg class="ins-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg><span><b>홈 화면에 추가</b> 고르기</span></li></ol></div>');
 window.addEventListener('appinstalled', () => { const el = document.querySelector('.install'); if (el) el.remove(); });
 
 
@@ -1985,6 +1985,8 @@ const MENU = [
   chips.className = 'gnav-chips'; chips.setAttribute('role', 'navigation'); chips.setAttribute('aria-label', '계산기 분류');
   chips.innerHTML = MENU.map(([t], i) => btn(t, i)).join('');
   inner.after(chips);
+  const chipEnd = () => chips.classList.toggle('at-end', chips.scrollLeft + chips.clientWidth >= chips.scrollWidth - 4);
+  chips.addEventListener('scroll', chipEnd, { passive: true }); requestAnimationFrame(chipEnd);
   const sBtn = document.createElement('button');
   sBtn.type = 'button'; sBtn.className = 'search-btn'; sBtn.dataset.g = 'search'; sBtn.setAttribute('aria-label', '계산기 검색'); sBtn.setAttribute('aria-expanded', 'false');
   sBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
@@ -2391,17 +2393,17 @@ function countOnce(k, v) {
   return counter(k, v);
 }
 
-// ── 첫 화면 휴대폰: 화면에 보이면 실수령액 숫자가 올라가요 ──
+// ── 첫 화면: 숫자들이 화면에 들어오면 토스처럼 0에서 좌라락 굴러 올라가요 (휴대폰 실수령액, 말풍선, 연봉 상위 %) ──
 (() => {
-  const n = document.querySelector('.phone .ph-result strong');
-  if (!n || !('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const to = Number(n.dataset.to), io = new IntersectionObserver(es => {
-    if (!es[0].isIntersecting) return;
-    io.disconnect();
-    const t0 = performance.now(), step = t => { const k = Math.min(1, (t - t0) / 900), e = 1 - Math.pow(1 - k, 3); n.textContent = won(to * e); if (k < 1) requestAnimationFrame(step); };
-    requestAnimationFrame(step);
-  }, { threshold: 0.6 });
-  io.observe(n);
+  const els = [...document.querySelectorAll('.phone .ph-result strong, .hero .bubble b, .sc-rank-num b')];
+  if (!els.length || !('IntersectionObserver' in window) || calmMotion) return;
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    io.unobserve(e.target);
+    const el = e.target, to = el.textContent;
+    setTimeout(() => rollText(el, to.replace(/\d/g, '0')), 120);
+  }), { threshold: 0.6 });
+  els.forEach(el => io.observe(el));
 })();
 
 // ── 첫 화면: 계산기 분류 5칸을 탭 하나로 (누른 분류만 보여 줘요, 고른 분류는 기억해요) ──
@@ -2876,4 +2878,19 @@ function mcIcs(list, name) {
     return `<a class="mc-row" href="/money-calendar/"><em class="${e.soft ? 'soft' : n <= 7 ? 'near' : ''}">${mcBadge(e)}</em><span>${e.t}</span><small>${e.soft ? '' : `${m}/${dd}`}</small></a>`;
   }).join('')}<a class="mc-more" href="/money-calendar/">돈 달력 전체 보기 ›</a></div>`;
   anchor.after(sec);
+})();
+
+// ── 스크롤하면 카드가 아래에서 살짝 떠오르며 나타나요 (애플·토스처럼). 처음 화면에 보이는 건 그대로 두고, 아래쪽 것만 ──
+(() => {
+  if (calmMotion || !('IntersectionObserver' in window)) return;
+  const items = [...document.querySelectorAll('.wrap > section.showcase > *, .wrap > section.duo > *, .wrap > section.group, .wrap > section.mc-home, .wrap > .card.sub-card, .wrap > article.guide, .wrap > section.card:not(:first-of-type)')]
+    .filter(el => el.getBoundingClientRect().top > window.innerHeight);
+  if (!items.length) return;
+  items.forEach(el => el.classList.add('rise'));
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    io.unobserve(e.target);
+    e.target.classList.add('in');
+  }), { rootMargin: '0px 0px -8% 0px' });
+  items.forEach(el => io.observe(el));
 })();

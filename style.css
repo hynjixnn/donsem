@@ -1533,3 +1533,19 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .odo-col { position: absolute; overflow: hidden; box-sizing: border-box; white-space: pre; text-align: left; }
 .odo-strip { display: block; will-change: transform; }
 .odo-strip > span { display: block; }
+
+/* 스크롤하면 떠오르기 */
+.rise { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .7s cubic-bezier(.22, 1, .36, 1); }
+.rise.in { opacity: 1; transform: none; }
+/* 휴대폰 위 분류 줄: 옆으로 더 있다는 걸 오른쪽 끝을 흐리게 해서 알려 줘요 */
+@media (max-width: 640px) {
+  .gnav-chips { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
+  .gnav-chips.at-end { -webkit-mask-image: none; mask-image: none; }
+}
+
+/* 앱처럼 쓰기 안내: 글 대신 아이콘 2단계 */
+.ins-steps { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.ins-steps li { display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 1.45; color: var(--text); }
+.ins-steps i { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--blue); color: #fff; font-style: normal; font-size: 12px; font-weight: 700; display: grid; place-items: center; }
+.ins-ic { flex: none; width: 26px; height: 26px; padding: 4px; border-radius: 8px; background: var(--bg); color: var(--blue); }
+.ins-steps small { display: block; font-size: 12px; color: var(--muted); }
