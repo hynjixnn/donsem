@@ -83,9 +83,9 @@
     const list = data.entries.filter(e => e.date.startsWith(month));
     const sumIn = list.filter(e => e.type === 'in').reduce((s, e) => s + e.amt, 0);
     const sumOut = list.filter(e => e.type === 'out').reduce((s, e) => s + e.amt, 0);
-    $('b-in').textContent = won(sumIn);
-    $('b-out').textContent = won(sumOut);
-    $('b-left').textContent = (sumIn - sumOut < 0 ? '-' : '') + won(Math.abs(sumIn - sumOut));
+    setRoll($('b-in'), won(sumIn));
+    setRoll($('b-out'), won(sumOut));
+    setRoll($('b-left'), (sumIn - sumOut < 0 ? '-' : '') + won(Math.abs(sumIn - sumOut)));
     $('b-left').classList.toggle('minus', sumIn - sumOut < 0);
     drawBudget(sumOut, y, m, list);
     drawStreak();

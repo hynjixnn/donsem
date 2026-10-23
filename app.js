@@ -1165,6 +1165,66 @@ document.querySelectorAll('.card label').forEach(label => {
 // 바뀐 자리 숫자만 <span>으로 감싸 굴려요. 글자 자체는 그대로라 저장·공유·엑셀은 최종 숫자를 읽어요
 const calmMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 let lastBig = null;
+// ── 토스처럼 숫자가 '좌라락' 굴러가며 바뀌어요 ──
+// 글자를 쪼개서 줄 안에 넣으면 아이폰에서 숫자가 처졌어요. 그래서 진짜 글자는 그대로 두고(잠깐 투명하게),
+// 그 위에 같은 자리·같은 크기로 숫자 띠를 겹쳐서 굴린 뒤, 다 굴러가면 띠를 치워요.
+function rollText(el, from) {
+  const node = el.firstChild;
+  if (calmMotion || !el.animate || !node || node.nodeType !== 3 || from == null) return;
+  const to = node.textContent;
+  if (from === to) return;
+  const toDigits = to.replace(/[^\d]/g, ''), fromDigits = String(from).replace(/[^\d]/g, '');
+  if (!toDigits) return;
+  if (el._odo) { el._odo.remove(); el._odo = null; }
+  const host = el.parentElement; // 띠는 글자 옆(부모 안)에 겹쳐요 — 글자 안에 넣으면 복사·공유되는 글자에 섞여요
+  if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+  const box = host.getBoundingClientRect(), up = Number(toDigits) >= Number(fromDigits || 0);
+  const layer = document.createElement('span');
+  layer.className = 'odo'; layer.setAttribute('aria-hidden', 'true');
+  layer.style.color = getComputedStyle(el).color;
+  const range = document.createRange();
+  let di = toDigits.length; // 오른쪽(일의 자리)부터 자리를 맞춰 비교해요
+  const cols = [];
+  for (let i = to.length - 1; i >= 0; i--) {
+    const ch = to[i];
+    range.setStart(node, i); range.setEnd(node, i + 1);
+    const r = range.getClientRects()[0];
+    if (!r || !r.width) continue;
+    const col = document.createElement('span');
+    col.className = 'odo-col';
+    const pad = r.height * 0.15; // 글자 양옆이 잘리지 않게 칸을 조금 넓히고 그만큼 안쪽으로 밀어요
+    col.style.cssText = `left:${r.left - box.left - pad}px;top:${r.top - box.top}px;width:${r.width + pad * 2}px;padding-left:${pad}px;height:${r.height}px;line-height:${r.height}px`;
+    if (/\d/.test(ch)) {
+      di--;
+      const oldCh = fromDigits[fromDigits.length - (toDigits.length - di)];
+      const a = oldCh === undefined ? 0 : Number(oldCh), z = Number(ch);
+      if (oldCh !== undefined && a === z) { col.textContent = ch; cols.push(col); continue; }
+      // 지나가는 숫자들을 띠로 세워요 (올라갈 땐 a→z, 내려갈 땐 거꾸로), 한 바퀴 이상 돌면 더 길게
+      const seq = [], steps = ((up ? z - a : a - z) + 10) % 10 || 10, turns = Math.min(toDigits.length - 1 - di, 1);
+      for (let k = 0; k <= steps + turns * 10; k++) seq.push((up ? a + k : a - k + 100) % 10);
+      const strip = document.createElement('span');
+      strip.className = 'odo-strip';
+      strip.innerHTML = seq.map(n => `<span>${n}</span>`).join('');
+      col.append(strip); cols.push(col);
+      const dist = (seq.length - 1) * r.height, delay = Math.min(toDigits.length - 1 - di, 8) * 35;
+      strip.animate([{ transform: 'translateY(0)' }, { transform: `translateY(${-dist}px)` }],
+        { duration: 650 + (toDigits.length - 1 - di) * 40, delay, easing: 'cubic-bezier(.2, .9, .25, 1)', fill: 'both' });
+    } else { col.textContent = ch; cols.push(col); }
+  }
+  layer.append(...cols);
+  ['fontSize', 'fontWeight', 'fontFamily', 'letterSpacing', 'fontVariantNumeric'].forEach(k => { layer.style[k] = getComputedStyle(el)[k]; });
+  host.append(layer); el._odo = layer;
+  el.classList.add('odo-on');
+  clearTimeout(el._odoT);
+  el._odoT = setTimeout(() => { layer.remove(); if (el._odo === layer) { el._odo = null; el.classList.remove('odo-on'); } }, 1100);
+}
+// 다른 화면(가계부·자산 합계)에서도 숫자를 바꿀 때 굴려요
+function setRoll(el, text) {
+  if (!el) return;
+  const from = el.dataset.rollFrom ?? null;
+  el.textContent = text; el.dataset.rollFrom = text;
+  rollText(el, from);
+}
 function animateBig() {
   const big = document.querySelector('.card .result .big');
   if (!big) { lastBig = null; return; }
@@ -1172,14 +1232,10 @@ function animateBig() {
   const m = node && node.nodeType === 3 && node.textContent.match(/[\d,]+(\.\d+)?/);
   if (!m) { lastBig = null; return; }
   big.dataset.final = node.textContent;
-  const to = m[0], from = lastBig;
+  const to = node.textContent, from = lastBig;
   lastBig = to;
-  if (calmMotion || from === null || from === to || !ready || !big.animate) return;
-  // 숫자가 바뀌면 글자를 쪼개지 않고, 결과 숫자 전체를 살짝 밀어 올리며 바로 보여 줘요
-  // (예전엔 바뀐 자리만 따로 굴려서, 아이폰에서 잠깐 아래로 처졌다가 제자리로 튀었어요)
-  const up = Number(to.replace(/,/g, '')) > Number(from.replace(/,/g, ''));
-  big.getAnimations().forEach(x => x.cancel());
-  big.animate([{ transform: `translateY(${up ? 6 : -6}px)`, opacity: 0.35 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'cubic-bezier(.22, 1, .36, 1)' });
+  if (from === null || from === to || !ready) return;
+  rollText(big, from);
 }
 
 // ── 토스처럼 편하게 ⑥: 휴대폰에서 결과가 화면 밖에 있으면 아래에 띄워 두기 ──
@@ -2098,6 +2154,7 @@ function zipStore(files) {
   return new Blob([...parts, ...dir, e]);
 }
 async function saveXlsx(name, url) {
+  document.querySelectorAll('.odo').forEach(x => x.remove()); document.querySelectorAll('.odo-on').forEach(x => x.classList.remove('odo-on')); // 굴러가는 숫자 띠가 엑셀에 섞이지 않게
   const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
   const fileName = `돈셈_${name.replace(/\s*계산기$/, '').replace(/[\\/:*?"<>|]/g, '')}_${stamp}.xlsx`;
   const blob = xlsxBlob(calcSheet(name, url), name.replace(/\s*계산기$/, ''));

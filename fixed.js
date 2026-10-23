@@ -80,7 +80,7 @@
   // ── 그리기 ──
   function render() {
     const perMonth = data.items.reduce((s, x) => s + monthly(x), 0);
-    $('f-month-total').textContent = won(perMonth);
+    setRoll($('f-month-total'), won(perMonth));
     $('f-year-total').textContent = won(perMonth * 12);
     $('f-count').textContent = `${data.items.length}개`;
     drawInsight(perMonth);

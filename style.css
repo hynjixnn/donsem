@@ -1526,3 +1526,10 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .mc-more { display: inline-block; margin-top: 6px; font-size: 14px; }
 
 .label-note { margin-left: 6px; font-size: 12px; font-weight: 500; color: var(--muted); }
+
+/* 토스처럼 굴러가는 숫자: 진짜 글자 위에 겹쳐 굴리고, 그동안 진짜 글자는 투명하게 */
+.odo-on { -webkit-text-fill-color: transparent; }
+.odo { position: absolute; inset: 0; pointer-events: none; -webkit-text-fill-color: currentColor; z-index: 1; }
+.odo-col { position: absolute; overflow: hidden; box-sizing: border-box; white-space: pre; text-align: left; }
+.odo-strip { display: block; will-change: transform; }
+.odo-strip > span { display: block; }

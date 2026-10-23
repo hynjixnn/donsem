@@ -67,7 +67,7 @@
   // ── 그리기 ──
   function render() {
     const t = totals();
-    $('a-net').textContent = signed(t.net);
+    setRoll($('a-net'), signed(t.net));
     $('a-net').classList.toggle('minus', t.net < 0);
     $('a-net-kr').textContent = t.net >= 10000 ? korean(t.net) : '';
     $('a-total').textContent = won(t.a);
