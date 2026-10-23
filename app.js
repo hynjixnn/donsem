@@ -1240,7 +1240,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 // ── 휴대폰 하단 탭: 홈 · 계산기 · ＋기록 · 돈 관리 · 마이 ──
 (() => {
   const path = location.pathname;
-  const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/'], MY = ['/my/', '/about/', '/privacy/', '/collection/'];
+  const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/', '/money-calendar/'], MY = ['/my/', '/about/', '/privacy/', '/collection/'];
   const HOME = ['/', '/quiz/', '/money-type/', '/no-spend/']; // 퀴즈·돈BTI·무지출은 홈에서 들어가는 곳이라 '홈'이 켜져요 (예전엔 '계산기'가 켜졌어요)
   const active = HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : 'calc';
   const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
@@ -1624,7 +1624,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax'];
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar'];
 const iconOf = path => { const slug = String(path).replace(/\//g, ''); return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -1770,7 +1770,7 @@ function addTileIcon(t) {
 
 // ── 위쪽 메뉴: 분류를 누르면(컴퓨터는 올리기만 해도) 그 분류 계산기가 펼쳐져요 ──
 const MENU = [
-  ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표']]],
+  ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금']]],
   ['챌린지 · 테스트', [['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제 금전운 돈나무'], ['/no-spend/', '무지출 챌린지', '절약 무지출 달력 도장'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti'],
     ['/collection/', '내 컬렉션', '돈나무 배지 기록 모음']]],
   ['저축 · 투자', [['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
@@ -2635,4 +2635,58 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
     box.style.top = vv.offsetTop + 'px'; box.style.height = vv.height + 'px';
   }
   if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
+})();
+
+// ── 돈 달력: 놓치면 손해 보는 돈 일정 (해마다 새 일정으로 바꿔요. 마지막 확인 2026-10-23) ──
+// d: 마감일(D-day 기준), from: 시작일, when: 날짜 대신 보여 줄 말(날짜 미발표), tag: 분류, go: 관련 계산기
+const MONEY_CAL = [
+  { d: '2026-11-30', when: '11월 중', t: '연말정산 미리보기 열림', tag: '연말정산', soft: true, who: '홈택스에서 1~9월 카드 사용액으로 올해 환급액을 미리 볼 수 있어요. 정확한 날짜는 국세청이 발표해요.', go: ['/year-end-tax/', '환급액 미리 계산'] },
+  { d: '2026-11-30', t: '종합소득세 중간예납 납부', tag: '세금', who: '5월에 종합소득세를 낸 개인사업자·프리랜서는 올해 세금의 절반쯤을 미리 내요. 고지서를 확인하세요.', go: ['/income-tax/', '종합소득세 계산기'] },
+  { d: '2026-12-15', from: '2026-12-01', t: '종합부동산세 납부', tag: '세금', who: '공시가격 합계가 기준을 넘는 집·땅을 가진 사람이 내요. 대상이면 11월 말에 고지서가 와요.' },
+  { d: '2026-12-31', t: '연금저축·IRP 납입 마감', tag: '연말정산', who: '12월 31일까지 넣은 돈만 올해 연말정산에서 돌려받아요. 은행·증권사 마감 시간은 더 이를 수 있어요.', go: ['/pension/', '연금저축·IRP 계산기'] },
+  { d: '2027-01-01', t: '최저임금 시급 10,700원 적용', tag: '월급', who: '2026년보다 380원(3.7%) 올라요. 주 40시간이면 주휴수당 포함 월 2,236,300원이에요.', go: ['/wage/', '시급·월급 계산기'] },
+  { d: '2027-01-15', when: '1월 15일 무렵', t: '연말정산 간소화 자료 공개', tag: '연말정산', who: '홈택스에서 카드·의료비·보험료 자료를 내려받아 회사에 내요. 매년 1월 15일 무렵 열려요.', go: ['/year-end-tax/', '환급액 미리 계산'] },
+  { d: '2027-01-25', from: '2027-01-01', t: '부가세 2기 확정신고·납부', tag: '세금', who: '개인 일반과세자는 7~12월분 부가가치세를 신고하고 내요.', go: ['/vat/', '부가세 계산기'] },
+  { d: '2027-01-31', from: '2027-01-16', t: '자동차세 연납 신청·납부', tag: '세금', who: '1년치 자동차세를 1월에 한 번에 내면 깎아 줘요. 위택스에서 신청해요. 마감일이 주말이면 다음 평일까지예요.' },
+  { d: '2027-03-15', from: '2027-03-01', t: '근로장려금 반기 신청', tag: '지원금', who: '2026년 하반기 근로소득이 있는 사람이 신청해요. 소득·재산 기준은 홈택스에서 확인하세요.' },
+  { d: '2027-03-31', t: '법인세 신고·납부', tag: '세금', who: '12월 결산 법인은 2026년 법인세를 신고하고 내요.', go: ['/corporate-tax/', '법인세 계산기'] },
+  { d: '2027-05-31', from: '2027-05-01', t: '종합소득세 신고·납부', tag: '세금', who: '프리랜서·사업자·부업 소득이 있는 사람은 2026년 소득을 신고해요. 3.3% 뗀 사람은 환급받을 수도 있어요.', go: ['/income-tax/', '종합소득세 계산기'] },
+  { d: '2027-05-31', from: '2027-05-01', t: '근로·자녀장려금 정기 신청', tag: '지원금', who: '2026년 소득·재산 기준을 맞춘 가구가 신청해요. 대상이면 안내문이 와요.' },
+];
+const MONEY_CHANGES = [
+  { t: '최저임금 인상', a: '시급 10,320원', b: '10,700원', note: '380원(3.7%) 올라요. 알바 월급·주휴수당이 같이 올라요.', src: '최저임금위원회 2026.7.14 의결', go: ['/wage/', '시급·월급 계산기'] },
+  { t: '국민연금 보험료율 인상', a: '9.5%', b: '10%', note: '직장인은 회사와 반씩 내서 월급의 4.75% → 5%가 빠져요.', src: '국민연금법 개정 (2025.4.2 공포, 해마다 0.5%p씩 13%까지)', go: ['/salary/', '연봉 실수령액 계산기'] },
+  { t: '건강보험료율 동결', a: '7.19%', b: '7.19%', note: '직장인 부담은 그대로 3.595%예요.', src: '보건복지부 건강보험정책심의위원회 2026.9.8 결정', go: ['/salary/', '연봉 실수령액 계산기'] },
+];
+// 오늘 기준 D-day (날짜만 비교해요)
+const mcDays = d => { const t = new Date(), a = new Date(t.getFullYear(), t.getMonth(), t.getDate()), [y, m, dd] = d.split('-').map(Number); return Math.round((new Date(y, m - 1, dd) - a) / 864e5); };
+const mcUpcoming = () => MONEY_CAL.filter(e => mcDays(e.d) >= 0).sort((a, b) => a.d.localeCompare(b.d));
+const mcBadge = e => { const n = mcDays(e.d); return e.when && e.soft ? e.when : n === 0 ? 'D-DAY' : `D-${n}`; };
+// 내 달력에 넣기(.ics): 마감일 하루짜리 일정 + 하루 전 오전 9시 알림
+function mcIcs(list, name) {
+  const esc2 = t => String(t).replace(/[\;,]/g, m => '\\' + m).replace(/\n/g, '\\n'), ymd = d => d.replace(/-/g, '');
+  const next = d => { const [y, m, dd] = d.split('-').map(Number), x = new Date(y, m - 1, dd + 1); return `${x.getFullYear()}${String(x.getMonth() + 1).padStart(2, '0')}${String(x.getDate()).padStart(2, '0')}`; };
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+  const ev = list.map(e => ['BEGIN:VEVENT', `UID:${ymd(e.d)}-${encodeURIComponent(e.t).slice(0, 40)}@doncalculator.com`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${ymd(e.d)}`, `DTEND;VALUE=DATE:${next(e.d)}`,
+    `SUMMARY:${esc2((e.from ? '[마감] ' : '') + e.t)}`, `DESCRIPTION:${esc2(e.who + (e.when ? `\n(날짜: ${e.when})` : ''))}`, `URL:https://doncalculator.com${e.go ? e.go[0] : '/money-calendar/'}`, 'TRANSP:TRANSPARENT',
+    'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc2(`내일 ${e.t}`)}`, 'TRIGGER:-PT15H', 'END:VALARM', 'END:VEVENT'].join('\r\n')).join('\r\n');
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//doncalculator.com//donsem money calendar//KO', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:돈셈 돈 달력', ev, 'END:VCALENDAR'].join('\r\n') + '\r\n';
+  if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) { location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics); return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' })); a.download = name;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('캘린더 파일을 저장했어요. 파일을 열면 달력에 들어가요.');
+}
+// 첫 화면: 다가오는 돈 일정 3개
+(() => {
+  if (!document.body.classList.contains('home')) return;
+  const list = mcUpcoming().slice(0, 3), anchor = document.querySelector('.duo');
+  if (!list.length || !anchor) return;
+  const sec = document.createElement('section');
+  sec.className = 'group mc-home';
+  sec.innerHTML = `<div class="mc-home-in"><h2><img src="/icons/money-calendar.webp" alt="" width="28" height="28">다가오는 돈 일정</h2>${list.map(e => {
+    const n = mcDays(e.d), [, m, dd] = e.d.split('-').map(Number);
+    return `<a class="mc-row" href="/money-calendar/"><em class="${e.soft ? 'soft' : n <= 7 ? 'near' : ''}">${mcBadge(e)}</em><span>${e.t}</span><small>${e.soft ? '' : `${m}/${dd}`}</small></a>`;
+  }).join('')}<a class="mc-more" href="/money-calendar/">돈 달력 전체 보기 ›</a></div>`;
+  anchor.after(sec);
 })();
