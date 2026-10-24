@@ -213,14 +213,16 @@ function tableTax(pay, fam) {
   if (pay <= 87000000) return base + 13394600 + (pay - 45000000) * 0.42;
   return base + 31034600 + (pay - 87000000) * 0.45;
 }
-function takeHome(month, free, fam, kids, rate = 1) { // rate: 매달 떼는 소득세 비율 (80%·100%·120% 중 직원이 골라요)
+function takeHome(month, free, fam, kids, rate = 1, relCut = 0) { // rate: 매달 떼는 소득세 비율 (80%·100%·120% 중 직원이 골라요)
   const pay = Math.max(0, month - free); // 세금·보험료는 비과세를 뺀 돈에만 붙어요
   const pension = pay > 0 ? floor10(Math.min(Math.max(Math.floor(pay / 1000) * 1000, INS_2026.penMin), INS_2026.penMax) * INS_2026.pension) : 0;
   const health = floor10(pay * INS_2026.health), care = floor10(health * INS_2026.care), job = floor10(pay * INS_2026.job);
   const kidCut = kids <= 0 ? 0 : kids === 1 ? 20830 : 45830 + (kids - 2) * 33330;
-  const tax = Math.max(0, floor10((tableTax(pay, fam) - kidCut) * rate)), local = floor10(tax * 0.1);
+  // relCut: 중소기업 취업자 감면율(0.9·0.7) — 원천징수 단계에서 줄여서 떼요. 1년 한도 200만 원이라 한 달에는 약 16.6만 원까지만 줄여요
+  const before = Math.max(0, floor10((tableTax(pay, fam) - kidCut) * rate)), relief = relCut ? Math.min(floor10(before * relCut), Math.floor(2e6 / 12 / 10) * 10) : 0;
+  const tax = before - relief, local = floor10(tax * 0.1);
   const cut = pension + health + care + job + tax + local;
-  return { pension, health, care, job, tax, local, cut, net: month - cut };
+  return { pension, health, care, job, tax, local, cut, net: month - cut, relief, before };
 }
 // 입력값을 한 번에 읽어요 (계산, 한 줄 정리, 다음 추천이 같이 써요)
 function salaryInput() {
@@ -228,22 +230,27 @@ function salaryInput() {
   const month = Math.floor(byYear ? A / (sev ? 13 : 12) : A);
   const kids = Math.max(0, Math.round(val('m_kids'))), famIn = Math.max(1, Math.round(val('m_fam')));
   const rateEl = document.querySelector('.seg[data-k="m_rate"] .on'), rate = rateEl ? Number(rateEl.dataset.v) / 100 : 1;
-  return { month, sev, kids, famIn, fam: Math.max(famIn, kids + 1), free: Math.min(val('m_free'), month), rate };
+  const cutEl = document.querySelector('.seg[data-k="m_cut"] .on'), cut = cutEl ? Number(cutEl.dataset.v) / 100 : 0;
+  return { month, sev, kids, famIn, fam: Math.max(famIn, kids + 1), free: Math.min(val('m_free'), month), rate, cut };
 }
 function salary() {
   const out = document.getElementById('m_out'), s = salaryInput();
   if (!s.month) { out.innerHTML = '금액을 넣어 주세요.'; return; }
-  const r = takeHome(s.month, s.free, s.fam, s.kids, s.rate), note = [];
+  const r = takeHome(s.month, s.free, s.fam, s.kids, s.rate, s.cut), note = [];
   if (s.sev) note.push('퇴직금 포함 연봉이라 13으로 나눠 한 달 월급을 계산했어요.');
   if (s.rate !== 1) {
-    const base = takeHome(s.month, s.free, s.fam, s.kids), gap = Math.abs(base.tax + base.local - r.tax - r.local) * 12;
+    const base = takeHome(s.month, s.free, s.fam, s.kids, 1, s.cut), gap = Math.abs(base.tax + base.local - r.tax - r.local) * 12;
     note.push(s.rate < 1 ? `소득세를 80%만 떼서 100%보다 매달 ${won(r.net - base.net)} 더 받아요. 대신 1년에 약 ${won(gap)}을 덜 떼서, 연말정산 때 그만큼 덜 돌려받거나 더 낼 수 있어요.`
       : `소득세를 120% 떼서 100%보다 매달 ${won(base.net - r.net)} 덜 받아요. 대신 1년에 약 ${won(gap)}을 더 떼서, 연말정산 때 그만큼 더 돌려받아요.`);
+  }
+  if (s.cut) {
+    const capped = floor10(r.before * s.cut) > r.relief;
+    note.push(r.relief ? `중소기업 취업자 감면(${Math.round(s.cut * 100)}%)으로 매달 소득세가 ${won(r.relief)}, 지방소득세까지 약 ${won(Math.round(r.relief * 1.1 / 10) * 10)} 줄어요.${capped ? ' 1년 감면 한도 200만 원에 맞춰 한 달 감면을 줄여서 계산했어요.' : ''}` : '이 월급은 원래 떼는 소득세가 없어서 감면으로 달라지는 게 없어요.');
   }
   if (s.fam > s.famIn) note.push(`자녀도 부양가족에 들어가서 부양가족을 ${s.fam}명으로 계산했어요.`);
   out.innerHTML = `<div>한 달 실수령액</div><div class="big">${won(r.net)}</div>` +
     rows([['세전 월급', won(s.month)], ['국민연금 (4.75%)', minus(r.pension)], ['건강보험 (3.595%)', minus(r.health)], ['장기요양보험', minus(r.care)],
-      ['고용보험 (0.9%)', minus(r.job)], [s.rate === 1 ? '근로소득세' : `근로소득세 (${Math.round(s.rate * 100)}%)`, minus(r.tax)], ['지방소득세', minus(r.local)], ['빠지는 돈 합계', minus(r.cut)], ['1년 실수령액', won(r.net * 12)]]) +
+      ['고용보험 (0.9%)', minus(r.job)], [`근로소득세${s.rate !== 1 || s.cut ? ` (${[s.rate !== 1 ? Math.round(s.rate * 100) + '%' : '', s.cut ? `감면 ${Math.round(s.cut * 100)}%` : ''].filter(Boolean).join(' · ')})` : ''}`, minus(r.tax)], ['지방소득세', minus(r.local)], ['빠지는 돈 합계', minus(r.cut)], ['1년 실수령액', won(r.net * 12)]]) +
     note.map(t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`).join('');
 }
 
@@ -846,7 +853,7 @@ const insights = {
   m_out() {
     const s = salaryInput();
     if (!s.month) return '';
-    const r = takeHome(s.month, s.free, s.fam, s.kids, s.rate), raise = takeHome(s.month + Math.round(10000000 / (s.sev ? 13 : 12)), s.free, s.fam, s.kids, s.rate);
+    const r = takeHome(s.month, s.free, s.fam, s.kids, s.rate, s.cut), raise = takeHome(s.month + Math.round(10000000 / (s.sev ? 13 : 12)), s.free, s.fam, s.kids, s.rate, s.cut);
     return `세전 월급의 ${pct(r.net / s.month * 100)}를 받아요. 연봉이 1,000만 원 오르면 한 달 실수령액은 약 ${won(Math.round((raise.net - r.net) / 1000) * 1000)} 늘어요.`;
   },
   j_out() {
