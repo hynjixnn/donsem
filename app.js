@@ -233,6 +233,8 @@ function salaryInput() {
   const cutEl = document.querySelector('.seg[data-k="m_cut"] .on'), cut = cutEl ? Number(cutEl.dataset.v) / 100 : 0;
   return { month, sev, kids, famIn, fam: Math.max(famIn, kids + 1), free: Math.min(val('m_free'), month), rate, cut };
 }
+// 감면을 고르면 원래 떼던 금액을 줄 그어 옆에 보여 줘요 (소득세와 지방소득세가 함께 줄어드는 게 한눈에 보이게)
+const was = (before, now) => (before > now ? `<s class="was">${won(before)}</s>` : '');
 function salary() {
   const out = document.getElementById('m_out'), s = salaryInput();
   if (!s.month) { out.innerHTML = '금액을 넣어 주세요.'; return; }
@@ -250,7 +252,8 @@ function salary() {
   if (s.fam > s.famIn) note.push(`자녀도 부양가족에 들어가서 부양가족을 ${s.fam}명으로 계산했어요.`);
   out.innerHTML = `<div>한 달 실수령액</div><div class="big">${won(r.net)}</div>` +
     rows([['세전 월급', won(s.month)], ['국민연금 (4.75%)', minus(r.pension)], ['건강보험 (3.595%)', minus(r.health)], ['장기요양보험', minus(r.care)],
-      ['고용보험 (0.9%)', minus(r.job)], [`근로소득세${s.rate !== 1 || s.cut ? ` (${[s.rate !== 1 ? Math.round(s.rate * 100) + '%' : '', s.cut ? `감면 ${Math.round(s.cut * 100)}%` : ''].filter(Boolean).join(' · ')})` : ''}`, minus(r.tax)], ['지방소득세', minus(r.local)], ['빠지는 돈 합계', minus(r.cut)], ['1년 실수령액', won(r.net * 12)]]) +
+      ['고용보험 (0.9%)', minus(r.job)], [`근로소득세${s.rate !== 1 || s.cut ? ` (${[s.rate !== 1 ? Math.round(s.rate * 100) + '%' : '', s.cut ? `감면 ${Math.round(s.cut * 100)}%` : ''].filter(Boolean).join(' · ')})` : ''}`, was(r.before, r.tax) + minus(r.tax)],
+      ['지방소득세', was(floor10(r.before * 0.1), r.local) + minus(r.local)], ...(r.relief ? [['감면으로 줄어든 세금 (한 달)', `<span class="save-amt">${won(r.relief + floor10(r.before * 0.1) - r.local)}</span>`]] : []), ['빠지는 돈 합계', minus(r.cut)], ['1년 실수령액', won(r.net * 12)]]) +
     note.map(t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`).join('');
 }
 
