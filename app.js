@@ -2980,3 +2980,22 @@ const paydayLabel = d => `${d.getMonth() + 1}월 ${d.getDate()}일 (${'일월화
   a.innerHTML = `<span class="pd-home-ico" aria-hidden="true">💰</span><span class="pd-home-t">${pi.days ? `월급날까지 <b>D-${pi.days}</b>` : '<b>오늘 월급날</b>이에요 🎉'}<small>${paydayLabel(pi.next)}</small></span>${pi.perDay != null ? `<span class="pd-home-r"><small>하루 쓸 수 있는 돈</small><b>${won(pi.perDay)}</b></span>` : '<span class="pd-home-r"><small>가계부에서 보기</small><b>›</b></span>'}`;
   daily.before(a);
 })();
+
+// ── 쿠팡 파트너스: 계산 결과와 바로 이어지는 자리에만 작은 카드 1개 ──
+// 쿠팡 파트너스에서 만든 링크를 url에 넣으면 그 페이지에 카드가 나타나요. url이 비어 있으면 아무것도 안 보여요.
+const COUPANG = {
+  '/unit-price/': { t: '대용량이 더 싸다면', d: '생수·휴지·세제 대용량 묶음 최저가 보기', url: '' },
+  '/fuel/': { t: '기름값을 아끼려면', d: '하이패스·연료첨가제·차량용품 보기', url: '' },
+  '/no-spend/': { t: '무지출을 도와줄 살림템', d: '도시락통·텀블러·밀프렙 용기 보기', url: '' },
+  '/budget/': { t: '손으로도 적고 싶다면', d: '가계부 노트·영수증 정리함 보기', url: '' },
+};
+(() => {
+  const c = COUPANG[location.pathname];
+  if (!c || !/^https:\/\/(link\.coupang\.com|coupa\.ng)\//.test(c.url)) return; // 쿠팡 파트너스 링크만 써요
+  const box = document.createElement('aside');
+  box.className = 'cpn';
+  box.innerHTML = `<a href="${c.url}" target="_blank" rel="sponsored noopener"><span class="cpn-t">${c.t}</span><b>${c.d} ›</b><span class="cpn-tag">쿠팡</span></a>
+    <p class="cpn-note">이 링크로 구매하면 돈셈이 쿠팡 파트너스 활동으로 일정액의 수수료를 받을 수 있어요. 가격은 똑같아요.</p>`;
+  const after = document.querySelector('.card .next') || document.querySelector('.card .share') || document.getElementById('b-wrap-card') || document.getElementById('no-spend');
+  if (after) after.after(box);
+})();

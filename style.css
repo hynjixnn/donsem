@@ -1649,3 +1649,12 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 /* 연봉 계산기: 감면 전 금액(줄 긋기)과 줄어든 세금 */
 .rows s.was { display: block; margin: 0 0 1px; font-size: .78em; font-weight: 500; line-height: 1.2; text-align: right; color: var(--muted); }
 .rows .save-amt { color: #1a8a3a; }
+
+/* 쿠팡 파트너스 카드: 결과 아래 작게, 돈셈 카드 모양 그대로 */
+.cpn { margin-top: 16px; }
+.cpn a { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; padding: 14px 16px; border-radius: 16px; background: var(--card); color: var(--text); border: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.cpn a:hover { text-decoration: none; }
+.cpn-t { flex: 1 0 100%; font-size: 12.5px; color: var(--muted); }
+.cpn a b { flex: 1; min-width: 0; font-size: 15px; }
+.cpn-tag { flex: none; padding: 2px 8px; border-radius: 980px; background: var(--field); font-size: 11px; color: var(--muted); }
+.cpn-note { margin: 6px 4px 0; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
