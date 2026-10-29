@@ -1991,7 +1991,7 @@ function addTileIcon(t) {
 
 // ── 위쪽 메뉴: 분류를 누르면(컴퓨터는 올리기만 해도) 그 분류 계산기가 펼쳐져요 ──
 const MENU = [
-  ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금']]],
+  ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금'], ['/guide/', '돈 가이드', '글 정리 연말정산 실업급여 실수령액 IRP 카드 공제 월세']]],
   ['챌린지 · 테스트', [['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제 금전운 돈나무'], ['/no-spend/', '무지출 챌린지', '절약 무지출 달력 도장'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti'],
     ['/collection/', '내 컬렉션', '돈나무 배지 기록 모음']]],
   ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
@@ -2998,4 +2998,22 @@ const COUPANG = {
     <p class="cpn-note">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다. 구매하시는 가격은 똑같아요.</p>`;
   const after = document.querySelector('.card .next') || document.querySelector('.card .share') || document.getElementById('b-wrap-card') || document.getElementById('no-spend');
   if (after) after.after(box);
+})();
+
+// 계산기 아래에 관련 「돈 가이드」 글을 이어 줘요
+const GUIDE_FOR = {
+  '/salary/': [['salary-take-home', '연봉별 실수령액 표'], ['salary-rank', '내 연봉은 상위 몇 %']],
+  '/salary-rank/': [['salary-rank', '내 연봉은 상위 몇 %'], ['salary-take-home', '연봉별 실수령액 표']],
+  '/unemployment/': [['unemployment', '실업급여 조건과 금액']],
+  '/severance/': [['unemployment', '실업급여 조건과 금액']],
+  '/year-end-tax/': [['year-end-preview', '연말정산 미리 계산하기'], ['card-deduction', '신용카드·체크카드 비율'], ['missed-deductions', '놓치기 쉬운 공제 4가지']],
+  '/pension/': [['irp-pension', 'IRP·연금저축 세액공제'], ['year-end-basics', '연말정산 환급 기본']],
+};
+(() => {
+  const g = GUIDE_FOR[location.pathname], foot = document.querySelector('.wrap > footer');
+  if (!g || !foot) return;
+  const box = document.createElement('section');
+  box.className = 'card sub-card gd-more';
+  box.innerHTML = `<h2>함께 읽으면 좋은 돈 가이드</h2><ul>${g.map(([s, t]) => `<li><a href="/guide/${s}/">${t}</a></li>`).join('')}</ul>`;
+  foot.before(box);
 })();
