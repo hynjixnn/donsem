@@ -21,7 +21,7 @@
   }
   let data = load();
   function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(data)); return true; }
+    try { localStorage.setItem(KEY, JSON.stringify(data)); window.dispatchEvent(new Event('donsem:data')); return true; }
     catch (e) { toast('이 브라우저에서는 저장할 수 없어요. 개인정보 보호 모드인지 확인해 주세요.'); return false; }
   }
   const monthly = x => (x.cycle === 'year' ? x.amt / 12 : x.amt);
@@ -255,7 +255,7 @@
       if (!b || !Array.isArray(b.entries)) b = { entries: [], budget: (b && b.budget) || 0 };
       const add = pending().map(({ x, d }) => ({ id: `fx-${x.id}-${thisMonth}`, type: 'out', amt: x.amt, cat: TO_BUDGET_CAT[x.cat] || '기타', date: iso(d), memo: `${x.name} (고정지출)`.slice(0, 40) }));
       b.entries = b.entries.concat(add);
-      try { localStorage.setItem(BUDGET_KEY, JSON.stringify(b)); } catch (e) { return toast('가계부에 저장하지 못했어요.'); }
+      try { localStorage.setItem(BUDGET_KEY, JSON.stringify(b)); window.dispatchEvent(new Event('donsem:data')); } catch (e) { return toast('가계부에 저장하지 못했어요.'); }
       render();
       toast(`가계부에 고정지출 ${add.length}개를 기록했어요.`);
     });
@@ -305,4 +305,5 @@
 
   drawCats();
   render();
+  window.addEventListener('donsem:budget', drawSync); // 같은 화면 가계부에 적으면 '한 번에 기록하기' 버튼도 다시 계산해요
 })();

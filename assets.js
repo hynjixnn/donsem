@@ -26,7 +26,7 @@
   function save() {
     const t = totals();
     data.history[thisMonth] = { a: t.a, d: t.d }; // 이번 달 기록은 바뀔 때마다 최신 값으로 덮어써요
-    try { localStorage.setItem(KEY, JSON.stringify(data)); return true; }
+    try { localStorage.setItem(KEY, JSON.stringify(data)); window.dispatchEvent(new Event('donsem:data')); return true; }
     catch (e) { toast('이 브라우저에서는 저장할 수 없어요. 개인정보 보호 모드인지 확인해 주세요.'); return false; }
   }
   const signed = n => (n < 0 ? '-' : '') + won(Math.abs(n));

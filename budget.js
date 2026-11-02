@@ -21,7 +21,7 @@
     return { entries: [], budget: 0, cats: {} };
   }
   function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(data)); return true; }
+    try { localStorage.setItem(KEY, JSON.stringify(data)); window.dispatchEvent(new Event('donsem:budget')); return true; }
     catch (e) { toast('이 브라우저에서는 저장할 수 없어요. 개인정보 보호 모드인지 확인해 주세요.'); return false; }
   }
 
@@ -343,7 +343,6 @@
 
   // ── 달력 꾸미기: 테마와 날짜별 스티커 (donsem:deco, 이 기기에만 저장) ──
   const THEMES = [['basic', '기본', ''], ['berry', '딸기우유', '🍓'], ['mint', '민트초코', '🌿'], ['butter', '버터', '🌼'], ['lilac', '라벤더', '💜'], ['night', '밤하늘', '🌙']];
-  const STRIPS = { berry: '🍓 🌷 🍰 🌷 🍓', mint: '🌿 🍃 🍫 🍃 🌿', butter: '🌼 🐥 🧈 🐥 🌼', lilac: '💜 🫧 🦄 🫧 💜', night: '🌙 ✨ ⭐ ✨ 🌙' }; // 테마마다 달력 아래 장식 줄
   const STICKERS = '🍎 🍓 🍰 ☕ 🧋 🍜 🍕 🍗 🛍️ 💄 👗 🎁 💸 💰 🐷 🧾 🚕 ✈️ 🎬 🎮 💖 ⭐ 🌸 🍀 😎 🥳 😭 💪'.split(' ');
   const ST_MAX = 3;
   function loadDeco() {
@@ -413,11 +412,11 @@
     toast(`'${t}' 일정을 넣었어요.`);
   }
   function onPlan(e) {
-    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal]');
+    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal],[data-goassets]');
     if (!b) return false;
     if (b.dataset.pc) { pColor = b.dataset.pc; b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }
     else if (b.hasAttribute('data-padd')) addPlan();
-    else if (b.hasAttribute('data-goanal')) { const box = $('b-breakdown').closest('section'); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    else if (b.hasAttribute('data-goanal') || b.hasAttribute('data-goassets')) { const box = b.hasAttribute('data-goassets') ? $('assets') : $('b-breakdown').closest('section'); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     else if (b.hasAttribute('data-popen') || b.hasAttribute('data-pcancel')) { planOpen = b.hasAttribute('data-popen'); render(); if (planOpen) $('p-title').focus(); }
     else if (b.dataset.pdel) {
       const p = plans.find(x => x.id === b.dataset.pdel);
@@ -446,27 +445,51 @@
     else if (a > b * 1.1) title = `지난달보다 ${won(a - b)} 더 쓰는 중`;
     else title = '지난달과 비슷하게 쓰는 중';
     if (upTo && ym < nowYm) title = title.replace(' 쓰는 중', ' 썼어요');
-    // 작은 누적 그래프: 회색은 지난달, 진한 선은 이번 달
-    const W = 120, H = 44, top = Math.max(now[days], last[pdays], 1);
-    const pts = (r, n, k) => r.slice(0, k + 1).map((v, d) => `${(d / n * W).toFixed(1)},${(H - 4 - v / top * (H - 8)).toFixed(1)}`).join(' ');
-    const end = upTo ? pts(now, days, upTo).split(' ').pop().split(',') : null;
-    const svg = `<svg class="pace-g" viewBox="-4 0 ${W + 8} ${H}" aria-hidden="true"><polyline class="pace-last" points="${pts(last, pdays, pdays)}"/>${upTo ? `<polyline class="pace-now" points="${pts(now, days, upTo)}"/><circle cx="${end[0]}" cy="${end[1]}" r="3.5"/>` : ''}</svg>`;
-    return `<button type="button" class="cal-pace" data-goanal><span><b>${title}</b><small>분석·고정 지출 보기 ›</small></span>${svg}</button>`;
+    return `<div class="cal-pace"><button type="button" class="pace-l" data-goanal><b>${title}</b><small>분석·고정 지출 보기 ›</small></button>${assetGraph(ym)}</div>`;
+  }
+  // 내 자산과 연동: 월별 순자산이 늘면 그래프가 오르고, 줄면 내려가요 (빨강 = 늘었어요, 파랑 = 줄었어요)
+  function assetGraph(ym) {
+    let h = {};
+    try { const a = JSON.parse(localStorage.getItem('donsem:assets')); h = a && a.history && typeof a.history === 'object' ? a.history : {}; } catch (e) { h = {}; }
+    const [y, m] = ym.split('-').map(Number), pts = [];
+    let last = null;
+    for (let i = -5; i <= 0; i++) { // 보고 있는 달까지 6개월, 적지 않은 달은 앞 달 값을 이어 써요
+      const k = iso(new Date(y, m - 1 + i, 1)).slice(0, 7);
+      if (h[k]) last = (Number(h[k].a) || 0) - (Number(h[k].d) || 0);
+      if (last !== null) pts.push(last);
+    }
+    if (!pts.length) return '<button type="button" class="pace-r empty" data-goassets><small>순자산</small><span>내 자산을 적으면<br>그래프가 보여요 ›</span></button>';
+    const net = pts[pts.length - 1], diff = pts.length > 1 ? net - pts[pts.length - 2] : 0;
+    const lo = Math.min(...pts), hi = Math.max(...pts), span = hi - lo || 1, W = 120, H = 40;
+    const xy = pts.map((v, i) => [pts.length > 1 ? i / (pts.length - 1) * W : W, hi === lo ? H / 2 : H - 4 - (v - lo) / span * (H - 8)]);
+    const cls = diff > 0 ? 'up' : diff < 0 ? 'down' : '';
+    return `<button type="button" class="pace-r ${cls}" data-goassets aria-label="순자산 ${won(Math.abs(net))}, 지난달보다 ${diff >= 0 ? '늘었어요' : '줄었어요'}">
+      <small>순자산 ${diff ? `${diff > 0 ? '+' : '-'}${short(Math.abs(diff))}` : ''}</small>
+      <svg class="pace-g" viewBox="-4 0 ${W + 8} ${H}" aria-hidden="true"><polyline points="${xy.map(p => p.map(n => n.toFixed(1)).join(',')).join(' ')}"/><circle cx="${xy[xy.length - 1][0].toFixed(1)}" cy="${xy[xy.length - 1][1].toFixed(1)}" r="3.5"/></svg></button>`;
+  }
+  // 고정지출(넷플릭스 같은 구독)을 결제일 칸에 미리 보여 줘요. 가계부에 기록한 달은 지출 금액으로 보여서 빼요
+  function fixedByDay(y, m, last) {
+    let items = [];
+    try { const f = JSON.parse(localStorage.getItem('donsem:fixed')); items = f && Array.isArray(f.items) ? f.items : []; } catch (e) { items = []; }
+    const ym = `${y}-${String(m).padStart(2, '0')}`, have = new Set(data.entries.map(e => e.id)), out = {};
+    items.filter(x => x && Number(x.amt) > 0 && Number(x.day) > 0 && (x.cycle !== 'year' || Number(x.month) === m) && !have.has(`fx-${x.id}-${ym}`))
+      .forEach(x => { const d = Math.min(Number(x.day), last); (out[d] = out[d] || []).push(x); });
+    return out;
   }
   function drawCal(list) {
     const [y, m] = month.split('-').map(Number), first = new Date(y, m - 1, 1).getDay(), last = new Date(y, m, 0).getDate();
-    const rows = Math.ceil((first + last) / 7), by = {};
+    const rows = Math.ceil((first + last) / 7), by = {}, fx = fixedByDay(y, m, last);
     list.forEach(e => { const d = by[e.date] = by[e.date] || { in: 0, out: 0 }; d[e.type] += e.amt; });
     let cells = '';
     for (let i = 0; i < rows * 7; i++) { // 앞뒤 달 날짜도 흐리게 채워서 실제 달력처럼 보여요
       const dt = new Date(y, m - 1, i - first + 1), key = iso(dt), dow = i % 7, own = key.startsWith(month), t = own && by[key];
-      const ps = plansOn(key);
+      const ps = plansOn(key), fs = own ? fx[dt.getDate()] || [] : [];
       const chips = ps.slice(0, 2).map(p => { const st = p.s === key || dow === 0, en = (p.e || p.s) === key || dow === 6;
         // 여러 날 일정은 이름이 이번 주 끝(또는 일정 끝)까지 이어지게 폭을 넓혀요
         const span = st ? Math.min(Math.round((new Date((p.e || p.s) + 'T00:00:00') - dt) / 864e5), 6 - dow) + 1 : 1;
         return `<span class="cal-plan pc-${p.c}${st ? ' st' : ''}${en ? ' en' : ''}${span > 1 ? ' long' : ''}"${span > 1 ? ` style="--span:${span}"` : ''}>${st ? esc(p.t) : '&nbsp;'}</span>`; }).join('') + (ps.length > 2 ? `<span class="cal-more">+${ps.length - 2}</span>` : '');
-      cells += `<button type="button" class="cal-day${own ? '' : ' out'}${dow === 0 ? ' sun' : dow === 6 ? ' sat' : ''}${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${dt.getMonth() + 1}월 ${dt.getDate()}일${ps.length ? ' 일정 ' + ps.map(p => p.t).join(', ') : ''}${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
-        <span class="cal-n">${dt.getDate()}</span>${chips}${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
+      cells += `<button type="button" class="cal-day${own ? '' : ' out'}${dow === 0 ? ' sun' : dow === 6 ? ' sat' : ''}${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${dt.getMonth() + 1}월 ${dt.getDate()}일${ps.length ? ' 일정 ' + ps.map(p => p.t).join(', ') : ''}${fs.length ? ' 고정지출 ' + fs.map(x => `${x.name || x.cat} ${won(Number(x.amt))}`).join(', ') : ''}${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
+        <span class="cal-n">${dt.getDate()}</span>${chips}${fs.map(x => `<span class="cal-fx">${esc(x.name || x.cat || '고정지출')}</span>`).join('')}${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
     }
     const nowYm = iso(today).slice(0, 7);
     // 토스처럼 달력 위에 이달 지출·수입 합계
@@ -476,7 +499,7 @@
     $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-head"><button type="button" data-cm="-1" aria-label="이전 달">‹</button>
         <span class="cal-title"><b>${y}년 ${m}월</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><input type="month" id="b-jump" value="${month}" aria-label="년도와 달 고르기"></span>
         <button type="button" data-cm="1" aria-label="다음 달">›</button>${month !== nowYm ? '<button type="button" class="cal-today" data-ctoday>오늘</button>' : ''}</div>
-      ${sumHTML}<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div>${STRIPS[deco.th] ? `<div class="cal-strip" aria-hidden="true">${STRIPS[deco.th]}</div>` : ''}</div>` + planHTML() + decoHTML();
+      ${sumHTML}<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div></div>` + planHTML() + decoHTML();
   }
   $('b-cal').addEventListener('change', e => { if (e.target.id === 'b-jump' && /^\d{4}-\d{2}$/.test(e.target.value)) goMonth(e.target.value); });
   $('b-cal').addEventListener('keydown', e => { if (e.target.id === 'p-title' && e.key === 'Enter') { e.preventDefault(); addPlan(); } });
@@ -569,8 +592,9 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   const stamp = () => iso(new Date()).replace(/-/g, '');
+  const readKey = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
   $('b-export').addEventListener('click', () => {
-    download(`돈셈-가계부-백업-${stamp()}.json`, JSON.stringify({ app: 'donsem', version: 1, ...data, deco, plans }, null, 2), 'application/json');
+    download(`돈셈-가계부-백업-${stamp()}.json`, JSON.stringify({ app: 'donsem', version: 1, ...data, deco, plans, fixed: readKey('donsem:fixed'), assets: readKey('donsem:assets') }, null, 2), 'application/json');
     toast('백업 파일을 저장했어요. 안전한 곳에 보관하세요.');
   });
   $('b-csv').addEventListener('click', () => {
@@ -605,8 +629,14 @@
           .map(p => ({ id: String(p.id), s: p.s, e: /^\d{4}-\d{2}-\d{2}$/.test(p.e) && p.e > p.s ? p.e : p.s, t: String(p.t).slice(0, 20), c: PCOLORS.includes(p.c) ? p.c : 'pink' })));
         savePlans();
       }
+      let more = false; // 고정지출·내 자산은 이 기기에 아무것도 없을 때만 백업으로 채워요
+      [['donsem:fixed', d.fixed], ['donsem:assets', d.assets]].forEach(([k, v]) => {
+        const cur = readKey(k);
+        if (v && Array.isArray(v.items) && v.items.length && !(cur && Array.isArray(cur.items) && cur.items.length)) { try { localStorage.setItem(k, JSON.stringify(v)); more = true; } catch (err) { /* 저장 안 되면 넘어가요 */ } }
+      });
       save(); render();
-      toast(`기록 ${fresh.length}개를 불러왔어요.`);
+      toast(`기록 ${fresh.length}개를 불러왔어요.${more ? ' 고정지출과 내 자산도 불러와서 화면을 새로 열어요.' : ''}`);
+      if (more) setTimeout(() => location.reload(), 1200);
     } catch (err) {
       toast('돈셈 가계부 백업 파일이 아니에요. 파일을 다시 확인해 주세요.');
     }
@@ -618,6 +648,9 @@
     save(); render();
     toast('가계부를 모두 지웠어요.');
   });
+
+  // 같은 화면의 고정지출·내 자산에서 바꾸면 달력도 바로 다시 그려요
+  window.addEventListener('donsem:data', () => { data = load(); render(); });
 
   drawCats();
   render();

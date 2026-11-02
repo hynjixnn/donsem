@@ -18,7 +18,7 @@
   ],
   "shortcuts": [
     { "name": "가계부", "short_name": "가계부", "url": "/budget/", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
-    { "name": "내 자산", "short_name": "내 자산", "url": "/assets/", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "내 자산", "short_name": "내 자산", "url": "/budget/#assets", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
     { "name": "대출 이자 계산기", "short_name": "대출 이자", "url": "/loan/", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
   ]
 }

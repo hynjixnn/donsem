@@ -1761,9 +1761,8 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   // 저장하는 곳: [저장 키, 목록 칸, 보러 가는 주소, 이름]
   const DEST = {
     budget: ['donsem:budget', 'entries', '/budget/', '가계부', { entries: [], budget: 0 }],
-    fixed: ['donsem:fixed', 'items', '/fixed/', '고정지출', { items: [] }],
-    assets: ['donsem:assets', 'items', '/assets/', '내 자산', { items: [], history: {} }],
-    goals: ['donsem:goals', 'goals', '/goals/', '목표', { goals: [] }],
+    fixed: ['donsem:fixed', 'items', '/budget/#fixed', '고정지출', { items: [] }],
+    assets: ['donsem:assets', 'items', '/budget/#assets', '내 자산', { items: [], history: {} }],
   };
   function put(dest, item) {
     const [key, list, , , empty] = DEST[dest];
@@ -1793,11 +1792,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       ];
     },
     rent: () => seg('r_mode') === 'toMonthly' && bigNum() ? [['fixed', `고정지출에 월세 ${won(bigNum())} 추가`, { name: '월세', cat: '주거·관리비', amt: R(bigNum()), cycle: 'month', day }]] : [],
-    savings: () => [['goals', `만기 ${won(bigNum())}을 목표로 만들기`, { name: '적금 만기', target: R(bigNum()), date: after(val('s_n')), mode: 'manual', saved: 0 }]],
     deposit: () => [['assets', `예금 ${won(val('d_amt'))}을 내 자산에 추가`, { kind: 'asset', cat: '예금·적금', name: '정기예금', amt: R(val('d_amt')) }]],
-    goal: () => [['goals', `${won(val('g_goal'))} 모으기를 목표로 만들기`, { name: `${korean(val('g_goal')).replace(/ 원$|원$/, '')} 모으기`, target: R(val('g_goal')), date: after(val('g_y') * 12), mode: 'manual', saved: R(val('g_now')) }]],
-    retirement: () => [['goals', `노후자금 ${won(bigNum())}을 목표로 만들기`, { name: '노후자금', target: R(bigNum()), date: after(val('t_until') * 12), mode: 'manual', saved: 0 }]],
-    dividend: () => seg('b_mode') === 'need' ? [['goals', `배당 투자금 ${won(bigNum())}을 목표로 만들기`, { name: `월 배당 ${korean(val('b_want')).replace(/ 원$|원$/, '')}`, target: R(bigNum()), date: '', mode: 'manual', saved: 0 }]] : [],
     wage: () => { const m = rowNum('월급'); return m ? [['budget', `이번 달 월급 ${won(m)}을 가계부 수입으로 기록`, { type: 'in', amt: R(m), cat: '월급', date: iso(now), memo: '월급 (계산기에서 저장)' }]] : []; },
     salary: () => bigNum() ? [['budget', `이번 달 실수령액 ${won(bigNum())}을 가계부 수입으로 기록`, { type: 'in', amt: R(bigNum()), cat: '월급', date: iso(now), memo: '월급 실수령액 (계산기에서 저장)' }]] : [],
     unemployment: () => bigNum() ? [['budget', `한 달 실업급여 ${won(Math.floor(bigNum() / jobDays()) * 30)}을 가계부 수입으로 기록`, { type: 'in', amt: R(Math.floor(bigNum() / jobDays()) * 30), cat: '기타', date: iso(now), memo: '실업급여 (계산기에서 저장)' }]] : [],
@@ -1991,7 +1986,7 @@ function addTileIcon(t) {
 
 // ── 위쪽 메뉴: 분류를 누르면(컴퓨터는 올리기만 해도) 그 분류 계산기가 펼쳐져요 ──
 const MENU = [
-  ['돈 관리', [['/budget/', '가계부', '지출 수입 예산'], ['/fixed/', '고정지출', '구독 월세 보험'], ['/assets/', '내 자산', '순자산 부채'], ['/goals/', '목표', '저축 목표'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금'], ['/guide/', '돈 가이드', '글 정리 연말정산 실업급여 실수령액 IRP 카드 공제 월세']]],
+  ['돈 관리', [['/budget/', '캘린더 · 가계부', '지출 수입 예산 달력 일정'], ['/budget/#fixed', '고정지출', '구독 월세 보험'], ['/budget/#assets', '내 자산', '순자산 부채'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금'], ['/guide/', '돈 가이드', '글 정리 연말정산 실업급여 실수령액 IRP 카드 공제 월세']]],
   ['챌린지 · 테스트', [['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제 금전운 돈나무'], ['/no-spend/', '무지출 챌린지', '절약 무지출 달력 도장'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti'],
     ['/collection/', '내 컬렉션', '돈나무 배지 기록 모음']]],
   ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
