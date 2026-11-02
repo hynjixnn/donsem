@@ -1835,3 +1835,11 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .gd .cuts .cut b { display: block; font-size: 16px; line-height: 1.4; margin-bottom: 6px; }
 .gd .cuts .cut p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--muted); }
 @media (max-width: 600px) { .gd .cuts { grid-template-columns: 1fr; } }
+/* 연속 기록 복구권 */
+.restore-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 10px 0 4px; padding: 11px 14px; border: 1px dashed #ff9f0a; border-radius: 12px; background: rgba(255, 159, 10, .1); color: var(--text); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.restore-btn small { font-weight: 400; color: var(--muted); font-size: 13px; }
+.restore-note { margin: 8px 0 4px; font-size: 13px; color: var(--muted); }
+/* 쇼핑 세일 일정 */
+.mc-tag.shop { background: rgba(255, 55, 95, .14); color: #d61f4a; }
+.cal-mc.shop { background: rgba(255, 55, 95, .16); color: #c41c45; } .mc-dot.shop { background: #ff375f; }
+:root[data-theme="dark"] .mc-tag.shop, :root[data-theme="dark"] .cal-mc.shop { color: #ff7a9a; }

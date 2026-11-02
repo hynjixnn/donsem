@@ -177,7 +177,7 @@
 
   // ── 연속 기록 ──
   function drawStreak() {
-    const st = budgetStreak(data.entries), box = $('b-streak');
+    const st = budgetStreak(data.entries), box = $('b-streak'), rs = restoreInfo(data.entries);
     let head, sub;
     if (st.current) {
       head = `<span class="streak-fire">🔥</span><b>${st.current}일 연속 기록 중</b>`;
@@ -187,7 +187,10 @@
       head = `<span class="streak-fire">🌱</span><b>${data.entries.length ? '연속 기록을 다시 시작해요' : '오늘 첫 기록을 남겨 보세요'}</b>`;
       sub = '매일 한 번만 기록해도 3일이면 첫 배지를 받아요';
     }
-    box.innerHTML = `<div class="streak-head">${head}${st.best ? `<span class="streak-best">최고 ${st.best}일</span>` : ''}</div><p class="streak-sub">${sub}</p>
+    // 어제 하루만 비었고 복구권이 있으면, 끊기지 않게 채울 수 있어요
+    const fix = rs.gap && rs.tickets ? `<button type="button" class="restore-btn" data-restore="${rs.gap}">🎟️ 복구권으로 어제 채우기 <small>${rs.tickets}장 있어요</small></button>`
+      : rs.gap ? '<p class="restore-note">어제 하루 빠졌어요. 괜찮아요, 오늘부터 다시 하면 돼요. (기록한 날 7일마다 복구권 1장)</p>' : '';
+    box.innerHTML = `<div class="streak-head">${head}<span class="streak-best">${rs.tickets ? `🎟️ ${rs.tickets} · ` : ''}${st.best ? `최고 ${st.best}일` : ''}</span></div><p class="streak-sub">${sub}</p>${fix}
       <div class="badges">${STREAK_BADGES.map(([n, icon, name]) => `<span class="badge-item${st.best >= n ? ' on' : ''}" title="${n}일 연속 기록"><i>${icon}</i><small>${name}</small></span>`).join('')}</div>`;
   }
 
@@ -385,11 +388,11 @@
 
   // ── 돈 일정: 세금 마감·연말정산·지원금 신청처럼 놓치면 손해인 날 (app.js의 MONEY_CAL) ──
   // 내 상황을 고르면 나와 상관있는 일정만 보여요 (donsem:mc-me)
-  const ME = [['work', '직장인·알바'], ['biz', '사업자·프리랜서'], ['own', '집·차 있음']];
-  const meOf = e => /종합소득세|부가세|법인세/.test(e.t) ? 'biz' : /종합부동산세|자동차세/.test(e.t) ? 'own' : 'work';
-  let me = ['work', 'biz', 'own'];
+  const ME = [['work', '직장인·알바'], ['biz', '사업자·프리랜서'], ['own', '집·차 있음'], ['shop', '쇼핑 할인']];
+  const meOf = e => e.tag === '쇼핑' ? 'shop' : /종합소득세|부가세|법인세/.test(e.t) ? 'biz' : /종합부동산세|자동차세/.test(e.t) ? 'own' : 'work';
+  let me = ['work', 'biz', 'own', 'shop'];
   try { const v = JSON.parse(localStorage.getItem('donsem:mc-me')); if (Array.isArray(v)) me = v.filter(k => ME.some(x => x[0] === k)); } catch (e) { /* 처음이면 모두 */ }
-  const MC_TAG = { '세금': 'tax', '연말정산': 'yet', '월급': 'pay', '지원금': 'aid' };
+  const MC_TAG = { '세금': 'tax', '연말정산': 'yet', '월급': 'pay', '지원금': 'aid', '쇼핑': 'shop' };
   const moneyEvents = () => (typeof MONEY_CAL === 'undefined' ? [] : MONEY_CAL.filter(e => me.includes(meOf(e))));
   const mcOn = k => moneyEvents().filter(e => e.d === k);
   function lossHTML(ym) {
@@ -397,7 +400,7 @@
     const rows = list.slice(0, 3).map(e => { const n = typeof mcDays === 'function' ? mcDays(e.d) : 0;
       return `<button type="button" class="loss-row" data-mcday="${e.d}"><em class="${n <= 7 && !e.soft ? 'near' : ''}">${n < 0 ? '지남' : typeof mcBadge === 'function' ? mcBadge(e) : ''}</em><span>${esc(e.t)}</span><i class="mc-dot ${MC_TAG[e.tag] || ''}"></i></button>`; }).join('');
     return `<div class="cal-loss"><div class="loss-h"><b>${ym === nowYm ? '이번 달' : `${Number(ym.slice(5))}월`} 놓치면 손해</b><button type="button" class="loss-me-btn" data-meopen>내 상황 ›</button></div>
-      ${mePanel ? `<div class="loss-me">${ME.map(([k, n]) => `<button type="button" class="${me.includes(k) ? 'on' : ''}" data-me="${k}">${n}</button>`).join('')}<small>고른 상황에 맞는 세금·지원금 일정만 달력에 보여요</small></div>` : ''}
+      ${mePanel ? `<div class="loss-me">${ME.map(([k, n]) => `<button type="button" class="${me.includes(k) ? 'on' : ''}" data-me="${k}">${n}</button>`).join('')}<small>고른 상황에 맞는 세금·지원금·세일 일정만 달력에 보여요</small></div>` : ''}
       ${rows || `<p class="loss-none">${me.length ? '이 달에는 챙길 돈 일정이 없어요' : '내 상황을 골라 주세요'}</p>`}${list.length > 3 ? `<small class="loss-more">외 ${list.length - 3}개는 달력에서 볼 수 있어요</small>` : ''}</div>`;
   }
   let mePanel = false;
@@ -685,6 +688,13 @@
     data = { entries: [], budget: 0, cats: {}, payday: null };
     save(); render();
     toast('가계부를 모두 지웠어요.');
+  });
+
+  $('b-streak').addEventListener('click', e => {
+    const b = e.target.closest('[data-restore]');
+    if (!b || !useRestore(b.dataset.restore)) return;
+    render();
+    toast(`복구권을 썼어요. 연속 기록이 ${budgetStreak(data.entries).current}일로 이어졌어요 🎟️`);
   });
 
   // 같은 화면의 고정지출·내 자산에서 바꾸면 달력도 바로 다시 그려요

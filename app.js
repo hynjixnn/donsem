@@ -1020,9 +1020,31 @@ function applyState(q) {
 }
 // ── 가계부 연속 기록: 기록이 있는 날이 오늘(또는 어제)까지 며칠 이어졌는지 세요. 따로 저장하지 않고 기록 날짜로 계산해요 ──
 const STREAK_BADGES = [[3, '🌱', '새싹'], [7, '🔥', '일주일'], [14, '⭐', '2주'], [30, '🏅', '한 달'], [100, '👑', '100일']];
+// 연속 기록에 들어가는 날: 가계부에 적은 날 + 무지출 도장 찍은 날 + 복구권으로 채운 날
+// (미라클하지 않아도 괜찮아요: 안 쓴 날도 기록이고, 하루 빠지면 복구권으로 이어 가요)
+const readRestore = () => { try { const r = JSON.parse(localStorage.getItem('donsem:restore')); return r && Array.isArray(r.used) ? r : { used: [] }; } catch (e) { return { used: [] }; } };
+function streakDays(entries) {
+  const days = new Set((entries || []).map(e => e.date));
+  try { const ns = JSON.parse(localStorage.getItem('donsem:nospend')); if (ns && Array.isArray(ns.days)) ns.days.forEach(x => days.add(x)); } catch (e) { /* 없으면 넘어가요 */ }
+  readRestore().used.forEach(x => days.add(x));
+  return days;
+}
+// 복구권: 기록한 날 7일마다 1장 (최대 2장까지 모아 둬요). 어제만 비었으면 어제를 채울 수 있어요
+function restoreInfo(entries) {
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const r = readRestore(), days = streakDays(entries), real = days.size - r.used.length;
+  const tickets = Math.max(0, Math.min(2, Math.floor(real / 7) - r.used.length));
+  const t = new Date(), y1 = new Date(t.getFullYear(), t.getMonth(), t.getDate() - 1), y2 = new Date(t.getFullYear(), t.getMonth(), t.getDate() - 2);
+  return { tickets, gap: !days.has(ymd(y1)) && days.has(ymd(y2)) ? ymd(y1) : null };
+}
+function useRestore(day) {
+  const r = readRestore();
+  if (!r.used.includes(day)) r.used = [...r.used, day].sort();
+  try { localStorage.setItem('donsem:restore', JSON.stringify(r)); return true; } catch (e) { return false; }
+}
 function budgetStreak(entries) {
   const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const days = new Set((entries || []).map(e => e.date)), d = new Date();
+  const days = streakDays(entries), d = new Date();
   const recordedToday = days.has(ymd(d));
   if (!recordedToday) d.setDate(d.getDate() - 1); // 오늘 아직 안 썼어도 어제까지 이어졌으면 끊긴 게 아니에요
   let current = 0;
@@ -2882,6 +2904,10 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
 const MONEY_CAL = [
   { d: '2026-11-30', when: '11월 중', t: '연말정산 미리보기 열림', tag: '연말정산', soft: true, who: '홈택스에서 1~9월 카드 사용액으로 올해 환급액을 미리 볼 수 있어요. 정확한 날짜는 국세청이 발표해요.', go: ['/year-end-tax/', '환급액 미리 계산'] },
   { d: '2026-11-30', t: '종합소득세 중간예납 납부', tag: '세금', who: '5월에 종합소득세를 낸 개인사업자·프리랜서는 올해 세금의 절반쯤을 미리 내요. 고지서를 확인하세요.', go: ['/income-tax/', '종합소득세 계산기'] },
+  { d: '2026-11-11', t: '11.11 쇼핑 할인 (광군제)', tag: '쇼핑', who: '중국 광군제에 맞춰 해외 직구와 국내 쇼핑몰 할인이 몰리는 날이에요. 할인 전 가격을 먼저 확인하고, 할인율 계산기로 진짜 싼지 따져 보세요.', go: ['/discount/', '할인율 계산기'] },
+  { d: '2026-11-27', t: '블랙프라이데이', tag: '쇼핑', who: '미국 추수감사절 다음 날로, 해외 직구 할인이 가장 큰 날이에요. 직구는 150달러(미국은 200달러)를 넘으면 관세·부가세가 붙으니 금액을 나눠 사세요.', go: ['/discount/', '할인율 계산기'] },
+  { d: '2026-11-30', t: '사이버먼데이', tag: '쇼핑', who: '블랙프라이데이 다음 월요일에 온라인 할인이 한 번 더 열려요. 놓친 물건이 있다면 이날 다시 확인해 보세요.', go: ['/unit-price/', '단가 비교 계산기'] },
+  { d: '2026-12-26', t: '박싱데이', tag: '쇼핑', who: '크리스마스 다음 날 해외 쇼핑몰의 연말 재고 할인이 시작돼요. 할인 기간은 쇼핑몰마다 달라요.', go: ['/discount/', '할인율 계산기'] },
   { d: '2026-12-15', from: '2026-12-01', t: '종합부동산세 납부', tag: '세금', who: '공시가격 합계가 기준을 넘는 집·땅을 가진 사람이 내요. 대상이면 11월 말에 고지서가 와요.' },
   { d: '2026-12-31', t: '연금저축·IRP 납입 마감', tag: '연말정산', who: '12월 31일까지 넣은 돈만 올해 연말정산에서 돌려받아요. 은행·증권사 마감 시간은 더 이를 수 있어요.', go: ['/pension/', '연금저축·IRP 계산기'] },
   { d: '2027-01-01', t: '최저임금 시급 10,700원 적용', tag: '월급', who: '2026년보다 380원(3.7%) 올라요. 주 40시간이면 주휴수당 포함 월 2,236,300원이에요.', go: ['/wage/', '시급·월급 계산기'] },
