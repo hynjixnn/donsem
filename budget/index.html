@@ -84,6 +84,14 @@
     <a href="/date/">날짜</a>
   </nav>
 
+  <section class="card sub-card cal-card" id="calendar">
+    <h2>캘린더</h2>
+    <div class="bq-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="b-q" type="search" placeholder="내역 검색 (예: 커피, 택시, 5000)" aria-label="가계부 내역 검색" autocomplete="off" enterkeyhint="search"></div>
+    <div class="seg" id="b-view"><button type="button" data-v="cal" class="on">달력</button><button type="button" data-v="list">목록</button></div>
+    <div class="cal" id="b-cal"></div>
+    <ul class="items" id="b-items"></ul>
+  </section>
+
   <section class="card" id="budget">
     <h1>가계부</h1>
     <p class="sub">설치도 가입도 없이, 쓴 돈을 바로 적어요.</p>
@@ -121,13 +129,6 @@
     <button type="button" class="btn fill wide" id="b-save">지출 기록하기</button>
   </section>
 
-  <section class="card sub-card">
-    <h2>내역</h2>
-    <div class="bq-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="b-q" type="search" placeholder="내역 검색 (예: 커피, 택시, 5000)" aria-label="가계부 내역 검색" autocomplete="off" enterkeyhint="search"></div>
-    <div class="seg" id="b-view"><button type="button" data-v="cal" class="on">달력</button><button type="button" data-v="list">목록</button></div>
-    <div class="cal" id="b-cal"></div>
-    <ul class="items" id="b-items"></ul>
-  </section>
 
   <section class="card sub-card">
     <h2>어디에 썼나요</h2>
