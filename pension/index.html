@@ -84,7 +84,7 @@
   <section class="card" id="pension">
     <h1>연금저축·IRP 계산기</h1>
     <p class="sub">연말정산에서 돌려받는 돈과, 나중에 매달 받을 연금을 계산해요.</p>
-    <p class="trust">2026년 기준 · 2026.10.21 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
+    <p class="trust">2026년 기준 · 2026.11.04 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
     <label>총급여 (1년, 비과세 제외)</label>
     <div class="field"><input data-k="pn_pay" inputmode="numeric" value="40,000,000"><span>원</span></div>
     <label>연금저축에 1년에 넣을 돈</label>
@@ -97,6 +97,8 @@
     <div class="field"><input data-k="pn_r" inputmode="decimal" value="5"><span>%</span></div>
     <label>연금 받는 기간</label>
     <div class="field"><input data-k="pn_n" inputmode="numeric" value="20"><span>년</span></div>
+    <label>IRP 계좌 수수료 (연) <small class="lab-note">은행은 보통 0.1~0.5%, 수수료 0원 계좌는 0</small></label>
+    <div class="field"><input data-k="pn_fee" inputmode="decimal" value="0.3"><span>%</span></div>
     <div class="result" id="pn_out"></div>
   </section>
 
@@ -120,8 +122,9 @@
       <li>소득세법 제59조의3: 연금계좌 세액공제 한도 연금저축 600만 원, IRP 합산 900만 원, 공제율 12%(총급여 5,500만 원 이하 15%) + 지방소득세 10%</li>
       <li>연금소득세: 55~69세 5.5%, 70~79세 4.4%, 80세 이상 3.3% (계산은 5.5% 기준, 세액공제를 받지 않은 원금은 세금 없음)</li>
       <li>해마다 처음에 1년 치를 넣고 같은 수익률로 복리로 불리며, 연금을 받는 동안에도 같은 수익률로 굴린다고 계산했어요</li>
+      <li>IRP 수수료: 해마다 IRP 잔액에서 입력한 비율만큼 빠진다고 보고, 수수료 0% 계좌와 같은 기간·같은 수익률로 비교했어요 (운용관리·자산관리 수수료는 금융회사마다 달라요)</li>
     </ul>
-    <p class="basis-note">2026.10.21에 마지막으로 확인했어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
+    <p class="basis-note">2026.11.04에 마지막으로 확인했어요. 틀린 곳이 있으면 <a href="/about/#contact">알려 주세요</a>.</p>
   </article>
 
   <footer>
