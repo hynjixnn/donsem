@@ -343,6 +343,7 @@
 
   // ── 달력 꾸미기: 테마와 날짜별 스티커 (donsem:deco, 이 기기에만 저장) ──
   const THEMES = [['basic', '기본', ''], ['berry', '딸기우유', '🍓'], ['mint', '민트초코', '🌿'], ['butter', '버터', '🌼'], ['lilac', '라벤더', '💜'], ['night', '밤하늘', '🌙']];
+  const STRIPS = { berry: '🍓 🌷 🍰 🌷 🍓', mint: '🌿 🍃 🍫 🍃 🌿', butter: '🌼 🐥 🧈 🐥 🌼', lilac: '💜 🫧 🦄 🫧 💜', night: '🌙 ✨ ⭐ ✨ 🌙' }; // 테마마다 달력 아래 장식 줄
   const STICKERS = '🍎 🍓 🍰 ☕ 🧋 🍜 🍕 🍗 🛍️ 💄 👗 🎁 💸 💰 🐷 🧾 🚕 ✈️ 🎬 🎮 💖 ⭐ 🌸 🍀 😎 🥳 😭 💪'.split(' ');
   const ST_MAX = 3;
   function loadDeco() {
@@ -445,7 +446,7 @@
     $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-head"><button type="button" data-cm="-1" aria-label="이전 달">‹</button>
         <span class="cal-title"><b>${y}년 ${m}월</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><input type="month" id="b-jump" value="${month}" aria-label="년도와 달 고르기"></span>
         <button type="button" data-cm="1" aria-label="다음 달">›</button>${month !== nowYm ? '<button type="button" class="cal-today" data-ctoday>오늘</button>' : ''}</div>
-      <div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div></div>` + planHTML() + decoHTML();
+      <div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div>${STRIPS[deco.th] ? `<div class="cal-strip" aria-hidden="true">${STRIPS[deco.th]}</div>` : ''}</div>` + planHTML() + decoHTML();
   }
   $('b-cal').addEventListener('change', e => { if (e.target.id === 'b-jump' && /^\d{4}-\d{2}$/.test(e.target.value)) goMonth(e.target.value); });
   $('b-cal').addEventListener('keydown', e => { if (e.target.id === 'p-title' && e.key === 'Enter') { e.preventDefault(); addPlan(); } });
