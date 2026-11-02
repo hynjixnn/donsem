@@ -410,6 +410,9 @@
     return `<div class="mc-day">${list.map(e => `<div class="mc-day-row"><p><span class="mc-tag ${MC_TAG[e.tag] || ''}">${esc(e.tag)}</span><b>${esc(e.t)}</b></p><small>${esc(e.who)}${e.when ? ` (날짜: ${esc(e.when)})` : ''}</small>
       <div class="mc-acts">${e.go ? `<a class="go" href="${e.go[0]}">${esc(e.go[1])} ›</a>` : ''}<button type="button" data-mcics="${MONEY_CAL.indexOf(e)}">📅 휴대폰 달력에 넣기</button></div></div>`).join('')}</div>`;
   }
+  // 달력 접기: 토스처럼 고른 날이 있는 한 주만 보여요
+  let fold = false;
+  try { fold = localStorage.getItem('donsem:cal-fold') === '1'; } catch (e) { /* 기본은 펼침 */ }
   // 지출 히트맵: 많이 쓴 날일수록 칸이 진해져요 (주식 테마 캘린더처럼 한눈에)
   let heat = false;
   try { heat = localStorage.getItem('donsem:heat') === '1'; } catch (e) { /* 기본은 끔 */ }
@@ -427,7 +430,7 @@
   function planHTML() {
     if (!selDay) return '';
     const ps = plansOn(selDay);
-    return `${mcDayHTML(selDay)}<div class="plan-box"><p class="deco-h">일정 <span>${dayLabel(selDay)}</span></p>
+    return `<div class="plan-box"><p class="deco-h">일정 <span>${dayLabel(selDay)}</span></p>
       ${ps.map(p => `<div class="plan-row"><i class="pc-${p.c}"></i><b>${esc(p.t)}</b><span>${p.e && p.e !== p.s ? `${mdLabel(p.s)} ~ ${mdLabel(p.e)}` : ''}</span><button type="button" data-pdel="${esc(p.id)}" aria-label="${esc(p.t)} 일정 지우기">×</button></div>`).join('')}
       ${planOpen ? `<div class="plan-form"><div class="field"><input id="p-title" maxlength="20" placeholder="일정 이름 (예: 제주도 여행)" autocomplete="off" enterkeyhint="done" aria-label="일정 이름"></div>
         <div class="plan-opt"><span class="plan-lab">언제까지</span><span class="field"><input id="p-end" type="date" value="${selDay}" min="${selDay}" aria-label="일정이 끝나는 날"></span><small>여행처럼 며칠 이어지면 바꿔요</small></div>
@@ -443,7 +446,7 @@
     toast(`'${t}' 일정을 넣었어요.`);
   }
   function onPlan(e) {
-    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal],[data-goassets],[data-mcday],[data-me],[data-meopen],[data-mcics],[data-heat]');
+    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal],[data-goassets],[data-mcday],[data-me],[data-meopen],[data-mcics],[data-heat],[data-fold]');
     if (!b) return false;
     if (b.dataset.pc) { pColor = b.dataset.pc; b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }
     else if (b.hasAttribute('data-padd')) addPlan();
@@ -454,6 +457,7 @@
       render();
     } else if (b.hasAttribute('data-meopen')) { mePanel = !mePanel; render(); }
     else if (b.dataset.mcics) { if (typeof mcIcs === 'function') { const ev = MONEY_CAL[Number(b.dataset.mcics)]; mcIcs([ev], `돈셈-${ev.t}.ics`); } }
+    else if (b.hasAttribute('data-fold')) { fold = !fold; try { localStorage.setItem('donsem:cal-fold', fold ? '1' : '0'); } catch (err) { /* 괜찮아요 */ } render(); }
     else if (b.hasAttribute('data-heat')) { heat = !heat; try { localStorage.setItem('donsem:heat', heat ? '1' : '0'); } catch (err) { /* 괜찮아요 */ } render(); }
     else if (b.hasAttribute('data-goanal') || b.hasAttribute('data-goassets')) { const box = b.hasAttribute('data-goassets') ? $('assets') : $('b-breakdown').closest('section'); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     else if (b.hasAttribute('data-popen') || b.hasAttribute('data-pcancel')) { planOpen = b.hasAttribute('data-popen'); render(); if (planOpen) $('p-title').focus(); }
@@ -521,7 +525,9 @@
     list.forEach(e => { const d = by[e.date] = by[e.date] || { in: 0, out: 0 }; d[e.type] += e.amt; });
     const heatMax = Math.max(1, ...Object.values(by).map(d => d.out));
     let cells = '';
-    for (let i = 0; i < rows * 7; i++) { // 앞뒤 달 날짜도 흐리게 채워서 실제 달력처럼 보여요
+    const focus = selDay && selDay.startsWith(month) ? Number(selDay.slice(8)) : month === iso(today).slice(0, 7) ? today.getDate() : 1;
+    const row0 = fold ? Math.floor((first + focus - 1) / 7) : 0, row1 = fold ? row0 + 1 : rows;
+    for (let i = row0 * 7; i < row1 * 7; i++) { // 앞뒤 달 날짜도 흐리게 채워서 실제 달력처럼 보여요
       const dt = new Date(y, m - 1, i - first + 1), key = iso(dt), dow = i % 7, own = key.startsWith(month), t = own && by[key];
       const ps = plansOn(key), fs = own ? fx[dt.getDate()] || [] : [], ms = own ? mcOn(key) : [];
       const hv = heat && own && t && t.out ? Math.max(.12, Math.sqrt(t.out / heatMax)) : 0; // 제곱근으로 눌러서 작은 지출도 보이게
@@ -540,19 +546,26 @@
     $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-head"><button type="button" data-cm="-1" aria-label="이전 달">‹</button>
         <span class="cal-title"><b>${y}년 ${m}월</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><input type="month" id="b-jump" value="${month}" aria-label="년도와 달 고르기"></span>
         <button type="button" data-cm="1" aria-label="다음 달">›</button>${month !== nowYm ? '<button type="button" class="cal-today" data-ctoday>오늘</button>' : ''}</div>
-      ${sumHTML}<div class="cal-tools"><button type="button" class="heat-btn${heat ? ' on' : ''}" data-heat aria-pressed="${heat}">🔥 지출 히트맵</button>${heat ? '<span class="heat-key">적게<i></i><i></i><i></i><i></i>많이</span>' : ''}</div><div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div></div>` + lossHTML(month) + planHTML() + decoHTML();
+      ${sumHTML}<div class="cal-tools"><button type="button" class="heat-btn${heat ? ' on' : ''}" data-heat aria-pressed="${heat}">🔥 지출 히트맵</button>${heat ? '<span class="heat-key">적게<i></i><i></i><i></i><i></i>많이</span>' : ''}</div><div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div><button type="button" class="cal-fold" data-fold aria-expanded="${!fold}">${fold ? '﹀ 달력 펼치기' : '︿ 한 주만 보기'}</button></div>`;
+    // 달력 바로 밑: 일정·꾸미기 → (그날 내역) → 놓치면 손해 → 그날 돈 일정
+    $('b-cal-mid').innerHTML = planHTML() + decoHTML();
+    $('b-cal-more').innerHTML = lossHTML(month) + mcDayHTML(selDay);
   }
-  $('b-cal').addEventListener('change', e => { if (e.target.id === 'b-jump' && /^\d{4}-\d{2}$/.test(e.target.value)) goMonth(e.target.value); });
-  $('b-cal').addEventListener('keydown', e => { if (e.target.id === 'p-title' && e.key === 'Enter') { e.preventDefault(); addPlan(); } });
-  $('b-cal').addEventListener('input', e => { if (e.target.id === 'p-end' && e.target.value && e.target.value < selDay) e.target.value = selDay; });
-  $('b-cal').addEventListener('click', e => {
+  const calBoxes = ['b-cal', 'b-cal-mid', 'b-cal-more'].map($);
+  calBoxes.forEach(box => {
+    box.addEventListener('change', e => { if (e.target.id === 'b-jump' && /^\d{4}-\d{2}$/.test(e.target.value)) goMonth(e.target.value); });
+    box.addEventListener('keydown', e => { if (e.target.id === 'p-title' && e.key === 'Enter') { e.preventDefault(); addPlan(); } });
+    box.addEventListener('input', e => { if (e.target.id === 'p-end' && e.target.value && e.target.value < selDay) e.target.value = selDay; });
+    box.addEventListener('click', onCalClick);
+  });
+  function onCalClick(e) {
     if (e.target.id === 'b-jump') { try { e.target.showPicker(); } catch (err) { /* 누르면 바로 열리는 브라우저도 있어요 */ } return; }
     if (onPlan(e) || onDeco(e)) return;
     const b = e.target.closest('[data-day]');
     if (!b) return;
     if (!b.dataset.day.startsWith(month)) return goMonth(b.dataset.day.slice(0, 7), b.dataset.day);
     selDay = b.dataset.day; planOpen = false; render();
-  });
+  }
   $('b-view').addEventListener('click', e => {
     const v = e.target.dataset && e.target.dataset.v;
     if (!v) return;
@@ -570,7 +583,7 @@
   function drawList(list) {
     const ul = $('b-items');
     if (query) {
-      $('b-cal').hidden = true; $('b-view').hidden = true;
+      $('b-cal').hidden = $('b-cal-mid').hidden = $('b-cal-more').hidden = true; $('b-view').hidden = true;
       list = searchHits();
       const out = list.filter(e => e.type === 'out').reduce((a, e) => a + e.amt, 0), inn = list.filter(e => e.type === 'in').reduce((a, e) => a + e.amt, 0);
       if (!list.length) { ul.innerHTML = `<li class="empty">'${esc(query)}'에 맞는 기록이 없어요.</li>`; return; }
@@ -579,7 +592,7 @@
     }
     $('b-view').hidden = false;
     const cal = view === 'cal';
-    $('b-cal').hidden = !cal;
+    $('b-cal').hidden = $('b-cal-mid').hidden = $('b-cal-more').hidden = !cal;
     $('b-view').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === view));
     if (cal) {
       drawCal(list);

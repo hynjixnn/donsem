@@ -1843,3 +1843,7 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .mc-tag.shop { background: rgba(255, 55, 95, .14); color: #d61f4a; }
 .cal-mc.shop { background: rgba(255, 55, 95, .16); color: #c41c45; } .mc-dot.shop { background: #ff375f; }
 :root[data-theme="dark"] .mc-tag.shop, :root[data-theme="dark"] .cal-mc.shop { color: #ff7a9a; }
+/* 달력 접기 (토스처럼 한 주만) */
+.cal-fold { display: block; margin: 6px auto 0; padding: 6px 14px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+.cal-mid:empty, .cal-more:empty { display: none; }
+.cal-mid + .items { margin-top: 12px; }
