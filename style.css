@@ -600,9 +600,14 @@ html { -webkit-tap-highlight-color: transparent; }
 .plan-row button { border: 0; background: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 0 4px; }
 .plan-form { margin-top: 10px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .plan-opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.plan-opt label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); margin: 0; }
 .plan-opt .field { padding: 0 10px; }
 .plan-opt input[type=date] { font-size: 15px; height: 40px; width: 9.5em; min-width: 0; -webkit-appearance: none; appearance: none; background: transparent; }
+.plan-opt { justify-content: flex-start; }
+.plan-lab { flex: none; width: 4.5em; font-size: 14px; font-weight: 600; }
+.plan-opt small { flex-basis: 100%; margin-left: calc(4.5em + 12px); color: var(--muted); font-size: 12px; margin-top: -6px; }
+.plan-btns { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+.plan-open { margin-top: 10px; }
+.plan-colors button.on::after { content: "✓"; font-size: 14px; font-weight: 700; color: #3a3a3c; }
 .plan-colors { display: flex; gap: 8px; }
 .plan-colors button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; background: var(--pc); cursor: pointer; }
 .plan-colors button.on { border-color: var(--text); }

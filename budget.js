@@ -390,7 +390,7 @@
     try { const d = JSON.parse(localStorage.getItem('donsem:plans')); if (d && Array.isArray(d.items)) return d.items; } catch (e) { /* 처음이면 비어 있어요 */ }
     return [];
   }
-  let plans = loadPlans(), pColor = 'pink';
+  let plans = loadPlans(), pColor = 'pink', planOpen = false;
   const savePlans = () => { try { localStorage.setItem('donsem:plans', JSON.stringify({ items: plans })); } catch (e) { toast('이 브라우저에서는 저장할 수 없어요.'); } };
   const plansOn = k => plans.filter(p => p.s <= k && k <= (p.e || p.s)).sort((a, b) => a.s.localeCompare(b.s) || a.id.localeCompare(b.id));
   const mdLabel = k => `${Number(k.slice(5, 7))}.${Number(k.slice(8))}`;
@@ -399,23 +399,25 @@
     const ps = plansOn(selDay);
     return `<div class="plan-box"><p class="deco-h">일정 <span>${dayLabel(selDay)}</span></p>
       ${ps.map(p => `<div class="plan-row"><i class="pc-${p.c}"></i><b>${esc(p.t)}</b><span>${p.e && p.e !== p.s ? `${mdLabel(p.s)} ~ ${mdLabel(p.e)}` : ''}</span><button type="button" data-pdel="${esc(p.id)}" aria-label="${esc(p.t)} 일정 지우기">×</button></div>`).join('')}
-      <div class="plan-form"><div class="field"><input id="p-title" maxlength="20" placeholder="예: 제주도 여행, 엄마 생일" autocomplete="off" enterkeyhint="done" aria-label="일정 이름"></div>
-        <div class="plan-opt"><label>끝나는 날<span class="field"><input id="p-end" type="date" value="${selDay}" min="${selDay}"></span></label>
-        <div class="plan-colors" role="group" aria-label="일정 색">${PCOLORS.map(c => `<button type="button" class="pc-${c}${c === pColor ? ' on' : ''}" data-pc="${c}" aria-label="${c} 색"></button>`).join('')}</div></div>
-        <button type="button" class="btn fill wide" data-padd>일정 추가</button></div></div>`;
+      ${planOpen ? `<div class="plan-form"><div class="field"><input id="p-title" maxlength="20" placeholder="일정 이름 (예: 제주도 여행)" autocomplete="off" enterkeyhint="done" aria-label="일정 이름"></div>
+        <div class="plan-opt"><span class="plan-lab">언제까지</span><span class="field"><input id="p-end" type="date" value="${selDay}" min="${selDay}" aria-label="일정이 끝나는 날"></span><small>여행처럼 며칠 이어지면 바꿔요</small></div>
+        <div class="plan-opt"><span class="plan-lab">색깔</span><div class="plan-colors" role="group" aria-label="일정 색">${PCOLORS.map(c => `<button type="button" class="pc-${c}${c === pColor ? ' on' : ''}" data-pc="${c}" aria-label="${c} 색"></button>`).join('')}</div></div>
+        <div class="plan-btns"><button type="button" class="btn line" data-pcancel>취소</button><button type="button" class="btn fill" data-padd>저장</button></div></div>`
+      : `<button type="button" class="btn line wide plan-open" data-popen>＋ ${dayLabel(selDay)} 일정 추가</button>`}</div>`;
   }
   function addPlan() {
     const t = $('p-title').value.trim().slice(0, 20), end = $('p-end').value;
     if (!t) { toast('일정 이름을 적어 주세요.'); $('p-title').focus(); return; }
     plans.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), s: selDay, e: end && end > selDay ? end : selDay, t, c: pColor });
-    savePlans(); render();
+    planOpen = false; savePlans(); render();
     toast(`'${t}' 일정을 넣었어요.`);
   }
   function onPlan(e) {
-    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday]');
+    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel]');
     if (!b) return false;
     if (b.dataset.pc) { pColor = b.dataset.pc; b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }
     else if (b.hasAttribute('data-padd')) addPlan();
+    else if (b.hasAttribute('data-popen') || b.hasAttribute('data-pcancel')) { planOpen = b.hasAttribute('data-popen'); render(); if (planOpen) $('p-title').focus(); }
     else if (b.dataset.pdel) {
       const p = plans.find(x => x.id === b.dataset.pdel);
       if (p && confirm(`'${p.t}' 일정을 지울까요?`)) { plans = plans.filter(x => x !== p); savePlans(); render(); }
@@ -457,7 +459,7 @@
     const b = e.target.closest('[data-day]');
     if (!b) return;
     if (!b.dataset.day.startsWith(month)) return goMonth(b.dataset.day.slice(0, 7), b.dataset.day);
-    selDay = b.dataset.day; render();
+    selDay = b.dataset.day; planOpen = false; render();
   });
   $('b-view').addEventListener('click', e => {
     const v = e.target.dataset && e.target.dataset.v;
