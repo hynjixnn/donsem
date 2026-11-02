@@ -338,6 +338,48 @@
       ${months.map((o, i) => `<span class="trend-col${i === 5 ? ' now' : ''}"><small>${o.v ? short(o.v) : ''}</small><i style="height:calc(${o.v / top} * (100% - 52px))"></i><span>${o.m}월</span></span>`).join('')}</div>${avg ? `<p class="trend-key">지난 ${past.length}달 평균 ${won(Math.round(avg))}</p>` : ''}`;
   }
 
+  // ── 달력 꾸미기: 테마와 날짜별 스티커 (donsem:deco, 이 기기에만 저장) ──
+  const THEMES = [['basic', '기본', ''], ['berry', '딸기우유', '🍓'], ['mint', '민트초코', '🌿'], ['butter', '버터', '🌼'], ['lilac', '라벤더', '💜'], ['night', '밤하늘', '🌙']];
+  const STICKERS = '🍎 🍓 🍰 ☕ 🧋 🍜 🍕 🍗 🛍️ 💄 👗 🎁 💸 💰 🐷 🧾 🚕 ✈️ 🎬 🎮 💖 ⭐ 🌸 🍀 😎 🥳 😭 💪'.split(' ');
+  const ST_MAX = 3;
+  function loadDeco() {
+    try {
+      const d = JSON.parse(localStorage.getItem('donsem:deco'));
+      if (d && typeof d === 'object') return { th: THEMES.some(t => t[0] === d.th) ? d.th : 'basic', st: d.st && typeof d.st === 'object' ? d.st : {} };
+    } catch (e) { /* 처음이면 기본 */ }
+    return { th: 'basic', st: {} };
+  }
+  let deco = loadDeco(), decoOpen = false;
+  const saveDeco = () => { try { localStorage.setItem('donsem:deco', JSON.stringify(deco)); } catch (e) { /* 저장 안 돼도 화면은 바뀌어요 */ } };
+  const dayLabel = k => `${Number(k.slice(5, 7))}월 ${Number(k.slice(8))}일`;
+  function decoHTML() {
+    const mine = (selDay && selDay.startsWith(month) && deco.st[selDay]) || [];
+    return `<div class="deco"><button type="button" class="deco-toggle${decoOpen ? ' on' : ''}" data-deco="toggle" aria-expanded="${decoOpen}">🎨 달력 꾸미기</button>${decoOpen ? `
+      <p class="deco-h">테마</p><div class="deco-th">${THEMES.map(([k, n, e]) => `<button type="button" class="th-${k}${deco.th === k ? ' on' : ''}" data-pick="${k}"><i></i>${e ? e + ' ' : ''}${n}</button>`).join('')}</div>
+      <p class="deco-h">스티커 <span>${selDay && selDay.startsWith(month) ? `${dayLabel(selDay)}에 붙여요 (최대 ${ST_MAX}개)` : '먼저 달력에서 날짜를 눌러 주세요'}</span></p>
+      ${mine.length ? `<div class="deco-mine">${mine.map((c, i) => `<button type="button" data-rm="${i}" aria-label="${c} 스티커 떼기">${c}<b>×</b></button>`).join('')}</div>` : ''}
+      <div class="deco-st">${STICKERS.map(c => `<button type="button" data-st="${c}" aria-label="${c} 스티커 붙이기">${c}</button>`).join('')}</div>` : ''}</div>`;
+  }
+  function onDeco(e) {
+    const b = e.target.closest('[data-deco],[data-pick],[data-st],[data-rm]');
+    if (!b) return false;
+    if (b.dataset.deco) decoOpen = !decoOpen;
+    else if (b.dataset.pick) { deco.th = b.dataset.pick; saveDeco(); }
+    else if (!selDay || !selDay.startsWith(month)) { toast('먼저 달력에서 날짜를 눌러 주세요.'); return true; }
+    else if (b.dataset.st) {
+      const l = deco.st[selDay] = deco.st[selDay] || [];
+      if (l.length >= ST_MAX) { toast(`하루에 스티커는 ${ST_MAX}개까지 붙일 수 있어요. 붙인 스티커를 누르면 뗄 수 있어요.`); return true; }
+      l.push(b.dataset.st); saveDeco();
+    } else {
+      const l = deco.st[selDay] || [];
+      l.splice(Number(b.dataset.rm), 1);
+      if (!l.length) delete deco.st[selDay];
+      saveDeco();
+    }
+    render();
+    return true;
+  }
+
   // ── 달력 ──
   const short = n => n < 1e4 ? n.toLocaleString('ko-KR') : (n < 1e5 ? Math.round(n / 1e3) / 10 : Math.round(n / 1e4)).toLocaleString('ko-KR') + '만';
   function drawCal(list) {
@@ -349,11 +391,13 @@
     for (let d = 1; d <= last; d++) {
       const key = `${month}-${String(d).padStart(2, '0')}`, t = by[key];
       cells += `<button type="button" class="cal-day${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${m}월 ${d}일${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
-        <span class="cal-n">${d}</span>${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}</button>`;
+        <span class="cal-n">${d}</span>${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
     }
-    $('b-cal').innerHTML = `<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div>`;
+    $('b-cal').dataset.th = deco.th;
+    $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div></div>` + decoHTML();
   }
   $('b-cal').addEventListener('click', e => {
+    if (onDeco(e)) return;
     const b = e.target.closest('[data-day]');
     if (!b) return;
     selDay = b.dataset.day; render();
@@ -439,7 +483,7 @@
   }
   const stamp = () => iso(new Date()).replace(/-/g, '');
   $('b-export').addEventListener('click', () => {
-    download(`돈셈-가계부-백업-${stamp()}.json`, JSON.stringify({ app: 'donsem', version: 1, ...data }, null, 2), 'application/json');
+    download(`돈셈-가계부-백업-${stamp()}.json`, JSON.stringify({ app: 'donsem', version: 1, ...data, deco }, null, 2), 'application/json');
     toast('백업 파일을 저장했어요. 안전한 곳에 보관하세요.');
   });
   $('b-csv').addEventListener('click', () => {
@@ -463,6 +507,11 @@
       if (!data.budget && d.budget) data.budget = Number(d.budget) || 0;
       if (!Object.keys(data.cats).length) data.cats = cleanCats(d.cats);
       if (!data.payday) data.payday = cleanPay(d.payday);
+      if (d.deco && d.deco.st && typeof d.deco.st === 'object') { // 스티커는 비어 있는 날에만 채워요
+        Object.keys(d.deco.st).forEach(k => { const l = d.deco.st[k]; if (/^\d{4}-\d{2}-\d{2}$/.test(k) && !deco.st[k] && Array.isArray(l)) deco.st[k] = l.filter(c => STICKERS.includes(c)).slice(0, ST_MAX); });
+        if (deco.th === 'basic' && THEMES.some(t => t[0] === d.deco.th)) deco.th = d.deco.th;
+        saveDeco();
+      }
       save(); render();
       toast(`기록 ${fresh.length}개를 불러왔어요.`);
     } catch (err) {

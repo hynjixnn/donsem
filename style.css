@@ -563,7 +563,37 @@ html { -webkit-tap-highlight-color: transparent; }
 .cal-out, .cal-in { font-size: 11px; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cal-out { color: var(--text); }
 .cal-in { color: var(--blue); }
-@media (max-width: 640px) { .cal-day { min-height: 52px; padding: 4px 0; border-radius: 10px; } .cal-out, .cal-in { font-size: 10px; } .cal-n { font-size: 13px; } }
+/* 달력 꾸미기: 테마(--th 색, --strip 아래 장식)와 스티커 */
+.cal-st { margin-top: auto; font-size: 15px; line-height: 1; letter-spacing: -3px; white-space: nowrap; }
+.cal[data-th]:not([data-th="basic"]) .cal-paper { padding: 10px 8px 6px; border-radius: 18px; background: color-mix(in srgb, var(--th) 16%, var(--card)); }
+.cal[data-th]:not([data-th="basic"]) .cal-paper::after { content: var(--strip); display: block; margin-top: 8px; text-align: center; font-size: 18px; letter-spacing: 8px; }
+.cal[data-th]:not([data-th="basic"]) .cal-week span:first-child { color: #ff453a; }
+.cal[data-th]:not([data-th="basic"]) .cal-week span:last-child { color: #0a84ff; }
+.cal[data-th]:not([data-th="basic"]) .cal-day.today .cal-n { background: var(--th); }
+.cal[data-th]:not([data-th="basic"]) .cal-day.sel { box-shadow: inset 0 0 0 2px var(--th); }
+@media (hover: hover) { .cal[data-th]:not([data-th="basic"]) .cal-day:hover { background: color-mix(in srgb, var(--th) 10%, var(--field)); } }
+.cal[data-th="berry"], .th-berry { --th: #ff6b8b; --strip: "🍓 🌷 🍰 🌷 🍓"; }
+.cal[data-th="mint"], .th-mint { --th: #22b59c; --strip: "🌿 🍃 🍫 🍃 🌿"; }
+.cal[data-th="butter"], .th-butter { --th: #f0a500; --strip: "🌼 🐥 🧈 🐥 🌼"; }
+.cal[data-th="lilac"], .th-lilac { --th: #9a7aea; --strip: "💜 🫧 🦄 🫧 💜"; }
+.cal[data-th="night"], .th-night { --th: #3d4fb8; --strip: "🌙 ✨ ⭐ ✨ 🌙"; }
+.th-basic { --th: var(--blue); }
+.deco { margin-top: 10px; }
+.deco-toggle { display: block; margin-left: auto; padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--field); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+.deco-toggle.on { border-color: var(--blue); color: var(--blue); }
+.deco-h { margin: 14px 0 8px; font-size: 14px; font-weight: 600; }
+.deco-h span { margin-left: 6px; font-weight: 400; color: var(--muted); }
+.deco-th { display: flex; flex-wrap: wrap; gap: 8px; }
+.deco-th button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--field); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+.deco-th button i { width: 12px; height: 12px; border-radius: 50%; background: var(--th); }
+.deco-th button.on { border-color: var(--th); box-shadow: inset 0 0 0 1px var(--th); font-weight: 600; }
+.deco-st { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.deco-st button { aspect-ratio: 1; max-height: 52px; border: 0; border-radius: 12px; background: var(--field); font-size: 22px; line-height: 1; cursor: pointer; }
+@media (hover: hover) { .deco-st button:hover, .deco-th button:hover, .deco-toggle:hover { background: var(--accent-soft); } }
+.deco-mine { display: flex; gap: 8px; margin-bottom: 8px; }
+.deco-mine button { position: relative; width: 44px; height: 44px; border: 1px dashed var(--line); border-radius: 12px; background: var(--field); font-size: 22px; cursor: pointer; }
+.deco-mine b { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); color: #fff; font-size: 12px; line-height: 18px; }
+@media (max-width: 640px) { .cal-day { min-height: 52px; padding: 4px 0; border-radius: 10px; } .cal-out, .cal-in { font-size: 10px; } .cal-n { font-size: 13px; } .cal-st { font-size: 13px; } .deco-st button { font-size: 20px; } }
 
 /* 고정지출 → 구글 캘린더 */
 .chips a.gcal { border: 1px solid var(--line); border-radius: 980px; background: var(--field); color: var(--text); font-size: 14px; padding: 7px 13px; }
