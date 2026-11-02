@@ -383,6 +383,34 @@
     return true;
   }
 
+  // ── 돈 일정: 세금 마감·연말정산·지원금 신청처럼 놓치면 손해인 날 (app.js의 MONEY_CAL) ──
+  // 내 상황을 고르면 나와 상관있는 일정만 보여요 (donsem:mc-me)
+  const ME = [['work', '직장인·알바'], ['biz', '사업자·프리랜서'], ['own', '집·차 있음']];
+  const meOf = e => /종합소득세|부가세|법인세/.test(e.t) ? 'biz' : /종합부동산세|자동차세/.test(e.t) ? 'own' : 'work';
+  let me = ['work', 'biz', 'own'];
+  try { const v = JSON.parse(localStorage.getItem('donsem:mc-me')); if (Array.isArray(v)) me = v.filter(k => ME.some(x => x[0] === k)); } catch (e) { /* 처음이면 모두 */ }
+  const MC_TAG = { '세금': 'tax', '연말정산': 'yet', '월급': 'pay', '지원금': 'aid' };
+  const moneyEvents = () => (typeof MONEY_CAL === 'undefined' ? [] : MONEY_CAL.filter(e => me.includes(meOf(e))));
+  const mcOn = k => moneyEvents().filter(e => e.d === k);
+  function lossHTML(ym) {
+    const nowYm = iso(today).slice(0, 7), list = moneyEvents().filter(e => e.d.startsWith(ym) && (ym !== nowYm || e.d >= iso(today))).sort((a, b) => a.d.localeCompare(b.d));
+    const rows = list.slice(0, 3).map(e => { const n = typeof mcDays === 'function' ? mcDays(e.d) : 0;
+      return `<button type="button" class="loss-row" data-mcday="${e.d}"><em class="${n <= 7 && !e.soft ? 'near' : ''}">${n < 0 ? '지남' : typeof mcBadge === 'function' ? mcBadge(e) : ''}</em><span>${esc(e.t)}</span><i class="mc-dot ${MC_TAG[e.tag] || ''}"></i></button>`; }).join('');
+    return `<div class="cal-loss"><div class="loss-h"><b>${ym === nowYm ? '이번 달' : `${Number(ym.slice(5))}월`} 놓치면 손해</b><button type="button" class="loss-me-btn" data-meopen>내 상황 ›</button></div>
+      ${mePanel ? `<div class="loss-me">${ME.map(([k, n]) => `<button type="button" class="${me.includes(k) ? 'on' : ''}" data-me="${k}">${n}</button>`).join('')}<small>고른 상황에 맞는 세금·지원금 일정만 달력에 보여요</small></div>` : ''}
+      ${rows || `<p class="loss-none">${me.length ? '이 달에는 챙길 돈 일정이 없어요' : '내 상황을 골라 주세요'}</p>`}${list.length > 3 ? `<small class="loss-more">외 ${list.length - 3}개는 달력에서 볼 수 있어요</small>` : ''}</div>`;
+  }
+  let mePanel = false;
+  function mcDayHTML(k) {
+    const list = mcOn(k);
+    if (!list.length) return '';
+    return `<div class="mc-day">${list.map(e => `<div class="mc-day-row"><p><span class="mc-tag ${MC_TAG[e.tag] || ''}">${esc(e.tag)}</span><b>${esc(e.t)}</b></p><small>${esc(e.who)}${e.when ? ` (날짜: ${esc(e.when)})` : ''}</small>
+      <div class="mc-acts">${e.go ? `<a class="go" href="${e.go[0]}">${esc(e.go[1])} ›</a>` : ''}<button type="button" data-mcics="${MONEY_CAL.indexOf(e)}">📅 휴대폰 달력에 넣기</button></div></div>`).join('')}</div>`;
+  }
+  // 지출 히트맵: 많이 쓴 날일수록 칸이 진해져요 (주식 테마 캘린더처럼 한눈에)
+  let heat = false;
+  try { heat = localStorage.getItem('donsem:heat') === '1'; } catch (e) { /* 기본은 끔 */ }
+
   // ── 일정: 여행·생일 같은 계획 (donsem:plans, 이 기기에만 저장) ──
   const PCOLORS = ['pink', 'orange', 'yellow', 'green', 'blue', 'purple'];
   function loadPlans() {
@@ -396,7 +424,7 @@
   function planHTML() {
     if (!selDay) return '';
     const ps = plansOn(selDay);
-    return `<div class="plan-box"><p class="deco-h">일정 <span>${dayLabel(selDay)}</span></p>
+    return `${mcDayHTML(selDay)}<div class="plan-box"><p class="deco-h">일정 <span>${dayLabel(selDay)}</span></p>
       ${ps.map(p => `<div class="plan-row"><i class="pc-${p.c}"></i><b>${esc(p.t)}</b><span>${p.e && p.e !== p.s ? `${mdLabel(p.s)} ~ ${mdLabel(p.e)}` : ''}</span><button type="button" data-pdel="${esc(p.id)}" aria-label="${esc(p.t)} 일정 지우기">×</button></div>`).join('')}
       ${planOpen ? `<div class="plan-form"><div class="field"><input id="p-title" maxlength="20" placeholder="일정 이름 (예: 제주도 여행)" autocomplete="off" enterkeyhint="done" aria-label="일정 이름"></div>
         <div class="plan-opt"><span class="plan-lab">언제까지</span><span class="field"><input id="p-end" type="date" value="${selDay}" min="${selDay}" aria-label="일정이 끝나는 날"></span><small>여행처럼 며칠 이어지면 바꿔요</small></div>
@@ -412,10 +440,18 @@
     toast(`'${t}' 일정을 넣었어요.`);
   }
   function onPlan(e) {
-    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal],[data-goassets]');
+    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal],[data-goassets],[data-mcday],[data-me],[data-meopen],[data-mcics],[data-heat]');
     if (!b) return false;
     if (b.dataset.pc) { pColor = b.dataset.pc; b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }
     else if (b.hasAttribute('data-padd')) addPlan();
+    else if (b.dataset.mcday) { const k = b.dataset.mcday; if (k.startsWith(month)) { selDay = k; planOpen = false; render(); } else goMonth(k.slice(0, 7), k); }
+    else if (b.dataset.me) {
+      me = me.includes(b.dataset.me) ? me.filter(x => x !== b.dataset.me) : me.concat(b.dataset.me);
+      try { localStorage.setItem('donsem:mc-me', JSON.stringify(me)); } catch (err) { /* 저장 안 돼도 화면은 바뀌어요 */ }
+      render();
+    } else if (b.hasAttribute('data-meopen')) { mePanel = !mePanel; render(); }
+    else if (b.dataset.mcics) { if (typeof mcIcs === 'function') { const ev = MONEY_CAL[Number(b.dataset.mcics)]; mcIcs([ev], `돈셈-${ev.t}.ics`); } }
+    else if (b.hasAttribute('data-heat')) { heat = !heat; try { localStorage.setItem('donsem:heat', heat ? '1' : '0'); } catch (err) { /* 괜찮아요 */ } render(); }
     else if (b.hasAttribute('data-goanal') || b.hasAttribute('data-goassets')) { const box = b.hasAttribute('data-goassets') ? $('assets') : $('b-breakdown').closest('section'); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     else if (b.hasAttribute('data-popen') || b.hasAttribute('data-pcancel')) { planOpen = b.hasAttribute('data-popen'); render(); if (planOpen) $('p-title').focus(); }
     else if (b.dataset.pdel) {
@@ -480,16 +516,18 @@
     const [y, m] = month.split('-').map(Number), first = new Date(y, m - 1, 1).getDay(), last = new Date(y, m, 0).getDate();
     const rows = Math.ceil((first + last) / 7), by = {}, fx = fixedByDay(y, m, last);
     list.forEach(e => { const d = by[e.date] = by[e.date] || { in: 0, out: 0 }; d[e.type] += e.amt; });
+    const heatMax = Math.max(1, ...Object.values(by).map(d => d.out));
     let cells = '';
     for (let i = 0; i < rows * 7; i++) { // 앞뒤 달 날짜도 흐리게 채워서 실제 달력처럼 보여요
       const dt = new Date(y, m - 1, i - first + 1), key = iso(dt), dow = i % 7, own = key.startsWith(month), t = own && by[key];
-      const ps = plansOn(key), fs = own ? fx[dt.getDate()] || [] : [];
+      const ps = plansOn(key), fs = own ? fx[dt.getDate()] || [] : [], ms = own ? mcOn(key) : [];
+      const hv = heat && own && t && t.out ? Math.max(.12, Math.sqrt(t.out / heatMax)) : 0; // 제곱근으로 눌러서 작은 지출도 보이게
       const chips = ps.slice(0, 2).map(p => { const st = p.s === key || dow === 0, en = (p.e || p.s) === key || dow === 6;
         // 여러 날 일정은 이름이 이번 주 끝(또는 일정 끝)까지 이어지게 폭을 넓혀요
         const span = st ? Math.min(Math.round((new Date((p.e || p.s) + 'T00:00:00') - dt) / 864e5), 6 - dow) + 1 : 1;
         return `<span class="cal-plan pc-${p.c}${st ? ' st' : ''}${en ? ' en' : ''}${span > 1 ? ' long' : ''}"${span > 1 ? ` style="--span:${span}"` : ''}>${st ? esc(p.t) : '&nbsp;'}</span>`; }).join('') + (ps.length > 2 ? `<span class="cal-more">+${ps.length - 2}</span>` : '');
-      cells += `<button type="button" class="cal-day${own ? '' : ' out'}${dow === 0 ? ' sun' : dow === 6 ? ' sat' : ''}${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${dt.getMonth() + 1}월 ${dt.getDate()}일${ps.length ? ' 일정 ' + ps.map(p => p.t).join(', ') : ''}${fs.length ? ' 고정지출 ' + fs.map(x => `${x.name || x.cat} ${won(Number(x.amt))}`).join(', ') : ''}${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
-        <span class="cal-n">${dt.getDate()}</span>${chips}${fs.map(x => `<span class="cal-fx">${esc(x.name || x.cat || '고정지출')}</span>`).join('')}${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
+      cells += `<button type="button"${hv ? ` style="--heat:${hv.toFixed(2)}"` : ''} class="cal-day${hv ? ' hot' : ''}${own ? '' : ' out'}${dow === 0 ? ' sun' : dow === 6 ? ' sat' : ''}${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${dt.getMonth() + 1}월 ${dt.getDate()}일${ps.length ? ' 일정 ' + ps.map(p => p.t).join(', ') : ''}${fs.length ? ' 고정지출 ' + fs.map(x => `${x.name || x.cat} ${won(Number(x.amt))}`).join(', ') : ''}${ms.length ? ' 돈 일정 ' + ms.map(e => e.t).join(', ') : ''}${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
+        <span class="cal-n">${dt.getDate()}</span>${chips}${ms.map(e => `<span class="cal-mc ${MC_TAG[e.tag] || ''}">${esc(e.t)}</span>`).join('')}${fs.map(x => `<span class="cal-fx">${esc(x.name || x.cat || '고정지출')}</span>`).join('')}${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
     }
     const nowYm = iso(today).slice(0, 7);
     // 토스처럼 달력 위에 이달 지출·수입 합계
@@ -499,7 +537,7 @@
     $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-head"><button type="button" data-cm="-1" aria-label="이전 달">‹</button>
         <span class="cal-title"><b>${y}년 ${m}월</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><input type="month" id="b-jump" value="${month}" aria-label="년도와 달 고르기"></span>
         <button type="button" data-cm="1" aria-label="다음 달">›</button>${month !== nowYm ? '<button type="button" class="cal-today" data-ctoday>오늘</button>' : ''}</div>
-      ${sumHTML}<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div></div>` + planHTML() + decoHTML();
+      ${sumHTML}<div class="cal-tools"><button type="button" class="heat-btn${heat ? ' on' : ''}" data-heat aria-pressed="${heat}">🔥 지출 히트맵</button>${heat ? '<span class="heat-key">적게<i></i><i></i><i></i><i></i>많이</span>' : ''}</div><div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div></div>` + lossHTML(month) + planHTML() + decoHTML();
   }
   $('b-cal').addEventListener('change', e => { if (e.target.id === 'b-jump' && /^\d{4}-\d{2}$/.test(e.target.value)) goMonth(e.target.value); });
   $('b-cal').addEventListener('keydown', e => { if (e.target.id === 'p-title' && e.key === 'Enter') { e.preventDefault(); addPlan(); } });

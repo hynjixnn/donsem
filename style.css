@@ -576,6 +576,39 @@ html { -webkit-tap-highlight-color: transparent; }
 .pace-r.empty span { font-size: 12px; color: var(--muted); text-align: right; line-height: 1.35; }
 .pace-r .pace-g polyline { stroke: var(--text); }
 .pace-r.up .pace-g circle { fill: #ff3b30; } .pace-r.down .pace-g circle { fill: #007aff; } .pace-r:not(.up):not(.down) .pace-g circle { fill: var(--muted); }
+/* 돈 일정(놓치면 손해) */
+.cal-loss { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; background: var(--field); }
+.loss-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.loss-h b { font-size: 15px; }
+.loss-me-btn { border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; padding: 4px 0; }
+.loss-me { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.loss-me button { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.loss-me button.on { border-color: var(--blue); background: var(--blue); color: #fff; }
+.loss-me small { flex-basis: 100%; font-size: 12px; color: var(--muted); }
+.loss-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.loss-row em { flex: none; min-width: 44px; font-style: normal; font-weight: 700; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.loss-row em.near { color: #ff3b30; }
+.loss-row span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
+.loss-none, .loss-more { display: block; margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+.cal-mc { align-self: stretch; margin: 1px -2px 0; padding: 0 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; line-height: 1.4; font-weight: 600; text-align: left; border-radius: 4px; background: rgba(0, 113, 227, .14); color: #0058b0; }
+.cal-mc.tax, .mc-dot.tax { background: rgba(255, 159, 10, .2); color: #b45309; } .mc-dot.tax { background: #ff9f0a; }
+.cal-mc.pay { background: rgba(52, 199, 89, .2); color: #1a7f37; } .mc-dot.pay { background: #34c759; }
+.cal-mc.aid { background: rgba(175, 82, 222, .18); color: #8e3dbb; } .mc-dot.aid { background: #af52de; }
+:root[data-theme="dark"] .cal-mc { color: #8cc4ff; } :root[data-theme="dark"] .cal-mc.tax { color: #ffb36b; } :root[data-theme="dark"] .cal-mc.pay { color: #5fd97f; } :root[data-theme="dark"] .cal-mc.aid { color: #d39bf0; }
+.mc-day { margin-top: 12px; display: grid; gap: 10px; }
+.mc-day-row { padding: 12px 14px; border-radius: 14px; background: var(--field); }
+.mc-day-row p { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; }
+.mc-day-row small { display: block; margin-bottom: 10px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+/* 지출 히트맵 */
+.cal-tools { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 4px 8px; }
+.heat-btn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--field); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.heat-btn.on { border-color: #ff3b30; color: #ff3b30; }
+.heat-key { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--muted); }
+.heat-key i { width: 12px; height: 12px; border-radius: 3px; background: #ff3b30; }
+.heat-key i:nth-child(1) { opacity: .15; } .heat-key i:nth-child(2) { opacity: .35; } .heat-key i:nth-child(3) { opacity: .6; } .heat-key i:nth-child(4) { opacity: .9; }
+.cal-day.hot:not(.today) .cal-n { color: var(--text); }
+.cal-day.hot { background: linear-gradient(rgba(255, 59, 48, calc(var(--heat) * .75)), rgba(255, 59, 48, calc(var(--heat) * .75))), var(--field); }
 .cal-fx { align-self: stretch; margin: 1px -2px 0; padding: 0 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; line-height: 1.4; text-align: left; border-radius: 4px; color: var(--muted); border: 1px dashed var(--line); }
 /* 캘린더 화면 안의 고정지출·내 자산 */
 .mm-note { margin: 14px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
