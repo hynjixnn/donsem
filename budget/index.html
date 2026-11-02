@@ -41,9 +41,6 @@
   </div>
 </header>
 <div class="wrap">
-  <div class="mm-tabs" role="navigation" aria-label="돈 관리">
-    <a href="/budget/">가계부</a><a href="/fixed/">고정지출</a><a href="/assets/">내 자산</a><a href="/goals/">목표</a>
-  </div>
   <nav>
     <a href="/savings/">적금 이자</a>
     <a href="/deposit/">예금 이자</a>
@@ -130,6 +127,82 @@
   </section>
 
 
+  <section class="card sub-card" id="fixed">
+    <h2>고정지출 <small class="h2-note">구독 · 통신 · 보험 · 월세</small></h2>
+    <div class="sum">
+      <div><span>한 달</span><b id="f-month-total"></b></div>
+      <div><span>1년</span><b id="f-year-total"></b></div>
+      <div><span>항목</span><b id="f-count"></b></div>
+    </div>
+    <div id="f-insight"></div>
+    <div id="f-sync"></div>
+    <p class="mm-note">결제일이 캘린더에 점선 칸으로 보여요. 금액을 누르면 바로 고칠 수 있어요.</p>
+    <ul class="items" id="f-items"></ul>
+    <details class="mm-in">
+      <summary>＋ 고정지출 추가하기</summary>
+      <label for="f-name">이름</label>
+      <div class="field memo"><input id="f-name" type="text" maxlength="30" placeholder="넷플릭스" autocomplete="off"></div>
+      <label>종류</label>
+      <div class="chips" id="f-cats"></div>
+      <label for="f-amt">금액</label>
+      <div class="field"><input id="f-amt" inputmode="numeric" placeholder="0" autocomplete="off"><span>원</span></div>
+      <label>결제 주기</label>
+      <div class="seg" id="f-cycle"><button type="button" data-v="month" class="on">매달</button><button type="button" data-v="year">매년</button></div>
+      <label for="f-day">결제일</label>
+      <div class="pair2">
+        <div class="field" id="f-month-wrap" hidden><select id="f-month" aria-label="결제 월"></select></div>
+        <div class="field"><select id="f-day"></select></div>
+      </div>
+      <p class="err" id="f-err" role="alert"></p>
+      <button type="button" class="btn fill wide" id="f-save">고정지출 추가하기</button>
+    </details>
+    <div id="f-subs-card" hidden><h3>구독 정리 리포트</h3><div id="f-subs"></div></div>
+    <details class="mm-in">
+      <summary>휴대폰 캘린더에 결제 알림 넣기</summary>
+      <p class="sub small">결제일을 휴대폰 캘린더에 넣어 두면, 매달 결제 전날 아침 9시에 알림이 와요.</p>
+      <button type="button" class="btn fill wide" id="f-ics">아이폰 · 맥 · 삼성 캘린더에 모두 넣기</button>
+      <p class="sub small" style="margin-top:18px">구글 캘린더는 하나씩 눌러서 넣어요.</p>
+      <div class="chips" id="f-gcal"></div>
+    </details>
+    <div hidden><ul id="f-upcoming"></ul><button type="button" id="f-export"></button><input type="file" id="f-import"><button type="button" id="f-reset"></button></div>
+  </section>
+
+  <section class="card sub-card" id="assets">
+    <h2>내 자산 <small class="h2-note">통장 · 투자 · 대출</small></h2>
+    <div class="net">
+      <span>순자산</span>
+      <b id="a-net"></b>
+      <small id="a-net-kr"></small>
+    </div>
+    <div class="sum two">
+      <div><span>자산</span><b id="a-total"></b></div>
+      <div><span>부채</span><b id="a-debt"></b></div>
+    </div>
+    <div id="a-insight"></div>
+    <p class="mm-note">금액을 누르면 바로 고칠 수 있어요. 한 달에 한 번 잔액을 고치면 캘린더 위 그래프가 따라 움직여요.</p>
+    <ul class="items" id="a-items"></ul>
+    <details class="mm-in">
+      <summary>＋ 자산 · 부채 추가하기</summary>
+      <div class="seg" id="a-kind"><button type="button" data-v="asset" class="on">자산</button><button type="button" data-v="debt">부채</button></div>
+      <label>종류</label>
+      <div class="chips" id="a-cats"></div>
+      <label for="a-name">이름 (선택)</label>
+      <div class="field memo"><input id="a-name" type="text" maxlength="30" autocomplete="off"></div>
+      <label for="a-amt">금액</label>
+      <div class="field"><input id="a-amt" inputmode="numeric" placeholder="0" autocomplete="off"><span>원</span></div>
+      <p class="err" id="a-err" role="alert"></p>
+      <button type="button" class="btn fill wide" id="a-save">자산 추가하기</button>
+    </details>
+    <details class="mm-in">
+      <summary>자산 구성 · 월별 순자산 보기</summary>
+      <h3>자산 구성</h3>
+      <div id="a-mix"></div>
+      <h3>월별 순자산</h3>
+      <div id="a-history"></div>
+    </details>
+    <div hidden><button type="button" id="a-export"></button><input type="file" id="a-import"><button type="button" id="a-reset"></button></div>
+  </section>
+
   <section class="card sub-card">
     <h2>어디에 썼나요</h2>
     <div id="b-breakdown"></div>
@@ -152,7 +225,7 @@
 
   <section class="card sub-card">
     <h2>백업</h2>
-    <p class="sub small">기록은 이 기기의 브라우저에만 있어요. 휴대폰을 바꾸거나 브라우저 기록을 지우기 전에 백업 파일을 저장해 두세요.</p>
+    <p class="sub small">가계부 · 일정 · 스티커 · 고정지출 · 내 자산을 파일 하나에 저장해요. 기록은 이 기기의 브라우저에만 있으니, 휴대폰을 바꾸거나 브라우저 기록을 지우기 전에 저장해 두세요.</p>
     <div class="row-btns">
       <button type="button" class="btn line" id="b-export">백업 파일 저장</button>
       <label class="btn line file-btn">백업 불러오기<input type="file" id="b-import" accept=".json,application/json"></label>
@@ -177,6 +250,8 @@
 </div>
 <script src="/app.js"></script>
 <script src="/budget.js"></script>
+<script src="/fixed.js"></script>
+<script src="/assets.js"></script>
 <!-- Cloudflare Web Analytics: 쿠키 없이 방문 수만 세요 --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4ddea5349bb94a689667508931ca47d8"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
