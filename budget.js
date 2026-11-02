@@ -73,9 +73,12 @@
 
   // ── 달 넘기기 ──
   document.querySelectorAll('.month-nav [data-m]').forEach(b => b.addEventListener('click', () => {
-    const [y, m] = month.split('-').map(Number), d = new Date(y, m - 1 + Number(b.dataset.m), 1);
-    month = iso(d).slice(0, 7); selDay = month === iso(today).slice(0, 7) ? iso(today) : null; editingBudget = false; render();
+    const [y, m] = month.split('-').map(Number);
+    goMonth(iso(new Date(y, m - 1 + Number(b.dataset.m), 1)).slice(0, 7));
   }));
+  function goMonth(ym, day) {
+    month = ym; selDay = day || (month === iso(today).slice(0, 7) ? iso(today) : null); editingBudget = false; render();
+  }
 
   // ── 그리기 ──
   function render() {
@@ -380,26 +383,79 @@
     return true;
   }
 
+  // ── 일정: 여행·생일 같은 계획 (donsem:plans, 이 기기에만 저장) ──
+  const PCOLORS = ['pink', 'orange', 'yellow', 'green', 'blue', 'purple'];
+  function loadPlans() {
+    try { const d = JSON.parse(localStorage.getItem('donsem:plans')); if (d && Array.isArray(d.items)) return d.items; } catch (e) { /* 처음이면 비어 있어요 */ }
+    return [];
+  }
+  let plans = loadPlans(), pColor = 'pink';
+  const savePlans = () => { try { localStorage.setItem('donsem:plans', JSON.stringify({ items: plans })); } catch (e) { toast('이 브라우저에서는 저장할 수 없어요.'); } };
+  const plansOn = k => plans.filter(p => p.s <= k && k <= (p.e || p.s)).sort((a, b) => a.s.localeCompare(b.s) || a.id.localeCompare(b.id));
+  const mdLabel = k => `${Number(k.slice(5, 7))}.${Number(k.slice(8))}`;
+  function planHTML() {
+    if (!selDay) return '';
+    const ps = plansOn(selDay);
+    return `<div class="plan-box"><p class="deco-h">일정 <span>${dayLabel(selDay)}</span></p>
+      ${ps.map(p => `<div class="plan-row"><i class="pc-${p.c}"></i><b>${esc(p.t)}</b><span>${p.e && p.e !== p.s ? `${mdLabel(p.s)} ~ ${mdLabel(p.e)}` : ''}</span><button type="button" data-pdel="${esc(p.id)}" aria-label="${esc(p.t)} 일정 지우기">×</button></div>`).join('')}
+      <div class="plan-form"><div class="field"><input id="p-title" maxlength="20" placeholder="예: 제주도 여행, 엄마 생일" autocomplete="off" enterkeyhint="done" aria-label="일정 이름"></div>
+        <div class="plan-opt"><label>끝나는 날<span class="field"><input id="p-end" type="date" value="${selDay}" min="${selDay}"></span></label>
+        <div class="plan-colors" role="group" aria-label="일정 색">${PCOLORS.map(c => `<button type="button" class="pc-${c}${c === pColor ? ' on' : ''}" data-pc="${c}" aria-label="${c} 색"></button>`).join('')}</div></div>
+        <button type="button" class="btn fill wide" data-padd>일정 추가</button></div></div>`;
+  }
+  function addPlan() {
+    const t = $('p-title').value.trim().slice(0, 20), end = $('p-end').value;
+    if (!t) { toast('일정 이름을 적어 주세요.'); $('p-title').focus(); return; }
+    plans.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), s: selDay, e: end && end > selDay ? end : selDay, t, c: pColor });
+    savePlans(); render();
+    toast(`'${t}' 일정을 넣었어요.`);
+  }
+  function onPlan(e) {
+    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday]');
+    if (!b) return false;
+    if (b.dataset.pc) { pColor = b.dataset.pc; b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }
+    else if (b.hasAttribute('data-padd')) addPlan();
+    else if (b.dataset.pdel) {
+      const p = plans.find(x => x.id === b.dataset.pdel);
+      if (p && confirm(`'${p.t}' 일정을 지울까요?`)) { plans = plans.filter(x => x !== p); savePlans(); render(); }
+    } else if (b.dataset.cm) { const [y, m] = month.split('-').map(Number); goMonth(iso(new Date(y, m - 1 + Number(b.dataset.cm), 1)).slice(0, 7)); }
+    else goMonth(iso(today).slice(0, 7));
+    return true;
+  }
+
   // ── 달력 ──
   const short = n => n < 1e4 ? n.toLocaleString('ko-KR') : (n < 1e5 ? Math.round(n / 1e3) / 10 : Math.round(n / 1e4)).toLocaleString('ko-KR') + '만';
   function drawCal(list) {
     const [y, m] = month.split('-').map(Number), first = new Date(y, m - 1, 1).getDay(), last = new Date(y, m, 0).getDate();
-    const by = {};
+    const rows = Math.ceil((first + last) / 7), by = {};
     list.forEach(e => { const d = by[e.date] = by[e.date] || { in: 0, out: 0 }; d[e.type] += e.amt; });
     let cells = '';
-    for (let i = 0; i < first; i++) cells += '<span class="cal-blank"></span>';
-    for (let d = 1; d <= last; d++) {
-      const key = `${month}-${String(d).padStart(2, '0')}`, t = by[key];
-      cells += `<button type="button" class="cal-day${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${m}월 ${d}일${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
-        <span class="cal-n">${d}</span>${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
+    for (let i = 0; i < rows * 7; i++) { // 앞뒤 달 날짜도 흐리게 채워서 실제 달력처럼 보여요
+      const dt = new Date(y, m - 1, i - first + 1), key = iso(dt), dow = i % 7, own = key.startsWith(month), t = own && by[key];
+      const ps = plansOn(key);
+      const chips = ps.slice(0, 2).map(p => { const st = p.s === key || dow === 0, en = (p.e || p.s) === key || dow === 6;
+        // 여러 날 일정은 이름이 이번 주 끝(또는 일정 끝)까지 이어지게 폭을 넓혀요
+        const span = st ? Math.min(Math.round((new Date((p.e || p.s) + 'T00:00:00') - dt) / 864e5), 6 - dow) + 1 : 1;
+        return `<span class="cal-plan pc-${p.c}${st ? ' st' : ''}${en ? ' en' : ''}${span > 1 ? ' long' : ''}"${span > 1 ? ` style="--span:${span}"` : ''}>${st ? esc(p.t) : '&nbsp;'}</span>`; }).join('') + (ps.length > 2 ? `<span class="cal-more">+${ps.length - 2}</span>` : '');
+      cells += `<button type="button" class="cal-day${own ? '' : ' out'}${dow === 0 ? ' sun' : dow === 6 ? ' sat' : ''}${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${dt.getMonth() + 1}월 ${dt.getDate()}일${ps.length ? ' 일정 ' + ps.map(p => p.t).join(', ') : ''}${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
+        <span class="cal-n">${dt.getDate()}</span>${chips}${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
     }
+    const nowYm = iso(today).slice(0, 7);
     $('b-cal').dataset.th = deco.th;
-    $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div></div>` + decoHTML();
+    $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-head"><button type="button" data-cm="-1" aria-label="이전 달">‹</button>
+        <span class="cal-title"><b>${y}년 ${m}월</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><input type="month" id="b-jump" value="${month}" aria-label="년도와 달 고르기"></span>
+        <button type="button" data-cm="1" aria-label="다음 달">›</button>${month !== nowYm ? '<button type="button" class="cal-today" data-ctoday>오늘</button>' : ''}</div>
+      <div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div></div>` + planHTML() + decoHTML();
   }
+  $('b-cal').addEventListener('change', e => { if (e.target.id === 'b-jump' && /^\d{4}-\d{2}$/.test(e.target.value)) goMonth(e.target.value); });
+  $('b-cal').addEventListener('keydown', e => { if (e.target.id === 'p-title' && e.key === 'Enter') { e.preventDefault(); addPlan(); } });
+  $('b-cal').addEventListener('input', e => { if (e.target.id === 'p-end' && e.target.value && e.target.value < selDay) e.target.value = selDay; });
   $('b-cal').addEventListener('click', e => {
-    if (onDeco(e)) return;
+    if (e.target.id === 'b-jump') { try { e.target.showPicker(); } catch (err) { /* 누르면 바로 열리는 브라우저도 있어요 */ } return; }
+    if (onPlan(e) || onDeco(e)) return;
     const b = e.target.closest('[data-day]');
     if (!b) return;
+    if (!b.dataset.day.startsWith(month)) return goMonth(b.dataset.day.slice(0, 7), b.dataset.day);
     selDay = b.dataset.day; render();
   });
   $('b-view').addEventListener('click', e => {
@@ -483,7 +539,7 @@
   }
   const stamp = () => iso(new Date()).replace(/-/g, '');
   $('b-export').addEventListener('click', () => {
-    download(`돈셈-가계부-백업-${stamp()}.json`, JSON.stringify({ app: 'donsem', version: 1, ...data, deco }, null, 2), 'application/json');
+    download(`돈셈-가계부-백업-${stamp()}.json`, JSON.stringify({ app: 'donsem', version: 1, ...data, deco, plans }, null, 2), 'application/json');
     toast('백업 파일을 저장했어요. 안전한 곳에 보관하세요.');
   });
   $('b-csv').addEventListener('click', () => {
@@ -511,6 +567,12 @@
         Object.keys(d.deco.st).forEach(k => { const l = d.deco.st[k]; if (/^\d{4}-\d{2}-\d{2}$/.test(k) && !deco.st[k] && Array.isArray(l)) deco.st[k] = l.filter(c => STICKERS.includes(c)).slice(0, ST_MAX); });
         if (deco.th === 'basic' && THEMES.some(t => t[0] === d.deco.th)) deco.th = d.deco.th;
         saveDeco();
+      }
+      if (Array.isArray(d.plans)) { // 일정도 없는 것만 더해요
+        const ids = new Set(plans.map(p => p.id));
+        plans = plans.concat(d.plans.filter(p => p && p.id && !ids.has(p.id) && /^\d{4}-\d{2}-\d{2}$/.test(p.s) && p.t)
+          .map(p => ({ id: String(p.id), s: p.s, e: /^\d{4}-\d{2}-\d{2}$/.test(p.e) && p.e > p.s ? p.e : p.s, t: String(p.t).slice(0, 20), c: PCOLORS.includes(p.c) ? p.c : 'pink' })));
+        savePlans();
       }
       save(); render();
       toast(`기록 ${fresh.length}개를 불러왔어요.`);
