@@ -444,11 +444,14 @@
         <span class="cal-n">${dt.getDate()}</span>${chips}${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
     }
     const nowYm = iso(today).slice(0, 7);
+    // 토스처럼 달력 위에 이달 지출·수입 합계
+    const tot = list.reduce((o, e) => (o[e.type] += e.amt, o), { in: 0, out: 0 });
+    const sumHTML = `<div class="cal-sum"><div><span>지출</span><b>${tot.out ? '-' : ''}${won(tot.out)}</b></div><div><span>수입</span><b>${tot.in ? '+' : ''}${won(tot.in)}</b></div></div>`;
     $('b-cal').dataset.th = deco.th;
     $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-head"><button type="button" data-cm="-1" aria-label="이전 달">‹</button>
         <span class="cal-title"><b>${y}년 ${m}월</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><input type="month" id="b-jump" value="${month}" aria-label="년도와 달 고르기"></span>
         <button type="button" data-cm="1" aria-label="다음 달">›</button>${month !== nowYm ? '<button type="button" class="cal-today" data-ctoday>오늘</button>' : ''}</div>
-      <div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div>${STRIPS[deco.th] ? `<div class="cal-strip" aria-hidden="true">${STRIPS[deco.th]}</div>` : ''}</div>` + planHTML() + decoHTML();
+      ${sumHTML}<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div>${STRIPS[deco.th] ? `<div class="cal-strip" aria-hidden="true">${STRIPS[deco.th]}</div>` : ''}</div>` + planHTML() + decoHTML();
   }
   $('b-cal').addEventListener('change', e => { if (e.target.id === 'b-jump' && /^\d{4}-\d{2}$/.test(e.target.value)) goMonth(e.target.value); });
   $('b-cal').addEventListener('keydown', e => { if (e.target.id === 'p-title' && e.key === 'Enter') { e.preventDefault(); addPlan(); } });

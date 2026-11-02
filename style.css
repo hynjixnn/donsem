@@ -564,7 +564,19 @@ html { -webkit-tap-highlight-color: transparent; }
 .cal-out { color: var(--text); }
 .cal-in { color: var(--blue); }
 /* 달력 꾸미기: 테마(--th 색, --strip 아래 장식)와 스티커 */
-.cal-st { margin-top: auto; font-size: 15px; line-height: 1; letter-spacing: -3px; white-space: nowrap; }
+.cal-st { margin-top: auto; max-width: 100%; font-size: 15px; line-height: 1.1; letter-spacing: -2px; white-space: nowrap; overflow: hidden; }
+.cal-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 4px 12px; padding: 12px 14px; border-radius: 14px; background: var(--field); }
+.cal-sum span { display: block; font-size: 13px; color: var(--muted); }
+.cal-sum b { display: block; margin-top: 2px; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) {
+  /* 휴대폰: 달력 칸을 넓히려고 좌우 여백을 줄여요 */
+  .cal-card { margin-left: -12px; margin-right: -12px; padding-left: 14px; padding-right: 14px; }
+  .cal-card .cal { margin-left: -8px; margin-right: -8px; }
+  .cal[data-th]:not([data-th="basic"]) .cal-paper { padding: 8px 4px 6px; }
+  .cal-week, .cal-grid { gap: 3px; }
+  .cal { --cg: 3px; }
+  .cal-sum b { font-size: 18px; }
+}
 .cal[data-th]:not([data-th="basic"]) .cal-paper { padding: 10px 8px 6px; border-radius: 18px; background: var(--thbg); }
 :root[data-theme="dark"] .cal[data-th]:not([data-th="basic"]) .cal-paper { background: var(--thbg-d); }
 @media (prefers-color-scheme: dark) { :root[data-theme="auto"] .cal[data-th]:not([data-th="basic"]) .cal-paper { background: var(--thbg-d); } }
@@ -583,10 +595,10 @@ html { -webkit-tap-highlight-color: transparent; }
 .cal-title svg { width: 14px; height: 14px; color: var(--muted); }
 .cal-title input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; cursor: pointer; }
 .cal-plan { align-self: stretch; margin: 1px -2px 0; padding: 1px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; line-height: 1.35; font-weight: 600; text-align: left; color: #3a3a3c; background: var(--pc); }
-.cal-plan:not(.en) { margin-right: -6px; }
+.cal-plan:not(.en) { margin-right: calc(-2px - var(--cg, 4px)); }
 .cal-plan.st { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
 .cal-plan.en { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
-.cal-plan.long { position: relative; z-index: 1; align-self: flex-start; width: calc(var(--span) * 100% + var(--span) * 8px - 4px); border-radius: 4px 0 0 4px; }
+.cal-plan.long { position: relative; z-index: 1; align-self: flex-start; width: calc(var(--span) * 100% + var(--span) * (var(--cg, 4px) + 4px) - var(--cg, 4px)); border-radius: 4px 0 0 4px; }
 .cal-plan.long.en { border-radius: 4px; }
 #p-title { text-align: left; }
 .cal-more { font-size: 10px; color: var(--muted); line-height: 1.2; }
@@ -634,7 +646,7 @@ html { -webkit-tap-highlight-color: transparent; }
 .deco-mine { display: flex; gap: 8px; margin-bottom: 8px; }
 .deco-mine button { position: relative; width: 44px; height: 44px; border: 1px dashed var(--line); border-radius: 12px; background: var(--field); font-size: 22px; cursor: pointer; }
 .deco-mine b { position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); color: #fff; font-size: 12px; line-height: 18px; }
-@media (max-width: 640px) { .cal-day { min-height: 64px; padding: 4px 2px; border-radius: 10px; } .cal-out, .cal-in { font-size: 10px; } .cal-n { font-size: 13px; } .cal-st { font-size: 13px; } .deco-st button { font-size: 20px; } }
+@media (max-width: 640px) { .cal-day { min-height: 64px; padding: 4px 2px; border-radius: 10px; } .cal-out, .cal-in { font-size: 10px; } .cal-n { font-size: 13px; } .cal-st { font-size: 12px; letter-spacing: -2.5px; padding-right: 2.5px; } .deco-st button { font-size: 20px; } }
 
 /* 고정지출 → 구글 캘린더 */
 .chips a.gcal { border: 1px solid var(--line); border-radius: 980px; background: var(--field); color: var(--text); font-size: 14px; padding: 7px 13px; }
