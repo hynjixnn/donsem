@@ -565,7 +565,17 @@ html { -webkit-tap-highlight-color: transparent; }
 .cal-in { color: var(--blue); }
 /* 달력 꾸미기: 테마(--th 색, --strip 아래 장식)와 스티커 */
 .cal-st { margin-top: auto; max-width: 100%; font-size: 15px; line-height: 1.1; letter-spacing: -2px; white-space: nowrap; overflow: hidden; }
-.cal-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 4px 12px; padding: 12px 14px; border-radius: 14px; background: var(--field); }
+.cal-sum { margin: 4px 4px 12px; padding: 12px 14px 4px; border-radius: 14px; background: var(--field); }
+.cal-tot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.cal-pace { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 10px 0 8px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.cal-pace > span { flex: 1; min-width: 0; }
+.cal-pace b { display: block; font-size: 15px; font-weight: 700; color: var(--text); }
+.cal-pace small { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); }
+.pace-g { flex: none; width: 112px; height: 44px; overflow: visible; }
+.pace-g polyline { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.pace-last { stroke: var(--line); }
+.pace-now { stroke: var(--text); }
+.pace-g circle { fill: #ff3b30; }
 .cal-sum span { display: block; font-size: 13px; color: var(--muted); }
 .cal-sum b { display: block; margin-top: 2px; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 640px) {
@@ -576,6 +586,8 @@ html { -webkit-tap-highlight-color: transparent; }
   .cal-week, .cal-grid { gap: 3px; }
   .cal { --cg: 3px; }
   .cal-sum b { font-size: 18px; }
+  .cal-pace b { font-size: 14px; }
+  .pace-g { width: 80px; height: 36px; }
 }
 .cal[data-th]:not([data-th="basic"]) .cal-paper { padding: 10px 8px 6px; border-radius: 18px; background: var(--thbg); }
 :root[data-theme="dark"] .cal[data-th]:not([data-th="basic"]) .cal-paper { background: var(--thbg-d); }

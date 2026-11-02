@@ -413,10 +413,11 @@
     toast(`'${t}' 일정을 넣었어요.`);
   }
   function onPlan(e) {
-    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel]');
+    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal]');
     if (!b) return false;
     if (b.dataset.pc) { pColor = b.dataset.pc; b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }
     else if (b.hasAttribute('data-padd')) addPlan();
+    else if (b.hasAttribute('data-goanal')) { const box = $('b-breakdown').closest('section'); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     else if (b.hasAttribute('data-popen') || b.hasAttribute('data-pcancel')) { planOpen = b.hasAttribute('data-popen'); render(); if (planOpen) $('p-title').focus(); }
     else if (b.dataset.pdel) {
       const p = plans.find(x => x.id === b.dataset.pdel);
@@ -428,6 +429,30 @@
 
   // ── 달력 ──
   const short = n => n < 1e4 ? n.toLocaleString('ko-KR') : (n < 1e5 ? Math.round(n / 1e3) / 10 : Math.round(n / 1e4)).toLocaleString('ko-KR') + '만';
+  // 지난달 같은 날까지 쓴 돈과 비교해서, 소비 습관이 유지되는지 한 줄로 알려 줘요
+  function paceHTML(y, m) {
+    const ym = `${y}-${String(m).padStart(2, '0')}`, prev = iso(new Date(y, m - 2, 1)).slice(0, 7);
+    const days = new Date(y, m, 0).getDate(), pdays = new Date(y, m - 1, 0).getDate();
+    const daily = k => { const a = []; data.entries.forEach(e => { if (e.type === 'out' && e.date.startsWith(k)) a[Number(e.date.slice(8))] = (a[Number(e.date.slice(8))] || 0) + e.amt; }); return a; };
+    const cum = (a, n) => { const r = [0]; for (let d = 1; d <= n; d++) r[d] = r[d - 1] + (a[d] || 0); return r; };
+    const now = cum(daily(ym), days), last = cum(daily(prev), pdays);
+    const nowYm = iso(today).slice(0, 7), upTo = ym === nowYm ? today.getDate() : ym < nowYm ? days : 0;
+    const a = now[upTo] || 0, b = last[Math.min(upTo, pdays)] || 0;
+    let title;
+    if (!upTo) title = '아직 오지 않은 달이에요';
+    else if (!b && !a) title = '이번 달 첫 지출을 기록해 보세요';
+    else if (!b) title = '지난달 기록이 없어서 비교할 수 없어요';
+    else if (a < b * 0.9) title = `지난달보다 ${won(b - a)} 덜 쓰는 중`;
+    else if (a > b * 1.1) title = `지난달보다 ${won(a - b)} 더 쓰는 중`;
+    else title = '지난달과 비슷하게 쓰는 중';
+    if (upTo && ym < nowYm) title = title.replace(' 쓰는 중', ' 썼어요');
+    // 작은 누적 그래프: 회색은 지난달, 진한 선은 이번 달
+    const W = 120, H = 44, top = Math.max(now[days], last[pdays], 1);
+    const pts = (r, n, k) => r.slice(0, k + 1).map((v, d) => `${(d / n * W).toFixed(1)},${(H - 4 - v / top * (H - 8)).toFixed(1)}`).join(' ');
+    const end = upTo ? pts(now, days, upTo).split(' ').pop().split(',') : null;
+    const svg = `<svg class="pace-g" viewBox="-4 0 ${W + 8} ${H}" aria-hidden="true"><polyline class="pace-last" points="${pts(last, pdays, pdays)}"/>${upTo ? `<polyline class="pace-now" points="${pts(now, days, upTo)}"/><circle cx="${end[0]}" cy="${end[1]}" r="3.5"/>` : ''}</svg>`;
+    return `<button type="button" class="cal-pace" data-goanal><span><b>${title}</b><small>분석·고정 지출 보기 ›</small></span>${svg}</button>`;
+  }
   function drawCal(list) {
     const [y, m] = month.split('-').map(Number), first = new Date(y, m - 1, 1).getDay(), last = new Date(y, m, 0).getDate();
     const rows = Math.ceil((first + last) / 7), by = {};
@@ -446,7 +471,7 @@
     const nowYm = iso(today).slice(0, 7);
     // 토스처럼 달력 위에 이달 지출·수입 합계
     const tot = list.reduce((o, e) => (o[e.type] += e.amt, o), { in: 0, out: 0 });
-    const sumHTML = `<div class="cal-sum"><div><span>지출</span><b>${tot.out ? '-' : ''}${won(tot.out)}</b></div><div><span>수입</span><b>${tot.in ? '+' : ''}${won(tot.in)}</b></div></div>`;
+    const sumHTML = `<div class="cal-sum"><div class="cal-tot"><div><span>지출</span><b>${tot.out ? '-' : ''}${won(tot.out)}</b></div><div><span>수입</span><b>${tot.in ? '+' : ''}${won(tot.in)}</b></div></div>${paceHTML(y, m)}</div>`;
     $('b-cal').dataset.th = deco.th;
     $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-head"><button type="button" data-cm="-1" aria-label="이전 달">‹</button>
         <span class="cal-title"><b>${y}년 ${m}월</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><input type="month" id="b-jump" value="${month}" aria-label="년도와 달 고르기"></span>
