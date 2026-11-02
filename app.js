@@ -582,11 +582,16 @@ function pensionCalc() {
   const refund = Math.floor(base * rate);
   let bal = 0;
   for (let i = 0; i < y; i++) bal = (bal + ps + irp) * (1 + r);
+  // IRP 계좌 수수료: 은행 IRP는 보통 연 0.1~0.5%가 잔액에서 빠져요. 수수료 0% 계좌와 비교해요
+  const fee = Math.max(0, Math.min(3, val('pn_fee'))) / 100;
+  let i0 = 0, i1 = 0;
+  for (let i = 0; i < y; i++) { i0 = (i0 + irp) * (1 + r); i1 = (i1 + irp) * (1 + r) * (1 - fee); }
+  const feeLoss = Math.max(0, i0 - i1);
   const paid = (ps + irp) * y, mr = r / 12, m = n * 12;
   const monthly = bal ? (mr ? bal * mr / (1 - Math.pow(1 + mr, -m)) : bal / m) : 0; // 받는 동안에도 같은 수익률로 굴린다고 봐요
   const freeShare = bal ? Math.min(1, (ps + irp - base) * y / bal) : 0; // 세액공제를 안 받은 원금은 받을 때 세금이 없어요
   const tax = monthly * (1 - freeShare) * 0.055; // 연금소득세: 55~69세 5.5% (70대 4.4%, 80세 이상 3.3%)
-  return { pay, ps, irp, y, n, base, rate, refund, bal, paid, monthly, net: monthly - tax, over: monthly * 12 * (1 - freeShare) > 15000000, room: Math.max(0, 9000000 - base), psOver: ps > 6000000 };
+  return { pay, ps, irp, y, n, base, rate, refund, bal, paid, monthly, fee, feeLoss, net: monthly - tax, over: monthly * 12 * (1 - freeShare) > 15000000, room: Math.max(0, 9000000 - base), psOver: ps > 6000000 };
 }
 function pension() {
   const o = pensionCalc(), out = document.getElementById('pn_out');
@@ -595,6 +600,7 @@ function pension() {
   out.innerHTML = `<div>연말정산에서 매년 돌려받는 돈</div><div class="big">${won(o.refund)} <small>/ 년</small></div>` +
     rows([['세액공제 받는 금액', won(o.base)], ['공제율', o.rate === 0.165 ? '16.5% (총급여 5,500만 원 이하)' : '13.2% (총급여 5,500만 원 초과)'], [`${o.y}년 동안 돌려받는 돈`, won(o.refund * o.y)],
       ['넣은 돈 (원금)', won(o.paid)], [`${o.y}년 뒤 모인 돈 (세전)`, won(o.bal)], [`${o.n}년 동안 매달 받는 연금 (세전)`, won(o.monthly)], ['연금소득세 뺀 금액 (55~69세 기준)', won(o.net)]]) +
+    (o.irp && o.fee ? `<p class="pn-fee"><b>IRP 수수료 연 ${+(o.fee * 100).toFixed(2)}%면 ${o.y}년 동안 약 ${won(Math.round(o.feeLoss / 1e4) * 1e4)}이 수수료로 빠져요.</b>수수료 0원 계좌(증권사 다이렉트 IRP 등)로 <b>해지 말고 '계좌 이전'</b>을 하면 세금 없이 옮길 수 있어요. <a href="/guide/irp-transfer/">IRP 계좌 이전 6단계 ›</a></p>` : '') +
     (o.psOver ? note('연금저축은 600만 원까지만 세액공제를 받아요. 넘는 돈은 IRP에 넣어야 900만 원까지 채울 수 있어요.') : '') +
     (o.over ? note('세금이 붙는 연금이 1년에 1,500만 원을 넘으면, 16.5% 분리과세와 종합과세 중 하나를 골라야 해요. 받는 기간을 늘려 1년에 받는 금액을 줄이면 저율(3.3~5.5%)로 받을 수 있어요.') : '');
 }
@@ -3002,7 +3008,7 @@ const GUIDE_FOR = {
   '/unemployment/': [['unemployment', '실업급여 조건과 금액']],
   '/severance/': [['unemployment', '실업급여 조건과 금액']],
   '/year-end-tax/': [['year-end-preview', '연말정산 미리 계산하기'], ['card-deduction', '신용카드·체크카드 비율'], ['missed-deductions', '놓치기 쉬운 공제 4가지']],
-  '/pension/': [['irp-pension', 'IRP·연금저축 세액공제'], ['year-end-basics', '연말정산 환급 기본']],
+  '/pension/': [['irp-transfer', 'IRP 계좌 이전 6단계'], ['irp-pension', 'IRP·연금저축 세액공제'], ['year-end-basics', '연말정산 환급 기본']],
 };
 (() => {
   const g = GUIDE_FOR[location.pathname], foot = document.querySelector('.wrap > footer');
