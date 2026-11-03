@@ -1526,17 +1526,18 @@ document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click',
 }));
 if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (document.documentElement.dataset.theme === 'auto') applyTheme('auto', false); });
 
-// ── 휴대폰 하단 탭: 홈 · 계산기 · ＋기록 · 캘린더(가계부 달력) · 마이 ──
+// ── 휴대폰 하단 탭: 홈 · 계산기 · 부동산 · 캘린더(가계부 달력) · 마이 ── (＋기록 창은 첫 화면 '오늘 쓴 돈 정리'에서 열려요)
 (() => {
   const path = location.pathname;
   const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/', '/money-calendar/'], MY = ['/my/', '/about/', '/privacy/', '/collection/'];
   const HOME = ['/', '/quiz/', '/money-type/', '/no-spend/']; // 퀴즈·돈BTI·무지출은 홈에서 들어가는 곳이라 '홈'이 켜져요 (예전엔 '계산기'가 켜졌어요)
-  const active = HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : 'calc';
+  const ESTATE = ['/real-estate/', '/acquisition-tax/', '/brokerage-fee/'];
+  const active = HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : ESTATE.includes(path) ? 'estate' : 'calc';
   const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const tabs = [
     ['home', '/', '홈', '<span class="tab-logo" aria-hidden="true"></span>'], // 위버스처럼 홈 버튼에는 집 모양 대신 돈셈 아이콘
     ['calc', '/calculators/', '계산기', ic('<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/>')],
-    ['add', '', '기록', ic('<path d="M12 6v12M6 12h12"/>')],
+    ['estate', '/real-estate/', '부동산', ic('<path d="M3.5 10.5 12 4l8.5 6.5"/><path d="M5.5 9v10.5h13V9"/><path d="M10 19.5v-5h4v5"/>')],
     ['money', '/budget/', '캘린더', ic('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>')], // 누르면 가계부 달력이 맨 위에 보여요
     ['my', '/my/', '마이', ic('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')],
   ];
@@ -1659,7 +1660,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     if (typeof window.drawToday === 'function') window.drawToday();
     if (path === '/budget/') setTimeout(() => location.reload(), 1200); // 가계부를 보고 있었다면 바로 반영
   }
-  bar.querySelector('.tab-add').addEventListener('click', open);
+  window.openQuickAdd = open; // 아래 탭에서는 빠졌지만, 첫 화면 '오늘 쓴 돈 정리 → 기록'에서 이 창을 열어요
 })();
 
 // ── 다음에 많이 보는 계산: 결과 아래에 이어서 볼 계산기를, 지금 넣은 숫자를 채운 채로 추천해요 ──
@@ -2486,8 +2487,8 @@ function markDailyFull() {
   const host = document.getElementById('daily'), quizCard = document.querySelector('.quiz-home') || document.querySelector('.wrap > .group');
   if (host) host.append(sec); else if (quizCard) quizCard.before(sec); else return;
   const openAdd = () => {
-    const add = document.querySelector('.tabbar .tab-add');
-    if (add && getComputedStyle(document.querySelector('.tabbar')).display !== 'none') add.click(); // 휴대폰: 아래에서 기록 창
+    const bar = document.querySelector('.tabbar');
+    if (typeof window.openQuickAdd === 'function' && bar && getComputedStyle(bar).display !== 'none') window.openQuickAdd(); // 휴대폰: 아래에서 기록 창
     else location.href = '/budget/';
   };
   function draw() {
