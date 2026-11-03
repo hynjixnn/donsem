@@ -151,3 +151,23 @@
     $('my-install').innerHTML = '<span class="my-installed">✓</span> 지금 홈 화면에 설치한 돈셈 앱으로 쓰고 있어요.'; // 체크 표시가 줄 끝에 홀로 떨어지지 않게 앞에 둬요
   }
 })();
+
+// ── 마이: 즐겨찾기 · 최근 본 계산기 (무신사 '좋아요 · 최근 본'처럼 탭으로) ──
+(() => {
+  const box = document.getElementById('my-likes'); if (!box || typeof MENU === 'undefined') return;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const get = k => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch (e) { return []; } };
+  const nameOf = {}; MENU.forEach(([, items]) => items.forEach(([p, n]) => { nameOf[p] = nameOf[p] || n; }));
+  const favs = get('donsem:favs').filter(p => nameOf[p]).map(p => ({ p, name: nameOf[p] }));
+  const recent = get('donsem:recent').filter(r => r && r.p).map(r => ({ p: r.p, name: nameOf[r.p] || r.name, big: r.big }));
+  const tabs = [['fav', '즐겨찾기', favs, '아직 즐겨찾기가 없어요. 계산기 화면의 ☆를 누르면 여기에 모여요.'], ['recent', '최근 본', recent, '아직 써 본 계산기가 없어요.']];
+  let on = favs.length || !recent.length ? 'fav' : 'recent';
+  const card = x => { const ic = iconOf(x.p); return `<a class="lk-item" href="${esc(x.p)}">${ic ? ic.replace('class="ico"', 'class="lk-ico"') : `<span class="lk-ico lk-txt" aria-hidden="true">${esc(x.name.slice(0, 1))}</span>`}<b>${esc(x.name)}</b>${x.big ? `<small>${esc(x.big)}</small>` : ''}</a>`; };
+  function draw() {
+    const t = tabs.find(x => x[0] === on);
+    box.innerHTML = `<div class="lk-tabs" role="tablist">${tabs.map(([k, n, l]) => `<button type="button" role="tab" data-k="${k}" class="${k === on ? 'on' : ''}" aria-selected="${k === on}">${n} <span>${l.length}</span></button>`).join('')}</div>
+      ${t[2].length ? `<div class="lk-row">${t[2].map(card).join('')}</div>` : `<p class="hint">${t[3]}</p>`}`;
+  }
+  box.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) { on = b.dataset.k; draw(); } });
+  draw();
+})();

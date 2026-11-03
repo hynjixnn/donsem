@@ -3355,3 +3355,59 @@ const GUIDE_FOR = {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
   window.addEventListener('donsem:data', refresh); window.addEventListener('donsem:budget', refresh);
 })();
+
+// ── 홈: 다음 돈 마감까지 남은 시간 (무신사 '종료까지 8일 08:04:05'처럼 초 단위로 줄어들어요) ──
+(() => {
+  if (!document.body.classList.contains('home') || typeof MONEY_CAL === 'undefined') return;
+  const hero = document.querySelector('.wrap > .hero'); if (!hero) return;
+  const isDue = x => /마감|신청|납부|신고|제출|접수/.test(x.t) || ['세금', '연말정산'].includes(x.tag); // 그날 안에 해야 하는 일
+  const near = MONEY_CAL.filter(x => (x.imp || 2) >= 2 && !x.soft && mcDays(x.d) >= 0 && mcDays(x.d) <= 60).sort((a, b) => a.d.localeCompare(b.d));
+  const e = near.find(isDue) || near[0]; // 놓치면 손해인 마감을 먼저
+  if (!e) return;
+  const due = isDue(e), [y, m, d] = e.d.split('-').map(Number), end = due ? new Date(y, m - 1, d, 23, 59, 59) : new Date(y, m - 1, d); // 마감은 그날 끝까지, 발표·행사는 그날 시작까지
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const sec = document.createElement('a');
+  sec.className = 'cd-home'; sec.href = '/budget/';
+  sec.innerHTML = `<span class="cd-tag">${esc(e.tag || '마감')}</span><b class="cd-t">${esc(e.t)}</b><span class="cd-left">${due ? '마감까지' : '그날까지'} <time class="cd-clock" datetime="${e.d}"></time></span><span class="cd-date">${m}월 ${d}일${due ? '까지' : ''} · 캘린더에서 보기 ›</span>`;
+  hero.before(sec);
+  const clock = sec.querySelector('.cd-clock'), p2 = n => String(n).padStart(2, '0');
+  const tick = () => {
+    const s = Math.max(0, Math.floor((end - Date.now()) / 1000));
+    clock.textContent = `${Math.floor(s / 86400) ? `${Math.floor(s / 86400)}일 ` : ''}${p2(Math.floor(s % 86400 / 3600))}:${p2(Math.floor(s % 3600 / 60))}:${p2(s % 60)}`;
+  };
+  tick(); setInterval(tick, 1000);
+})();
+
+// ── 모든 계산기 (휴대폰): 무신사 카테고리처럼 왼쪽에 분류, 오른쪽에 아이콘 격자. 왼쪽을 누르면 그 분류로 내려가요 ──
+(() => {
+  const list = document.getElementById('calc-list'), q = document.getElementById('calc-q');
+  if (!list || !q || typeof MENU === 'undefined') return;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  let favs = []; try { favs = JSON.parse(localStorage.getItem('donsem:favs')) || []; } catch (e) { favs = []; }
+  const nameOf = {}; MENU.forEach(([, items]) => items.forEach(([p, n]) => { nameOf[p] = nameOf[p] || n; }));
+  const groups = [...(favs.some(p => nameOf[p]) ? [['즐겨찾기', favs.filter(p => nameOf[p]).map(p => [p, nameOf[p]])]] : []), ...MENU];
+  const item = ([p, n]) => { const ic = iconOf(p); return `<a href="${p}">${ic ? ic.replace('class="ico"', 'class="cb-ico"') : `<span class="cb-ico cb-txt" aria-hidden="true">${esc(n.slice(0, 1))}</span>`}<span>${esc(n)}</span></a>`; };
+  const cb = document.createElement('section');
+  cb.className = 'cb'; cb.setAttribute('aria-label', '분류별 계산기');
+  cb.innerHTML = `<div class="cb-side" role="tablist">${groups.map(([g], i) => `<button type="button" role="tab" data-i="${i}" class="${i ? '' : 'on'}">${esc(g.replace(/\s*·\s*/g, '·'))}</button>`).join('')}</div>
+    <div class="cb-main">${groups.map(([g, items], i) => `<div class="cb-sec" id="cb-${i}"><h2>${esc(g)}</h2><div class="cb-grid">${items.map(item).join('')}</div></div>`).join('')}</div>`;
+  list.after(cb);
+  document.body.classList.add('cb-on');
+  const side = cb.querySelector('.cb-side'), secs = [...cb.querySelectorAll('.cb-sec')];
+  const topGap = () => (document.querySelector('.topbar') || { offsetHeight: 0 }).offsetHeight + 8;
+  const setTop = () => cb.style.setProperty('--cb-top', topGap() + 'px'); setTop(); addEventListener('resize', setTop);
+  const mark = i => side.querySelectorAll('button').forEach(b => { const on = +b.dataset.i === i; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); if (on) b.scrollIntoView({ block: 'nearest' }); });
+  let lock = 0;
+  side.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const i = +b.dataset.i; mark(i); lock = Date.now();
+    scrollTo({ top: secs[i].getBoundingClientRect().top + scrollY - topGap(), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  });
+  addEventListener('scroll', () => { // 내리면서 보이는 분류에 왼쪽 불이 따라와요 (누른 직후 미끄러지는 동안은 그대로)
+    if (Date.now() - lock < 800 || !cb.offsetParent) return;
+    const y = topGap() + 40; let cur = 0;
+    secs.forEach((s, i) => { if (s.getBoundingClientRect().top <= y) cur = i; });
+    mark(cur);
+  }, { passive: true });
+  q.addEventListener('input', () => document.body.classList.toggle('cb-search', !!q.value.trim())); // 검색할 때는 원래 목록으로 결과를 보여 줘요
+})();
