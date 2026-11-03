@@ -3061,10 +3061,13 @@ const COUPANG = {
 
 // 계산기 아래에 관련 「돈 가이드」 글을 이어 줘요
 const GUIDE_FOR = {
-  '/salary/': [['salary-take-home', '연봉별 실수령액 표'], ['salary-rank', '내 연봉은 상위 몇 %']],
+  '/salary/': [['salary-take-home', '연봉별 실수령액 표'], ['youth-tax-cut', '중소기업 청년 소득세 감면 90%'], ['salary-rank', '내 연봉은 상위 몇 %']],
   '/salary-rank/': [['salary-rank', '내 연봉은 상위 몇 %'], ['salary-take-home', '연봉별 실수령액 표']],
-  '/unemployment/': [['unemployment', '실업급여 조건과 금액']],
-  '/severance/': [['unemployment', '실업급여 조건과 금액']],
+  '/severance/': [['severance-pay', '퇴직금 계산법 총정리'], ['unemployment', '실업급여 조건과 금액']],
+  '/asset-rank/': [['asset-rank', '순자산 순위표와 나이대별 평균']],
+  '/savings/': [['savings-interest', '적금 이자 진짜 계산법'], ['deposit-protection', '예금자보호 1억 원']],
+  '/deposit/': [['deposit-protection', '예금자보호 1억 원'], ['savings-interest', '적금 이자 진짜 계산법']],
+  '/unemployment/': [['unemployment', '실업급여 조건과 금액'], ['severance-pay', '퇴직금 계산법 총정리']],
   '/year-end-tax/': [['year-end-preview', '연말정산 미리 계산하기'], ['card-deduction', '신용카드·체크카드 비율'], ['missed-deductions', '놓치기 쉬운 공제 4가지']],
   '/pension/': [['irp-transfer', 'IRP 계좌 이전 6단계'], ['irp-pension', 'IRP·연금저축 세액공제'], ['year-end-basics', '연말정산 환급 기본']],
 };
