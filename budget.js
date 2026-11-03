@@ -388,26 +388,44 @@
 
   // ── 돈 일정: 세금 마감·연말정산·지원금 신청처럼 놓치면 손해인 날 (app.js의 MONEY_CAL) ──
   // 내 상황을 고르면 나와 상관있는 일정만 보여요 (donsem:mc-me)
-  const ME = [['work', '직장인·알바'], ['biz', '사업자·프리랜서'], ['own', '집·차 있음'], ['shop', '쇼핑 할인']];
-  const meOf = e => e.tag === '쇼핑' ? 'shop' : /종합소득세|부가세|법인세/.test(e.t) ? 'biz' : /종합부동산세|자동차세/.test(e.t) ? 'own' : 'work';
-  let me = ['work', 'biz', 'own', 'shop'];
-  try { const v = JSON.parse(localStorage.getItem('donsem:mc-me')); if (Array.isArray(v)) me = v.filter(k => ME.some(x => x[0] === k)); } catch (e) { /* 처음이면 모두 */ }
-  const MC_TAG = { '세금': 'tax', '연말정산': 'yet', '월급': 'pay', '지원금': 'aid', '쇼핑': 'shop' };
+  const ME = [['work', '직장인·알바'], ['biz', '사업자·프리랜서'], ['own', '집·차 있음'], ['invest', '예금·대출·투자 (금리)'], ['shop', '쇼핑 할인']];
+  const meOf = e => e.tag === '쇼핑' ? 'shop' : e.tag === '금리' ? 'invest' : /종합소득세|부가세|법인세/.test(e.t) ? 'biz' : /종합부동산세|자동차세/.test(e.t) ? 'own' : 'work';
+  let me = ['work', 'biz', 'own', 'invest', 'shop'];
+  try { // { on: 켠 상황, known: 그때 있던 상황 } — 나중에 새로 생긴 상황은 켜진 채로 시작해요
+    const v = JSON.parse(localStorage.getItem('donsem:mc-me')), on = Array.isArray(v) ? v : v && Array.isArray(v.on) ? v.on : null;
+    const known = Array.isArray(v) ? ['work', 'biz', 'own', 'shop'] : v && Array.isArray(v.known) ? v.known : [];
+    if (on) me = ME.map(x => x[0]).filter(k => on.includes(k) || !known.includes(k));
+  } catch (e) { /* 처음이면 모두 */ }
+  const MC_TAG = { '세금': 'tax', '연말정산': 'yet', '월급': 'pay', '지원금': 'aid', '쇼핑': 'shop', '금리': 'rate' };
+  // 중요도 별점 (Save 앱 경제 캘린더처럼): ★★★ 꼭 챙길 마감, ★★ 알아 두면 좋은 날, ★ 쇼핑처럼 가벼운 날
+  const impOf = e => e.imp || 2, stars = n => `<span class="imp-stars" aria-label="중요도 ${n}">${'★'.repeat(n)}<i>${'★'.repeat(3 - n)}</i></span>`;
+  let impF = 0, lossAll = false;
+  const dateLabel = k => { const [y, m, d] = k.split('-').map(Number); return `${m}월 ${d}일 (${W[new Date(y, m - 1, d).getDay()]})`; };
   const moneyEvents = () => (typeof MONEY_CAL === 'undefined' ? [] : MONEY_CAL.filter(e => me.includes(meOf(e))));
   const mcOn = k => moneyEvents().filter(e => e.d === k);
   function lossHTML(ym) {
-    const nowYm = iso(today).slice(0, 7), list = moneyEvents().filter(e => e.d.startsWith(ym) && (ym !== nowYm || e.d >= iso(today))).sort((a, b) => a.d.localeCompare(b.d));
-    const rows = list.slice(0, 3).map(e => { const n = typeof mcDays === 'function' ? mcDays(e.d) : 0;
-      return `<button type="button" class="loss-row" data-mcday="${e.d}"><em class="${n <= 7 && !e.soft ? 'near' : ''}">${n < 0 ? '지남' : typeof mcBadge === 'function' ? mcBadge(e) : ''}</em><span>${esc(e.t)}</span><i class="mc-dot ${MC_TAG[e.tag] || ''}"></i></button>`; }).join('');
+    const nowYm = iso(today).slice(0, 7);
+    const list = moneyEvents().filter(e => e.d.startsWith(ym) && (ym !== nowYm || e.d >= iso(today)) && (!impF || impOf(e) === impF))
+      .sort((a, b) => a.d.localeCompare(b.d) || impOf(b) - impOf(a));
+    const row = e => { const n = typeof mcDays === 'function' ? mcDays(e.d) : 0;
+      return `<button type="button" class="loss-row" data-mcday="${e.d}"><em class="${n <= 7 && !e.soft ? 'near' : ''}">${n < 0 ? '지남' : typeof mcBadge === 'function' ? mcBadge(e) : ''}</em><span>${esc(e.t)}</span>${stars(impOf(e))}<i class="mc-dot ${MC_TAG[e.tag] || ''}"></i></button>`; };
+    let rows = '';
+    if (lossAll) { // 전체 보기: 날짜별로 묶어서 차례로 (경제 캘린더 목록처럼)
+      let prev = '';
+      list.forEach(e => { if (e.d !== prev) { rows += `<p class="loss-date">${dateLabel(e.d)}</p>`; prev = e.d; } rows += row(e); });
+    } else rows = list.slice(0, 3).map(row).join('');
+    const chips = [[0, '전체'], [3, '★★★'], [2, '★★'], [1, '★']].map(([v, l]) => `<button type="button" class="${impF === v ? 'on' : ''}" data-imp="${v}">${l}</button>`).join('');
     return `<div class="cal-loss"><div class="loss-h"><b>${ym === nowYm ? '이번 달' : `${Number(ym.slice(5))}월`} 놓치면 손해</b><button type="button" class="loss-me-btn" data-meopen>내 상황 ›</button></div>
-      ${mePanel ? `<div class="loss-me">${ME.map(([k, n]) => `<button type="button" class="${me.includes(k) ? 'on' : ''}" data-me="${k}">${n}</button>`).join('')}<small>고른 상황에 맞는 세금·지원금·세일 일정만 달력에 보여요</small></div>` : ''}
-      ${rows || `<p class="loss-none">${me.length ? '이 달에는 챙길 돈 일정이 없어요' : '내 상황을 골라 주세요'}</p>`}${list.length > 3 ? `<small class="loss-more">외 ${list.length - 3}개는 달력에서 볼 수 있어요</small>` : ''}</div>`;
+      ${mePanel ? `<div class="loss-me">${ME.map(([k, n]) => `<button type="button" class="${me.includes(k) ? 'on' : ''}" data-me="${k}">${n}</button>`).join('')}<small>고른 상황에 맞는 세금·지원금·금리·세일 일정만 달력에 보여요</small></div>` : ''}
+      <div class="imp-f" role="group" aria-label="중요도로 거르기">${chips}</div>
+      ${rows || `<p class="loss-none">${me.length ? (impF ? '이 중요도의 일정이 없어요' : '이 달에는 챙길 돈 일정이 없어요') : '내 상황을 골라 주세요'}</p>`}
+      ${list.length > 3 ? `<button type="button" class="loss-all" data-lossall>${lossAll ? '접기 ︿' : `전체 ${list.length}개 날짜별로 보기 ›`}</button>` : ''}</div>`;
   }
   let mePanel = false;
   function mcDayHTML(k) {
     const list = mcOn(k);
     if (!list.length) return '';
-    return `<div class="mc-day">${list.map(e => `<div class="mc-day-row"><p><span class="mc-tag ${MC_TAG[e.tag] || ''}">${esc(e.tag)}</span><b>${esc(e.t)}</b></p><small>${esc(e.who)}${e.when ? ` (날짜: ${esc(e.when)})` : ''}</small>
+    return `<div class="mc-day">${list.map(e => `<div class="mc-day-row"><p><span class="mc-tag ${MC_TAG[e.tag] || ''}">${esc(e.tag)}</span><b>${esc(e.t)}</b>${stars(impOf(e))}</p><small>${esc(e.who)}${e.when ? ` (날짜: ${esc(e.when)})` : ''}</small>
       <div class="mc-acts">${e.go ? `<a class="go" href="${e.go[0]}">${esc(e.go[1])} ›</a>` : ''}<button type="button" data-mcics="${MONEY_CAL.indexOf(e)}">📅 휴대폰 달력에 넣기</button></div></div>`).join('')}</div>`;
   }
   // 달력 접기: 토스처럼 고른 날이 있는 한 주만 보여요
@@ -446,17 +464,19 @@
     toast(`'${t}' 일정을 넣었어요.`);
   }
   function onPlan(e) {
-    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal],[data-goassets],[data-mcday],[data-me],[data-meopen],[data-mcics],[data-heat],[data-fold]');
+    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal],[data-goassets],[data-mcday],[data-me],[data-meopen],[data-mcics],[data-heat],[data-fold],[data-imp],[data-lossall]');
     if (!b) return false;
     if (b.dataset.pc) { pColor = b.dataset.pc; b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }
     else if (b.hasAttribute('data-padd')) addPlan();
     else if (b.dataset.mcday) { const k = b.dataset.mcday; if (k.startsWith(month)) { selDay = k; planOpen = false; render(); } else goMonth(k.slice(0, 7), k); }
     else if (b.dataset.me) {
       me = me.includes(b.dataset.me) ? me.filter(x => x !== b.dataset.me) : me.concat(b.dataset.me);
-      try { localStorage.setItem('donsem:mc-me', JSON.stringify(me)); } catch (err) { /* 저장 안 돼도 화면은 바뀌어요 */ }
+      try { localStorage.setItem('donsem:mc-me', JSON.stringify({ on: me, known: ME.map(x => x[0]) })); } catch (err) { /* 저장 안 돼도 화면은 바뀌어요 */ }
       render();
     } else if (b.hasAttribute('data-meopen')) { mePanel = !mePanel; render(); }
     else if (b.dataset.mcics) { if (typeof mcIcs === 'function') { const ev = MONEY_CAL[Number(b.dataset.mcics)]; mcIcs([ev], `돈셈-${ev.t}.ics`); } }
+    else if (b.dataset.imp !== undefined) { impF = Number(b.dataset.imp); render(); }
+    else if (b.hasAttribute('data-lossall')) { lossAll = !lossAll; render(); }
     else if (b.hasAttribute('data-fold')) { fold = !fold; try { localStorage.setItem('donsem:cal-fold', fold ? '1' : '0'); } catch (err) { /* 괜찮아요 */ } render(); }
     else if (b.hasAttribute('data-heat')) { heat = !heat; try { localStorage.setItem('donsem:heat', heat ? '1' : '0'); } catch (err) { /* 괜찮아요 */ } render(); }
     else if (b.hasAttribute('data-goanal') || b.hasAttribute('data-goassets')) { const box = b.hasAttribute('data-goassets') ? $('assets') : $('b-breakdown').closest('section'); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }

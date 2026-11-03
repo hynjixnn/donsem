@@ -1847,3 +1847,16 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .cal-fold { display: block; margin: 6px auto 0; padding: 6px 14px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
 .cal-mid:empty, .cal-more:empty { display: none; }
 .cal-mid + .items { margin-top: 12px; }
+/* 돈 일정 중요도 (★★★) */
+.imp-stars { flex: none; font-size: 11px; letter-spacing: -1px; color: #ff9f0a; }
+.imp-stars i { font-style: normal; color: var(--line); }
+.imp-f { display: flex; gap: 6px; margin: 2px 0 6px; }
+.imp-f button { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
+.imp-f button.on { border-color: var(--text); background: var(--text); color: var(--bg); }
+.loss-date { margin: 12px 0 2px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.loss-all { display: block; width: 100%; margin-top: 6px; padding: 8px 0 2px; border: 0; background: none; color: var(--blue); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; }
+.mc-day-row p .imp-stars { margin-left: auto; }
+.mc-tag.rate { background: rgba(48, 176, 199, .16); color: #0e7c8f; }
+.cal-mc.rate { background: rgba(48, 176, 199, .18); color: #0b6f80; } .mc-dot.rate { background: #30b0c7; }
+:root[data-theme="dark"] .mc-tag.rate, :root[data-theme="dark"] .cal-mc.rate { color: #6fd6e8; }
+.loss-row .imp-stars { flex: none; overflow: visible; white-space: nowrap; }

@@ -4,7 +4,7 @@
   if (!list || typeof MONEY_CAL === 'undefined') return;
   function $id(id) { return document.getElementById(id); }
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const W = '일월화수목금토', TAG = { '세금': 'tax', '연말정산': 'yet', '월급': 'pay', '지원금': 'aid', '쇼핑': 'shop' };
+  const W = '일월화수목금토', TAG = { '세금': 'tax', '연말정산': 'yet', '월급': 'pay', '지원금': 'aid', '쇼핑': 'shop', '금리': 'rate' };
   const t = new Date(), thisM = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}`;
   // 고를 수 있는 달: 이번 달부터 일정이 있는 달
   const months = [...new Set(MONEY_CAL.map(e => e.d.slice(0, 7)))].filter(m => m >= thisM).sort();
