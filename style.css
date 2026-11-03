@@ -2043,3 +2043,19 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .re-links a { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 13px 0; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; font-size: 15px; font-weight: 600; }
 .re-links small { font-size: 12px; color: var(--muted); font-weight: 400; }
 .leaflet-container { font: inherit; }
+/* 구별 실거래가 */
+.re-guh { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
+.re-guh + .re-gu { margin-top: 6px; }
+.re-deals { margin-top: 12px; padding: 14px; border-radius: 16px; background: var(--field); }
+.dl-h b { font-size: 17px; } .dl-h small { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
+.dl-tabs, .dl-size { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.dl-tabs button, .dl-size button { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.dl-tabs button.on { border-color: var(--text); background: var(--text); color: var(--bg); }
+.dl-size button.on { border-color: var(--blue); color: var(--blue); font-weight: 600; }
+.dl-sum { margin: 12px 0 4px; font-size: 14px; } .dl-sum b { color: var(--blue); }
+.dl-list { list-style: none; margin: 6px 0 0; padding: 0; }
+.dl-list button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 11px 0; border: 0; border-top: 1px solid var(--line); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.dl-list span { min-width: 0; } .dl-list span b { display: block; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dl-list span small { display: block; font-size: 12px; color: var(--muted); }
+.dl-list em { flex: none; font-style: normal; font-weight: 700; font-size: 15px; text-align: right; font-variant-numeric: tabular-nums; } .dl-list em small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+
