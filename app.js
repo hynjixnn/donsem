@@ -553,6 +553,24 @@ function assetTop(won0) {
   for (let i = 1; i < P.length; i++) if (x <= P[i][0]) { const [a, ta] = P[i - 1], [b, tb] = P[i]; return ta + (tb - ta) * (x - a) / (b - a); }
   return 50;
 }
+// ── 목돈 굴리기 비교 (카카오뱅크 '1,000만 원을 투자하면?'처럼): 같은 돈을 어디에 두면 세후 얼마가 붙는지 금리순으로 ──
+function lumpSum() {
+  const P = val('ls_amt'), m = Math.max(1, Math.min(120, Math.round(val('ls_m')))), out = document.getElementById('ls_out');
+  if (!P) { out.innerHTML = '굴릴 돈을 넣어 주세요.'; return; }
+  const opts = [
+    ['파킹통장', val('ls_park'), 0.154, '언제든 꺼낼 수 있어요. 금리는 은행이 바꿀 수 있어요.'],
+    ['정기예금', val('ls_dep'), 0.154, '중간에 깨면 약속한 이자를 못 받아요. 예금자보호 1억 원까지.'],
+    ['채권 (만기까지 보유)', val('ls_bond'), 0.154, '이자에만 세금이 붙어요. 할인채는 세금이 더 적을 수 있어요. 예금자보호는 없어요.'],
+    ['ISA 안에서 예금', val('ls_dep'), -1, '이자 200만 원까지 세금 0원, 넘는 부분 9.9%. 3년은 넣어 둬야 해요.'],
+  ].map(([n, r, tax, note]) => {
+    const gross = P * r / 100 * m / 12, t = tax < 0 ? Math.max(0, gross - 2000000) * 0.099 : gross * tax;
+    return { n, r, net: Math.floor(gross - t), tax: Math.floor(t), note };
+  }).filter(o => o.r > 0).sort((a, b) => b.net - a.net);
+  if (!opts.length) { out.innerHTML = '금리를 넣어 주세요.'; return; }
+  out.innerHTML = `<div>${korean(P) || won(P)}을 ${m}개월 두면</div><div class="big">최대 +${won(opts[0].net)}</div>` +
+    `<ul class="ls-list">${opts.map((o, i) => `<li><em>${i + 1}</em><div><b>${o.n}</b><small>연 ${o.r}% · 세금 ${won(o.tax)}</small><p>${o.note}</p></div><strong>+${won(o.net)}</strong></li>`).join('')}</ul>` +
+    `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">세후 이자 기준이에요(단리, 이자소득세 15.4%). 실제 금리는 상품과 날짜마다 달라요. 한 곳에 1억 원이 넘으면 나눠 넣으세요.</p>`;
+}
 // ── 내 시간 가치: 실수령액 ÷ 일하는 시간 (출퇴근까지 넣은 '진짜 시급'도) ──
 function timeValue() {
   const pay = val('tv_pay'), h = Math.min(120, val('tv_h')), c = Math.min(8, val('tv_c')), price = val('tv_price'), out = document.getElementById('tv_out');
@@ -765,7 +783,7 @@ function finIncome() {
     (o.Y ? smallNote('직장인은 월급 말고 다른 소득이 2,000만 원을 넘으면 건강보험료(소득월액보험료)가 따로 붙어요.') : smallNote('피부양자는 금융소득이 많으면 건강보험 피부양자에서 빠질 수 있어요.'));
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
@@ -2061,7 +2079,7 @@ const MENU = [
     ['/overseas-stock-tax/', '해외주식 양도세', '미국 주식 양도소득세 250만 원 공제 22% 손익통산'], ['/etf-fee/', 'ETF 보수 비교', '총보수 수수료 운용보수 장기 투자'], ['/loss-recovery/', '손실 회복 수익률', '본전 주식 하락 마이너스 손절'], ['/financial-income-tax/', '금융소득종합과세', '이자 배당 2천만 원 종합과세 건강보험료']]],
   ['대출 · 집', [['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
-  ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/time-value/', '내 시간 가치', '시급 노동 시간 가격 몇 시간 충동구매'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
+  ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/time-value/', '내 시간 가치', '시급 노동 시간 가격 몇 시간 충동구매'], ['/lump-sum/', '목돈 굴리기 비교', '1000만원 예금 파킹통장 채권 ISA 어디에 넣을까 이자'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
     ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
   ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/income-tax/', '종합소득세', '프리랜서 3.3% 환급 개인사업자 5월'], ['/corporate-tax/', '법인세', '법인 사업자 세율'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'],
     ['/fuel/', '유류비', '기름값 연비'], ['/dutch-pay/', '더치페이', 'n빵 정산'], ['/date/', '날짜', '디데이 d-day 며칠']]],
@@ -2842,7 +2860,7 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   btn.type = 'button'; btn.className = 'ai-btn'; btn.setAttribute('aria-label', '돈셈 도우미에게 물어보기'); btn.innerHTML = spark(24);
   right.prepend(btn);
 
-  const SUGGEST = ['연말정산 월세 공제 조건', 'ISA랑 연금저축 차이', '주휴수당 받는 조건', '실업급여 자진퇴사', '백업은 어떻게 해?', '적금 이자가 생각보다 적은 이유'];
+  const SUGGEST = ['이번 달 얼마 썼어?', '내 순자산은?', '다음 결제는 언제야?', '연말정산 월세 공제 조건', 'ISA랑 연금저축 차이', '주휴수당 받는 조건', '실업급여 자진퇴사', '백업은 어떻게 해?', '적금 이자가 생각보다 적은 이유'];
   let box = null, kb = null, kbWait = null;
   const loadKb = () => kbWait || (kbWait = fetch('/kb.json').then(r => r.json()).then(d => (kb = d)).catch(() => { kbWait = null; return (kb = []); }));
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -2870,6 +2888,55 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       return [sc, k];
     }).filter(([sc]) => sc >= 4).sort((a, b) => b[0] - a[0]).slice(0, 4).map(([, k]) => k);
   }
+  // 내 기록으로 답하기 (카카오뱅크 AI '내 금융정보 조회'처럼): 이 기기에 적어 둔 가계부·고정지출·내 자산만 봐요
+  function mine(q) {
+    const t = q.replace(/\s+/g, ''), rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+    const b = rd('donsem:budget'), es = b && Array.isArray(b.entries) ? b.entries : [];
+    const n = new Date(), ym = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`, pm = new Date(n.getFullYear(), n.getMonth() - 1, 1);
+    const pym = `${pm.getFullYear()}-${String(pm.getMonth() + 1).padStart(2, '0')}`, outs = k => es.filter(e => e.type === 'out' && e.date.startsWith(k));
+    const go = (h, l) => `<a class="ai-go" href="${h}">${l} ›</a>`, none = w => `<p>아직 ${w}에 적은 게 없어요. 적어 두면 여기서 바로 알려 드려요.</p>`;
+    if (/순자산|재산|자산.*(얼마|순위)|내자산/.test(t)) {
+      const a = rd('donsem:assets'), it = a && Array.isArray(a.items) ? a.items : [];
+      if (!it.length) return none('내 자산') + go('/budget/#assets', '내 자산 적기');
+      const as = it.filter(x => x.kind !== 'debt').reduce((s, x) => s + (+x.amt || 0), 0), de = it.filter(x => x.kind === 'debt').reduce((s, x) => s + (+x.amt || 0), 0);
+      return `<b>순자산은 ${won(as - de)}이에요</b><p>자산 ${won(as)}, 부채 ${won(de)}예요.${typeof assetTop === 'function' && as - de >= 0 ? ` 우리나라 가구 중 상위 ${topText(assetTop(as - de))}예요.` : ''}</p>` + go('/budget/#assets', '내 자산 보기');
+    }
+    if (/결제|고정지출|구독|빠져나가/.test(t)) {
+      const f = rd('donsem:fixed'), it = f && Array.isArray(f.items) ? f.items.filter(x => +x.amt > 0 && +x.day > 0) : [];
+      if (!it.length) return none('고정지출') + go('/budget/#fixed', '고정지출 적기');
+      const d0 = n.getDate(), next = it.map(x => ({ x, d: +x.day >= d0 ? +x.day - d0 : +x.day + new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate() - d0 })).sort((a, c) => a.d - c.d);
+      const month = it.reduce((s, x) => s + (x.cycle === 'year' ? x.amt / 12 : +x.amt), 0);
+      return `<b>다음 결제는 ${next[0].d ? `${next[0].d}일 뒤` : '오늘'} ${esc(next[0].x.name || next[0].x.cat)} ${won(+next[0].x.amt)}이에요</b><p>고정지출은 한 달에 약 ${won(Math.round(month))}이에요.${next[1] ? ` 그다음은 ${esc(next[1].x.name || next[1].x.cat)} (${next[1].d}일 뒤)예요.` : ''}</p>` + go('/budget/#fixed', '고정지출 보기');
+    }
+    if (/월급날|월급.*언제|월급까지/.test(t)) {
+      const pi = typeof paydayInfo === 'function' ? paydayInfo(b) : null;
+      if (!pi) return '<p>아직 월급날을 정하지 않았어요.</p>' + go('/budget/', '월급날 정하기');
+      return `<b>${pi.days ? `월급날까지 ${pi.days}일 남았어요` : '오늘이 월급날이에요!'}</b><p>${pi.next.getMonth() + 1}월 ${pi.next.getDate()}일이에요.</p>` + go('/budget/', '캘린더 보기');
+    }
+    if (/예산/.test(t)) {
+      if (!b || !(b.budget > 0)) return '<p>아직 이번 달 예산을 정하지 않았어요.</p>' + go('/budget/', '예산 정하기');
+      const used = outs(ym).reduce((s, e) => s + e.amt, 0);
+      return `<b>${used <= b.budget ? `예산이 ${won(b.budget - used)} 남았어요` : `예산을 ${won(used - b.budget)} 넘었어요`}</b><p>이번 달 예산 ${won(b.budget)} 중 ${won(used)}(${Math.round(used / b.budget * 100)}%)를 썼어요.</p>` + go('/budget/', '캘린더 보기');
+    }
+    if (/어디에.*(많이|제일)|뭐에.*(많이|제일)|많이쓴/.test(t)) {
+      const by = {}; outs(ym).forEach(e => { by[e.cat] = (by[e.cat] || 0) + e.amt; });
+      const top = Object.entries(by).sort((a, c) => c[1] - a[1]);
+      if (!top.length) return none('이번 달 가계부') + go('/budget/', '가계부 적기');
+      return `<b>이번 달은 ${esc(top[0][0])}에 가장 많이 썼어요 (${won(top[0][1])})</b><p>${top.slice(1, 3).map(([c, v]) => `${esc(c)} ${won(v)}`).join(', ')}${top.length > 1 ? ' 순이에요.' : ''}</p>` + go('/budget/', '어디에 썼나요 보기');
+    }
+    if (/(이번달|이달|오늘|지난달).*(얼마|지출|썼|씀)|지출.*얼마|얼마.*썼/.test(t)) {
+      if (!es.length) return none('가계부') + go('/budget/', '가계부 적기');
+      if (/오늘/.test(t)) { const td = ym + '-' + String(n.getDate()).padStart(2, '0'), v = es.filter(e => e.type === 'out' && e.date === td).reduce((s, e) => s + e.amt, 0); return `<b>오늘은 ${won(v)}을 썼어요</b>` + go('/budget/', '캘린더 보기'); }
+      if (/지난달/.test(t)) return `<b>지난달은 ${won(outs(pym).reduce((s, e) => s + e.amt, 0))}을 썼어요</b>` + go('/budget/', '캘린더 보기');
+      const now = outs(ym).reduce((s, e) => s + e.amt, 0), prev = outs(pym).filter(e => +e.date.slice(8) <= n.getDate()).reduce((s, e) => s + e.amt, 0);
+      return `<b>이번 달은 ${won(now)}을 썼어요</b><p>${prev ? `지난달 같은 기간(${won(prev)})보다 ${won(Math.abs(now - prev))} ${now <= prev ? '덜' : '더'} 썼어요.` : '지난달 같은 기간 기록이 없어서 비교는 못 했어요.'}</p>` + go('/budget/', '캘린더 보기');
+    }
+    if (/무지출/.test(t)) {
+      const ns = rd('donsem:nospend'), d = ns && Array.isArray(ns.days) ? ns.days.filter(x => x.startsWith(ym)).length : 0;
+      return `<b>이번 달 무지출은 ${d}일이에요</b>` + go('/no-spend/', '무지출 챌린지 보기');
+    }
+    return '';
+  }
   // 맞는 계산기 버튼 (메뉴 이름·찾기 단어에서)
   function calcFor(q) {
     if (typeof MENU === 'undefined') return null;
@@ -2882,7 +2949,7 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
     box = document.createElement('div');
     box.className = 'ai'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '돈셈 도우미');
     box.innerHTML = `<div class="ai-head"><button type="button" class="ai-x" aria-label="닫기">×</button><div class="ai-title"><b>돈셈 도우미</b><span>Beta</span></div><span class="ai-sp"></span></div>
-      <div class="ai-body"><div class="ai-hello">${spark(44)}<b>무엇이 궁금하세요?</b><p>계산 방법, 세금·금융 상식, 돈셈 쓰는 법을<br>돈셈에 정리된 설명에서 찾아 드려요.</p></div><div class="ai-log" aria-live="polite"></div></div>
+      <div class="ai-body"><div class="ai-hello">${spark(44)}<b>무엇이 궁금하세요?</b><p>계산 방법, 세금·금융 상식, 돈셈 쓰는 법을 찾아 드려요.<br>"이번 달 얼마 썼어?"처럼 내 기록도 물어볼 수 있어요.</p></div><div class="ai-log" aria-live="polite"></div></div>
       <div class="ai-foot"><div class="ai-chips">${SUGGEST.map(t => `<button type="button">${t}</button>`).join('')}</div>
         <form class="ai-form"><input type="text" placeholder="궁금한 점을 물어보세요" aria-label="질문" enterkeyhint="send" autocomplete="off"><button type="submit" aria-label="보내기">↑</button></form>
         <p class="ai-note">돈셈에 정리된 내용으로 답해요. 세금·투자 결정 전에는 국세청 등 공식 안내도 확인하세요.</p></div>`;
@@ -2893,9 +2960,10 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       box.classList.add('chatting');
       log.insertAdjacentHTML('beforeend', `<div class="ai-q">${esc(q)}</div>`);
       if (!kb || !kb.length) await loadKb();
-      const hits = search(q), calc = calcFor(q);
+      const hits = search(q), calc = calcFor(q), my = mine(q);
       let html = '';
-      if (hits.length) {
+      if (my) html = `<div class="ai-a"><span class="ai-src">내 기록</span>${my}</div>`;
+      else if (hits.length) {
         const k = hits[0];
         html = `<div class="ai-a"><span class="ai-src">${esc(k.t)}</span><b>${esc(k.q)}</b><p>${esc(k.a)}</p>`;
         const link = k.u || (calc && calc[0]), label = k.u ? (k.n || `${k.t} 열기`) : calc && `${calc[1]} 계산기 열기`;
