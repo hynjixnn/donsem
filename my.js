@@ -104,6 +104,48 @@
     toast('백업을 불러왔어요.');
   });
 
+  // ── 나의 돈 온도: 처음 36.5℃에서, 꾸준한 기록·무지출·예산 지키기로 오르고 예산 초과·오래 쉬면 내려가요 (이 기기 기록으로만) ──
+  function drawTemp() {
+    const d = new Date(), ymd = x => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+    const today = ymd(d), since = ymd(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 29)), ym = today.slice(0, 7);
+    const b = read('donsem:budget') || {}, es = Array.isArray(b.entries) ? b.entries.filter(e => e && typeof e.date === 'string') : [];
+    const mine = es.filter(e => !String(e.id).startsWith('fx-')); // 고정지출에서 한 번에 넣은 기록은 '직접 적은 날'로 세지 않아요
+    const recDays = new Set(mine.filter(e => e.date >= since && e.date <= today).map(e => e.date)).size;
+    const st = typeof budgetStreak === 'function' ? budgetStreak(es) : { current: 0 };
+    const nsDays = ((read('donsem:nospend') || {}).days || []).filter(x => x >= since && x <= today).length;
+    const spent = es.filter(e => e.type === 'out' && e.date.startsWith(ym)).reduce((s, e) => s + (Number(e.amt) || 0), 0), bud = Number(b.budget) || 0;
+    const dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), pace = bud ? spent / (bud * d.getDate() / dim) : 0;
+    const cnt = (k, l) => { const v = read(k); return v && Array.isArray(v[l]) ? v[l].length : 0; };
+    const fixed = cnt('donsem:fixed', 'items'), assets = cnt('donsem:assets', 'items'), goals = cnt('donsem:goals', 'goals');
+    const q = read('donsem:quiz'), quizDays = q && q.days ? Object.keys(q.days).length : 0;
+    const last = mine.map(e => e.date).filter(x => x <= today).sort().pop(), rest = last ? Math.round((Date.parse(today) - Date.parse(last)) / 864e5) : 0;
+    const why = []; // [무엇, 얼마나, 온도 변화]
+    if (recDays) why.push(['최근 30일 가계부 기록', `${recDays}일`, Math.min(3, recDays * 0.1)]);
+    if (st.current >= 3) why.push(['연속 기록', `${st.current}일째`, Math.min(2, st.current * 0.05)]);
+    if (nsDays) why.push(['최근 30일 무지출 도장', `${nsDays}개`, Math.min(3, nsDays * 0.3)]);
+    if (bud && spent) why.push(pace <= 1 ? ['이번 달 예산', '속도 안에서 쓰는 중', 1.5] : ['이번 달 예산', `속도보다 ${Math.round((pace - 1) * 100)}% 빨라요`, -Math.min(2, (pace - 1) * 2)]);
+    if (fixed) why.push(['고정지출 정리', `${fixed}개`, 0.5]);
+    if (assets) why.push(['내 자산 정리', `${assets}개`, 0.5]);
+    if (goals) why.push(['모으는 목표', `${goals}개`, Math.min(1, goals * 0.5)]);
+    if (quizDays) why.push(['돈 퀴즈', `${quizDays}일`, Math.min(1.5, quizDays * 0.05)]);
+    if (rest > 14) why.push(['기록을 쉰 지', `${rest}일`, -1]);
+    const t = Math.max(30, Math.min(99, Math.round((36.5 + why.reduce((s, w) => s + w[2], 0)) * 10) / 10));
+    const lv = t < 36 ? ['😟', 'cold'] : t < 37.5 ? ['🙂', 'mild'] : t < 40 ? ['😊', 'warm'] : t < 45 ? ['😄', 'hot'] : ['🥰', 'fire'];
+    $('tp-num').textContent = `${t.toFixed(1)}℃`; $('tp-face').textContent = lv[0];
+    $('my-temp').dataset.lv = lv[1];
+    $('tp-fill').style.width = `${Math.max(4, Math.min(100, (t - 30) / 20 * 100))}%`; // 50℃면 가득
+    const e = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    $('tp-why').innerHTML = why.length ? why.map(([a, v, x]) => `<li><span>${e(a)} <small>${e(v)}</small></span><b class="${x < 0 ? 'dn' : 'up'}">${x < 0 ? '−' : '+'}${Math.abs(x).toFixed(1)}℃</b></li>`).join('')
+      : '<li class="tp-empty">아직 기록이 없어서 처음 온도 그대로예요.</li>';
+    // 다음에 하면 온도가 오르는 것 하나만
+    const next = !recDays ? ['/budget/', '오늘 쓴 돈을 기록하면 온도가 올라가요 ›'] : !nsDays ? ['/no-spend/', '돈 안 쓴 날 무지출 도장을 찍어 보세요 ›'] : !bud ? ['/budget/', '이번 달 예산을 정하고 지키면 +1.5℃ ›']
+      : !fixed ? ['/fixed/', '월세·구독 같은 고정지출을 정리해 보세요 ›'] : !goals ? ['/goals/', '모으고 싶은 목표를 하나 만들어 보세요 ›'] : null;
+    $('tp-next').hidden = !next;
+    if (next) { $('tp-next').href = next[0]; $('tp-next').textContent = next[1]; }
+  }
+  $('my-temp').querySelector('.tp-q').addEventListener('click', ev => { const h = $('tp-help'); h.hidden = !h.hidden; ev.currentTarget.setAttribute('aria-expanded', String(!h.hidden)); });
+  drawTemp();
+
   // 이미 홈 화면 앱으로 열었다면 설치 안내 대신 확인 문구
   if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) {
     $('my-install').innerHTML = '<span class="my-installed">✓</span> 지금 홈 화면에 설치한 돈셈 앱으로 쓰고 있어요.'; // 체크 표시가 줄 끝에 홀로 떨어지지 않게 앞에 둬요

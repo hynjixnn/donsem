@@ -2141,3 +2141,21 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .pc-tb + .pc-sub { margin-top: 16px; }
 .pc-tb td small.pc-wrap { margin: 0; font-size: 13px; color: var(--text); }
 .pc-tb td a { color: var(--blue); }
+/* 당근에서 영감: 나의 돈 온도 · 떠 있는 + 기록 */
+.tp-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; } .tp-head h2 { margin: 0; }
+.tp-q { width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 50%; background: var(--card); color: var(--muted); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.tp-help { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--field); font-size: 13px; line-height: 1.5; color: var(--muted); }
+.tp-main { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 10px; }
+.tp-num { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--tp, #0a84ff); } .tp-face { font-size: 26px; line-height: 1; }
+.tp-bar { height: 8px; margin-top: 6px; border-radius: 999px; background: var(--field); overflow: hidden; } .tp-bar i { display: block; height: 100%; border-radius: inherit; background: var(--tp, #0a84ff); transition: width .6s ease; }
+#my-temp[data-lv="cold"] { --tp: #8e8e93; } #my-temp[data-lv="mild"] { --tp: #0a84ff; } #my-temp[data-lv="warm"] { --tp: #30b158; } #my-temp[data-lv="hot"] { --tp: #ff9f0a; } #my-temp[data-lv="fire"] { --tp: #ff453a; }
+.tp-why { list-style: none; margin: 12px 0 0; padding: 0; } .tp-why li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.tp-why li:first-child { border-top: 0; } .tp-why small { color: var(--muted); font-size: 12px; } .tp-why b { flex: none; font-variant-numeric: tabular-nums; } .tp-why b.up { color: #30b158; } .tp-why b.dn { color: #ff453a; }
+.tp-why .tp-empty { color: var(--muted); }
+.tp-next { display: block; margin-top: 10px; padding: 11px 14px; border-radius: 12px; background: var(--field); color: var(--blue); font-size: 14px; font-weight: 600; text-decoration: none; }
+.fab-add { display: none; }
+@media (max-width: 640px) {
+  .fab-add { display: inline-flex; align-items: center; gap: 4px; position: fixed; z-index: 44; right: 20px; bottom: calc(100px + env(safe-area-inset-bottom)); height: 46px; padding: 0 18px 0 14px; border: 0; border-radius: 999px; background: var(--blue); color: #fff; font: inherit; font-size: 16px; font-weight: 700; box-shadow: 0 6px 18px -4px rgba(0, 113, 227, .55); cursor: pointer; }
+  .fab-add span { font-size: 22px; font-weight: 600; line-height: 1; margin-top: -2px; }
+  html.qa-open .fab-add { visibility: hidden; }
+}

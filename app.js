@@ -604,6 +604,23 @@ function lumpSum() {
     `<ul class="ls-list">${opts.map((o, i) => `<li><em>${i + 1}</em><div><b>${o.n}</b><small>연 ${o.r}% · 세금 ${won(o.tax)}</small><p>${o.note}</p></div><strong>+${won(o.net)}</strong></li>`).join('')}</ul>` +
     `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">세후 이자 기준이에요(단리, 이자소득세 15.4%). 실제 금리는 상품과 날짜마다 달라요. 한 곳에 1억 원이 넘으면 나눠 넣으세요.</p>`;
 }
+// ── 중고 시세 어림: 물건 종류별로 산 직후 한 번 떨어지고(첫 감가), 그 뒤 해마다 일정 비율씩 줄어든다고 보고 계산해요 ──
+// [이름, 산 직후 남는 비율, 1년마다 줄어드는 비율] — 중고거래에서 흔히 보이는 흐름을 돈셈이 어림한 값이에요
+const USED = { phone: ['스마트폰', 0.8, 0.28], laptop: ['노트북·태블릿', 0.78, 0.22], appliance: ['가전', 0.65, 0.15], luxury: ['명품 가방·시계', 0.8, 0.05], bike: ['자전거·운동기구', 0.65, 0.15], furniture: ['가구', 0.45, 0.2], etc: ['기타', 0.6, 0.2] };
+const USED_COND = { new: ['새것 같아요', 1.05], good: ['깨끗해요', 1], used: ['사용감 있어요', 0.85], broken: ['고장·하자 있어요', 0.45] };
+function usedPrice() {
+  const price = val('up_price'), m = Math.max(0, Math.min(240, Math.round(val('up_m')))), out = document.getElementById('up_out');
+  const k = USED[seg('up_kind')] || USED.phone, c = USED_COND[seg('up_cond')] || USED_COND.good, box = seg('up_box') === 'yes';
+  if (!price) { out.innerHTML = '산 가격을 넣어 주세요.'; return; }
+  const boxF = ['phone', 'laptop', 'luxury'].includes(seg('up_kind')) ? (box ? 1.03 : 0.97) : 1; // 박스·구성품은 전자기기·명품에서 값이 달라져요
+  const at = mm => price * (mm < 1 ? (1 + k[1]) / 2 : k[1]) * Math.pow(1 - k[2], mm / 12) * c[1] * boxF;
+  const r1000 = v => Math.max(0, Math.round(v / 1000) * 1000), v = at(m), lo = r1000(v * 0.88), hi = r1000(v * 1.1), mid = r1000(v);
+  const v6 = r1000(at(m + 6)), v12 = r1000(at(m + 12)), left = Math.round(mid / price * 100);
+  out.innerHTML = `<div>${k[0]} · ${m ? `${m}개월 사용` : '거의 안 씀'} · ${c[0]}</div><div class="big">${won(mid)}</div>` +
+    rows([['예상 시세 범위', `${won(lo)} ~ ${won(hi)}`], ['올릴 때 가격', `${won(hi)} (가격 제안은 받기로)`], ['이 아래로는 팔지 않기', won(lo)], ['산 값 대비', `${left}% 남았어요`],
+      ['6개월 더 쓰고 팔면', `${won(v6)} (${won(mid - v6)} 덜 받아요)`], ['1년 더 쓰고 팔면', `${won(v12)} (${won(mid - v12)} 덜 받아요)`]]) +
+    `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">물건 종류별 평균적인 값 떨어지는 흐름으로 어림한 값이에요. 같은 모델이 실제로 얼마에 팔렸는지 중고거래 앱의 '거래완료' 가격을 꼭 함께 보세요.</p>`;
+}
 // ── 내 시간 가치: 실수령액 ÷ 일하는 시간 (출퇴근까지 넣은 '진짜 시급'도) ──
 function timeValue() {
   const pay = val('tv_pay'), h = Math.min(120, val('tv_h')), c = Math.min(8, val('tv_c')), price = val('tv_price'), out = document.getElementById('tv_out');
@@ -816,7 +833,7 @@ function finIncome() {
     (o.Y ? smallNote('직장인은 월급 말고 다른 소득이 2,000만 원을 넘으면 건강보험료(소득월액보험료)가 따로 붙어요.') : smallNote('피부양자는 금융소득이 많으면 건강보험 피부양자에서 빠질 수 있어요.'));
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, at_out: acquisitionTax, bf_out: brokerageFee, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, at_out: acquisitionTax, bf_out: brokerageFee, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome, up_out: usedPrice };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
@@ -1661,6 +1678,14 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     if (path === '/budget/') setTimeout(() => location.reload(), 1200); // 가계부를 보고 있었다면 바로 반영
   }
   window.openQuickAdd = open; // 아래 탭에서는 빠졌지만, 첫 화면 '오늘 쓴 돈 정리 → 기록'에서 이 창을 열어요
+  // 떠 있는 '+ 기록' 버튼 (홈·캘린더, 휴대폰): 아래 탭 바로 위 오른쪽이라 엄지로 바로 눌러요
+  if (path === '/' || path === '/budget/') {
+    const fab = document.createElement('button');
+    fab.type = 'button'; fab.className = 'fab-add'; fab.setAttribute('aria-label', '지출이나 수입 바로 기록하기');
+    fab.innerHTML = '<span aria-hidden="true">+</span>기록';
+    fab.addEventListener('click', open);
+    document.body.append(fab);
+  }
 })();
 
 // ── 다음에 많이 보는 계산: 결과 아래에 이어서 볼 계산기를, 지금 넣은 숫자를 채운 채로 추천해요 ──
@@ -1955,7 +1980,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax'];
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'used-price', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax'];
 const iconOf = path => { const slug = String(path).replace(/\//g, ''); return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -2115,7 +2140,7 @@ const MENU = [
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
   ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/time-value/', '내 시간 가치', '시급 노동 시간 가격 몇 시간 충동구매'], ['/lump-sum/', '목돈 굴리기 비교', '1000만원 예금 파킹통장 채권 ISA 어디에 넣을까 이자'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
     ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
-  ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/income-tax/', '종합소득세', '프리랜서 3.3% 환급 개인사업자 5월'], ['/corporate-tax/', '법인세', '법인 사업자 세율'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'],
+  ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/income-tax/', '종합소득세', '프리랜서 3.3% 환급 개인사업자 5월'], ['/corporate-tax/', '법인세', '법인 사업자 세율'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'], ['/used-price/', '중고 시세', '중고거래 얼마에 팔까 감가 시세'],
     ['/fuel/', '유류비', '기름값 연비'], ['/dutch-pay/', '더치페이', 'n빵 정산'], ['/date/', '날짜', '디데이 d-day 며칠']]],
 ];
 (() => {
