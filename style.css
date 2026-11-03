@@ -2071,3 +2071,41 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .re-search .field { position: relative; padding-right: 6px; }
 .re-search .field input { padding-right: 8px; }
 .re-search .field .re-go { flex: none; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--blue); color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+/* 부동산 지도 2탄: 선명한 벡터 지도 + 네이버지도처럼 누르면 전체화면 */
+.re-mapwrap { position: relative; }
+.re-mapwrap .re-map { cursor: pointer; }
+.re-expand { position: absolute; left: 10px; bottom: 10px; z-index: 2; padding: 8px 12px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .92); color: #1d1d1f; font: inherit; font-size: 13px; font-weight: 700; box-shadow: 0 2px 10px rgba(0, 0, 0, .18); cursor: pointer; }
+.re-fs-top, .re-fs-chips, .re-fs-side, .re-fs-sheet { display: none; }
+.re-poi { margin-top: -4px; }
+.re-poi button.on { border-color: #ff9f0a; background: #ff9f0a; color: #fff; }
+.re-pin { cursor: pointer; transform: none; }
+.re-poi-pin { width: 28px; height: 28px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 1px 6px rgba(0, 0, 0, .3); cursor: pointer; }
+.maplibregl-popup-content { padding: 6px 10px; border-radius: 10px; font: 600 13px/1.3 Pretendard, system-ui, sans-serif; color: #1d1d1f; }
+.maplibregl-ctrl-attrib { font-size: 10px; }
+/* 전체화면 */
+html.re-fs-open, html.re-fs-open body { overflow: hidden; }
+html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibility: hidden; }
+.re-mapwrap.full { position: fixed; inset: 0; z-index: 300; background: var(--bg); }
+.re-mapwrap.full .re-map { position: absolute; inset: 0; height: auto; border-radius: 0; cursor: crosshair; }
+.re-mapwrap.full .re-expand { display: none; }
+.re-mapwrap.full .re-fs-top { display: flex; align-items: center; gap: 8px; position: absolute; z-index: 3; left: 12px; right: 12px; top: calc(10px + env(safe-area-inset-top)); flex-wrap: wrap; }
+.re-fs-close { flex: none; width: 46px; height: 46px; border: 0; border-radius: 50%; background: var(--card); color: var(--text); font-size: 28px; line-height: 1; box-shadow: 0 2px 12px rgba(0, 0, 0, .2); cursor: pointer; }
+.re-mapwrap.full .re-search { flex: 1; min-width: 0; margin: 0; }
+.re-mapwrap.full .re-search .field { height: 46px; border-radius: 999px; box-shadow: 0 2px 12px rgba(0, 0, 0, .2); background: var(--card); }
+.re-mapwrap.full .re-results { flex-basis: 100%; max-height: 40vh; overflow: auto; border-radius: 14px; box-shadow: 0 4px 16px rgba(0, 0, 0, .2); }
+.re-mapwrap.full .re-results:empty { display: none; }
+.re-mapwrap.full .re-fs-chips { display: block; position: absolute; z-index: 2; left: 0; right: 0; top: calc(66px + env(safe-area-inset-top)); padding: 0 12px; }
+.re-mapwrap.full .re-fs-chips .re-gu { margin: 0 0 6px; }
+.re-mapwrap.full .re-fs-chips .re-gu button { background: var(--card); box-shadow: 0 1px 6px rgba(0, 0, 0, .18); border-color: transparent; }
+.re-mapwrap.full .re-fs-chips .re-gu button.on { background: var(--blue); color: #fff; }
+.re-mapwrap.full .re-fs-chips .re-poi button.on { background: #ff9f0a; color: #fff; }
+.re-mapwrap.full .re-fs-side { display: flex; flex-direction: column; gap: 8px; position: absolute; z-index: 2; right: 12px; top: calc(150px + env(safe-area-inset-top)); }
+.re-fs-side button { width: 42px; height: 42px; border: 0; border-radius: 50%; background: var(--card); font-size: 18px; box-shadow: 0 2px 10px rgba(0, 0, 0, .2); cursor: pointer; }
+.re-mapwrap.full .re-fs-sheet { display: block; position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; max-height: 46vh; overflow: auto; padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; background: var(--card); box-shadow: 0 -4px 20px rgba(0, 0, 0, .18); }
+.re-mapwrap.full .re-fs-sheet::before { content: ""; display: block; width: 40px; height: 5px; margin: 0 auto 8px; border-radius: 3px; background: var(--line); }
+.re-mapwrap.full .re-fs-sheet:not(:has(.re-deals:not([hidden]))):not(:has(.re-fs-act:not([hidden]))) { display: none; }
+.re-mapwrap.full .re-deals { margin: 0; padding: 0; background: none; }
+.re-fs-act { margin-bottom: 8px; } .re-fs-act .btn { margin: 0; }
+.re-mapwrap.full .maplibregl-ctrl-bottom-right { bottom: calc(46vh + 8px); }
+@media (min-width: 900px) { .re-mapwrap.full .re-fs-sheet { left: 12px; right: auto; bottom: 12px; top: calc(150px + env(safe-area-inset-top)); width: 380px; max-height: none; border-radius: 18px; } .re-mapwrap.full .re-fs-sheet::before { display: none; } .re-mapwrap.full .maplibregl-ctrl-bottom-right { bottom: 0; } .re-mapwrap.full .re-fs-top { right: auto; width: 520px; } }
+.re-mapwrap.full:not(:has(.re-deals:not([hidden]))):not(:has(.re-fs-act:not([hidden]))) .maplibregl-ctrl-bottom-right { bottom: calc(12px + env(safe-area-inset-bottom)); }
