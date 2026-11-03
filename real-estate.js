@@ -289,6 +289,9 @@
   // ── 단지 정보 창 (카카오맵 앱처럼 아래에서 올라와요) ──
   // 카카오가 웹사이트에 주는 건 이름·주소·전화·카카오맵 링크까지예요. 사진·세대수 같은 단지정보는 카카오맵 링크로 보여 주고,
   // 돈셈은 국토교통부 실거래 자료로 그 단지의 준공 연도·최근 거래가를 붙여요
+  // 단지정보(세대수·동수·주차·난방·시공사…)는 국토교통부 공동주택 자료를 돈셈 카운터 워커가 찾아 줘요. 공공데이터 서버가 가끔 거절해서 한 번 더 물어봐요
+  const kaptInfo = async (gu, name, dong) => { for (let i = 0; i < 2; i++) { try { const r = await fetch(`${API.replace('/apt', '/kapt')}?lawd=${LAWD[gu]}&name=${encodeURIComponent(name)}&dong=${encodeURIComponent(dong || '')}`); const d = await r.json(); if (d && d.found) return d; if (d && d.found === false) return null; } catch (e) { /* 다시 */ } await new Promise(ok => setTimeout(ok, 1200)); } return null; };
+  const telFmt = v => String(v).replace(/^(02|0\d{2})(\d{3,4})(\d{4})$/, '$1-$2-$3');
   const norm = v => String(v).replace(/\(.*?\)|\s|아파트|APT/gi, '');
   let placeDeals = [];
   async function showPlace(r, aptName) {
@@ -306,7 +309,7 @@
     if (!gu || !/서울/.test(jibun) || !isApt) { box.innerHTML = head + `<p class="re-tip">실거래가는 서울 아파트만 보여 드려요.</p>` + acts; return; }
     box.innerHTML = head + '<p class="re-empty">이 단지 실거래가를 찾는 중…</p>' + acts;
     const key = norm(aptName || r.name);
-    const [tr, rt] = await Promise.all([Promise.all(yms(6).map(ym => month(gu, ym, 'trade'))), Promise.all(yms(3).map(ym => month(gu, ym, 'rent')))]);
+    const [tr, rt, k] = await Promise.all([Promise.all(yms(6).map(ym => month(gu, ym, 'trade'))), Promise.all(yms(3).map(ym => month(gu, ym, 'rent'))), kaptInfo(gu, aptName || r.name, dong)]);
     if (box.dataset.tok !== tok) return; // 그사이 다른 곳을 골랐어요
     const mine = l => l.filter(Boolean).flat().filter(x => (!dong || x.dong === dong) && norm(x.apt).length > 1 && (norm(x.apt).includes(key) || key.includes(norm(x.apt)))).sort(byDate);
     const T = mine(tr).map(x => ({ ...x, t: 'trade' })), R = mine(rt), J = R.filter(x => !x.rent), W = R.filter(x => x.rent);
@@ -314,15 +317,29 @@
     const built = (T[0] || R[0] || {}).built, areas = [...new Set([...T, ...R].map(x => Math.round(x.area)))].sort((a, b) => a - b);
     const row = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
     placeDeals = T.slice(0, 5);
-    box.innerHTML = head + (T.length || R.length ? `<table class="pc-tb">
+    const n = v => Number(v).toLocaleString('ko-KR'), use = k && /^\d{6}/.test(k.use) ? `${k.use.slice(0, 4)}년 ${+k.use.slice(4, 6)}월` : '';
+    const sz = k ? [['60㎡ 이하', k.sizes.u60], ['60~85㎡', k.sizes.u85], ['85~135㎡', k.sizes.u135], ['135㎡ 초과', k.sizes.o135]].filter(x => x[1]).map(([a, c]) => `${a} ${n(c)}세대`).join(' · ') : '';
+    const edu = k ? k.edu.replace(/[^\s()]+\(\s*\)/g, '').replace(/\s+/g, ' ').trim() : '';
+    const info = k ? `<p class="pc-sub">단지정보 <small>국토교통부 공동주택 자료</small></p><table class="pc-tb">
+      ${k.households ? row('규모', `<b>${n(k.households)}세대</b>${k.dongs ? ` (${k.dongs}개 동)` : ''}`) : ''}
+      ${use ? row('준공', use) : ''}
+      ${k.builder ? row('시공', esc(k.builder)) : ''}
+      ${k.heat || k.hall ? row('난방·구조', esc([k.heat, k.hall].filter(Boolean).join(' · '))) : ''}
+      ${k.parking ? row('주차', `${k.households ? `세대당 ${(k.parking / k.households).toFixed(1)}대 ` : ''}<small>총 ${n(k.parking)}대${k.ev ? ` · 전기차 충전기 ${n(k.ev)}대` : ''}</small>`) : ''}
+      ${sz ? row('면적별 세대수', `<small class="pc-wrap">전용 ${sz}</small>`) : ''}
+      ${k.subway ? row('지하철', `${esc(k.subway)}${k.subwayTime ? `<small>걸어서 ${esc(k.subwayTime)}</small>` : ''}`) : ''}
+      ${edu ? row('학교', esc(edu)) : ''}
+      ${k.kind || k.sale ? row('형태', esc([k.kind, k.sale].filter(Boolean).join(' · '))) : ''}
+      ${k.tel ? row('관리사무소', `<a href="tel:${esc(k.tel)}">${esc(telFmt(k.tel))}</a>`) : ''}</table>` : '';
+    box.innerHTML = head + info + (T.length || R.length ? `${k ? '<p class="pc-sub">실거래가 <small>국토교통부</small></p>' : ''}<table class="pc-tb">
       ${T.length ? row('매매 실거래', `<b>${range(T)}</b><small>최근 6달 ${T.length}건</small>`) : ''}
       ${J.length ? row('전세 실거래', `<b>${range(J)}</b><small>최근 3달 ${J.length}건</small>`) : ''}
       ${W.length ? row('월세 실거래', `<b>보증금 ${eok(W[0].amt)} / 월 ${W[0].rent.toLocaleString("ko-KR")}만</b><small>최근 3달 ${W.length}건 · 가장 최근 거래</small>`) : ''}
-      ${built ? row('준공', `${built}년`) : ''}
+      ${built && !use ? row('준공', `${built}년`) : ''}
       ${areas.length ? row('거래된 면적', `전용 ${areas.join(' · ')}㎡`) : ''}</table>
       ${placeDeals.length ? `<p class="pc-sub">최근 매매 · 누르면 그 가격으로 관심 부동산에 넣어요</p><ul class="dl-list">${placeDeals.map((x, i) => `<li><button type="button" data-pd="${i}"><span><b>전용 ${Math.round(x.area)}㎡ · ${x.floor}층</b><small>${x.y}.${x.m}.${x.d}</small></span><em>${eok(x.amt)}</em></button></li>`).join('')}</ul>` : ''}`
       : '<p class="re-tip">최근 6달 동안 신고된 이 단지 거래를 찾지 못했어요. 거래가 없었거나 국토부 자료의 단지 이름이 달라서일 수 있어요.</p>') + acts
-      + '<p class="re-tip">사진·세대수·관리비 같은 자세한 단지정보는 「사진·단지정보 (카카오맵)」에서 볼 수 있어요. 실거래 출처: 국토교통부</p>';
+      + `<p class="re-tip">${k ? '사진·관리비는 「사진·단지정보 (카카오맵)」에서 볼 수 있어요.' : '사진·세대수·관리비 같은 자세한 단지정보는 「사진·단지정보 (카카오맵)」에서 볼 수 있어요.'} 출처: 국토교통부</p>`;
   }
 
   // ── 관심 부동산 추가 ──

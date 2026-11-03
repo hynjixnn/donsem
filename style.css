@@ -2137,3 +2137,7 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .pc-tb { table-layout: fixed; } .pc-tb td { overflow-wrap: anywhere; word-break: keep-all; }
 .pc-tb th, .pc-tb td { white-space: normal; }
 .pc-tb th, .pc-tb td { border-bottom: 0; }
+.pc-sub small { margin-left: 4px; font-size: 11px; color: var(--muted); }
+.pc-tb + .pc-sub { margin-top: 16px; }
+.pc-tb td small.pc-wrap { margin: 0; font-size: 13px; color: var(--text); }
+.pc-tb td a { color: var(--blue); }
