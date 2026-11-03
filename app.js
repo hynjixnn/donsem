@@ -553,6 +553,39 @@ function assetTop(won0) {
   for (let i = 1; i < P.length; i++) if (x <= P[i][0]) { const [a, ta] = P[i - 1], [b, tb] = P[i]; return ta + (tb - ta) * (x - a) / (b - a); }
   return 50;
 }
+// ── 주택 취득세 (지방세법 제11조·제13조의2): 1주택 1~3%, 다주택·조정대상지역 중과 8·12% + 지방교육세 + 농어촌특별세 ──
+function acqRate(p) { // 일반세율(%) — 6억~9억은 (취득가액 × 2/3억 − 3)%
+  if (p <= 6e8) return 1;
+  if (p <= 9e8) return Math.round((p / 1e8 * 2 / 3 - 3) * 100) / 100;
+  return 3;
+}
+function acquisitionTax() {
+  const p = val('at_price'), n = seg('at_count'), adj = seg('at_adj') === 'adj', big = seg('at_area') === 'big', first = seg('at_first') === 'yes', out = document.getElementById('at_out');
+  if (!p) { out.innerHTML = '집값(취득가액)을 넣어 주세요.'; return; }
+  const base = acqRate(p);
+  const rate = n === '1' || n === 't2' ? base : n === '2' ? (adj ? 8 : base) : n === '3' ? (adj ? 12 : 8) : 12;
+  const heavy = rate >= 8;
+  const edu = heavy ? 0.4 : Math.round(base * 0.1 * 1000) / 1000, farm = big ? (rate === 12 ? 1 : rate === 8 ? 0.6 : 0.2) : 0;
+  let tax = Math.floor(p * rate / 100);
+  const cut = first && !heavy && p <= 12e8 ? Math.min(2000000, tax) : 0; tax -= cut;
+  const eduAmt = Math.floor(p * edu / 100), farmAmt = Math.floor(p * farm / 100), total = tax + eduAmt + farmAmt;
+  out.innerHTML = `<div>내야 할 취득세 (모두 합쳐서)</div><div class="big">${won(total)}</div>` +
+    rows([['취득세율', `${rate}%${heavy ? ' (다주택 중과)' : ''}`], ['취득세', won(tax)], ...(cut ? [['생애최초 감면', `-${won(cut)}`]] : []), [`지방교육세 (${edu}%)`, won(eduAmt)], [`농어촌특별세 (${farm}%)`, farm ? won(farmAmt) : '0원 (85㎡ 이하)'], ['집값 대비', `${(total / p * 100).toFixed(2)}%`]]) +
+    `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">잔금일(또는 등기일)로부터 60일 안에 내야 해요. ${n === 't2' ? '일시적 2주택은 3년 안에 예전 집을 팔아야 일반세율이 유지돼요. ' : ''}실제 세액은 위택스에서 확인하세요.</p>`;
+}
+// ── 부동산 중개보수 (공인중개사법 시행규칙, 주택): 매매·전세·월세 상한요율과 한도액 ──
+function brokerageFee() {
+  const k = seg('bf_kind'), amt = val('bf_amt'), rent = val('bf_rent'), vat = seg('bf_vat') === 'yes', out = document.getElementById('bf_out');
+  if (!amt) { out.innerHTML = k === 'buy' ? '매매가를 넣어 주세요.' : '보증금을 넣어 주세요.'; return; }
+  let base = amt;
+  if (k === 'rent') { base = amt + rent * 100; if (base < 5e7) base = amt + rent * 70; } // 월세는 '보증금 + 월세×100' (5천만 원 미만이면 ×70)
+  const T = k === 'buy' ? [[5e7, 0.6, 250000], [2e8, 0.5, 800000], [9e8, 0.4, 0], [12e8, 0.5, 0], [15e8, 0.6, 0], [Infinity, 0.7, 0]]
+    : [[5e7, 0.5, 200000], [1e8, 0.4, 300000], [6e8, 0.3, 0], [12e8, 0.4, 0], [15e8, 0.5, 0], [Infinity, 0.6, 0]];
+  const [, r, cap] = T.find(([lim]) => base < lim), raw = Math.floor(base * r / 100), fee = cap ? Math.min(raw, cap) : raw, withVat = vat ? Math.floor(fee * 1.1) : fee;
+  out.innerHTML = `<div>중개수수료 최대 (한쪽 기준)</div><div class="big">${won(withVat)}</div>` +
+    rows([['거래금액', `${won(base)}${k === 'rent' ? ' (월세 환산)' : ''}`], ['상한요율', `${r}%`], ['한도액', cap ? won(cap) : '없음'], ['중개수수료', won(fee)], ...(vat ? [['부가세 10%', won(withVat - fee)]] : [])]) +
+    `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">법으로 정한 최대 금액이에요. 중개사와 협의해서 더 낮출 수 있고, 파는 사람·사는 사람이 각각 내요.</p>`;
+}
 // ── 목돈 굴리기 비교 (카카오뱅크 '1,000만 원을 투자하면?'처럼): 같은 돈을 어디에 두면 세후 얼마가 붙는지 금리순으로 ──
 function lumpSum() {
   const P = val('ls_amt'), m = Math.max(1, Math.min(120, Math.round(val('ls_m')))), out = document.getElementById('ls_out');
@@ -783,7 +816,7 @@ function finIncome() {
     (o.Y ? smallNote('직장인은 월급 말고 다른 소득이 2,000만 원을 넘으면 건강보험료(소득월액보험료)가 따로 붙어요.') : smallNote('피부양자는 금융소득이 많으면 건강보험 피부양자에서 빠질 수 있어요.'));
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, at_out: acquisitionTax, bf_out: brokerageFee, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
@@ -2077,7 +2110,7 @@ const MENU = [
   ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
     ['/dividend/', '배당금', '주식 배당 세금'], ['/avg-price/', '물타기', '평균 단가 주식'], ['/retirement/', '노후자금', '은퇴 연금'], ['/inflation/', '물가상승률', '화폐 가치'],
     ['/overseas-stock-tax/', '해외주식 양도세', '미국 주식 양도소득세 250만 원 공제 22% 손익통산'], ['/etf-fee/', 'ETF 보수 비교', '총보수 수수료 운용보수 장기 투자'], ['/loss-recovery/', '손실 회복 수익률', '본전 주식 하락 마이너스 손절'], ['/financial-income-tax/', '금융소득종합과세', '이자 배당 2천만 원 종합과세 건강보험료']]],
-  ['대출 · 집', [['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
+  ['대출 · 집', [['/real-estate/', '부동산 지도', '서울 아파트 지도 관심 단지 실거래가 시세 부동산 뉴스'], ['/acquisition-tax/', '취득세', '주택 아파트 취득세 다주택 중과 생애최초'], ['/brokerage-fee/', '중개수수료', '복비 부동산 중개보수 전세 월세 매매'], ['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
   ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/time-value/', '내 시간 가치', '시급 노동 시간 가격 몇 시간 충동구매'], ['/lump-sum/', '목돈 굴리기 비교', '1000만원 예금 파킹통장 채권 ISA 어디에 넣을까 이자'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
     ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
