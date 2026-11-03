@@ -102,16 +102,46 @@
     drawWrap(list, y, m, sumOut);
     drawRank();
   }
-  // 내 자산 카드 안: 우리나라 가구 중 순자산 순위 (뱅크샐러드 '내 자산 순위'처럼)
+  // 내 자산 흐름 (뱅크샐러드 위젯처럼): 순자산 추이 · 자산 순위 · 투자 비율 · 비상금
   function drawRank() {
-    const el = $('a-rank');
+    const el = $('a-flow');
     let a = null;
     try { a = JSON.parse(localStorage.getItem('donsem:assets')); } catch (e) { a = null; }
-    if (!el || typeof assetTop !== 'function' || !a || !Array.isArray(a.items) || !a.items.length) { if (el) el.hidden = true; return; }
-    const net = a.items.reduce((s, x) => s + (x.kind === 'debt' ? -1 : 1) * (Number(x.amt) || 0), 0);
-    el.hidden = false;
-    el.innerHTML = `🏔️ 우리나라 가구 중 <strong>상위 ${topText(assetTop(net))}</strong> ›`;
+    if (!el) return;
+    if (!a || !Array.isArray(a.items) || !a.items.length) { el.innerHTML = ''; return; }
+    const sum = f => a.items.filter(f).reduce((s, x) => s + (Number(x.amt) || 0), 0);
+    const as = sum(x => x.kind !== 'debt'), de = sum(x => x.kind === 'debt'), net = as - de;
+    // ① 순자산 추이: 최근 12달 (적지 않은 달은 건너뛰어요)
+    const h = a.history && typeof a.history === 'object' ? a.history : {}, ks = Object.keys(h).sort().slice(-12);
+    let chart = '<p class="fw-empty">한 달에 한 번 금액을 고치면 막대가 쌓여요</p>';
+    if (ks.length) {
+      const top = Math.max(1, ...ks.map(k => Math.max(h[k].a || 0, h[k].d || 0))), W = 300, H = 110, bw = W / ks.length;
+      const y = v => H - 14 - Math.max(0, v) / top * (H - 24);
+      const bars = ks.map((k, i) => `<rect x="${(i * bw + bw * 0.18).toFixed(1)}" y="${y(h[k].a || 0).toFixed(1)}" width="${(bw * 0.38).toFixed(1)}" height="${(H - 14 - y(h[k].a || 0)).toFixed(1)}" rx="2" class="fw-a"/><rect x="${(i * bw + bw * 0.56).toFixed(1)}" y="${y(h[k].d || 0).toFixed(1)}" width="${(bw * 0.26).toFixed(1)}" height="${(H - 14 - y(h[k].d || 0)).toFixed(1)}" rx="2" class="fw-d"/>`).join('');
+      const pts = ks.map((k, i) => [(i * bw + bw / 2).toFixed(1), y((h[k].a || 0) - (h[k].d || 0)).toFixed(1)]);
+      const labels = ks.map((k, i) => (i === 0 || i === ks.length - 1 || ks.length <= 6) ? `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H - 2}">${Number(k.slice(5))}월</text>` : '').join('');
+      chart = `<svg class="fw-chart" viewBox="0 0 ${W} ${H}" aria-hidden="true">${bars}<polyline points="${pts.map(p => p.join(',')).join(' ')}" class="fw-line"/>${pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3" class="fw-dot"/>`).join('')}${labels}</svg>
+        <div class="fw-key"><span class="a">자산</span><span class="d">부채</span><span class="n">순자산</span></div>`;
+    }
+    // ② 순위
+    const t = typeof assetTop === 'function' ? assetTop(Math.max(0, net)) : null, yPos = t === null ? 50 : Math.max(8, Math.min(92, t));
+    // ③ 투자 자산 비율 (주식·펀드)
+    const inv = sum(x => x.kind !== 'debt' && x.cat === '주식·펀드'), ir = as ? inv / as : 0;
+    // ④ 비상금: 현금·예금이 최근 석 달 평균 지출의 몇 달 치인지
+    const cash = sum(x => x.kind !== 'debt' && (x.cat === '현금·입출금' || x.cat === '예금·적금'));
+    const d0 = new Date(today.getFullYear(), today.getMonth() - 3, 1), from = iso(d0), to = iso(new Date(today.getFullYear(), today.getMonth(), 0));
+    const spent = data.entries.filter(e => e.type === 'out' && e.date >= from && e.date <= to).reduce((s, e) => s + e.amt, 0) / 3;
+    const months = spent ? cash / spent : null;
+    const donut = (r, cls) => `<svg class="fw-donut" viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="15.9" class="fw-ring"/>${r > 0.005 ? `<circle cx="21" cy="21" r="15.9" class="${cls}" stroke-dasharray="${(r * 100).toFixed(1)} ${(100 - r * 100).toFixed(1)}" stroke-dashoffset="25"/>` : ''}</svg>`;
+    el.innerHTML = `<p class="fw-title">내 자산 흐름</p><div class="fw-grid">
+      <div class="fw fw-wide"><span>순자산 추이</span>${chart}</div>
+      <a class="fw" href="/asset-rank/"><span>내 자산 순위 ›</span><svg class="fw-pyr" viewBox="0 0 100 60" aria-hidden="true"><polygon points="50,2 98,58 2,58" class="ar-tri"/><polygon points="50,2 ${(50 + 48 * yPos / 100).toFixed(1)},${(2 + 56 * yPos / 100).toFixed(1)} ${(50 - 48 * yPos / 100).toFixed(1)},${(2 + 56 * yPos / 100).toFixed(1)}" class="ar-top"/><line x1="0" x2="100" y1="${(2 + 56 * yPos / 100).toFixed(1)}" y2="${(2 + 56 * yPos / 100).toFixed(1)}" class="ar-line"/></svg><b>${t === null ? '-' : `상위 ${topText(t)}`}</b><small>우리나라 가구 중</small></a>
+      <div class="fw"><span>투자 자산 비율</span>${donut(ir, 'fw-inv')}<b>${(ir * 100).toFixed(1)}%</b><small>주식·펀드 ÷ 전체 자산</small></div>
+      <div class="fw"><span>비상금</span><b class="fw-big">${months === null ? '-' : `${months >= 24 ? '24+' : months.toFixed(1)}개월`}</b><small>${months === null ? '가계부에 지출을 적으면 계산해요' : `현금·예금으로 버틸 수 있는 기간 (보통 3~6개월 권장)`}</small></div>
+      <div class="fw"><span>부채 비율</span>${donut(as ? Math.min(1, de / as) : 0, 'fw-debt')}<b>${as ? (de / as * 100).toFixed(1) : 0}%</b><small>부채 ÷ 자산</small></div>
+    </div>`;
   }
+
 
   // ── 월말 돈 결산 카드 (스포티파이 연말 결산처럼) ──
   const NICK = { '식비': '맛집 탐험가 🍚', '카페·간식': '카페 단골손님 ☕', '교통': '프로 이동러 🚌', '쇼핑': '쇼핑 요정 🛍️', '생활': '살림 고수 🧺', '주거·통신': '집이 최고 🏠',

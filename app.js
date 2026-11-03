@@ -3153,3 +3153,78 @@ const GUIDE_FOR = {
   if (note) { note.hidden = false; note.innerHTML = net < 0 ? '내 자산에서 부채가 자산보다 많아서 0원으로 넣었어요. 부채가 더 많은 가구는 약 3%예요.' : '캘린더 <a href="/budget/#assets">내 자산</a>에 적은 순자산을 넣었어요.'; }
 })();
 
+
+// ── 알림함 (뱅크샐러드 알림처럼): 내 기록으로 만든 알림 — 주간 지출, 결제 예정, 월급날, 예산, 연속 기록, 놓치면 손해 ──
+// 서버 없이 이 기기 기록만 보고 열 때마다 새로 만들어요. 읽은 알림은 donsem:noti-seen에 기억해요
+(() => {
+  const right = document.querySelector('.topbar .top-right');
+  if (!right) return;
+  const read = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const md = d => `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  function build() {
+    const n = new Date(), t0 = new Date(n.getFullYear(), n.getMonth(), n.getDate()), today = ymd(t0), out = [];
+    const b = read('donsem:budget'), entries = b && Array.isArray(b.entries) ? b.entries : [];
+    // ① 지난주 지출 (월~일)
+    const mon = new Date(t0); mon.setDate(t0.getDate() - ((t0.getDay() + 6) % 7) - 7);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const wk = entries.filter(e => e.type === 'out' && e.date >= ymd(mon) && e.date <= ymd(sun));
+    if (wk.length) out.push({ id: 'wk-' + ymd(mon), ico: '📅', t: '주간 지출', m: `지난주(${md(mon)}~${md(sun)})에 총 ${won(wk.reduce((s, e) => s + e.amt, 0))}을 썼어요. 어디에 많이 썼는지 확인해 보세요.`, go: '/budget/', more: `${wk.length}건 보기` });
+    // ② 월급날
+    const pi = typeof paydayInfo === 'function' ? paydayInfo(b) : null;
+    if (pi && pi.days <= 3) out.push({ id: 'pay-' + ymd(pi.next), ico: '💰', t: '월급날', m: pi.days ? `월급날까지 ${pi.days}일 남았어요. 남은 돈을 확인해 보세요.` : '오늘은 월급날이에요! 고정지출이 빠져나가기 전에 저축부터 해 보세요.', go: '/budget/' });
+    // ③ 고정지출 결제 예정 (3일 안)
+    const f = read('donsem:fixed');
+    (f && Array.isArray(f.items) ? f.items : []).forEach(x => {
+      if (!(Number(x.amt) > 0 && Number(x.day) > 0)) return;
+      for (let k = 0; k <= 3; k++) {
+        const d = new Date(t0); d.setDate(t0.getDate() + k);
+        const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        if (Math.min(Number(x.day), last) !== d.getDate() || (x.cycle === 'year' && Number(x.month) !== d.getMonth() + 1)) continue;
+        out.push({ id: `fx-${x.id}-${ymd(d)}`, ico: '↻', t: '결제 예정', m: `${k === 0 ? '오늘' : k === 1 ? '내일' : `${k}일 뒤`} ${x.name || x.cat} ${won(Number(x.amt))}이 결제돼요.`, go: '/budget/#fixed' });
+        break;
+      }
+    });
+    // ④ 이번 달 예산
+    if (b && b.budget > 0) {
+      const used = entries.filter(e => e.type === 'out' && e.date.startsWith(today.slice(0, 7))).reduce((s, e) => s + e.amt, 0), r = used / b.budget;
+      if (r >= 0.8) out.push({ id: `bud-${today.slice(0, 7)}-${r >= 1 ? 100 : 80}`, ico: r >= 1 ? '🚨' : '⚠️', t: '이번 달 예산', m: r >= 1 ? `예산을 ${won(used - b.budget)} 넘었어요. 남은 날은 꼭 필요한 데만 써 볼까요?` : `예산의 ${Math.floor(r * 100)}%를 썼어요. 남은 돈은 ${won(b.budget - used)}이에요.`, go: '/budget/' });
+    }
+    // ⑤ 연속 기록
+    if (typeof budgetStreak === 'function' && entries.length) {
+      const s = budgetStreak(entries);
+      if (s.current && !s.recordedToday) out.push({ id: 'streak-' + today, ico: '🔥', t: '연속 기록', m: `오늘 기록하면 ${s.current + 1}일 연속이에요. 돈을 안 썼다면 무지출 도장도 괜찮아요.`, go: '/budget/' });
+    }
+    // ⑥ 놓치면 손해 (중요도 ★★ 이상, 7일 안)
+    if (typeof MONEY_CAL !== 'undefined' && typeof mcDays === 'function')
+      MONEY_CAL.filter(e => (e.imp || 2) >= 2 && !e.soft && mcDays(e.d) >= 0 && mcDays(e.d) <= 7).forEach(e => out.push({ id: 'mc-' + e.d + e.t, ico: '⏰', t: '놓치면 손해', m: `${mcDays(e.d) ? `D-${mcDays(e.d)}` : '오늘'} ${e.t}`, go: '/budget/' }));
+    if (!out.length) out.push({ id: 'hello', ico: '👋', t: '돈셈 알림', m: entries.length ? '지금은 새 알림이 없어요. 결제 예정, 월급날, 예산을 넘을 때 여기서 알려 드려요.' : '가계부에 첫 기록을 남겨 보세요. 주간 지출과 결제 예정 알림을 여기서 보여 드려요.', go: '/budget/' });
+    return out;
+  }
+  const seen = () => new Set(read('donsem:noti-seen') || []);
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'noti-btn'; btn.setAttribute('aria-label', '알림');
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 4.5 1.5 6.5 2 7H4c.5-.5 2-2.5 2-7z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><i hidden></i>';
+  const theme = right.querySelector('.theme-btn');
+  theme ? right.insertBefore(btn, theme) : right.append(btn);
+  const dot = btn.querySelector('i');
+  const refresh = () => { const s = seen(), n = build().filter(x => !s.has(x.id) && x.id !== 'hello').length; dot.hidden = !n; dot.textContent = n > 9 ? '9+' : n || ''; };
+  refresh();
+  let panel = null;
+  function close() { if (panel) { panel.remove(); panel = null; btn.setAttribute('aria-expanded', 'false'); } }
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (panel) return close();
+    const list = build(), s = seen();
+    panel = document.createElement('div');
+    panel.className = 'noti-panel'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', '알림');
+    panel.innerHTML = `<div class="noti-h"><b>알림</b><small>내 기록으로 만든 알림이에요</small></div>` + list.map(x => `<a class="noti-it${s.has(x.id) ? '' : ' new'}" href="${x.go}"><span class="noti-ico">${x.ico}</span><span><b>${x.t}</b><em>${esc2h(x.m)}</em>${x.more ? `<u>${x.more}</u>` : ''}</span></a>`).join('');
+    document.body.append(panel);
+    btn.setAttribute('aria-expanded', 'true');
+    try { localStorage.setItem('donsem:noti-seen', JSON.stringify([...new Set([...s, ...list.map(x => x.id)])].slice(-200))); } catch (err) { /* 괜찮아요 */ }
+    dot.hidden = true;
+  });
+  document.addEventListener('click', e => { if (panel && !panel.contains(e.target)) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  window.addEventListener('donsem:data', refresh); window.addEventListener('donsem:budget', refresh);
+})();
