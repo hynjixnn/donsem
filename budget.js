@@ -100,6 +100,17 @@
     drawCatBudget(list);
     drawTrend(y, m);
     drawWrap(list, y, m, sumOut);
+    drawRank();
+  }
+  // 내 자산 카드 안: 우리나라 가구 중 순자산 순위 (뱅크샐러드 '내 자산 순위'처럼)
+  function drawRank() {
+    const el = $('a-rank');
+    let a = null;
+    try { a = JSON.parse(localStorage.getItem('donsem:assets')); } catch (e) { a = null; }
+    if (!el || typeof assetTop !== 'function' || !a || !Array.isArray(a.items) || !a.items.length) { if (el) el.hidden = true; return; }
+    const net = a.items.reduce((s, x) => s + (x.kind === 'debt' ? -1 : 1) * (Number(x.amt) || 0), 0);
+    el.hidden = false;
+    el.innerHTML = `🏔️ 우리나라 가구 중 <strong>상위 ${topText(assetTop(net))}</strong> ›`;
   }
 
   // ── 월말 돈 결산 카드 (스포티파이 연말 결산처럼) ──

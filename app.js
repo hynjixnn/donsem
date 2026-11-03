@@ -539,6 +539,34 @@ function salaryAt(top) { // 상위 몇 % → 그 지점 총급여(만 원)
   return P[P.length - 1][1];
 }
 const topText = t => t < 0.1 ? '0.1% 이내' : t.toFixed(1).replace(/\.0$/, '') + '%';
+
+// ── 순자산 상위 %: 「2025년 가계금융복지조사」(2025.3월 말, 가구 기준) 순자산 분위 경계와 금액별 누적 비율 ──
+// [순자산(만 원), 그 금액 이상인 가구 비율(%)] — 사이는 직선으로 잇고, 11억 넘는 부분은 위쪽 꼬리 모양(파레토)으로 어림해요
+const NET_RANK = [[-10000, 99.5], [0, 97], [1210, 90], [5108, 80], [10000, 70.5], [10296, 70], [16472, 60], [20000, 55.1], [23860, 50],
+  [30000, 43], [33050, 40], [46180, 30], [50000, 27.9], [69380, 20], [70000, 19.8], [100000, 11.8], [110020, 10]];
+const NET_AGE = { y39: ['39세 이하', 21950], y40: ['40대', 48389], y50: ['50대', 55161], y60: ['60세 이상', 53591] }; // 가구주 나이별 평균 순자산(만 원)
+const NET_MEDIAN = 23860, NET_AVG = 47144;
+function assetTop(won0) {
+  const x = won0 / 10000, P = NET_RANK;
+  if (x <= P[0][0]) return P[0][1];
+  if (x >= P[P.length - 1][0]) return Math.max(0.05, 10 * Math.pow(x / 110020, -1.51));
+  for (let i = 1; i < P.length; i++) if (x <= P[i][0]) { const [a, ta] = P[i - 1], [b, tb] = P[i]; return ta + (tb - ta) * (x - a) / (b - a); }
+  return 50;
+}
+function assetRank() {
+  const net = val('ar_net'), age = NET_AGE[seg('ar_age')] || NET_AGE.y39, out = document.getElementById('ar_out');
+  if (!net && net !== 0) { out.innerHTML = '순자산을 넣어 주세요.'; return; }
+  const t = assetTop(net), man = v => korean(Math.abs(v) * 10000) || '0원';
+  const cmp = (base, label) => [`${label} ${man(base)}보다`, Math.abs(net / 10000 - base) < 1 ? '거의 같아요' : `${man(net / 10000 - base)} ${net / 10000 >= base ? '많아요' : '적어요'}`];
+  const next = NET_RANK.find(([v, top]) => v * 10000 > net && top < t - 0.05 && v % 10000 === 0); // 바로 위 단계 (1억·2억·3억처럼 딱 떨어지는 금액)
+  // 뱅크샐러드처럼 피라미드 위에 내 자리를 점선으로
+  const yPos = Math.max(6, Math.min(94, t)); // 위에서부터 %
+  out.innerHTML = `<div>우리나라 가구 중</div><div class="big">상위 ${topText(t)}</div>
+    <div class="ar-pyr" aria-hidden="true"><svg viewBox="0 0 200 120"><polygon points="100,4 196,116 4,116" class="ar-tri"/><polygon points="100,4 ${100 + 96 * yPos / 100},${4 + 112 * yPos / 100} ${100 - 96 * yPos / 100},${4 + 112 * yPos / 100}" class="ar-top"/><line x1="0" x2="200" y1="${4 + 112 * yPos / 100}" y2="${4 + 112 * yPos / 100}" class="ar-line"/></svg><span style="top:${((4 + 112 * yPos / 100) / 1.2).toFixed(1)}%">나</span></div>` +
+    rows([['순자산 (자산 − 부채)', won(net)], cmp(NET_MEDIAN, '가운데(중위) 가구'), cmp(NET_AVG, '평균 가구'), cmp(age[1], `가구주 ${age[0]} 평균`),
+      ...(next ? [[`상위 ${topText(next[1])}까지`, `${man(next[0] - net / 10000)} 더 모으면 돼요`]] : [])]) +
+    `<p style="font-size:13px;color:var(--muted);margin:10px 0 0">가구 기준이에요. 혼자 살면 내 순자산, 가족과 함께라면 가구 전체 순자산을 넣어야 정확해요.${t < 10 ? ' 상위 10% 안쪽은 공식 경계가 없어서 어림한 값이에요.' : ''}</p>`;
+}
 function salaryRank() {
   const year = (seg('sr_mode') === 'month' ? val('sr_amt') * 12 : val('sr_amt')) / 10000, out = document.getElementById('sr_out');
   if (!year) { out.innerHTML = '연봉이나 월급을 넣어 주세요.'; return; }
@@ -726,7 +754,7 @@ function finIncome() {
     (o.Y ? smallNote('직장인은 월급 말고 다른 소득이 2,000만 원을 넘으면 건강보험료(소득월액보험료)가 따로 붙어요.') : smallNote('피부양자는 금융소득이 많으면 건강보험 피부양자에서 빠질 수 있어요.'));
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
@@ -2022,7 +2050,7 @@ const MENU = [
     ['/overseas-stock-tax/', '해외주식 양도세', '미국 주식 양도소득세 250만 원 공제 22% 손익통산'], ['/etf-fee/', 'ETF 보수 비교', '총보수 수수료 운용보수 장기 투자'], ['/loss-recovery/', '손실 회복 수익률', '본전 주식 하락 마이너스 손절'], ['/financial-income-tax/', '금융소득종합과세', '이자 배당 2천만 원 종합과세 건강보험료']]],
   ['대출 · 집', [['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
-  ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
+  ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
     ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
   ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/income-tax/', '종합소득세', '프리랜서 3.3% 환급 개인사업자 5월'], ['/corporate-tax/', '법인세', '법인 사업자 세율'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'],
     ['/fuel/', '유류비', '기름값 연비'], ['/dutch-pay/', '더치페이', 'n빵 정산'], ['/date/', '날짜', '디데이 d-day 며칠']]],
@@ -3067,7 +3095,8 @@ const GUIDE_FOR = {
     const last = read('donsem:last-net');
     const diff = last && last.day !== today ? net - last.net : last ? last.diff || 0 : 0;
     if (!last || last.day !== today) try { localStorage.setItem('donsem:last-net', JSON.stringify({ net, day: today, diff })); } catch (e) { /* 괜찮아요 */ }
-    html += `<a class="mh-row mh-net" href="/budget/#assets"><span>순자산</span><b>${sgn(net)} ›</b>${diff ? `<small class="${diff > 0 ? 'up' : 'down'}">지난 방문보다 ${man(diff)} ${diff > 0 ? '늘었어요' : '줄었어요'}</small>` : ''}
+    const rank = typeof assetTop === 'function' ? assetTop(net) : null;
+    html += `<a class="mh-row mh-net" href="/asset-rank/"><span>순자산${rank !== null ? ` · <strong class="mh-rank">상위 ${topText(rank)}</strong>` : ''}</span><b>${sgn(net)} ›</b>${diff ? `<small class="${diff > 0 ? 'up' : 'down'}">지난 방문보다 ${man(diff)} ${diff > 0 ? '늘었어요' : '줄었어요'}</small>` : ''}
       <span class="mh-mini"><i>자산 ${man(as)}</i><i>부채 ${man(de)}</i></span></a>`;
   }
   // ② 이번 달 지출과 지난달 같은 기간 비교
@@ -3094,5 +3123,19 @@ const GUIDE_FOR = {
   sec.setAttribute('aria-label', '내 돈 한눈에');
   sec.innerHTML = `<div class="mh-h"><h2>내 돈 한눈에</h2><a href="/budget/">캘린더 ›</a></div><div class="mh-body">${html}</div>`;
   (document.querySelector('.wrap > .hero') || anchor).before(sec); // 다시 온 사람에겐 내 돈이 맨 먼저 보여요
+})();
+
+// ── 순자산 상위 % 페이지: 내 자산에 적어 둔 게 있으면 그 순자산으로 바로 보여 줘요 ──
+(() => {
+  if (location.pathname !== '/asset-rank/' || new URLSearchParams(location.search).has('ar_net')) return;
+  let a = null;
+  try { a = JSON.parse(localStorage.getItem('donsem:assets')); } catch (e) { a = null; }
+  if (!a || !Array.isArray(a.items) || !a.items.length) return;
+  const net = a.items.reduce((s, x) => s + (x.kind === 'debt' ? -1 : 1) * (Number(x.amt) || 0), 0);
+  const inp = document.querySelector('input[data-k="ar_net"]'), note = document.getElementById('ar-from');
+  if (!inp) return;
+  inp.value = Math.max(0, net).toLocaleString('ko-KR'); // 부채가 더 많으면 0원으로 넣어요 (우리나라 가구의 약 3%예요)
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
+  if (note) { note.hidden = false; note.innerHTML = net < 0 ? '내 자산에서 부채가 자산보다 많아서 0원으로 넣었어요. 부채가 더 많은 가구는 약 3%예요.' : '캘린더 <a href="/budget/#assets">내 자산</a>에 적은 순자산을 넣었어요.'; }
 })();
 

@@ -1893,3 +1893,13 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
   .mh-row { padding: 6px 24px; border-bottom: 0; border-left: 1px solid var(--line); }
   .mh-row:first-child { padding-left: 0; border-left: 0; }
 }
+/* 순자산 상위 % */
+.ar-pyr { position: relative; width: 200px; max-width: 70%; margin: 14px auto 6px; }
+.ar-pyr svg { display: block; width: 100%; height: auto; }
+.ar-tri { fill: var(--line); } .ar-top { fill: var(--blue); opacity: .85; }
+.ar-line { stroke: var(--text); stroke-width: 1.2; stroke-dasharray: 4 3; }
+.ar-pyr span { position: absolute; right: -34px; transform: translateY(-50%); font-size: 12px; font-weight: 700; color: var(--text); }
+.ar-from { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.net .ar-link, .ar-link { display: inline-block; width: auto; font-weight: 500; line-height: 1.4; margin-top: 8px; padding: 6px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--blue); font-size: 14px; text-decoration: none; }
+.mh-rank { color: var(--blue); font-weight: 700; }
+
