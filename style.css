@@ -2059,3 +2059,15 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .dl-list span small { display: block; font-size: 12px; color: var(--muted); }
 .dl-list em { flex: none; font-style: normal; font-weight: 700; font-size: 15px; text-align: right; font-variant-numeric: tabular-nums; } .dl-list em small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
 
+
+/* 휴대폰 위 메뉴바: 화면 모드 버튼은 '마이'에 있으니 빼고, 접힌 제목이 오른쪽 버튼(도우미·검색·알림)과 겹치지 않게 그 사이에만 놓여요 */
+@media (max-width: 640px) {
+  .topbar .theme-btn { display: none; }
+  .top-title { left: 46px; right: 124px; max-width: none; text-align: center; transform: translateY(-50%) translateY(8px); }
+  .topbar.titled .top-title { transform: translateY(-50%); }
+}
+/* 부동산 지도: 찾기 버튼을 검색창 안으로 */
+.re-search { display: block; }
+.re-search .field { position: relative; padding-right: 6px; }
+.re-search .field input { padding-right: 8px; }
+.re-search .field .re-go { flex: none; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--blue); color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
