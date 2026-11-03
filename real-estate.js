@@ -1,5 +1,5 @@
 // 돈셈 부동산: 서울 지도에 내 관심 부동산을 핀으로 꽂고, 취득세·중개수수료·대출까지 바로 계산해요 (네이버페이 부동산 '관심 부동산'처럼)
-// 지도는 OpenFreeMap 벡터 지도(MapLibre, 확대해도 선명해요), 주소 찾기는 Nominatim, 주변 시설은 Overpass(모두 OpenStreetMap 자료)를 써요
+// 지도·장소 찾기·주변 시설은 카카오맵을 써요. 카카오맵이 안 열리면 OpenFreeMap 지도 + Nominatim·Overpass(OpenStreetMap 자료)로 바꿔요
 // 관심 부동산은 이 기기에만 저장해요(donsem:homes). 지도를 누르면 네이버지도처럼 전체화면으로 커져요
 (() => {
   const mapEl = document.getElementById('re-map');
@@ -18,45 +18,81 @@
   const priceText = x => x.kind === 'rent' ? `보증금 ${man(x.price)} · 월 ${man(x.rent || 0)}` : `${KIND[x.kind]} ${man(x.price)}`;
   const naverAt = (lat, lng) => `https://new.land.naver.com/complexes?ms=${lat.toFixed(5)},${lng.toFixed(5)},17`;
 
-  // ── 지도 불러오기 (MapLibre는 필요할 때만 받아요) ──
+  // ── 지도 엔진: 카카오맵을 먼저 쓰고, 안 열리면 OpenFreeMap(MapLibre) 지도로 바꿔요 ──
+  // 두 엔진 모두 아래 map 모양(fly·fit·bounds·zoom·pin…)으로 다뤄요. 확대 정도는 MapLibre 숫자(클수록 가까이)로 맞춰요
+  // 카카오 JavaScript 키는 원래 공개되는 키예요. 카카오 개발자 사이트에 등록한 돈셈 주소에서만 지도가 열려요
+  const KAKAO_KEY = '659255150dcc2175d56e029a25d0d460';
+  const script = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.append(s); });
+  const lv = z => Math.max(1, Math.min(14, Math.round(20 - z))); // MapLibre 확대 → 카카오 레벨(작을수록 가까이)
+  const onMapClick = (lat, lng) => {
+    if (!full) return enter(); // 작은 지도를 누르면 먼저 크게
+    if (temp) temp.remove();
+    temp = map.dot(lat, lng);
+    pending = { name: '', lat, lng };
+    $('re-fs-act').hidden = false;
+  };
+  function kakaoMap() {
+    const wait = new Promise((_, no) => setTimeout(no, 8000));
+    return Promise.race([script(`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&autoload=false&libraries=services`).then(() => new Promise(ok => kakao.maps.load(ok))), wait]).then(() => {
+      const K = kakao.maps, LL = (a, b) => new K.LatLng(a, b);
+      const m = new K.Map(mapEl, { center: LL(37.5565, 126.978), level: 9 });
+      m.setCopyrightPosition(K.CopyrightPosition.BOTTOMRIGHT, true); // 카카오 로고가 PC 왼쪽 목록에 가리지 않게
+      K.event.addListener(m, 'click', e => onMapClick(e.latLng.getLat(), e.latLng.getLng()));
+      return {
+        kakao: true,
+        fly: (lat, lng, z) => { m.setLevel(lv(z)); m.panTo(LL(lat, lng)); },
+        fit: pts => { const b = new K.LatLngBounds(); pts.forEach(p => b.extend(LL(p.lat, p.lng))); m.setBounds(b, 60, 60, 60, 60); if (m.getLevel() < 3) m.setLevel(3); },
+        bounds: () => { const b = m.getBounds(), sw = b.getSouthWest(), ne = b.getNorthEast(); return [sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()]; },
+        zoom: () => 20 - m.getLevel(),
+        zoomTo: z => m.setLevel(lv(z)),
+        zoomBy: d => m.setLevel(m.getLevel() - d, { animate: true }),
+        stop: () => {},
+        resize: () => { const c = m.getCenter(); m.relayout(); m.setCenter(c); },
+        pin: (lat, lng, el) => { const o = new K.CustomOverlay({ position: LL(lat, lng), content: el, clickable: true }); o.setMap(m); return { remove: () => o.setMap(null) }; },
+        dot: (lat, lng) => { const k = new K.Marker({ position: LL(lat, lng) }); k.setMap(m); return { remove: () => k.setMap(null) }; },
+      };
+    });
+  }
+  // 카카오맵이 안 열릴 때: OpenFreeMap 벡터 지도 (MapLibre는 이때만 받아요)
   const isDark = () => { const t = document.documentElement.dataset.theme; return t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches); };
   const STYLE = () => `https://tiles.openfreemap.org/styles/${isDark() ? 'dark' : 'liberty'}`;
   function loadLib() {
     if (window.maplibregl) return Promise.resolve();
-    return new Promise((ok, no) => {
-      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css'; document.head.append(css);
-      const js = document.createElement('script'); js.src = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js'; js.onload = ok; js.onerror = no; document.head.append(js);
-    });
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css'; document.head.append(css);
+    return script('https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js');
   }
   // 지명은 한글로 (지도 자료의 name:ko → 없으면 원래 이름)
-  const koLabels = () => { try { map.getStyle().layers.forEach(l => { if (l.type === 'symbol' && map.getLayoutProperty(l.id, 'text-field')) map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', 'name:ko'], ['get', 'name:nonlatin'], ['get', 'name']]); }); } catch (e) { /* 스타일이 아직이면 다음에 */ } };
-  const flyTo = (lat, lng, zoom) => map && map.flyTo({ center: [lng, lat], zoom, speed: 1.6 });
-  loadLib().then(() => {
-    map = new maplibregl.Map({ container: mapEl, style: STYLE(), center: [126.978, 37.5565], zoom: 10.6, attributionControl: { compact: true }, localIdeographFontFamily: "'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif", dragRotate: false, pitchWithRotate: false });
-    map.touchZoomRotate.disableRotation();
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+  const koLabels = m => { try { m.getStyle().layers.forEach(l => { if (l.type === 'symbol' && m.getLayoutProperty(l.id, 'text-field')) m.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', 'name:ko'], ['get', 'name:nonlatin'], ['get', 'name']]); }); } catch (e) { /* 스타일이 아직이면 다음에 */ } };
+  const libreMap = () => loadLib().then(() => new Promise(ok => {
+    const m = new maplibregl.Map({ container: mapEl, style: STYLE(), center: [126.978, 37.5565], zoom: 10.6, attributionControl: { compact: true }, localIdeographFontFamily: "'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif", dragRotate: false, pitchWithRotate: false });
+    m.touchZoomRotate.disableRotation();
     const fold = () => mapEl.querySelectorAll('.maplibregl-compact-show').forEach(el => el.classList.remove('maplibregl-compact-show')); /* 출처는 접힌 ⓘ로 */
-    map.on('resize', () => setTimeout(fold, 0));
-    map.on('load', () => { koLabels(); fold(); draw(); if (items.length) fit(); });
-    map.on('click', e => {
-      if (!full) return enter(); // 작은 지도를 누르면 먼저 크게
-      if (temp) temp.remove();
-      temp = new maplibregl.Marker({ color: '#ff3b30' }).setLngLat(e.lngLat).addTo(map);
-      pending = { name: '', lat: e.lngLat.lat, lng: e.lngLat.lng };
-      $('re-fs-act').hidden = false;
-    });
-    new MutationObserver(() => { if (map) { map.setStyle(STYLE()); map.once('styledata', () => setTimeout(koLabels, 300)); } }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-  }).catch(() => { mapEl.innerHTML = '<p class="re-off">지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; });
-  function fit() {
-    if (!map || !items.length) return;
-    const b = new maplibregl.LngLatBounds(); items.forEach(x => b.extend([x.lng, x.lat]));
-    map.fitBounds(b, { padding: 60, maxZoom: 15, duration: 0 });
-  }
+    m.on('resize', () => setTimeout(fold, 0));
+    m.on('click', e => onMapClick(e.lngLat.lat, e.lngLat.lng));
+    new MutationObserver(() => { m.setStyle(STYLE()); m.once('styledata', () => setTimeout(() => koLabels(m), 300)); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    m.on('load', () => { koLabels(m); fold(); ok({
+      fly: (lat, lng, z) => m.flyTo({ center: [lng, lat], zoom: z, speed: 1.6 }),
+      fit: pts => { const b = new maplibregl.LngLatBounds(); pts.forEach(p => b.extend([p.lng, p.lat])); m.fitBounds(b, { padding: 60, maxZoom: 15, duration: 0 }); },
+      bounds: () => { const b = m.getBounds(); return [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()]; },
+      zoom: () => m.getZoom(),
+      zoomTo: z => m.jumpTo({ zoom: z }),
+      zoomBy: d => m.easeTo({ zoom: m.getZoom() + d }),
+      stop: () => m.stop(),
+      resize: () => m.resize(),
+      pin: (lat, lng, el) => new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(m),
+      dot: (lat, lng) => new maplibregl.Marker({ color: '#ff3b30' }).setLngLat([lng, lat]).addTo(m),
+    }); });
+  }));
+  kakaoMap().catch(() => { mapEl.innerHTML = ''; return libreMap(); })
+    .then(g => { map = g; mapEl.classList.toggle('kakao', !!g.kakao); draw(); if (items.length) fit(); })
+    .catch(() => { mapEl.innerHTML = '<p class="re-off">지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; });
+  const flyTo = (lat, lng, zoom) => map && map.fly(lat, lng, zoom);
+  const fit = () => { if (map && items.length) map.fit(items); };
 
   // ── 핀과 목록 ──
   const pinEl = x => { const el = document.createElement('div'); el.className = 're-pin'; el.innerHTML = `<span class="k-${x.kind}">${x.kind === 'rent' ? '월' : x.kind === 'jeonse' ? '전' : '매'}</span><b>${esc(man(x.price).replace(' 원', ''))}</b>`; el.addEventListener('click', ev => { ev.stopPropagation(); focus(x.id); }); return el; };
   function draw() {
-    if (map && window.maplibregl) { marks.forEach(m => m.remove()); marks = items.map(x => new maplibregl.Marker({ element: pinEl(x) }).setLngLat([x.lng, x.lat]).addTo(map)); }
+    if (map) { marks.forEach(m => m.remove()); marks = items.map(x => map.pin(x.lat, x.lng, pinEl(x))); }
     $('re-list').innerHTML = items.length ? items.map(x => `<li class="re-item" id="re-${x.id}"><div class="re-top"><b>${esc(x.name || '내가 고른 곳')}</b><button type="button" class="re-del" data-del="${x.id}" aria-label="지우기">×</button></div>
       <p class="re-price">${priceText(x)}</p>${x.memo ? `<p class="re-memo">${esc(x.memo)}</p>` : ''}
       <div class="re-acts">${x.kind === 'buy' ? `<a href="/acquisition-tax/?at_price=${x.price}">취득세</a>` : ''}<a href="/brokerage-fee/?bf_kind=${x.kind}&bf_amt=${x.price}${x.kind === 'rent' ? `&bf_rent=${x.rent || 0}` : ''}">중개수수료</a>${x.kind === 'buy' ? '<a href="/loan/">대출 이자</a>' : '<a href="/rent/">전월세 전환</a>'}<a href="${naverAt(x.lat, x.lng)}" target="_blank" rel="noopener">이 근처 시세 ↗</a><button type="button" data-go="${x.id}">지도에서 보기</button></div></li>`).join('')
@@ -87,6 +123,8 @@
     if (!fromPop) try { if (history.state && history.state.reFull) history.back(); } catch (e) { /* 괜찮아요 */ }
     setTimeout(() => map && map.resize(), 60);
   }
+  // 폰에서는 아래 실거래 시트만큼 지도를 줄여요 (카카오 로고가 시트에 가리지 않게)
+  if (window.ResizeObserver) new ResizeObserver(() => { const h = full && innerWidth < 900 ? $('re-fs-sheet').offsetHeight : 0; if (wrap.style.getPropertyValue('--sh') !== h + 'px') { wrap.style.setProperty('--sh', h + 'px'); if (map) map.resize(); } }).observe($('re-fs-sheet'));
   $('re-expand').addEventListener('click', enter);
   $('re-fs-close').addEventListener('click', () => exit());
   window.addEventListener('popstate', () => exit(true));
@@ -96,11 +134,27 @@
     if (!navigator.geolocation) return toast('이 기기에서는 내 위치를 찾을 수 없어요.');
     navigator.geolocation.getCurrentPosition(p => flyTo(p.coords.latitude, p.coords.longitude, 15), () => toast('위치 권한을 허용하면 내 위치로 가요.'), { timeout: 8000 });
   });
+  $('re-fs-zin').addEventListener('click', () => map && map.zoomBy(1));
+  $('re-fs-zout').addEventListener('click', () => map && map.zoomBy(-1));
   $('re-fs-star').addEventListener('click', () => { if (items.length) fit(); else toast('아직 관심 부동산이 없어요.'); });
 
   // ── 주변 생활 시설 (네이버지도 음식점·카페 칩처럼, 집 볼 때 중요한 것만) ──
-  const POI = { subway: ['🚇', '지하철역', 'node["railway"="station"]["subway"="yes"];node["station"="subway"];'], school: ['🏫', '학교', 'nwr["amenity"="school"];'],
-    mart: ['🛒', '마트', 'nwr["shop"~"^(supermarket|department_store)$"];'], hospital: ['🏥', '병원', 'nwr["amenity"="hospital"];'], park: ['🌳', '공원', 'nwr["leisure"="park"]["name"];'], cafe: ['☕', '카페', 'node["amenity"="cafe"];'] };
+  // 카카오맵이면 카카오 장소 자료, 아니면 OpenStreetMap(Overpass) 자료를 써요
+  const POI = { subway: ['🚇', '지하철역', 'node["railway"="station"]["subway"="yes"];node["station"="subway"];', 'SW8'], school: ['🏫', '학교', 'nwr["amenity"="school"];', 'SC4'],
+    mart: ['🛒', '마트', 'nwr["shop"~"^(supermarket|department_store)$"];', 'MT1'], hospital: ['🏥', '병원', 'nwr["amenity"="hospital"];', 'HP8'], park: ['🌳', '공원', 'nwr["leisure"="park"]["name"];', ''], cafe: ['☕', '카페', 'node["amenity"="cafe"];', 'CE7'] };
+  // 카카오 장소 찾기: 한 쪽에 15곳씩, max만큼 모아요
+  // 카카오가 오류를 주면(등록 안 된 주소 등) 실패로 알려서 OpenStreetMap 자료로 다시 찾게 해요
+  const kPlaces = (fn, arg, opt, max = 45) => new Promise((ok, no) => {
+    const out = [], ps = new kakao.maps.services.Places(), S = kakao.maps.services.Status;
+    ps[fn](arg, (d, st, pg) => { if (st === S.OK) out.push(...d); else if (st !== S.ZERO_RESULT && !out.length) return no(st); if (st === S.OK && pg && pg.hasNextPage && out.length < max) pg.nextPage(); else ok(out.slice(0, max)); }, opt);
+  });
+  async function overpass(q, [s, w, n, e]) {
+    const body = `[out:json][timeout:15];(${q.replace(/;/g, `(${s},${w},${n},${e});`)});out center 80;`;
+    for (const u of ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) { // 무료 서버가 붐비면 다른 곳에 다시 물어봐요
+      try { const r = await fetch(u, { method: 'POST', body: 'data=' + encodeURIComponent(body), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }); if (r.ok) return ((await r.json()).elements || []).filter(x => x.lat || x.center).slice(0, 80).map(x => ({ lat: x.lat || x.center.lat, lng: x.lon || x.center.lon, name: (x.tags && (x.tags['name:ko'] || x.tags.name)) || '' })); } catch (err) { /* 다음 서버 */ }
+    }
+    throw 0;
+  }
   let poiOn = '';
   $('re-poi').innerHTML = Object.entries(POI).map(([k, [i, n]]) => `<button type="button" data-poi="${k}">${i} ${n}</button>`).join('');
   $('re-poi').addEventListener('click', async e => {
@@ -108,35 +162,36 @@
     poiMarks.forEach(m => m.remove()); poiMarks = [];
     $('re-poi').querySelectorAll('button').forEach(x => x.classList.remove('on'));
     if (poiOn === b.dataset.poi) { poiOn = ''; return; }
-    map.stop(); if (map.getZoom() < 13.5) map.jumpTo({ zoom: 14.5 }); // 너무 멀면 먼저 동네 크기로 다가가요
+    map.stop(); if (map.zoom() < 13.5) map.zoomTo(14.5); // 너무 멀면 먼저 동네 크기로 다가가요
     poiOn = b.dataset.poi; b.classList.add('on');
-    const bb = map.getBounds(), box = `${bb.getSouth()},${bb.getWest()},${bb.getNorth()},${bb.getEast()}`, [ico, name, q] = POI[poiOn];
-    const body = `[out:json][timeout:15];(${q.replace(/;/g, `(${box});`)});out center 80;`;
+    const [ico, name, q, cat] = POI[poiOn], bb = map.bounds();
     try {
-      let d = null; // 무료 서버가 붐비면 다른 곳에 다시 물어봐요
-      for (const u of ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) {
-        try { const r = await fetch(u, { method: 'POST', body: 'data=' + encodeURIComponent(body), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }); if (r.ok) { d = await r.json(); break; } } catch (e) {}
-      }
-      if (!d) throw 0;
-      const els = (d.elements || []).filter(x => (x.lat || x.center)).slice(0, 80);
-      if (!els.length) return toast(`이 화면에는 ${name} 정보가 없어요.`);
-      poiMarks = els.map(x => { const el = document.createElement('div'); el.className = 're-poi-pin'; el.textContent = ico; const nm = (x.tags && (x.tags['name:ko'] || x.tags.name)) || name;
-        return new maplibregl.Marker({ element: el }).setLngLat([x.lon || x.center.lon, x.lat || x.center.lat]).setPopup(new maplibregl.Popup({ offset: 14, closeButton: false }).setText(nm)).addTo(map); });
-      toast(`${name} ${els.length}곳을 찾았어요.`);
+      let found;
+      if (map.kakao) { const bounds = new kakao.maps.LatLngBounds(new kakao.maps.LatLng(bb[0], bb[1]), new kakao.maps.LatLng(bb[2], bb[3])); found = await kPlaces(cat ? 'categorySearch' : 'keywordSearch', cat || '공원', { bounds }).then(l => l.map(p => ({ lat: +p.y, lng: +p.x, name: p.place_name })), () => null); }
+      if (!found) found = await overpass(q, bb);
+      if (!found.length) return toast(`이 화면에는 ${name} 정보가 없어요.`);
+      poiMarks = found.map(x => { const el = document.createElement('div'); el.className = 're-poi-pin'; el.textContent = ico; el.dataset.n = x.name || name;
+        el.addEventListener('click', ev => { ev.stopPropagation(); el.classList.toggle('show'); }); return map.pin(x.lat, x.lng, el); });
+      toast(`${name} ${found.length}곳을 찾았어요. 아이콘을 누르면 이름이 보여요.`);
     } catch (err) { toast('지금은 주변 시설을 불러오지 못했어요.'); }
   });
 
   // ── 주소·아파트 찾기 ──
+  // 장소 찾기: 카카오맵이면 카카오 장소 검색(아파트 이름도 잘 찾아요), 아니면 Nominatim
+  async function geo(q, n = 6) {
+    if (map && map.kakao) { try { return (await kPlaces('keywordSearch', q, { size: Math.min(15, n) }, n)).map(p => ({ name: p.place_name, addr: p.road_address_name || p.address_name, lat: +p.y, lng: +p.x })); } catch (e) { /* 아래 Nominatim으로 */ } }
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=${n}&countrycodes=kr&accept-language=ko&q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json' } });
+    return (await r.json()).map(p => ({ name: p.name || p.display_name.split(',')[0], addr: p.display_name, lat: +p.lat, lng: +p.lon }));
+  }
   async function search(q) {
     const box = $('re-results');
     if (!q.trim()) return;
     box.innerHTML = '<li class="re-empty">찾는 중…</li>';
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=6&countrycodes=kr&accept-language=ko&q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json' } });
-      const list = await r.json();
-      box.innerHTML = list.length ? list.map((p, i) => `<li><button type="button" data-pick="${i}"><b>${esc(p.name || p.display_name.split(',')[0])}</b><small>${esc(p.display_name)}</small></button></li>`).join('')
+      const list = await geo(q);
+      box.innerHTML = list.length ? list.map((p, i) => `<li><button type="button" data-pick="${i}"><b>${esc(p.name)}</b><small>${esc(p.addr)}</small></button></li>`).join('')
         : '<li class="re-empty">찾지 못했어요. "서울 송파구 잠실동"처럼 동네 이름으로 찾거나, 지도를 직접 눌러 보세요.</li>';
-      box.onclick = e => { const b = e.target.closest('[data-pick]'); if (!b) return; const p = list[+b.dataset.pick]; box.innerHTML = ''; flyTo(+p.lat, +p.lon, 16); if (full) { pending = { name: p.name || p.display_name.split(',')[0], lat: +p.lat, lng: +p.lon }; $('re-fs-act').hidden = false; return; } openForm({ name: p.name || p.display_name.split(',')[0], lat: +p.lat, lng: +p.lon }); };
+      box.onclick = e => { const b = e.target.closest('[data-pick]'); if (!b) return; const p = list[+b.dataset.pick]; box.innerHTML = ''; flyTo(p.lat, p.lng, 16); if (full) { pending = { name: p.name, lat: p.lat, lng: p.lng }; $('re-fs-act').hidden = false; return; } openForm({ name: p.name, lat: p.lat, lng: p.lng }); };
     } catch (e) { box.innerHTML = '<li class="re-empty">지금은 찾기가 안 돼요. 지도를 직접 눌러 핀을 꽂아 보세요.</li>'; }
   }
   $('re-q').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); search(e.target.value); } });
@@ -147,7 +202,7 @@
   $('re-gu').addEventListener('click', async e => {
     const b = e.target.closest('[data-gu]'); if (!b) return;
     let c = null; try { c = JSON.parse(localStorage.getItem('donsem:gu:' + b.dataset.gu)); } catch (err) { c = null; }
-    if (!c) { try { const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ko&q=${encodeURIComponent('서울특별시 ' + b.dataset.gu)}`); const p = (await r.json())[0]; if (p) { c = [+p.lat, +p.lon]; try { localStorage.setItem('donsem:gu:' + b.dataset.gu, JSON.stringify(c)); } catch (err) { /* 괜찮아요 */ } } } catch (err) { c = null; } }
+    if (!c) { try { const p = (await geo(map && map.kakao ? `서울 ${b.dataset.gu}청` : `서울특별시 ${b.dataset.gu}`, 1))[0]; if (p) { c = [p.lat, p.lng]; try { localStorage.setItem('donsem:gu:' + b.dataset.gu, JSON.stringify(c)); } catch (err) { /* 괜찮아요 */ } } } catch (err) { c = null; } }
     if (c) flyTo(c[0], c[1], 13.5); else toast('지금은 그 구로 이동하지 못했어요.');
     $('re-gu').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
     $('re-near').href = c ? naverAt(c[0], c[1]) : '#';
@@ -199,12 +254,11 @@
     if (it) { // 누르면 지도에서 그 단지를 찾아 보여 주고, 관심 부동산에 넣을 수 있게 해요
       const x = dealData[dealType][+it.dataset.di];
       try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=kr&accept-language=ko&q=${encodeURIComponent(`서울특별시 ${dealGu} ${x.dong} ${x.apt}`)}`);
-        let p = (await r.json())[0];
-        if (!p) { const r2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=kr&accept-language=ko&q=${encodeURIComponent(`서울특별시 ${dealGu} ${x.dong}`)}`); p = (await r2.json())[0]; }
-        if (p) { flyTo(+p.lat, +p.lon, 16); if (full) { pending = { name: `${x.apt} ${Math.round(x.area)}㎡`, lat: +p.lat, lng: +p.lon, deal: x }; $('re-fs-act').hidden = false; return; } mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        let p = null; // 단지 이름으로 먼저, 못 찾으면 동네로
+        for (const q of [`서울 ${dealGu} ${x.dong} ${x.apt}`, `${x.dong} ${x.apt}`, `서울 ${dealGu} ${x.dong}`]) { p = (await geo(q, 1))[0]; if (p) break; }
+        if (p) { flyTo(p.lat, p.lng, 16); if (full) { pending = { name: `${x.apt} ${Math.round(x.area)}㎡`, lat: p.lat, lng: p.lng, deal: x }; $('re-fs-act').hidden = false; return; } mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
         if (p) {
-          openForm({ name: `${x.apt} ${Math.round(x.area)}㎡`, lat: +p.lat, lng: +p.lon });
+          openForm({ name: `${x.apt} ${Math.round(x.area)}㎡`, lat: p.lat, lng: p.lng });
           const k = dealType === 'trade' ? 'buy' : x.rent ? 'rent' : 'jeonse';
           $('re-kind').querySelector(`[data-v="${k}"]`).click();
           $('re-price').value = (x.amt * 10000).toLocaleString('ko-KR'); $('re-rent').value = x.rent ? (x.rent * 10000).toLocaleString('ko-KR') : '';
