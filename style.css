@@ -2203,3 +2203,24 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .lk-pop { margin: 14px 0 8px; font-size: 13px; font-weight: 700; color: var(--muted); }
 @media (max-width: 640px) { .pf-stk { grid-template-columns: repeat(6, 1fr); } }
 .pf-panel .field input { text-align: left; }
+/* 네이버플러스스토어에서 영감: 최근 검색어 · 최근 본 · 이달의 돈 미션 */
+.rq-head { display: flex; align-items: center; justify-content: space-between; } .rq-head .gnav-cap { margin: 0; }
+.rq-all { padding: 4px 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+.rq-list { list-style: none; margin: 6px 0 12px; padding: 0; }
+.rq-list li { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.rq-q { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 9px 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 15px; font-weight: 600; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.rq-q svg { flex: none; width: 16px; height: 16px; color: var(--muted); }
+.rq-d { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rq-x { flex: none; width: 28px; height: 28px; border: 0; background: none; color: var(--muted); font-size: 18px; cursor: pointer; }
+.cb-grid a { position: relative; } .cb-seen { display: inline-block; margin-top: -2px; padding: 1px 6px; border-radius: 6px; background: rgba(0, 113, 227, .1); color: var(--blue); font-size: 10px; font-style: normal; font-weight: 700; }
+.ms-head { display: flex; align-items: center; justify-content: space-between; } .ms-head h2 { margin: 0; }
+.ms-dday { padding: 4px 10px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ms-list { list-style: none; margin: 10px 0 0; padding: 0; }
+.ms-list a { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); color: var(--text); text-decoration: none; }
+.ms-list li:first-child a { border-top: 0; } .ms-list a:hover { text-decoration: none; }
+.ms-ic { flex: none; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: var(--field); font-size: 18px; }
+.ms-t { flex: 1; min-width: 0; } .ms-t b { display: block; font-size: 14px; }
+.ms-bar { display: block; height: 6px; margin-top: 6px; border-radius: 999px; background: var(--field); overflow: hidden; } .ms-bar i { display: block; height: 100%; border-radius: inherit; background: var(--blue); }
+.ms-list li.ok .ms-bar i { background: #30b158; } .ms-list li.ok b { color: var(--muted); }
+.ms-list em { flex: none; font-style: normal; font-size: 13px; font-weight: 700; color: var(--blue); font-variant-numeric: tabular-nums; } .ms-list li.ok em { color: #30b158; }
+.rq-head, .rq-list { grid-column: 1 / -1; }

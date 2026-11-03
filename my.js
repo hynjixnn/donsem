@@ -166,6 +166,30 @@
   $('my-temp').querySelector('.tp-q').addEventListener('click', ev => { const h = $('tp-help'); h.hidden = !h.hidden; ev.currentTarget.setAttribute('aria-expanded', String(!h.hidden)); });
   drawTemp();
 
+  // ── 이달의 돈 미션 (네이버 '적립챌린지 · 11월 미션'처럼): 달이 바뀌면 새로 시작해요 ──
+  (() => {
+    if (!$('my-mission')) return;
+    const d = new Date(), ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), left = dim - d.getDate();
+    const b = read('donsem:budget') || {}, es = Array.isArray(b.entries) ? b.entries.filter(e => e && typeof e.date === 'string' && e.date.startsWith(ym)) : [];
+    const todayS = `${ym}-${String(d.getDate()).padStart(2, '0')}`, rec = new Set(es.filter(e => !String(e.id).startsWith('fx-') && e.date <= todayS).map(e => e.date)).size; // 미래 날짜 기록은 빼요
+    const ns = ((read('donsem:nospend') || {}).days || []).filter(x => String(x).startsWith(ym)).length;
+    const q = read('donsem:quiz'), qz = q && q.days ? Object.keys(q.days).filter(k => k.startsWith(ym)).length : 0;
+    const bud = Number(b.budget) || 0, spent = es.filter(e => e.type === 'out').reduce((s2, e) => s2 + (Number(e.amt) || 0), 0), pace = bud ? spent / (bud * d.getDate() / dim) : 0;
+    const ms = [
+      ['📒', '가계부 15일 기록하기', rec, 15, '/budget/'],
+      ['🚫', '무지출 날 5일 만들기', ns, 5, '/no-spend/'],
+      ['💡', '돈 퀴즈 10일 풀기', qz, 10, '/quiz/'],
+      ['🎯', bud ? '예산 속도 지키기' : '이번 달 예산 정하기', bud ? (pace <= 1 ? 1 : 0) : 0, 1, '/budget/'],
+    ];
+    const done = ms.filter(m => m[2] >= m[3]).length;
+    $('ms-title').textContent = `${d.getMonth() + 1}월 돈 미션`;
+    $('ms-dday').textContent = left ? `D-${left}` : '오늘 마감';
+    $('ms-sum').textContent = done === ms.length ? `🎉 ${d.getMonth() + 1}월 미션을 모두 끝냈어요! 다음 달에 새 미션이 열려요.` : `${ms.length}개 중 ${done}개 끝냈어요. 달이 끝나기 전에 모두 채워 보세요.`;
+    const e2 = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    $('ms-list').innerHTML = ms.map(([ic, t, v, goal, href]) => { const ok = v >= goal, pct = Math.min(100, Math.round(v / goal * 100));
+      return `<li class="${ok ? 'ok' : ''}"><a href="${href}"><span class="ms-ic" aria-hidden="true">${ok ? '✅' : ic}</span><span class="ms-t"><b>${e2(t)}</b><i class="ms-bar"><i style="width:${pct}%"></i></i></span><em>${goal > 1 ? `${Math.min(v, goal)}/${goal}` : ok ? '완료' : '하러 가기'}</em></a></li>`; }).join('');
+  })();
+
   // 이미 홈 화면 앱으로 열었다면 설치 안내 대신 확인 문구
   if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) {
     $('my-install').innerHTML = '<span class="my-installed">✓</span> 지금 홈 화면에 설치한 돈셈 앱으로 쓰고 있어요.'; // 체크 표시가 줄 끝에 홀로 떨어지지 않게 앞에 둬요

@@ -2187,6 +2187,8 @@ const MENU = [
   const panel = wrap.querySelector('.gnav-in');
   let open = null, timer = 0;
 
+  const recentQ = () => { try { const v = JSON.parse(store.get('donsem:searches')); return Array.isArray(v) ? v.filter(r => r && r.q).slice(0, 10) : []; } catch (e) { return []; } };
+  const saveQ = v => { v = String(v).trim().slice(0, 30); if (!v) return; const d = new Date(), l = recentQ().filter(r => r.q !== v); l.unshift({ q: v, d: `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}.` }); store.set('donsem:searches', JSON.stringify(l.slice(0, 10))); };
   function draw(g) {
     if (g === 'search') {
       panel.innerHTML = `<div class="gnav-head"><b>계산기 검색</b><button type="button" class="gnav-x" aria-label="닫기">×</button></div>
@@ -2199,10 +2201,20 @@ const MENU = [
       const find = () => {
         const s = q.value.replace(/\s/g, '').toLowerCase(), onlyCho = /^[ㄱ-ㅎ]+$/.test(s);
         const hits = s ? all.filter(([, name, kw, t]) => { const h = (name + kw + t).replace(/[\s·]/g, '').toLowerCase(); return h.includes(s) || (onlyCho && cho(name.replace(/[\s·]/g, '')).includes(s)); }) : all.filter(([href]) => ['/salary/', '/loan/', '/year-end-tax/', '/unemployment/', '/severance/', '/budget/'].includes(href));
-        list.innerHTML = (s ? '' : '<p class="gnav-cap">많이 찾는 것</p>') + (hits.length ? hits.map(item).join('') : '<p class="gnav-none">찾는 계산기가 없어요. 다른 말로 찾아보세요.</p>');
+        const rs = s ? [] : recentQ(), esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+        const recentHtml = rs.length ? `<div class="rq-head"><p class="gnav-cap">최근 검색어</p><button type="button" class="rq-all" data-rall="1">전체삭제</button></div><ul class="rq-list">${rs.map((r, i) => `<li><button type="button" class="rq-q" data-rq="${esc(r.q)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>${esc(r.q)}</button><span class="rq-d">${esc(r.d)}</span><button type="button" class="rq-x" data-rx="${i}" aria-label="${esc(r.q)} 지우기">×</button></li>`).join('')}</ul>` : '';
+        list.innerHTML = recentHtml + (s ? '' : '<p class="gnav-cap">많이 찾는 것</p>') + (hits.length ? hits.map(item).join('') : '<p class="gnav-none">찾는 계산기가 없어요. 다른 말로 찾아보세요.</p>');
       };
       q.addEventListener('input', e => { e.stopPropagation(); find(); });
-      q.addEventListener('keydown', e => { if (e.key === 'Enter') { const a = list.querySelector('a'); if (a) location.href = a.href; } });
+      q.addEventListener('keydown', e => { if (e.key === 'Enter') { const a = list.querySelector('a'); if (a) { saveQ(q.value); location.href = a.href; } } });
+      // 최근 검색어: 고른 검색어만 날짜와 함께 10개까지 (네이버 쇼핑 검색처럼 하나씩 지우거나 전체삭제)
+      list.addEventListener('click', e => {
+        const rq = e.target.closest('[data-rq]'), rx = e.target.closest('[data-rx]'), all = e.target.closest('[data-rall]'), a = e.target.closest('a');
+        if (rq) { q.value = rq.dataset.rq; find(); q.focus({ preventScroll: true }); return; }
+        if (rx) { const l = recentQ(); l.splice(+rx.dataset.rx, 1); store.set('donsem:searches', JSON.stringify(l)); find(); return; }
+        if (all) { store.del('donsem:searches'); find(); return; }
+        if (a && q.value.trim()) saveQ(q.value);
+      });
       find();
       setTimeout(() => q.focus({ preventScroll: true }), 30);
     } else {
@@ -3398,7 +3410,8 @@ const GUIDE_FOR = {
   let favs = []; try { favs = JSON.parse(localStorage.getItem('donsem:favs')) || []; } catch (e) { favs = []; }
   const nameOf = {}; MENU.forEach(([, items]) => items.forEach(([p, n]) => { nameOf[p] = nameOf[p] || n; }));
   const groups = [...(favs.some(p => nameOf[p]) ? [['즐겨찾기', favs.filter(p => nameOf[p]).map(p => [p, nameOf[p]])]] : []), ...MENU];
-  const item = ([p, n]) => { const ic = iconOf(p); return `<a href="${p}">${ic ? ic.replace('class="ico"', 'class="cb-ico"') : `<span class="cb-ico cb-txt" aria-hidden="true">${esc(n.slice(0, 1))}</span>`}<span>${esc(n)}</span></a>`; };
+  let seen = []; try { seen = (JSON.parse(localStorage.getItem('donsem:recent')) || []).map(r => r.p).slice(0, 6); } catch (e) { seen = []; }
+  const item = ([p, n]) => { const ic = iconOf(p); return `<a href="${p}">${ic ? ic.replace('class="ico"', 'class="cb-ico"') : `<span class="cb-ico cb-txt" aria-hidden="true">${esc(n.slice(0, 1))}</span>`}<span>${esc(n)}</span>${seen.includes(p) ? '<em class="cb-seen">최근 본</em>' : ''}</a>`; }; // 네이버 쇼핑 카테고리처럼
   const cb = document.createElement('section');
   cb.className = 'cb'; cb.setAttribute('aria-label', '분류별 계산기');
   cb.innerHTML = `<div class="cb-side" role="tablist">${groups.map(([g], i) => `<button type="button" role="tab" data-i="${i}" class="${i ? '' : 'on'}">${esc(g.replace(/\s*·\s*/g, '·'))}</button>`).join('')}</div>
