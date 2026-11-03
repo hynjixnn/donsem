@@ -553,6 +553,17 @@ function assetTop(won0) {
   for (let i = 1; i < P.length; i++) if (x <= P[i][0]) { const [a, ta] = P[i - 1], [b, tb] = P[i]; return ta + (tb - ta) * (x - a) / (b - a); }
   return 50;
 }
+// ── 내 시간 가치: 실수령액 ÷ 일하는 시간 (출퇴근까지 넣은 '진짜 시급'도) ──
+function timeValue() {
+  const pay = val('tv_pay'), h = Math.min(120, val('tv_h')), c = Math.min(8, val('tv_c')), price = val('tv_price'), out = document.getElementById('tv_out');
+  if (!pay || !h) { out.innerHTML = '한 달 실수령액과 일하는 시간을 넣어 주세요.'; return; }
+  const mh = h * 52 / 12, per = pay / mh, real = pay / (mh + c * 5 * 52 / 12);
+  const hm = n => { const t = Math.round(n * 60); return t < 60 ? `${t}분` : `${Math.floor(t / 60).toLocaleString('ko-KR')}시간${t % 60 ? ` ${t % 60}분` : ''}`; };
+  out.innerHTML = `<div>내 1시간의 가치</div><div class="big">${won(Math.round(per))}</div>` +
+    rows([['출퇴근까지 넣은 진짜 시급', won(Math.round(real))], ['1분의 가치', won(Math.round(per / 60))], ['한 달 일하는 시간', `약 ${Math.round(mh)}시간`],
+      ...(price ? [['이 물건을 사려면', `${hm(price / per)} 일해야 해요`], ['하루 8시간 기준', `약 ${(price / per / 8).toFixed(1)}일`], ['커피 한 잔(4,500원)은', `${hm(4500 / per)} 노동`]] : [])]) +
+    (real < MIN_WAGE_2026 ? `<p style="font-size:13px;color:var(--muted);margin:10px 0 0">출퇴근 시간까지 넣으면 올해 최저시급(${won(MIN_WAGE_2026)})보다 낮아요.</p>` : '');
+}
 function assetRank() {
   const net = val('ar_net'), age = NET_AGE[seg('ar_age')] || NET_AGE.y39, out = document.getElementById('ar_out');
   if (!net && net !== 0) { out.innerHTML = '순자산을 넣어 주세요.'; return; }
@@ -754,7 +765,7 @@ function finIncome() {
     (o.Y ? smallNote('직장인은 월급 말고 다른 소득이 2,000만 원을 넘으면 건강보험료(소득월액보험료)가 따로 붙어요.') : smallNote('피부양자는 금융소득이 많으면 건강보험 피부양자에서 빠질 수 있어요.'));
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
@@ -2042,7 +2053,7 @@ function addTileIcon(t) {
 
 // ── 위쪽 메뉴: 분류를 누르면(컴퓨터는 올리기만 해도) 그 분류 계산기가 펼쳐져요 ──
 const MENU = [
-  ['돈 관리', [['/budget/', '캘린더 · 가계부', '지출 수입 예산 달력 일정'], ['/budget/#fixed', '고정지출', '구독 월세 보험'], ['/budget/#assets', '내 자산', '순자산 부채'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금'], ['/guide/', '돈 가이드', '글 정리 연말정산 실업급여 실수령액 IRP 카드 공제 월세']]],
+  ['돈 관리', [['/budget/', '캘린더 · 가계부', '지출 수입 예산 달력 일정'], ['/hidden-money/', '숨은 돈 찾기', '환급 공제 지원금 월세 의료비 근로장려금 놓친 돈'], ['/budget/#fixed', '고정지출', '구독 월세 보험'], ['/budget/#assets', '내 자산', '순자산 부채'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금'], ['/guide/', '돈 가이드', '글 정리 연말정산 실업급여 실수령액 IRP 카드 공제 월세']]],
   ['챌린지 · 테스트', [['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제 금전운 돈나무'], ['/no-spend/', '무지출 챌린지', '절약 무지출 달력 도장'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti'],
     ['/collection/', '내 컬렉션', '돈나무 배지 기록 모음']]],
   ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
@@ -2050,7 +2061,7 @@ const MENU = [
     ['/overseas-stock-tax/', '해외주식 양도세', '미국 주식 양도소득세 250만 원 공제 22% 손익통산'], ['/etf-fee/', 'ETF 보수 비교', '총보수 수수료 운용보수 장기 투자'], ['/loss-recovery/', '손실 회복 수익률', '본전 주식 하락 마이너스 손절'], ['/financial-income-tax/', '금융소득종합과세', '이자 배당 2천만 원 종합과세 건강보험료']]],
   ['대출 · 집', [['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
-  ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
+  ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/time-value/', '내 시간 가치', '시급 노동 시간 가격 몇 시간 충동구매'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
     ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
   ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/income-tax/', '종합소득세', '프리랜서 3.3% 환급 개인사업자 5월'], ['/corporate-tax/', '법인세', '법인 사업자 세율'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'],
     ['/fuel/', '유류비', '기름값 연비'], ['/dutch-pay/', '더치페이', 'n빵 정산'], ['/date/', '날짜', '디데이 d-day 며칠']]],
