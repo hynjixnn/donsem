@@ -25,13 +25,37 @@
   const script = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.append(s); });
   const lv = z => Math.max(1, Math.min(14, Math.round(20 - z))); // MapLibre 확대 → 카카오 레벨(작을수록 가까이)
   const clearPick = () => { if (temp) { temp.remove(); temp = null; } pending = null; $('re-fs-act').hidden = true; $('re-place').hidden = true; };
-  const onMapClick = (lat, lng) => {
+  // 큰 지도에서 누르면: 그 자리가 아파트면 바로 단지 정보 창 → 아니면 정보 창 닫기 → 그다음엔 마크 꽂기/지우기
+  let tapTok = 0, markTap = 0;
+  const onMapClick = async (lat, lng) => {
     if (!full) return enter(); // 작은 지도를 누르면 먼저 크게
-    if (temp || !$('re-place').hidden) return clearPick(); // 마크가 있을 때 한 번 더 누르면 사라져요
+    if (Date.now() - markTap < 500) return; // 파란 마크를 누른 거면 지도 누름은 무시
+    const tok = ++tapTok, apt = await aptAt(lat, lng);
+    if (tok !== tapTok) return;
+    if (apt) { const b = $('re-place'); if (!b.hidden && b.dataset.code === apt.raw.id) return; return showPlace(apt); }
+    if (!$('re-place').hidden) { $('re-place').hidden = true; return; } // 정보 창만 닫고 파란 마크는 남겨요 (누르면 다시 열려요)
+    if (temp) return clearPick(); // 마크가 있을 때 한 번 더 누르면 사라져요
     temp = map.dot(lat, lng, clearPick);
     pending = { name: '', lat, lng };
     $('re-fs-act').hidden = false;
   };
+  // 누른 자리의 아파트 찾기 (카카오: 그 자리 건물 이름 → 근처 아파트). 카카오맵이 아니면 없어요
+  async function aptAt(lat, lng) {
+    if (!map || !map.kakao) return null;
+    const S = kakao.maps.services, here = new kakao.maps.LatLng(lat, lng);
+    const ad = await new Promise(ok => new S.Geocoder().coord2Address(lng, lat, (r, st) => ok(st === S.Status.OK ? r[0] : null)));
+    const bname = ad && ad.road_address && ad.road_address.building_name, jibun = ad && ad.address && ad.address.address_name;
+    const isApt = p => /아파트|주거시설/.test(p.category_name), main = p => /아파트$/.test(p.category_name); // 단지 자체(…> 아파트)를 동·상가보다 먼저
+    const same = (a, b) => { a = norm(a); b = norm(b); return a.length > 1 && b.length > 1 && (a.includes(b) || b.includes(a)); };
+    // 건물 이름이 같은 아파트 → 지번 주소가 똑같은 아파트 → 50m 안 아파트 순서로 (공원처럼 아파트가 아닌 곳은 아무것도 안 골라요)
+    for (const [q, radius, ok] of [[bname, 300, x => same(x.place_name, bname)], [jibun, 300, x => x.address_name === jibun], ['아파트', 50, () => true]]) {
+      if (!q) continue;
+      const list = (await kPlaces('keywordSearch', q, { location: here, radius, sort: S.SortBy.DISTANCE }, 15).catch(() => [])).filter(x => isApt(x) && ok(x));
+      const p = list.find(main) || list[0];
+      if (p) return { name: p.place_name.replace(/\s*\d+동$/, ''), addr: p.road_address_name || p.address_name, lat: +p.y, lng: +p.x, raw: p }; // '○○아파트 101동'은 단지 이름으로
+    }
+    return null;
+  }
   function kakaoMap() {
     const wait = new Promise((_, no) => setTimeout(no, 8000));
     return Promise.race([script(`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&autoload=false&libraries=services`).then(() => new Promise(ok => kakao.maps.load(ok))), wait]).then(() => {
@@ -50,7 +74,7 @@
         stop: () => {},
         resize: () => { const c = m.getCenter(); m.relayout(); m.setCenter(c); },
         pin: (lat, lng, el) => { const o = new K.CustomOverlay({ position: LL(lat, lng), content: el, clickable: true }); o.setMap(m); return { remove: () => o.setMap(null) }; },
-        dot: (lat, lng, onTap) => { const k = new K.Marker({ position: LL(lat, lng) }); k.setMap(m); if (onTap) K.event.addListener(k, 'click', onTap); return { remove: () => k.setMap(null) }; },
+        dot: (lat, lng, onTap) => { const k = new K.Marker({ position: LL(lat, lng), clickable: !!onTap }); k.setMap(m); if (onTap) K.event.addListener(k, 'click', onTap); return { remove: () => k.setMap(null) }; },
       };
     });
   }
@@ -133,7 +157,7 @@
   $('re-fs-add').addEventListener('click', () => { const p = pending; exit(); if (p) openForm(p); });
   $('re-place').addEventListener('click', e => {
     const b = e.target.closest('[data-pc], [data-pd]'); if (!b) return;
-    if (b.dataset.pc === 'x') return clearPick();
+    if (b.dataset.pc === 'x') { $('re-place').hidden = true; return; } // 마크는 남겨서 다시 누르면 열려요
     if (b.dataset.pc === 'copy') { const a = $('re-place').dataset.addr; return navigator.clipboard ? navigator.clipboard.writeText(a).then(() => toast('주소를 복사했어요.'), () => toast(a)) : toast(a); }
     const p = pending && { ...pending }; if (!p) return;
     if (b.dataset.pd) p.deal = placeDeals[+b.dataset.pd]; // 그 거래 가격으로 채워서 열어요
@@ -297,7 +321,8 @@
   async function showPlace(r, aptName) {
     const box = $('re-place'), raw = r.raw || {}, jibun = raw.address_name || r.addr || '', cat = (raw.category_name || '').split(' > ').pop();
     const words = jibun.split(/[\s,]+/), gu = words.find(w => LAWD[w]) || '', dong = gu && raw.address_name ? words[words.indexOf(gu) + 1] : '';
-    if (temp) temp.remove(); temp = map ? map.dot(r.lat, r.lng, clearPick) : null;
+    if (temp) temp.remove(); temp = map ? map.dot(r.lat, r.lng, () => { markTap = Date.now(); if (box.innerHTML) box.hidden = !box.hidden; }) : null; // 파란 마크를 누르면 정보 창이 열리고 닫혀요
+    box.dataset.code = raw.id || '';
     pending = { name: r.name, lat: r.lat, lng: r.lng }; placeDeals = [];
     $('re-fs-act').hidden = true; box.hidden = false;
     const tok = String(Date.now()); box.dataset.tok = tok; box.dataset.addr = raw.road_address_name || r.addr || '';
