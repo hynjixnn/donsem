@@ -3048,3 +3048,51 @@ const GUIDE_FOR = {
   box.innerHTML = `<h2>함께 읽으면 좋은 돈 가이드</h2><ul>${g.map(([s, t]) => `<li><a href="/guide/${s}/">${t}</a></li>`).join('')}</ul>`;
   foot.before(box);
 })();
+
+// ── 첫 화면 '내 돈 한눈에' (뱅크샐러드 홈처럼): 순자산·이번 달 지출·다가오는 돈 일정을 한 카드에 ──
+// 가계부·고정지출·내 자산 중 하나라도 적어 둔 사람에게만 보여요
+(() => {
+  const anchor = document.getElementById('daily');
+  if (!anchor || !document.body.classList.contains('home')) return;
+  const read = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const b = read('donsem:budget'), a = read('donsem:assets'), f = read('donsem:fixed');
+  const entries = b && Array.isArray(b.entries) ? b.entries : [], items = a && Array.isArray(a.items) ? a.items : [], fixed = f && Array.isArray(f.items) ? f.items : [];
+  if (!entries.length && !items.length && !fixed.length) return;
+  const n = new Date(), ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, today = ymd(n), ym = today.slice(0, 7);
+  const sgn = v => (v < 0 ? '-' : '') + won(Math.abs(v)), man = v => (Math.abs(v) >= 1e4 ? `${Math.round(Math.abs(v) / 1e4).toLocaleString('ko-KR')}만 원` : won(Math.abs(v)));
+  let html = '';
+  // ① 순자산과 지난 방문 때보다 얼마나 변했는지
+  if (items.length) {
+    const sum = k => items.filter(x => x.kind === k).reduce((s, x) => s + (Number(x.amt) || 0), 0), as = sum('asset'), de = sum('debt'), net = as - de;
+    const last = read('donsem:last-net');
+    const diff = last && last.day !== today ? net - last.net : last ? last.diff || 0 : 0;
+    if (!last || last.day !== today) try { localStorage.setItem('donsem:last-net', JSON.stringify({ net, day: today, diff })); } catch (e) { /* 괜찮아요 */ }
+    html += `<a class="mh-row mh-net" href="/budget/#assets"><span>순자산</span><b>${sgn(net)} ›</b>${diff ? `<small class="${diff > 0 ? 'up' : 'down'}">지난 방문보다 ${man(diff)} ${diff > 0 ? '늘었어요' : '줄었어요'}</small>` : ''}
+      <span class="mh-mini"><i>자산 ${man(as)}</i><i>부채 ${man(de)}</i></span></a>`;
+  }
+  // ② 이번 달 지출과 지난달 같은 기간 비교
+  const prevYm = ymd(new Date(n.getFullYear(), n.getMonth() - 1, 1)).slice(0, 7), day = n.getDate();
+  const out = entries.filter(e => e.type === 'out' && e.date.startsWith(ym)).reduce((s, e) => s + e.amt, 0);
+  const prev = entries.filter(e => e.type === 'out' && e.date.startsWith(prevYm) && Number(e.date.slice(8)) <= day).reduce((s, e) => s + e.amt, 0);
+  if (entries.length) html += `<a class="mh-row" href="/budget/"><span>이번 달 지출</span><b>${out ? '-' : ''}${won(out)} ›</b>${prev ? `<small>지난달 같은 기간보다 ${man(prev - out)} ${out <= prev ? '덜' : '더'} 썼어요</small>` : ''}</a>`;
+  // ③ 다가오는 돈 일정: 월급날, 가장 가까운 고정지출
+  const up = [];
+  const pi = typeof paydayInfo === 'function' ? paydayInfo(b) : null;
+  if (pi) up.push([pi.days, '💰', '월급', pi.days ? `D-${pi.days}` : '오늘']);
+  fixed.filter(x => Number(x.amt) > 0 && Number(x.day) > 0 && (x.cycle !== 'year' || Number(x.month) - 1 === n.getMonth() || Number(x.month) - 1 === (n.getMonth() + 1) % 12)).forEach(x => {
+    const at = (y, m) => new Date(y, m, Math.min(Number(x.day), new Date(y, m + 1, 0).getDate()));
+    let d = at(n.getFullYear(), n.getMonth()); if (ymd(d) < today) d = at(n.getFullYear(), n.getMonth() + 1);
+    if (x.cycle === 'year' && d.getMonth() !== Number(x.month) - 1) return;
+    const dd = Math.round((d - new Date(n.getFullYear(), n.getMonth(), n.getDate())) / 864e5);
+    up.push([dd, '↻', `${x.name || x.cat} ${won(Number(x.amt))}`, dd ? `${dd}일 뒤` : '오늘']);
+  });
+  up.sort((p, q) => p[0] - q[0]);
+  if (up.length) html += `<a class="mh-row" href="/budget/"><span>다가오는 돈 일정</span>${up.slice(0, 2).map(([, i, t, w]) => `<em><i>${i}</i>${esc2h(t)}<u>${w}</u></em>`).join('')}</a>`;
+  if (!html) return;
+  const sec = document.createElement('section');
+  sec.className = 'card my-home';
+  sec.setAttribute('aria-label', '내 돈 한눈에');
+  sec.innerHTML = `<div class="mh-h"><h2>내 돈 한눈에</h2><a href="/budget/">캘린더 ›</a></div><div class="mh-body">${html}</div>`;
+  (document.querySelector('.wrap > .hero') || anchor).before(sec); // 다시 온 사람에겐 내 돈이 맨 먼저 보여요
+})();
+

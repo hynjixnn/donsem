@@ -1860,3 +1860,36 @@ html[data-theme="dark"] .mc-tag.tax { color: #ffb36b; } html[data-theme="dark"] 
 .cal-mc.rate { background: rgba(48, 176, 199, .18); color: #0b6f80; } .mc-dot.rate { background: #30b0c7; }
 :root[data-theme="dark"] .mc-tag.rate, :root[data-theme="dark"] .cal-mc.rate { color: #6fd6e8; }
 .loss-row .imp-stars { flex: none; overflow: visible; white-space: nowrap; }
+/* 뱅크샐러드에서 따온 것: 달력 예산 줄, 무지출 점, 월급날 */
+.cal-bud { display: block; width: 100%; padding: 10px 0 6px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.cal-bud span { font-size: 13px; color: var(--muted); }
+.cal-bud b { float: right; font-size: 14px; }
+.cal-bud b.over { color: #ff3b30; }
+.bud-bar { display: block; clear: both; height: 6px; margin-top: 8px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.bud-bar u { display: block; height: 100%; border-radius: 3px; background: var(--blue); }
+.bud-bar u.warn { background: #ff9f0a; } .bud-bar u.over { background: #ff3b30; }
+.cal-ns { display: flex; align-items: center; gap: 8px; margin: 0 4px 8px; padding: 10px 14px; border-radius: 12px; background: var(--field); color: var(--text); font-size: 14px; text-decoration: none; }
+.cal-ns i { width: 8px; height: 8px; border-radius: 50%; background: #ff375f; }
+.cal-ns b { margin-left: auto; font-weight: 600; } .cal-ns span { color: var(--muted); }
+.cal-day.ns { position: relative; }
+.cal-day.ns::before { content: ""; position: absolute; top: 5px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: #ff375f; }
+.cal-pay { align-self: stretch; margin: 1px -2px 0; padding: 0 3px; font-size: 10px; line-height: 1.4; font-weight: 700; border-radius: 4px; background: rgba(52, 199, 89, .2); color: #1a7f37; white-space: nowrap; overflow: hidden; }
+:root[data-theme="dark"] .cal-pay { color: #5fd97f; }
+/* 첫 화면 '내 돈 한눈에' */
+.my-home { margin-bottom: 16px; }
+.mh-h { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+.mh-h h2 { margin: 0; font-size: 20px; } .mh-h a { font-size: 14px; color: var(--muted); text-decoration: none; }
+.mh-row { display: block; padding: 14px 0; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; }
+.mh-row:last-child { border-bottom: 0; }
+.mh-row > span:first-child { display: block; font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+.mh-row > b { display: block; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.mh-row small { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); }
+.mh-row small.up { color: #e5322d; } .mh-row small.down { color: #007aff; }
+.mh-mini { display: flex; gap: 14px; margin-top: 8px; font-size: 13px; color: var(--muted); } .mh-mini i { font-style: normal; }
+.mh-row em { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-style: normal; font-size: 15px; }
+.mh-row em i { font-style: normal; width: 20px; text-align: center; } .mh-row em u { margin-left: auto; text-decoration: none; font-size: 13px; font-weight: 600; color: var(--blue); }
+@media (min-width: 641px) {
+  .mh-body { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0; margin-top: 8px; }
+  .mh-row { padding: 6px 24px; border-bottom: 0; border-left: 1px solid var(--line); }
+  .mh-row:first-child { padding-left: 0; border-left: 0; }
+}
