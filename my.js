@@ -32,6 +32,7 @@
         if (ns) write('donsem:nospend', { days: [...new Set([...(myNs.days || []), ...ns.days])].sort(), goal: myNs.goal || ns.goal || 10 });
         if (mtNew) write('donsem:money-type', d.moneyType);
         if (favNew) write('donsem:favs', [...myFavs, ...favs.filter(x => !myFavs.includes(x))]);
+        if (d.profile && typeof d.profile === 'object' && !read('donsem:profile')) write('donsem:profile', { e: String(d.profile.e || '🐷').slice(0, 4), n: String(d.profile.n || '').slice(0, 12) });
       },
     };
   }
@@ -66,7 +67,7 @@
   $('my-export').addEventListener('click', () => {
     const out = { app: 'donsem-all', version: 1, saved: new Date().toISOString() };
     PARTS.forEach(p => { out[p.key.split(':')[1]] = read(p.key); });
-    out.quiz = read('donsem:quiz'); out.nospend = read('donsem:nospend'); out.moneyType = rawStr('donsem:money-type'); out.favs = read('donsem:favs');
+    out.quiz = read('donsem:quiz'); out.nospend = read('donsem:nospend'); out.moneyType = rawStr('donsem:money-type'); out.favs = read('donsem:favs'); out.profile = read('donsem:profile');
     const url = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
     const a = document.createElement('a');
     a.href = url; a.download = `돈셈-전체-백업-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.json`;
@@ -104,6 +105,24 @@
     toast('백업을 불러왔어요.');
   });
 
+  // ── 프로필 꾸미기 (배민 '마이배민'처럼 스티커 + 별명): 이 기기에만 저장돼요 ──
+  const STK = ['🐷', '🐰', '🐻', '🦊', '🐱', '🐶', '🐼', '🐥', '🐸', '🦁', '🐯', '🐳', '💰', '🍀', '🌱', '⭐'];
+  const pf = Object.assign({ e: '🐷', n: '' }, read('donsem:profile') || {});
+  let pick = STK.includes(pf.e) ? pf.e : '🐷';
+  function drawPf() {
+    $('pf-av').textContent = pf.e; $('pf-name').textContent = pf.n || '돈셈이';
+    $('pf-stk').innerHTML = STK.map(x => `<button type="button" role="radio" aria-checked="${x === pick}" class="${x === pick ? 'on' : ''}" data-e="${x}">${x}</button>`).join('');
+  }
+  const openPf = () => { const p = $('pf-panel'); p.hidden = !p.hidden; $('pf-edit').setAttribute('aria-expanded', String(!p.hidden)); if (!p.hidden) { pick = pf.e; $('pf-in').value = pf.n; drawPf(); } };
+  $('pf-edit').addEventListener('click', openPf); $('pf-av').addEventListener('click', openPf);
+  $('pf-stk').addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (!b) return; pick = b.dataset.e; drawPf(); $('pf-av').textContent = pick; });
+  $('pf-save').addEventListener('click', () => {
+    pf.e = pick; pf.n = $('pf-in').value.trim().slice(0, 12);
+    write('donsem:profile', pf); drawPf(); $('pf-panel').hidden = true; $('pf-edit').setAttribute('aria-expanded', 'false');
+    toast('프로필을 바꿨어요.');
+  });
+  drawPf();
+
   // ── 나의 돈 온도: 처음 36.5℃에서, 꾸준한 기록·무지출·예산 지키기로 오르고 예산 초과·오래 쉬면 내려가요 (이 기기 기록으로만) ──
   function drawTemp() {
     const d = new Date(), ymd = x => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
@@ -132,6 +151,7 @@
     const t = Math.max(30, Math.min(99, Math.round((36.5 + why.reduce((s, w) => s + w[2], 0)) * 10) / 10));
     const lv = t < 36 ? ['😟', 'cold'] : t < 37.5 ? ['🙂', 'mild'] : t < 40 ? ['😊', 'warm'] : t < 45 ? ['😄', 'hot'] : ['🥰', 'fire'];
     $('tp-num').textContent = `${t.toFixed(1)}℃`; $('tp-face').textContent = lv[0];
+    if ($('pf-temp')) { $('pf-temp').textContent = `${t.toFixed(1)}℃`; $('pf-temp').dataset.lv = lv[1]; } // 프로필 옆에도 온도
     $('my-temp').dataset.lv = lv[1];
     $('tp-fill').style.width = `${Math.max(4, Math.min(100, (t - 30) / 20 * 100))}%`; // 50℃면 가득
     const e = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -160,13 +180,15 @@
   const nameOf = {}; MENU.forEach(([, items]) => items.forEach(([p, n]) => { nameOf[p] = nameOf[p] || n; }));
   const favs = get('donsem:favs').filter(p => nameOf[p]).map(p => ({ p, name: nameOf[p] }));
   const recent = get('donsem:recent').filter(r => r && r.p).map(r => ({ p: r.p, name: nameOf[r.p] || r.name, big: r.big }));
+  const POP = ['/salary/', '/loan/', '/savings/', '/year-end-tax/', '/severance/', '/delivery/'];
   const tabs = [['fav', '즐겨찾기', favs, '아직 즐겨찾기가 없어요. 계산기 화면의 ☆를 누르면 여기에 모여요.'], ['recent', '최근 본', recent, '아직 써 본 계산기가 없어요.']];
   let on = favs.length || !recent.length ? 'fav' : 'recent';
   const card = x => { const ic = iconOf(x.p); return `<a class="lk-item" href="${esc(x.p)}">${ic ? ic.replace('class="ico"', 'class="lk-ico"') : `<span class="lk-ico lk-txt" aria-hidden="true">${esc(x.name.slice(0, 1))}</span>`}<b>${esc(x.name)}</b>${x.big ? `<small>${esc(x.big)}</small>` : ''}</a>`; };
   function draw() {
     const t = tabs.find(x => x[0] === on);
     box.innerHTML = `<div class="lk-tabs" role="tablist">${tabs.map(([k, n, l]) => `<button type="button" role="tab" data-k="${k}" class="${k === on ? 'on' : ''}" aria-selected="${k === on}">${n} <span>${l.length}</span></button>`).join('')}</div>
-      ${t[2].length ? `<div class="lk-row">${t[2].map(card).join('')}</div>` : `<p class="hint">${t[3]}</p>`}`;
+      ${t[2].length ? `<div class="lk-row">${t[2].map(card).join('')}</div>` : `<p class="hint">${t[3]}</p>`}
+      ${on === 'fav' && !favs.length ? `<p class="lk-pop">많은 사람이 즐겨 찾는 계산기</p><div class="lk-row">${POP.filter(p => nameOf[p]).map(p => card({ p, name: nameOf[p] })).join('')}</div>` : ''}`; // 배민 '단골이 찜한 가게'처럼
   }
   box.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) { on = b.dataset.k; draw(); } });
   draw();

@@ -2188,3 +2188,18 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .lk-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; } .lk-row::-webkit-scrollbar { display: none; }
 .lk-item { flex: none; display: flex; flex-direction: column; gap: 6px; width: 120px; padding: 12px; border-radius: 16px; background: var(--field); color: var(--text); text-decoration: none; }
 .lk-item:hover { text-decoration: none; } .lk-ico { width: 36px; height: 36px; } .lk-item b { font-size: 14px; line-height: 1.3; word-break: keep-all; } .lk-item small { font-size: 12px; color: var(--blue); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 배민에서 영감: 마이 프로필 꾸미기 */
+.pf { display: flex; align-items: center; gap: 12px; margin: 14px 0 4px; }
+.pf-av { flex: none; width: 58px; height: 58px; border: 0; border-radius: 50%; background: var(--field); font-size: 32px; line-height: 1; cursor: pointer; }
+.pf-txt { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; } .pf-txt b { font-size: 19px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-temp { flex: none; padding: 3px 8px; border-radius: 999px; background: var(--field); color: #0a84ff; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pf-temp:empty { display: none; } .pf-temp[data-lv="cold"] { color: #8e8e93; } .pf-temp[data-lv="warm"] { color: #30b158; } .pf-temp[data-lv="hot"] { color: #ff9f0a; } .pf-temp[data-lv="fire"] { color: #ff453a; }
+.pf-edit { flex: none; padding: 7px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.pf-panel { margin-top: 10px; padding: 14px; border-radius: 16px; background: var(--card); }
+.pf-cap { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+.pf-stk { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-bottom: 12px; }
+.pf-stk button { aspect-ratio: 1; border: 2px solid transparent; border-radius: 12px; background: var(--field); font-size: 22px; line-height: 1; cursor: pointer; } .pf-stk button.on { border-color: var(--blue); }
+.pf-panel .btn { margin-top: 10px; }
+.lk-pop { margin: 14px 0 8px; font-size: 13px; font-weight: 700; color: var(--muted); }
+@media (max-width: 640px) { .pf-stk { grid-template-columns: repeat(6, 1fr); } }
+.pf-panel .field input { text-align: left; }
