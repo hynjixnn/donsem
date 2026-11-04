@@ -88,6 +88,12 @@
     <div class="shop-price"><b>9,900원</b><small>부가세 포함 · 한 번 구매로 계속 사용</small></div>
     <button type="button" class="btn fill wide shop-buy" id="shop-buy">구매하기</button>
     <p class="shop-note" id="shop-note">결제를 준비하고 있어요. 곧 이 버튼으로 바로 구매할 수 있어요.</p>
+    <div class="shop-mine" id="shop-mine">
+      <ul class="shop-mine-list" id="shop-mine-list" hidden></ul>
+      <details class="shop-find-box"><summary>구매한 파일 다시 받기</summary>
+        <form id="shop-find" class="shop-find"><input id="find-oid" class="pay-input" placeholder="주문번호 (DS로 시작)" autocomplete="off" maxlength="70"><input id="find-email" class="pay-input" type="email" inputmode="email" placeholder="결제할 때 적은 이메일" autocomplete="email" maxlength="160"><button type="submit" class="btn line">찾기</button></form>
+      </details>
+    </div>
     <div class="shop-shots">
       <figure><img src="/shop/sheet-summary.png" alt="월별 요약 시트: 12달 수입·지출·남은 돈·저축률" loading="lazy" width="700" height="530"><figcaption>월별 요약 · 저축률 자동 계산</figcaption></figure>
       <figure><img src="/shop/sheet-ledger.png" alt="가계부 시트: 날짜·구분·분류·금액" loading="lazy" width="530" height="700"><figcaption>가계부 · 고르고 적기만</figcaption></figure>
@@ -110,7 +116,7 @@
     <table class="pc-tb shop-tb">
       <tr><th>상품 종류</th><td>디지털 파일 (엑셀 .xlsx, 1개)</td></tr>
       <tr><th>쓸 수 있는 곳</th><td>Microsoft Excel 2016 이상, 구글 시트, 맥 Numbers(그래프 일부 다르게 보일 수 있어요)</td></tr>
-      <tr><th>받는 방법</th><td>결제 후 바로 내려받기 링크 + 이메일로 보내 드려요</td></tr>
+      <tr><th>받는 방법</th><td>결제가 끝나면 바로 내려받아요. 1년 동안 30번까지 다시 받을 수 있어요</td></tr>
       <tr><th>환불</th><td>내려받기 전 7일 안에는 전액 환불. 내려받은 뒤에는 디지털 상품 특성상 단순 변심 환불이 어려워요. 파일 문제는 언제든 교환·환불해 드려요. <a href="/refund/">환불정책 ›</a></td></tr>
       <tr><th>이용 범위</th><td>산 사람의 개인 사용. 다시 팔거나 나눠 주면 안 돼요. <a href="/terms/">이용약관 ›</a></td></tr>
       <tr><th>판매자</th><td>돈셈 (대표 정현진) · 사업자등록번호 589-37-01513 · <a href="mailto:hjjung330@gmail.com">hjjung330@gmail.com</a></td></tr>
@@ -122,6 +128,7 @@
   </footer>
 </div>
 <script src="/app.js"></script>
+<script src="/shop.js"></script>
 <!-- Cloudflare Web Analytics: 쿠키 없이 방문 수만 세요 --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4ddea5349bb94a689667508931ca47d8"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
