@@ -467,7 +467,7 @@
     const list = mcOn(k);
     if (!list.length) return '';
     return `<div class="mc-day">${list.map(e => `<div class="mc-day-row"><p><span class="mc-tag ${MC_TAG[e.tag] || ''}">${esc(e.tag)}</span><b>${esc(e.t)}</b>${stars(impOf(e))}</p><small>${esc(e.who)}${e.when ? ` (날짜: ${esc(e.when)})` : ''}</small>
-      <div class="mc-acts">${e.go ? `<a class="go" href="${e.go[0]}">${esc(e.go[1])} ›</a>` : ''}<button type="button" data-mcics="${MONEY_CAL.indexOf(e)}">📅 휴대폰 달력에 넣기</button></div></div>`).join('')}</div>`;
+      <div class="mc-acts">${e.go ? `<a class="go" href="${e.go[0]}">${esc(e.go[1])} ›</a>` : ''}<button type="button" class="${typeof mcSubs === 'function' && mcSubs().has(mcSubKey(e)) ? 'on' : ''}" data-mcsub="${MONEY_CAL.indexOf(e)}">${typeof mcSubs === 'function' && mcSubs().has(mcSubKey(e)) ? '🔔 알림 받는 중' : '🔕 알림 받기'}</button><button type="button" data-mcics="${MONEY_CAL.indexOf(e)}">📅 휴대폰 달력에 넣기</button></div></div>`).join('')}</div>`;
   }
   // 달력 접기: 토스처럼 고른 날이 있는 한 주만 보여요
   let fold = false;
@@ -505,7 +505,7 @@
     toast(`'${t}' 일정을 넣었어요.`);
   }
   function onPlan(e) {
-    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal],[data-goassets],[data-mcday],[data-me],[data-meopen],[data-mcics],[data-heat],[data-fold],[data-imp],[data-lossall],[data-gobudget]');
+    const b = e.target.closest('[data-pc],[data-padd],[data-pdel],[data-cm],[data-ctoday],[data-popen],[data-pcancel],[data-goanal],[data-goassets],[data-mcday],[data-me],[data-meopen],[data-mcics],[data-mcsub],[data-heat],[data-fold],[data-imp],[data-lossall],[data-gobudget]');
     if (!b) return false;
     if (b.dataset.pc) { pColor = b.dataset.pc; b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }
     else if (b.hasAttribute('data-padd')) addPlan();
@@ -515,6 +515,7 @@
       try { localStorage.setItem('donsem:mc-me', JSON.stringify({ on: me, known: ME.map(x => x[0]) })); } catch (err) { /* 저장 안 돼도 화면은 바뀌어요 */ }
       render();
     } else if (b.hasAttribute('data-meopen')) { mePanel = !mePanel; render(); }
+    else if (b.dataset.mcsub) { if (typeof mcSubToggle === 'function') { mcSubToggle(MONEY_CAL[Number(b.dataset.mcsub)]); render(); } }
     else if (b.dataset.mcics) { if (typeof mcIcs === 'function') { const ev = MONEY_CAL[Number(b.dataset.mcics)]; mcIcs([ev], `돈셈-${ev.t}.ics`); } }
     else if (b.hasAttribute('data-gobudget')) {
       const card = $('budget'); if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });

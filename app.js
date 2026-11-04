@@ -660,6 +660,18 @@ function subscriptionScore() {
       ['1년 뒤 같은 조건이면', `${nextY}점 (${nextY - total >= 0 ? '+' : ''}${nextY - total}점)`]]) +
     `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">부양가족 1명이 5점으로 가장 커요. 인기 단지일수록 높은 점수가 필요하니, 모집공고의 지난 당첨 가점을 함께 확인하세요.</p>`;
 }
+// ── 덕질 비용 계산기 (위버스 샵·멤버십처럼): 앨범·굿즈·공연·구독을 1년으로 모아 보고, 월급 대비 얼마인지 ──
+function fanBudget() {
+  const alb = val('fb_alb') * val('fb_albp'), goods = val('fb_goods'), con = val('fb_con') * val('fb_conp'), sub = val('fb_sub') * 12, trip = val('fb_trip'), pay = val('fb_pay'), out = document.getElementById('fb_out');
+  const year = alb + goods + con + sub + trip;
+  if (!year) { out.innerHTML = '1년에 쓰는 덕질 비용을 하나라도 넣어 주세요.'; return; }
+  const month = year / 12, parts = [['앨범', alb], ['굿즈·포토카드', goods], ['콘서트·팬미팅', con], ['멤버십·구독', sub], ['교통·숙박', trip]].filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
+  const r = 0.035 / 12, fv10 = Math.round(month * ((Math.pow(1 + r, 120) - 1) / r) / 10000) * 10000; // 같은 돈을 매달 연 3.5%로 10년 모으면
+  out.innerHTML = `<div>1년 덕질 비용</div><div class="big">${won(Math.round(year))}</div>` +
+    rows([['한 달 평균', won(Math.round(month))], ...parts.map(([n, v]) => [n, `${won(Math.round(v))} (${Math.round(v / year * 100)}%)`]),
+      ...(pay ? [['월 실수령액 대비', `${(month / pay * 100).toFixed(1)}%`]] : []), ['같은 돈을 10년 모으면', `약 ${korean(fv10) || won(fv10)} (연 3.5%)`]]) +
+    `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${pay && month / pay > 0.15 ? '월 실수령액의 15%가 넘어요. 생활비·저축을 먼저 떼어 두고 남은 돈 안에서 즐기면 오래 덕질할 수 있어요.' : '덕질 예산을 정해 두고 가계부 문화·여가에 적으면 넘기 전에 알 수 있어요.'}</p>`;
+}
 // ── 내 시간 가치: 실수령액 ÷ 일하는 시간 (출퇴근까지 넣은 '진짜 시급'도) ──
 function timeValue() {
   const pay = val('tv_pay'), h = Math.min(120, val('tv_h')), c = Math.min(8, val('tv_c')), price = val('tv_price'), out = document.getElementById('tv_out');
@@ -872,7 +884,7 @@ function finIncome() {
     (o.Y ? smallNote('직장인은 월급 말고 다른 소득이 2,000만 원을 넘으면 건강보험료(소득월액보험료)가 따로 붙어요.') : smallNote('피부양자는 금융소득이 많으면 건강보험 피부양자에서 빠질 수 있어요.'));
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, at_out: acquisitionTax, bf_out: brokerageFee, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome, up_out: usedPrice, dv_out: deliveryCost, jc_out: jeonseCheck, sc_out: subscriptionScore };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, at_out: acquisitionTax, bf_out: brokerageFee, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome, up_out: usedPrice, dv_out: deliveryCost, fb_out: fanBudget, jc_out: jeonseCheck, sc_out: subscriptionScore };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
@@ -2019,7 +2031,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'used-price', 'delivery', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'asset-rank', 'time-value', 'lump-sum'];
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'asset-rank', 'time-value', 'lump-sum'];
 const iconOf = path => { const slug = String(path).split('#')[1] || String(path).replace(/\//g, ''); /* '/budget/#fixed' → 고정지출 아이콘 */ return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -2179,7 +2191,7 @@ const MENU = [
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
   ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/time-value/', '내 시간 가치', '시급 노동 시간 가격 몇 시간 충동구매'], ['/lump-sum/', '목돈 굴리기 비교', '1000만원 예금 파킹통장 채권 ISA 어디에 넣을까 이자'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
     ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
-  ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/income-tax/', '종합소득세', '프리랜서 3.3% 환급 개인사업자 5월'], ['/corporate-tax/', '법인세', '법인 사업자 세율'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'], ['/used-price/', '중고 시세', '중고거래 얼마에 팔까 감가 시세'], ['/delivery/', '배달비', '배달 음식 배달팁 멤버십 구독 포장 픽업 외식'],
+  ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/income-tax/', '종합소득세', '프리랜서 3.3% 환급 개인사업자 5월'], ['/corporate-tax/', '법인세', '법인 사업자 세율'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'], ['/used-price/', '중고 시세', '중고거래 얼마에 팔까 감가 시세'], ['/delivery/', '배달비', '배달 음식 배달팁 멤버십 구독 포장 픽업 외식'], ['/fan-budget/', '덕질 비용', '덕질 아이돌 앨범 굿즈 포토카드 콘서트 팬미팅 멤버십 팬사인회'],
     ['/fuel/', '유류비', '기름값 연비'], ['/dutch-pay/', '더치페이', 'n빵 정산'], ['/date/', '날짜', '디데이 d-day 며칠']]],
 ];
 (() => {
@@ -3146,6 +3158,16 @@ const MONEY_CHANGES = [
   { t: '건강보험료율 동결', a: '7.19%', b: '7.19%', note: '직장인 부담은 그대로 3.595%예요.', src: '보건복지부 건강보험정책심의위원회 2026.9.8 결정', go: ['/salary/', '연봉 실수령액 계산기'] },
 ];
 // 오늘 기준 D-day (날짜만 비교해요)
+// 일정 알림 받기 (위버스 '오픈 알림 받기'처럼): 고른 일정은 D-3부터 🔔에 떠요 (이 기기에 저장, donsem:mc-sub)
+const mcSubKey = e => `${e.d}|${e.t}`;
+const mcSubs = () => { try { const v = JSON.parse(localStorage.getItem('donsem:mc-sub')); return new Set(Array.isArray(v) ? v : []); } catch (err) { return new Set(); } };
+function mcSubToggle(e) {
+  const s2 = mcSubs(), k = mcSubKey(e), on = !s2.has(k);
+  if (on) s2.add(k); else s2.delete(k);
+  try { localStorage.setItem('donsem:mc-sub', JSON.stringify([...s2])); } catch (err) { /* 저장이 막힌 브라우저 */ }
+  toast(on ? `'${e.t}' 알림을 받아요. D-3부터 위쪽 🔔에 알려 드려요.` : `'${e.t}' 알림을 껐어요.`);
+  return on;
+}
 const mcDays = d => { const t = new Date(), a = new Date(t.getFullYear(), t.getMonth(), t.getDate()), [y, m, dd] = d.split('-').map(Number); return Math.round((new Date(y, m - 1, dd) - a) / 864e5); };
 const mcUpcoming = () => MONEY_CAL.filter(e => mcDays(e.d) >= 0).sort((a, b) => a.d.localeCompare(b.d));
 const esc2h = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
@@ -3374,8 +3396,9 @@ const GUIDE_FOR = {
       if (s.current && !s.recordedToday) out.push({ id: 'streak-' + today, ico: '🔥', t: '연속 기록', m: `오늘 기록하면 ${s.current + 1}일 연속이에요. 돈을 안 썼다면 무지출 도장도 괜찮아요.`, go: '/budget/' });
     }
     // ⑥ 놓치면 손해 (중요도 ★★ 이상, 7일 안)
-    if (typeof MONEY_CAL !== 'undefined' && typeof mcDays === 'function')
-      MONEY_CAL.filter(e => (e.imp || 2) >= 2 && !e.soft && mcDays(e.d) >= 0 && mcDays(e.d) <= 7).forEach(e => out.push({ id: 'mc-' + e.d + e.t, ico: '⏰', t: '놓치면 손해', m: `${mcDays(e.d) ? `D-${mcDays(e.d)}` : '오늘'} ${e.t}`, go: '/budget/' }));
+    if (typeof MONEY_CAL !== 'undefined' && typeof mcDays === 'function') {
+      { const subs = mcSubs(); MONEY_CAL.filter(e => subs.has(mcSubKey(e)) && mcDays(e.d) >= 0 && mcDays(e.d) <= 3).forEach(e => out.push({ id: 'mc-' + e.d + e.t, ico: '🔔', t: '알림 받기로 한 일정', m: `${mcDays(e.d) ? `D-${mcDays(e.d)}` : '오늘'} ${e.t}`, go: '/budget/' })); }
+      MONEY_CAL.filter(e => (e.imp || 2) >= 2 && !e.soft && mcDays(e.d) >= 0 && mcDays(e.d) <= 7 && !out.some(o => o.id === 'mc-' + e.d + e.t)).forEach(e => out.push({ id: 'mc-' + e.d + e.t, ico: '⏰', t: '놓치면 손해', m: `${mcDays(e.d) ? `D-${mcDays(e.d)}` : '오늘'} ${e.t}`, go: '/budget/' })); }
     if (!out.length) out.push({ id: 'hello', ico: '👋', t: '돈셈 알림', m: entries.length ? '지금은 새 알림이 없어요. 결제 예정, 월급날, 예산을 넘을 때 여기서 알려 드려요.' : '가계부에 첫 기록을 남겨 보세요. 주간 지출과 결제 예정 알림을 여기서 보여 드려요.', go: '/budget/' });
     return out;
   }
@@ -3412,8 +3435,8 @@ const GUIDE_FOR = {
   if (!document.body.classList.contains('home') || typeof MONEY_CAL === 'undefined') return;
   const hero = document.querySelector('.wrap > .hero'); if (!hero) return;
   const isDue = x => /마감|신청|납부|신고|제출|접수/.test(x.t) || ['세금', '연말정산'].includes(x.tag); // 그날 안에 해야 하는 일
-  const near = MONEY_CAL.filter(x => (x.imp || 2) >= 2 && !x.soft && mcDays(x.d) >= 0 && mcDays(x.d) <= 60).sort((a, b) => a.d.localeCompare(b.d));
-  const e = near.find(isDue) || near[0]; // 놓치면 손해인 마감을 먼저
+  const subs = mcSubs(), near = MONEY_CAL.filter(x => mcDays(x.d) >= 0 && mcDays(x.d) <= 60 && (subs.has(mcSubKey(x)) || ((x.imp || 2) >= 2 && !x.soft))).sort((a, b) => a.d.localeCompare(b.d));
+  const e = near.find(x => subs.has(mcSubKey(x))) || near.find(isDue) || near[0]; // 알림 받기로 한 일정 → 놓치면 손해인 마감 순서로
   if (!e) return;
   const due = isDue(e), [y, m, d] = e.d.split('-').map(Number), end = due ? new Date(y, m - 1, d, 23, 59, 59) : new Date(y, m - 1, d); // 마감은 그날 끝까지, 발표·행사는 그날 시작까지
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -3421,6 +3444,10 @@ const GUIDE_FOR = {
   sec.className = 'cd-home'; sec.href = '/budget/';
   sec.innerHTML = `<span class="cd-tag">${esc(e.tag || '마감')}</span><b class="cd-t">${esc(e.t)}</b><span class="cd-left">${due ? '마감까지' : '그날까지'} <time class="cd-clock" datetime="${e.d}"></time></span><span class="cd-date">${m}월 ${d}일${due ? '까지' : ''} · 캘린더에서 보기 ›</span>`;
   hero.before(sec);
+  const bell = document.createElement('button'); bell.type = 'button'; bell.className = 'cd-bell';
+  const bellDraw = () => { const on = mcSubs().has(mcSubKey(e)); bell.textContent = on ? '🔔 알림 받는 중' : '🔕 알림 받기'; bell.setAttribute('aria-pressed', String(on)); };
+  bell.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); mcSubToggle(e); bellDraw(); });
+  bellDraw(); sec.append(bell);
   const clock = sec.querySelector('.cd-clock'), p2 = n => String(n).padStart(2, '0');
   const tick = () => {
     const s = Math.max(0, Math.floor((end - Date.now()) / 1000));

@@ -2280,3 +2280,13 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .mh-big em { font-style: normal; font-size: 13px; font-weight: 700; padding: 3px 8px; border-radius: 999px; } .mh-big em.up { color: #ff453a; background: rgba(255, 69, 58, .1); } .mh-big em.dn { color: #0a84ff; background: rgba(10, 132, 255, .1); }
 #mh-out .dl-list button { cursor: default; }
 .re-gb small { padding: 2px 7px; font-size: 11px; } .re-gb b { padding: 3px 7px; font-size: 13px; }
+/* 위버스에서 영감: 일정 알림 받기 · 돈셈 매거진 */
+.cd-home { position: relative; }
+.cd-bell { position: absolute; right: 12px; bottom: 12px; padding: 6px 11px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .22); color: #fff; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.cd-bell[aria-pressed="true"] { background: #fff; color: #5e5ce6; }
+.mc-acts button.on { border-color: var(--blue); color: var(--blue); font-weight: 700; }
+.mag-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 16px; padding: 18px 20px; border-radius: 20px; background: linear-gradient(120deg, #d7f3ff, #e9e6ff); color: #1d1d1f; text-decoration: none; }
+.mag-card:hover { text-decoration: none; }
+.mag-t b { display: block; font-size: 19px; } .mag-t small { display: block; margin-top: 3px; font-size: 13px; color: #48484a; line-height: 1.4; }
+:root[data-theme="dark"] .mag-card { background: linear-gradient(120deg, #12384a, #2a2552); color: #fff; } :root[data-theme="dark"] .mag-t small { color: #c7c7cc; }
+@media (prefers-color-scheme: dark) { :root[data-theme="auto"] .mag-card { background: linear-gradient(120deg, #12384a, #2a2552); color: #fff; } :root[data-theme="auto"] .mag-t small { color: #c7c7cc; } }
