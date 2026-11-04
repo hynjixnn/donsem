@@ -2046,7 +2046,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'loan-limit', 'asset-rank', 'time-value', 'lump-sum'];
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'shop', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'loan-limit', 'asset-rank', 'time-value', 'lump-sum'];
 const iconOf = path => { const slug = String(path).split('#')[1] || String(path).replace(/\//g, ''); /* '/budget/#fixed' → 고정지출 아이콘 */ return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -2196,7 +2196,7 @@ function addTileIcon(t) {
 
 // ── 위쪽 메뉴: 분류를 누르면(컴퓨터는 올리기만 해도) 그 분류 계산기가 펼쳐져요 ──
 const MENU = [
-  ['돈 관리', [['/budget/', '캘린더 · 가계부', '지출 수입 예산 달력 일정'], ['/hidden-money/', '숨은 돈 찾기', '환급 공제 지원금 월세 의료비 근로장려금 놓친 돈'], ['/budget/#fixed', '고정지출', '구독 월세 보험'], ['/budget/#assets', '내 자산', '순자산 부채'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금'], ['/guide/', '돈 가이드', '글 정리 연말정산 실업급여 실수령액 IRP 카드 공제 월세']]],
+  ['돈 관리', [['/budget/', '캘린더 · 가계부', '지출 수입 예산 달력 일정'], ['/shop/', '돈셈 스토어', '엑셀 가계부 템플릿 재테크 구글 시트 구매'], ['/hidden-money/', '숨은 돈 찾기', '환급 공제 지원금 월세 의료비 근로장려금 놓친 돈'], ['/budget/#fixed', '고정지출', '구독 월세 보험'], ['/budget/#assets', '내 자산', '순자산 부채'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금'], ['/guide/', '돈 가이드', '글 정리 연말정산 실업급여 실수령액 IRP 카드 공제 월세']]],
   ['챌린지 · 테스트', [['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제 금전운 돈나무'], ['/no-spend/', '무지출 챌린지', '절약 무지출 달력 도장'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti'],
     ['/collection/', '내 컬렉션', '돈나무 배지 기록 모음']]],
   ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
@@ -3508,4 +3508,21 @@ const GUIDE_FOR = {
     mark(cur);
   }, { passive: true });
   q.addEventListener('input', () => document.body.classList.toggle('cb-search', !!q.value.trim())); // 검색할 때는 원래 목록으로 결과를 보여 줘요
+})();
+
+// ── 사업자 정보 (전자상거래법에 따른 표시): 모든 페이지 맨 아래에 붙여요 ──
+(() => {
+  const ft = document.querySelector('footer');
+  if (!ft || ft.querySelector('.biz')) return;
+  const d = document.createElement('div');
+  d.className = 'biz';
+  d.innerHTML = `<p class="biz-links"><a href="/shop/">돈셈 스토어</a> · <a href="/terms/">이용약관</a> · <a href="/refund/">환불정책</a> · <a href="/privacy/"><b>개인정보처리방침</b></a></p>
+    <p>상호 돈셈 · 대표 정현진 · 사업자등록번호 589-37-01513 · 통신판매업 신고 준비 중<br>전북 순창군 순창읍 장류로 422 광명메이루즈 102동 602호 · <a href="mailto:hjjung330@gmail.com">hjjung330@gmail.com</a></p>`;
+  ft.append(d);
+})();
+
+// ── 돈셈 스토어: 결제 심사가 끝나기 전까지 구매 버튼은 안내만 해요 ──
+(() => {
+  const b = document.getElementById('shop-buy');
+  if (b) b.addEventListener('click', () => toast('결제를 준비하고 있어요. 곧 바로 구매할 수 있게 열어 드릴게요.'));
 })();
