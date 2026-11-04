@@ -2290,3 +2290,18 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .mag-t b { display: block; font-size: 19px; } .mag-t small { display: block; margin-top: 3px; font-size: 13px; color: #48484a; line-height: 1.4; }
 :root[data-theme="dark"] .mag-card { background: linear-gradient(120deg, #12384a, #2a2552); color: #fff; } :root[data-theme="dark"] .mag-t small { color: #c7c7cc; }
 @media (prefers-color-scheme: dark) { :root[data-theme="auto"] .mag-card { background: linear-gradient(120deg, #12384a, #2a2552); color: #fff; } :root[data-theme="auto"] .mag-t small { color: #c7c7cc; } }
+/* 카카오페이에서 영감: 금액 숨기기 · 출석체크 */
+.my-home .mh-h { gap: 10px; } .my-home .mh-h h2 { flex: 1; }
+.mh-eye { padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.my-home.amt-hide .mh-body b, .my-home.amt-hide .mh-body small, .my-home.amt-hide .mh-mini, .my-home.amt-hide .mh-body em u { filter: blur(8px); user-select: none; }
+.at-head { display: flex; align-items: center; justify-content: space-between; } .at-head h2 { margin: 0; }
+.at-streak { padding: 4px 10px; border-radius: 999px; background: #fee500; color: #191919; font-size: 12px; font-weight: 800; } .at-streak:empty { display: none; }
+.at-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.at-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
+.at-slot span { font-size: 26px; line-height: 1; } .at-slot b { font-size: 14px; } .at-slot small { font-size: 12px; color: var(--muted); }
+.at-slot.now { border-color: #fee500; box-shadow: 0 0 0 2px #fee500 inset; } .at-slot.now small { color: #191919; background: #fee500; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+.at-slot.done { opacity: .55; cursor: default; } .at-slot:disabled:not(.done) { opacity: .45; cursor: default; }
+.at-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; list-style: none; margin: 14px 0 6px; padding: 0; }
+.at-week li { display: flex; flex-direction: column; align-items: center; gap: 4px; } .at-week i { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--field); color: var(--muted); font-style: normal; font-size: 12px; font-weight: 700; }
+.at-week li.ok i { background: #fee500; color: #191919; } .at-week li.next i { box-shadow: 0 0 0 2px #fee500 inset; color: var(--text); } .at-week small { font-size: 11px; color: var(--muted); font-weight: 700; }
+.my-home.amt-hide .mh-rank { filter: blur(6px); }

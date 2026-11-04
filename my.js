@@ -123,6 +123,34 @@
   });
   drawPf();
 
+  // ── 출석체크 (카카오페이처럼 오전·오후 하루 두 번, 3일·5일 연속이면 보너스): 출석한 날은 돈 온도에도 더해져요 ──
+  const AT = 'donsem:attend', atRead = () => { const v = read(AT); return v && v.days && typeof v.days === 'object' ? v : { days: {} }; };
+  const ymdOf = x => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  function atStreak(days) { // 오늘(아직이면 어제)까지 이어진 출석 날짜 수
+    const d = new Date(); if (!days[ymdOf(d)]) d.setDate(d.getDate() - 1);
+    let n = 0; while (days[ymdOf(d)]) { n++; d.setDate(d.getDate() - 1); } return n;
+  }
+  function drawAttend() {
+    if (!$('my-attend')) return;
+    const a = atRead(), today = ymdOf(new Date()), got = a.days[today] || [], pm = new Date().getHours() >= 12, st = atStreak(a.days);
+    const slot = (k, label, ico, open) => { const done = got.includes(k); return `<button type="button" class="at-slot ${done ? 'done' : ''} ${open && !done ? 'now' : ''}" data-at="${k}" ${done || !open ? 'disabled' : ''}><span aria-hidden="true">${ico}</span><b>${label}</b><small>${done ? '완료' : open ? '지금 체크' : k === 'am' ? '놓쳤어요' : '12시부터'}</small></button>`; };
+    $('at-slots').innerHTML = slot('am', '오전 출석', '🌤️', !pm) + slot('pm', '오후 출석', '☀️', pm);
+    const pos = got.length ? st : st + 1; // 오늘 체크하면 몇 번째 날인지
+    $('at-week').innerHTML = [1, 2, 3, 4, 5, 6, 7].map(i => `<li class="${i < pos || (i === pos && got.length) ? 'ok' : i === pos ? 'next' : ''}"><i>${i < pos || (i === pos && got.length) ? '✓' : i}</i><small>${i === 3 ? '×2' : i === 5 ? '×3' : i === 7 ? '🎁' : `${i}일`}</small></li>`).join('');
+    $('at-streak').textContent = st ? `${st}일 연속` : '';
+    $('at-msg').textContent = got.length === 2 ? '오늘 출석을 모두 끝냈어요. 내일 또 만나요!' : st >= 7 ? '일주일 연속 출석! 돈 온도가 쑥 올라가요.' : '출석한 날은 나의 돈 온도에 더해져요. 3일·5일 연속이면 보너스예요.';
+  }
+  $('my-attend') && $('at-slots').addEventListener('click', e => {
+    const b = e.target.closest('[data-at]'); if (!b || b.disabled) return;
+    const a = atRead(), today = ymdOf(new Date()); a.days[today] = [...new Set([...(a.days[today] || []), b.dataset.at])];
+    Object.keys(a.days).filter(k => k < ymdOf(new Date(Date.now() - 400 * 864e5))).forEach(k => delete a.days[k]); // 1년 넘은 기록은 정리
+    write(AT, a);
+    const st = atStreak(a.days);
+    toast(st === 3 && a.days[today].length === 1 ? '🎉 3일 연속 출석! 보너스 ×2로 돈 온도가 더 올라요.' : st === 5 && a.days[today].length === 1 ? '🎉 5일 연속 출석! 보너스 ×3!' : st === 7 && a.days[today].length === 1 ? '🎁 일주일 연속 출석 달성!' : '출석 완료! 돈 온도에 더해졌어요.');
+    drawAttend(); drawTemp();
+  });
+  drawAttend();
+
   // ── 나의 돈 온도: 처음 36.5℃에서, 꾸준한 기록·무지출·예산 지키기로 오르고 예산 초과·오래 쉬면 내려가요 (이 기기 기록으로만) ──
   function drawTemp() {
     const d = new Date(), ymd = x => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
@@ -147,6 +175,8 @@
     if (assets) why.push(['내 자산 정리', `${assets}개`, 0.5]);
     if (goals) why.push(['모으는 목표', `${goals}개`, Math.min(1, goals * 0.5)]);
     if (quizDays) why.push(['돈 퀴즈', `${quizDays}일`, Math.min(1.5, quizDays * 0.05)]);
+    { const ad = Object.keys(atRead().days).filter(k => k >= since && k <= today).length, ast = atStreak(atRead().days); // 출석: 하루 0.05℃, 3일·5일 연속이면 ×2·×3
+      if (ad) why.push(['최근 30일 출석', `${ad}일${ast >= 3 ? ` · ${ast}일 연속 ×${ast >= 5 ? 3 : 2}` : ''}`, Math.min(2, ad * 0.05 * (ast >= 5 ? 3 : ast >= 3 ? 2 : 1))]); }
     if (rest > 14) why.push(['기록을 쉰 지', `${rest}일`, -1]);
     const t = Math.max(30, Math.min(99, Math.round((36.5 + why.reduce((s, w) => s + w[2], 0)) * 10) / 10));
     const lv = t < 36 ? ['😟', 'cold'] : t < 37.5 ? ['🙂', 'mild'] : t < 40 ? ['😊', 'warm'] : t < 45 ? ['😄', 'hot'] : ['🥰', 'fire'];

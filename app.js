@@ -672,6 +672,21 @@ function fanBudget() {
       ...(pay ? [['월 실수령액 대비', `${(month / pay * 100).toFixed(1)}%`]] : []), ['같은 돈을 10년 모으면', `약 ${korean(fv10) || won(fv10)} (연 3.5%)`]]) +
     `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${pay && month / pay > 0.15 ? '월 실수령액의 15%가 넘어요. 생활비·저축을 먼저 떼어 두고 남은 돈 안에서 즐기면 오래 덕질할 수 있어요.' : '덕질 예산을 정해 두고 가계부 문화·여가에 적으면 넘기 전에 알 수 있어요.'}</p>`;
 }
+// ── 대출 한도 (카카오페이 '예상 대출 조건'처럼): DSR = 모든 대출의 1년 원리금 ÷ 연소득. 은행 40%, 2금융권 50% 안에서 빌릴 수 있어요 ──
+function loanLimit() {
+  const inc = val('ll_inc'), credit = seg('ll_kind') === 'credit', rate = val('ll_rate'), stress = Math.max(0, val('ll_stress')), exist = val('ll_exist'), dsr = seg('ll_dsr') === 'second' ? 0.5 : 0.4, out = document.getElementById('ll_out');
+  const years = credit ? 5 : Math.max(1, Math.min(50, val('ll_term'))), n = years * 12; // 신용대출은 DSR을 셀 때 5년에 나눠 갚는다고 봐요
+  if (!inc) { out.innerHTML = '연소득을 넣어 주세요.'; return; }
+  const yearPay = inc * dsr - exist;
+  if (yearPay <= 0) { out.innerHTML = `<div>더 빌릴 수 있는 돈</div><div class="big">0원</div><p style="font-size:13px;color:var(--muted);margin:10px 0 0">지금 대출의 1년 원리금이 이미 연소득의 ${dsr * 100}%를 넘어요. 기존 대출을 줄이거나 소득이 늘면 다시 계산해 보세요.</p>`; return; }
+  const pv = (pay, r) => r ? pay * (1 - Math.pow(1 + r, -n)) / r : pay * n, pmt = (P, r) => r ? P * r / (1 - Math.pow(1 + r, -n)) : P / n;
+  const r1 = (rate + stress) / 100 / 12, max = Math.floor(pv(yearPay / 12, r1) / 1e5) * 1e5;
+  const shown = credit ? Math.min(max, inc) : max, monthly = Math.round(pmt(shown, rate / 100 / 12)); // 보여 주는 한도를 다 빌렸을 때
+  out.innerHTML = `<div>DSR ${dsr * 100}% 기준 예상 최대 한도</div><div class="big">${korean(shown) || won(shown)}</div>` +
+    rows([['1년에 갚을 수 있는 원리금', won(Math.round(yearPay))], ['한도 계산에 쓴 금리', `${(rate + stress).toFixed(2)}%${stress ? ` (금리 ${rate}% + 스트레스 ${stress}%p)` : ''}`],
+      ['다 빌리면 매달 갚을 돈', `${won(monthly)} (${years}년 원리금균등, 금리 ${rate}%)`], ...(credit && max > inc ? [['DSR로 계산한 한도', `${korean(max) || won(max)} (보통 연소득 안에서 나와요)`]] : [])]) +
+    `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${credit ? '은행 신용대출은 신용점수와 직장에 따라 보통 연소득 안에서 정해져요.' : '주택담보대출은 집값의 일정 비율(LTV)도 함께 넘을 수 없어요.'} 실제 한도와 금리는 금융회사 심사로 정해져요.</p>`;
+}
 // ── 내 시간 가치: 실수령액 ÷ 일하는 시간 (출퇴근까지 넣은 '진짜 시급'도) ──
 function timeValue() {
   const pay = val('tv_pay'), h = Math.min(120, val('tv_h')), c = Math.min(8, val('tv_c')), price = val('tv_price'), out = document.getElementById('tv_out');
@@ -884,7 +899,7 @@ function finIncome() {
     (o.Y ? smallNote('직장인은 월급 말고 다른 소득이 2,000만 원을 넘으면 건강보험료(소득월액보험료)가 따로 붙어요.') : smallNote('피부양자는 금융소득이 많으면 건강보험 피부양자에서 빠질 수 있어요.'));
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, at_out: acquisitionTax, bf_out: brokerageFee, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome, up_out: usedPrice, dv_out: deliveryCost, fb_out: fanBudget, jc_out: jeonseCheck, sc_out: subscriptionScore };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, at_out: acquisitionTax, bf_out: brokerageFee, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome, up_out: usedPrice, dv_out: deliveryCost, fb_out: fanBudget, jc_out: jeonseCheck, sc_out: subscriptionScore, ll_out: loanLimit };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = 10320; // 2026년 최저시급
@@ -2031,7 +2046,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'asset-rank', 'time-value', 'lump-sum'];
+const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'loan-limit', 'asset-rank', 'time-value', 'lump-sum'];
 const iconOf = path => { const slug = String(path).split('#')[1] || String(path).replace(/\//g, ''); /* '/budget/#fixed' → 고정지출 아이콘 */ return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -2187,7 +2202,7 @@ const MENU = [
   ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
     ['/dividend/', '배당금', '주식 배당 세금'], ['/avg-price/', '물타기', '평균 단가 주식'], ['/retirement/', '노후자금', '은퇴 연금'], ['/inflation/', '물가상승률', '화폐 가치'],
     ['/overseas-stock-tax/', '해외주식 양도세', '미국 주식 양도소득세 250만 원 공제 22% 손익통산'], ['/etf-fee/', 'ETF 보수 비교', '총보수 수수료 운용보수 장기 투자'], ['/loss-recovery/', '손실 회복 수익률', '본전 주식 하락 마이너스 손절'], ['/financial-income-tax/', '금융소득종합과세', '이자 배당 2천만 원 종합과세 건강보험료']]],
-  ['대출 · 집', [['/real-estate/', '부동산 지도', '서울 아파트 지도 관심 단지 실거래가 시세 부동산 뉴스'], ['/acquisition-tax/', '취득세', '주택 아파트 취득세 다주택 중과 생애최초'], ['/brokerage-fee/', '중개수수료', '복비 부동산 중개보수 전세 월세 매매'], ['/jeonse-check/', '전세 안심 진단', '깡통전세 전세사기 보증금 근저당 전세가율 보증보험'], ['/subscription-score/', '청약 가점', '청약 가점 점수 무주택 부양가족 청약통장 84점 분양'], ['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
+  ['대출 · 집', [['/real-estate/', '부동산 지도', '서울 아파트 지도 관심 단지 실거래가 시세 부동산 뉴스'], ['/acquisition-tax/', '취득세', '주택 아파트 취득세 다주택 중과 생애최초'], ['/brokerage-fee/', '중개수수료', '복비 부동산 중개보수 전세 월세 매매'], ['/jeonse-check/', '전세 안심 진단', '깡통전세 전세사기 보증금 근저당 전세가율 보증보험'], ['/subscription-score/', '청약 가점', '청약 가점 점수 무주택 부양가족 청약통장 84점 분양'], ['/loan-limit/', '대출 한도', 'DSR 대출 한도 주담대 신용대출 스트레스 얼마까지 빌릴 수'], ['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
   ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/time-value/', '내 시간 가치', '시급 노동 시간 가격 몇 시간 충동구매'], ['/lump-sum/', '목돈 굴리기 비교', '1000만원 예금 파킹통장 채권 ISA 어디에 넣을까 이자'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
     ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
@@ -3335,8 +3350,12 @@ const GUIDE_FOR = {
   const sec = document.createElement('section');
   sec.className = 'card my-home';
   sec.setAttribute('aria-label', '내 돈 한눈에');
-  sec.innerHTML = `<div class="mh-h"><h2>내 돈 한눈에</h2><a href="/budget/">캘린더 ›</a></div><div class="mh-body">${html}</div>`;
+  sec.innerHTML = `<div class="mh-h"><h2>내 돈 한눈에</h2><button type="button" class="mh-eye" aria-pressed="false">금액 숨기기</button><a href="/budget/">캘린더 ›</a></div><div class="mh-body">${html}</div>`;
   (document.querySelector('.wrap > .hero') || anchor).before(sec); // 다시 온 사람에겐 내 돈이 맨 먼저 보여요
+  // 금액 숨기기 (카카오페이처럼): 지하철·회사에서 첫 화면을 열어도 금액이 흐리게 보여요. 이 기기에 기억해요
+  const eye = sec.querySelector('.mh-eye'), hideOn = on => { sec.classList.toggle('amt-hide', on); eye.textContent = on ? '금액 보기' : '금액 숨기기'; eye.setAttribute('aria-pressed', String(on)); };
+  hideOn(store.get('donsem:hide-amt') === '1');
+  eye.addEventListener('click', () => { const on = !sec.classList.contains('amt-hide'); store.set('donsem:hide-amt', on ? '1' : '0'); hideOn(on); });
 })();
 
 // ── 순자산 상위 % 페이지: 내 자산에 적어 둔 게 있으면 그 순자산으로 바로 보여 줘요 ──
