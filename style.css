@@ -2319,3 +2319,29 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .shop-card h2 { margin-top: 24px; font-size: 19px; }
 .shop-list { margin: 8px 0 0; padding-left: 18px; font-size: 15px; line-height: 1.7; } .shop-list b { margin-right: 4px; }
 .shop-tb { margin-top: 10px; } .shop-tb th { width: 96px; }
+/* 돈셈 스토어 결제 */
+.pay-card h1 { margin-bottom: 6px; }
+.pay-test { margin: 8px 0 12px; padding: 10px 12px; border-radius: 12px; background: rgba(255, 159, 10, .14); color: #a35a00; font-size: 14px; font-weight: 600; }
+:root[data-theme="dark"] .pay-test { color: #ffb340; }
+.pay-item { display: flex; align-items: center; gap: 12px; margin: 14px 0 18px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; }
+.pay-item img { width: 64px; height: 48px; object-fit: cover; object-position: top left; border-radius: 8px; border: 1px solid var(--line); background: #fff; flex: none; }
+.pay-item div { flex: 1; min-width: 0; } .pay-item b { display: block; font-size: 15px; } .pay-item small { font-size: 12px; color: var(--muted); } .pay-item strong { font-size: 16px; white-space: nowrap; }
+.pay-label { display: block; margin: 4px 0 6px; font-size: 14px; font-weight: 600; } .pay-label small { font-weight: 400; color: var(--muted); }
+.pay-input { width: 100%; box-sizing: border-box; padding: 12px 14px; font: inherit; font-size: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); color: var(--text); }
+.pay-widget { margin: 16px -8px 0; padding: 4px 0; border-radius: 16px; background: #fff; overflow: hidden; }
+.pay-agree { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; font-size: 13px; line-height: 1.55; color: var(--muted); cursor: pointer; }
+.pay-agree input { width: 18px; height: 18px; margin: 1px 0 0; flex: none; accent-color: var(--blue); }
+.pay-agree b { color: var(--text, inherit); }
+#pay-go:disabled { opacity: .5; cursor: default; }
+.pay-spin { width: 36px; height: 36px; margin: 24px auto; border: 3px solid var(--line); border-top-color: var(--blue); border-radius: 50%; animation: pay-spin .8s linear infinite; }
+@keyframes pay-spin { to { transform: rotate(360deg); } }
+.pay-ok { width: 56px; height: 56px; margin: 8px auto 12px; border-radius: 50%; background: #34c759; color: #fff; font-size: 30px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+#pay-done h1, #pay-done > .sub, #pay-fail h1, #pay-wait h1, #pay-wait .sub, #pay-closed h1, #pay-closed .sub { text-align: center; }
+#pay-done .shop-tb { margin-top: 18px; } .pay-tips { margin-top: 14px; font-size: 14px; color: var(--muted); }
+.shop-mine { margin-top: 12px; }
+.shop-mine-list { list-style: none; margin: 0 0 8px; padding: 0; }
+.shop-mine-list li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px; }
+.shop-mine-list span { flex: 1; min-width: 0; } .shop-mine-list b { display: block; font-size: 14px; } .shop-mine-list small { font-size: 12px; color: var(--muted); word-break: break-all; }
+.shop-mine-list .btn { padding: 8px 14px; font-size: 14px; white-space: nowrap; }
+.shop-find-box summary { cursor: pointer; font-size: 14px; color: var(--blue); text-align: center; padding: 6px; list-style: none; } .shop-find-box summary::-webkit-details-marker { display: none; }
+.shop-find { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; } .shop-find .btn { font: inherit; cursor: pointer; background: transparent; }

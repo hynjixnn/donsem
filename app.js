@@ -3521,8 +3521,3 @@ const GUIDE_FOR = {
   ft.append(d);
 })();
 
-// ── 돈셈 스토어: 결제 심사가 끝나기 전까지 구매 버튼은 안내만 해요 ──
-(() => {
-  const b = document.getElementById('shop-buy');
-  if (b) b.addEventListener('click', () => toast('결제를 준비하고 있어요. 곧 바로 구매할 수 있게 열어 드릴게요.'));
-})();
