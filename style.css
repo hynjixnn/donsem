@@ -2345,3 +2345,18 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .shop-mine-list .btn { padding: 8px 14px; font-size: 14px; white-space: nowrap; }
 .shop-find-box summary { cursor: pointer; font-size: 14px; color: var(--blue); text-align: center; padding: 6px; list-style: none; } .shop-find-box summary::-webkit-details-marker { display: none; }
 .shop-find { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; } .shop-find .btn { font: inherit; cursor: pointer; background: transparent; }
+/* 부동산 정보 창: 평형별 시세·가격 흐름·공유 */
+.pc-areas { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 14px 0 10px; padding-bottom: 2px; }
+.pc-areas::-webkit-scrollbar { display: none; }
+.pc-areas button { flex: none; border: 1px solid var(--line); border-radius: 980px; background: var(--field); color: var(--text); font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; cursor: pointer; }
+.pc-areas button small { margin-left: 4px; font-weight: 400; color: var(--muted); }
+.pc-areas button.on { background: var(--blue); border-color: var(--blue); color: #fff; } .pc-areas button.on small { color: rgba(255,255,255,.8); }
+.pc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 4px; }
+.pc-stats > div { padding: 10px 12px; border-radius: 12px; background: var(--field); border: 1px solid var(--line); min-width: 0; }
+.pc-stats small { display: block; font-size: 12px; color: var(--muted); } .pc-stats b { display: block; font-size: 17px; margin-top: 2px; }
+.pc-stats em { display: block; font-style: normal; font-size: 11px; color: var(--muted); margin-top: 2px; } .pc-stats em a { color: #d70015; font-weight: 600; }
+.pc-sub .pc-ch { float: right; font-style: normal; font-weight: 700; font-size: 13px; } .pc-ch.up { color: #d70015; } .pc-ch.dn { color: #0071e3; }
+.pc-spark { display: block; width: 100%; height: 70px; color: var(--blue); margin-top: 4px; }
+.pc-spark-x { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 2px; } .pc-spark-x span { flex: 1; text-align: center; } .pc-spark-x b { display: block; font-weight: 600; color: var(--text); font-size: 10px; white-space: nowrap; }
+.pc-share { margin: 10px 0 0; } .pc-share .btn { width: 100%; font: inherit; font-size: 15px; cursor: pointer; padding: 10px; background: transparent; }
+:root[data-theme="dark"] .pc-stats em a { color: #ff6961; } :root[data-theme="dark"] .pc-ch.up { color: #ff6961; } :root[data-theme="dark"] .pc-ch.dn { color: #64d2ff; }

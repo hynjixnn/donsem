@@ -111,7 +111,7 @@
     }); });
   }));
   kakaoMap().catch(() => { mapEl.innerHTML = ''; return libreMap(); })
-    .then(g => { map = g; setTimeout(drawGuBubbles, 600); mapEl.classList.toggle('kakao', !!g.kakao); const zc = z => { mapEl.classList.toggle('far', z < 12); mapEl.classList.toggle('mid', z < 14); }; g.onZoom(zc); zc(g.zoom()); /* 멀리서 보면 말풍선을 숨기고, 조금 멀면 가격만 */ draw(); if (items.length) fit(); })
+    .then(g => { map = g; setTimeout(drawGuBubbles, 600); mapEl.classList.toggle('kakao', !!g.kakao); const zc = z => { mapEl.classList.toggle('far', z < 12); mapEl.classList.toggle('mid', z < 14); }; g.onZoom(zc); zc(g.zoom()); /* 멀리서 보면 말풍선을 숨기고, 조금 멀면 가격만 */ draw(); if (!openShared() && items.length) fit(); })
     .catch(() => { mapEl.innerHTML = '<p class="re-off">지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; });
   const flyTo = (lat, lng, zoom) => map && map.fly(lat, lng, zoom);
   const fit = () => { if (map && items.length) map.fit(items); };
@@ -168,7 +168,9 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') exit(); });
   $('re-fs-add').addEventListener('click', () => { const p = pending; exit(); if (p) openForm(p); });
   $('re-place').addEventListener('click', e => {
+    const a = e.target.closest('[data-pa]'); if (a) { pcData.sel = +a.dataset.pa; return drawArea(); }
     const b = e.target.closest('[data-pc], [data-pd]'); if (!b) return;
+    if (b.dataset.pc === 'share') return shareApt(pending && pending.name);
     if (b.dataset.pc === 'x') { $('re-place').hidden = true; return; } // 마크는 남겨서 다시 누르면 열려요
     if (b.dataset.pc === 'copy') { const a = $('re-place').dataset.addr; return navigator.clipboard ? navigator.clipboard.writeText(a).then(() => toast('주소를 복사했어요.'), () => toast(a)) : toast(a); }
     const p = pending && { ...pending }; if (!p) return;
@@ -420,7 +422,7 @@
     const words = jibun.split(/[\s,]+/), gu = words.find(w => LAWD[w]) || '', dong = gu && raw.address_name ? words[words.indexOf(gu) + 1] : '';
     if (temp) temp.remove(); temp = map ? map.dot(r.lat, r.lng, () => { markTap = Date.now(); if (box.innerHTML) box.hidden = !box.hidden; }) : null; // 파란 마크를 누르면 정보 창이 열리고 닫혀요
     box.dataset.code = raw.id || '';
-    pending = { name: r.name, lat: r.lat, lng: r.lng }; placeDeals = [];
+    pending = { name: r.name, lat: r.lat, lng: r.lng }; placeDeals = []; pcData = null;
     saveRecent(r);
     $('re-fs-act').hidden = true; box.hidden = false; peek(false);
     const tok = String(Date.now()); box.dataset.tok = tok; box.dataset.addr = raw.road_address_name || r.addr || '';
@@ -440,6 +442,9 @@
     const built = (T[0] || R[0] || {}).built, areas = [...new Set([...T, ...R].map(x => Math.round(x.area)))].sort((a, b) => a - b);
     const row = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
     placeDeals = T.slice(0, 5);
+    { const cnt = {}; [...T, ...J].forEach(x => { const a = Math.round(x.area); cnt[a] = (cnt[a] || 0) + (x.t ? 2 : 1); }); /* 매매 거래가 많은 평형을 먼저 */
+      const top = Object.entries(cnt).sort((p, q) => q[1] - p[1]).slice(0, 6).map(([a]) => +a).sort((p, q) => p - q);
+      pcData = { T, J, areas: top, sel: top.length > 1 ? +Object.entries(cnt).sort((p, q) => q[1] - p[1])[0][0] : 0 }; }
     const n = v => Number(v).toLocaleString('ko-KR'), use = k && /^\d{6}/.test(k.use) ? `${k.use.slice(0, 4)}년 ${+k.use.slice(4, 6)}월` : '';
     const sz = k ? [['60㎡ 이하', k.sizes.u60], ['60~85㎡', k.sizes.u85], ['85~135㎡', k.sizes.u135], ['135㎡ 초과', k.sizes.o135]].filter(x => x[1]).map(([a, c]) => `${a} ${n(c)}세대`).join(' · ') : '';
     const edu = k ? k.edu.replace(/[^\s()]+\(\s*\)/g, '').replace(/\s+/g, ' ').trim() : '';
@@ -460,9 +465,53 @@
       ${W.length ? row('월세 실거래', `<b>보증금 ${eok(W[0].amt)} / 월 ${W[0].rent.toLocaleString("ko-KR")}만</b><small>최근 3달 ${W.length}건 · 가장 최근 거래</small>`) : ''}
       ${built && !use ? row('준공', `${built}년`) : ''}
       ${areas.length ? row('거래된 면적', `전용 ${areas.join(' · ')}㎡`) : ''}</table>
-      ${placeDeals.length ? `<p class="pc-sub">최근 매매 · 누르면 그 가격으로 관심 부동산에 넣어요</p><ul class="dl-list">${placeDeals.map((x, i) => `<li><button type="button" data-pd="${i}"><span><b>전용 ${Math.round(x.area)}㎡ · ${x.floor}층</b><small>${x.y}.${x.m}.${x.d}</small></span><em>${eok(x.amt)}</em></button></li>`).join('')}</ul>` : ''}`
+      <div id="pc-area"></div>`
       : '<p class="re-tip">최근 6달 동안 신고된 이 단지 거래를 찾지 못했어요. 거래가 없었거나 국토부 자료의 단지 이름이 달라서일 수 있어요.</p>') + acts
+      + `<p class="pc-share"><button type="button" class="btn line" data-pc="share">🔗 이 단지 공유하기</button></p>`
       + `<p class="re-tip">${k ? '사진·관리비는 「사진·단지정보 (카카오맵)」에서 볼 수 있어요.' : '사진·세대수·관리비 같은 자세한 단지정보는 「사진·단지정보 (카카오맵)」에서 볼 수 있어요.'} 출처: 국토교통부</p>`;
+    drawArea();
+  }
+
+  // ── 평형별 시세: 고른 평형의 매매·전세 가운데 값, 전세가율, 3.3㎡당 값, 6달 가격 흐름 ──
+  let pcData = null;
+  function drawArea() {
+    const el = document.getElementById('pc-area'); if (!el || !pcData) return;
+    const { T, J, areas, sel } = pcData;
+    const near = x => !sel || Math.round(x.area) === sel, Ts = T.filter(near), Js = J.filter(near);
+    const md = a => { const v = [...a].sort((p, q) => p - q); return v.length ? v[Math.floor(v.length / 2)] : 0; };
+    const mT = md(Ts.map(x => x.amt)), mJ = md(Js.map(x => x.amt)), ratio = mT && mJ ? Math.round(mJ / mT * 100) : 0;
+    const chips = areas.length > 1 ? `<div class="pc-areas" role="group" aria-label="평형 고르기"><button type="button" data-pa="0" class="${sel ? '' : 'on'}">전체</button>${areas.map(a => `<button type="button" data-pa="${a}" class="${sel === a ? 'on' : ''}">${a}㎡<small>${Math.round(a * 0.4)}평형</small></button>`).join('')}</div>` : '';
+    const stat = (k, v, s) => `<div><small>${k}</small><b>${v}</b>${s ? `<em>${s}</em>` : ''}</div>`;
+    const stats = `<div class="pc-stats">${stat('매매 가운데 값', mT ? eok(mT) : '-', Ts.length ? `6달 ${Ts.length}건` : '거래 없음')}${stat('전세 가운데 값', mJ ? eok(mJ) : '-', Js.length ? `3달 ${Js.length}건` : '거래 없음')}${ratio ? stat('전세가율', ratio + '%', ratio >= 80 ? '<a href="/jeonse-check/">높아요 · 전세 안심 진단 ›</a>' : ratio >= 70 ? '조금 높은 편' : '보통') : ''}${sel && mT ? stat('3.3㎡당', eok(Math.round(mT / (sel / 3.3058))), '전용 면적 기준') : ''}</div>`;
+    const ms = yms(6).reverse(), pts = ms.map(ym => { const v = Ts.filter(x => x.y === +ym.slice(0, 4) && x.m === +ym.slice(4)).map(x => x.amt); return v.length ? md(v) : null; });
+    const have = pts.filter(v => v !== null);
+    let spark = '';
+    if (have.length >= 2) {
+      const lo = Math.min(...have), hi = Math.max(...have), W = 300, H = 70, P = 8;
+      const xy = pts.map((v, i) => v === null ? null : [P + i * (W - 2 * P) / (ms.length - 1), hi === lo ? H / 2 : P + (hi - v) * (H - 2 * P) / (hi - lo)]);
+      const line = xy.filter(Boolean).map(p => p.map(n => n.toFixed(1)).join(',')).join(' ');
+      const first = have[0], last = have[have.length - 1], ch = (last - first) / first * 100;
+      spark = `<p class="pc-sub">매매 가격 흐름 <small>달마다 가운데 값${sel ? ` · 전용 ${sel}㎡` : ''}</small><em class="pc-ch ${ch >= 0 ? 'up' : 'dn'}">${ch >= 0 ? '+' : ''}${ch.toFixed(1)}%</em></p>
+        <svg class="pc-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="최근 6달 매매 가격 흐름"><polyline points="${line}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>${xy.filter(Boolean).map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" fill="currentColor"/>`).join('')}</svg>
+        <div class="pc-spark-x">${ms.map((ym, i) => `<span>${+ym.slice(4)}월${pts[i] !== null ? `<b>${eok(pts[i])}</b>` : ''}</span>`).join('')}</div>`;
+    }
+    placeDeals = Ts.slice(0, 5);
+    el.innerHTML = chips + stats + spark + (placeDeals.length ? `<p class="pc-sub">최근 매매 · 누르면 그 가격으로 관심 부동산에 넣어요</p><ul class="dl-list">${placeDeals.map((x, i) => `<li><button type="button" data-pd="${i}"><span><b>전용 ${Math.round(x.area)}㎡ · ${x.floor}층</b><small>${x.y}.${x.m}.${x.d}</small></span><em>${eok(x.amt)}</em></button></li>`).join('')}</ul>` : '');
+    const on = el.querySelector('.pc-areas .on'); if (on) on.parentElement.scrollLeft = on.offsetLeft - on.parentElement.offsetLeft - on.parentElement.clientWidth / 2 + on.offsetWidth / 2; /* 고른 평형이 보이게 */
+  }
+  // ── 단지 공유: 링크를 열면 그 단지 정보 창이 바로 열려요 (?apt=단지이름) ──
+  function shareApt(name) {
+    if (!name) return;
+    const url = `${location.origin}/real-estate/?apt=${encodeURIComponent(name)}`, text = `${name} 실거래가 · 돈셈 부동산`;
+    if (navigator.share) return navigator.share({ title: text, url }).catch(() => {});
+    if (navigator.clipboard) return navigator.clipboard.writeText(url).then(() => toast('링크를 복사했어요. 붙여넣어 보내 주세요.'), () => toast(url));
+    toast(url);
+  }
+  function openShared() {
+    const q = new URLSearchParams(location.search).get('apt'); if (!q || q.length > 60) return false;
+    $('re-q').value = q;
+    geo(q, 6, true).then(l => { const p = l && l[0]; if (!p) return search(q); enter(); setTimeout(() => { flyTo(p.lat, p.lng, 17); showPlace(p); }, 150); }).catch(() => search(q));
+    return true;
   }
 
   // ── 관심 부동산 추가 ──
