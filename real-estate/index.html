@@ -97,7 +97,7 @@
       <div class="re-map" id="re-map" aria-label="서울 지도"></div>
       <button type="button" class="re-expand" id="re-expand">⤢ 크게 보기</button>
       <div class="re-fs-side"><button type="button" id="re-fs-star" aria-label="관심 부동산 모두 보기">⭐</button><button type="button" id="re-fs-me" aria-label="내 위치">📍</button><button type="button" id="re-fs-zin" aria-label="확대">＋</button><button type="button" id="re-fs-zout" aria-label="축소">－</button></div>
-      <div class="re-fs-sheet" id="re-fs-sheet"><div class="re-place" id="re-place" hidden></div><div class="re-fs-act" id="re-fs-act" hidden><button type="button" class="btn fill wide" id="re-fs-add">📌 여기를 관심 부동산에 넣기</button></div></div>
+      <div class="re-fs-sheet" id="re-fs-sheet"><div class="fs-grip" id="fs-grip" role="button" tabindex="0" aria-label="아래 창 접기·펴기" aria-expanded="true"><i></i></div><div class="re-place" id="re-place" hidden></div><div class="re-fs-act" id="re-fs-act" hidden><button type="button" class="btn fill wide" id="re-fs-add">📌 여기를 관심 부동산에 넣기</button></div></div>
     </div>
     <div class="re-deals" id="re-deals" hidden></div>
     <p class="re-tip">지도를 누르면 크게 열려요. 큰 지도에서 아파트를 누르면 단지 정보가 나오고, 빈 곳을 누르면 핀을 꽂을 수 있어요. <a id="re-near" href="#" target="_blank" rel="noopener" hidden></a></p>
@@ -118,6 +118,15 @@
     <ul class="re-list" id="re-list"></ul>
   </section>
 
+  <section class="card sub-card rk-card" id="re-rank">
+    <h2>서울 동네 랭킹 <small id="rk-when"></small></h2>
+    <p class="sub small">국토교통부에 신고된 지난달 아파트 거래로 서울 동네를 줄 세워 봤어요. 누르면 그 구의 실거래가가 지도에 떠요.</p>
+    <div class="rk-share" id="rk-share"></div>
+    <div class="dl-view rk-tabs" id="rk-tabs"><button type="button" data-rk="dong" class="on">거래 많은 동네</button><button type="button" data-rk="gu">거래 많은 구</button><button type="button" data-rk="price">비싼 동네</button></div>
+    <ol class="rk-list" id="rk-list"><li class="re-empty">불러오는 중…</li></ol>
+    <button type="button" class="rk-more" id="rk-more" hidden>더보기</button>
+  </section>
+
   <section class="card sub-card">
     <h2>집 살 때·구할 때 계산기</h2>
     <div class="re-tools">
@@ -127,6 +136,7 @@
       <a href="/rent/"><b>🔁 전월세 전환</b><span>전세 ↔ 월세 바꾸면?</span></a>
       <a href="/refinance/"><b>💱 대출 갈아타기</b><span>금리 낮추면 얼마 아낄까</span></a>
       <a href="/pyeong/"><b>📐 평수</b><span>㎡ ↔ 평</span></a>
+      <a href="/jeonse-check/"><b>🛡️ 전세 안심 진단</b><span>깡통전세 위험 미리 보기</span></a>
     </div>
   </section>
 
