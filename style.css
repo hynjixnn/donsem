@@ -2224,3 +2224,21 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .ms-list li.ok .ms-bar i { background: #30b158; } .ms-list li.ok b { color: var(--muted); }
 .ms-list em { flex: none; font-style: normal; font-size: 13px; font-weight: 700; color: var(--blue); font-variant-numeric: tabular-nums; } .ms-list li.ok em { color: #30b158; }
 .rq-head, .rq-list { grid-column: 1 / -1; }
+/* 아파트실거래가에서 영감: 지도 말풍선 · 단지별 순위 · 최근 본 단지 */
+.re-bub { display: flex; flex-direction: column; align-items: stretch; padding: 0; border: 0; border-radius: 8px; background: none; font: inherit; cursor: pointer; transform: translateY(-50%); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .25)); }
+.re-bub small { padding: 2px 7px; border-radius: 8px 8px 0 0; background: #fff; color: #1d1d1f; font-size: 11px; font-weight: 700; white-space: nowrap; text-align: center; }
+.re-bub b { display: flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 0 0 8px 8px; background: #3a3ff0; color: #fff; font-size: 13px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.re-bub b i { font-style: normal; font-size: 10px; font-weight: 600; opacity: .85; }
+.re-bub::after { content: ""; align-self: center; width: 0; height: 0; border: 5px solid transparent; border-top-color: #3a3ff0; }
+.re-map.far .re-bub { display: none; }
+.dl-view { display: flex; margin-top: 10px; padding: 3px; border-radius: 12px; background: var(--field); }
+.re-mapwrap.full .dl-view { background: var(--bg); }
+.dl-view button { flex: 1; padding: 8px 0; border: 0; border-radius: 9px; background: none; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.dl-view button.on { background: var(--card); color: var(--text); box-shadow: 0 1px 4px rgba(0, 0, 0, .12); }
+.dl-rank { counter-reset: none; } .dl-rank .dl-no { flex: none; width: 22px; font-style: normal; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+.dl-rank button { justify-content: flex-start; } .dl-rank span { flex: 1; }
+.re-recent { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; overflow-x: auto; scrollbar-width: none; } .re-recent::-webkit-scrollbar { display: none; }
+.rr-cap { flex: none; font-size: 12px; font-weight: 700; color: var(--muted); }
+.re-recent button { flex: none; padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.re-recent .rr-clear { border: 0; background: none; color: var(--muted); font-size: 12px; text-decoration: underline; }
+.re-map.mid .re-bub small { display: none; } .re-map.mid .re-bub b { border-radius: 8px; }

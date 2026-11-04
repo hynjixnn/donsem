@@ -65,12 +65,13 @@
       K.event.addListener(m, 'click', e => onMapClick(e.latLng.getLat(), e.latLng.getLng()));
       return {
         kakao: true,
-        fly: (lat, lng, z) => { m.setLevel(lv(z)); m.panTo(LL(lat, lng)); },
+        fly: (lat, lng, z) => { m.setLevel(lv(z)); m.setCenter(LL(lat, lng)); }, // 미끄러지는 중에 아래 창이 열려 지도 크기가 바뀌면 중간에 멈춰서, 바로 옮겨요
         fit: pts => { const b = new K.LatLngBounds(); pts.forEach(p => b.extend(LL(p.lat, p.lng))); m.setBounds(b, 60, 60, 60, 60); if (m.getLevel() < 3) m.setLevel(3); },
         bounds: () => { const b = m.getBounds(), sw = b.getSouthWest(), ne = b.getNorthEast(); return [sw.getLat(), sw.getLng(), ne.getLat(), ne.getLng()]; },
         zoom: () => 20 - m.getLevel(),
         zoomTo: z => m.setLevel(lv(z)),
         zoomBy: d => m.setLevel(m.getLevel() - d, { animate: true }),
+        onZoom: cb => K.event.addListener(m, 'zoom_changed', () => cb(20 - m.getLevel())),
         stop: () => {},
         resize: () => { const c = m.getCenter(); m.relayout(); m.setCenter(c); },
         pin: (lat, lng, el) => { const o = new K.CustomOverlay({ position: LL(lat, lng), content: el, clickable: true }); o.setMap(m); return { remove: () => o.setMap(null) }; },
@@ -102,6 +103,7 @@
       zoom: () => m.getZoom(),
       zoomTo: z => m.jumpTo({ zoom: z }),
       zoomBy: d => m.easeTo({ zoom: m.getZoom() + d }),
+      onZoom: cb => m.on('zoomend', () => cb(m.getZoom())),
       stop: () => m.stop(),
       resize: () => m.resize(),
       pin: (lat, lng, el) => new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(m),
@@ -109,7 +111,7 @@
     }); });
   }));
   kakaoMap().catch(() => { mapEl.innerHTML = ''; return libreMap(); })
-    .then(g => { map = g; mapEl.classList.toggle('kakao', !!g.kakao); draw(); if (items.length) fit(); })
+    .then(g => { map = g; mapEl.classList.toggle('kakao', !!g.kakao); const zc = z => { mapEl.classList.toggle('far', z < 12); mapEl.classList.toggle('mid', z < 14); }; g.onZoom(zc); zc(g.zoom()); /* 멀리서 보면 말풍선을 숨기고, 조금 멀면 가격만 */ draw(); if (items.length) fit(); })
     .catch(() => { mapEl.innerHTML = '<p class="re-off">지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; });
   const flyTo = (lat, lng, zoom) => map && map.fly(lat, lng, zoom);
   const fit = () => { if (map && items.length) map.fit(items); };
@@ -234,7 +236,7 @@
   $('re-gu').innerHTML = GU.map(g => `<button type="button" data-gu="${g}">${g}</button>`).join('');
   $('re-gu').addEventListener('click', async e => {
     const b = e.target.closest('[data-gu]'); if (!b) return;
-    if (b.classList.contains('on')) { b.classList.remove('on'); $('re-deals').hidden = true; $('re-near').hidden = true; dealGu = ''; return; } // 한 번 더 누르면 실거래 창을 닫고 지도만
+    if (b.classList.contains('on')) { b.classList.remove('on'); $('re-deals').hidden = true; $('re-near').hidden = true; dealGu = ''; clearBubs(); return; } // 한 번 더 누르면 실거래 창을 닫고 지도만
     let c = null; try { c = JSON.parse(localStorage.getItem('donsem:gu:' + b.dataset.gu)); } catch (err) { c = null; }
     if (!c) { try { const p = (await geo(map && map.kakao ? `서울 ${b.dataset.gu}청` : `서울특별시 ${b.dataset.gu}`, 1))[0]; if (p) { c = [p.lat, p.lng]; try { localStorage.setItem('donsem:gu:' + b.dataset.gu, JSON.stringify(c)); } catch (err) { /* 괜찮아요 */ } } } catch (err) { c = null; } }
     if (c) flyTo(c[0], c[1], 13.5); else toast('지금은 그 구로 이동하지 못했어요.');
@@ -265,6 +267,39 @@
     box.innerHTML = `<p class="re-empty">${gu} 실거래가를 불러오는 중…</p>`;
     dealData.trade = await loadDeals('trade');
     drawDeals();
+    if (dealGu === gu) drawBubbles(gu, dealData.trade);
+  }
+
+  // ── 지도 위 단지별 실거래가 말풍선 (아파트실거래가 앱처럼 '84㎡ 25억') ──
+  // 구를 고르면 최근 2달 매매에서 거래가 많은 단지 30곳을 카카오 장소 검색으로 찾아 붙여요. 찾은 자리는 이 기기에 기억해 둬서 다음엔 바로 떠요
+  const XY = 'donsem:aptxy', short = v => v >= 10000 ? `${(v / 10000).toFixed(v >= 100000 ? 0 : 1).replace(/\.0$/, '')}억` : `${v.toLocaleString('ko-KR')}만`;
+  let bubs = [], bubTok = 0;
+  function clearBubs() { bubs.forEach(b => b.remove()); bubs = []; bubTok++; }
+  async function drawBubbles(gu, list) {
+    clearBubs(); const tok = bubTok;
+    if (!map || !map.kakao || !list || !list.length) return;
+    const by = new Map();
+    list.forEach(x => { const k = `${x.dong}|${x.apt}`, c = by.get(k); if (c) c.n++; else by.set(k, { k, x, n: 1 }); }); // 최신순이라 처음 것이 가장 최근 거래
+    const top = [...by.values()].sort((a, b) => b.n - a.n).slice(0, 30), key = t => `${gu}|${t.k}`;
+    let cache = {}; try { cache = JSON.parse(localStorage.getItem(XY)) || {}; } catch (e) { cache = {}; }
+    const todo = top.filter(t => !(key(t) in cache));
+    for (let i = 0; i < todo.length; i += 5) { // 5곳씩 나눠 찾아요
+      await Promise.all(todo.slice(i, i + 5).map(async t => {
+        try { const p = (await geo(`${t.x.dong} ${t.x.apt}`, 1, true))[0], r = p && p.raw;
+          cache[key(t)] = r && String(r.address_name).includes(gu) ? [p.lat, p.lng, r.id, r.place_name, r.address_name, r.road_address_name || '', r.place_url || ''] : 0; // 다른 구의 같은 이름 단지는 버려요
+        } catch (e) { /* 다음에 다시 */ }
+      }));
+      if (tok !== bubTok) return; // 그사이 다른 구를 골랐어요
+    }
+    try { localStorage.setItem(XY, JSON.stringify(cache)); } catch (e) { /* 기억 못 해도 괜찮아요 */ }
+    top.forEach(t => {
+      const c = cache[key(t)]; if (!c) return;
+      const el = document.createElement('button'); el.type = 'button'; el.className = 're-bub';
+      el.innerHTML = `<small>${esc(t.x.apt.length > 9 ? t.x.apt.slice(0, 9) + '…' : t.x.apt)}</small><b><i>${Math.round(t.x.area)}㎡</i>${short(t.x.amt)}</b>`;
+      el.title = `${t.x.apt} · 최근 2달 매매 ${t.n}건`;
+      el.addEventListener('click', ev => { ev.stopPropagation(); markTap = Date.now(); if (!full) enter(); showPlace({ name: c[3], lat: c[0], lng: c[1], addr: c[5] || c[4], raw: { id: c[2], place_name: c[3], address_name: c[4], road_address_name: c[5], place_url: c[6], category_name: '부동산 > 주거시설 > 아파트' } }, t.x.apt); });
+      bubs.push(map.pin(c[0], c[1], el));
+    });
   }
   function drawDeals() {
     const box = $('re-deals'), all = dealData[dealType];
@@ -275,14 +310,22 @@
     const label = dealType === 'trade' ? '매매' : dealRentMode === 'wol' ? '월세' : '전세';
     box.innerHTML = `<div class="dl-h"><b>${dealGu} 최근 실거래</b><small>국토교통부 · 최근 2달 · 신고 기준</small></div>
       <div class="dl-tabs"><button type="button" class="${dealType === 'trade' ? 'on' : ''}" data-dt="trade">매매</button><button type="button" class="${dealType === 'rent' && dealRentMode !== 'wol' ? 'on' : ''}" data-dt="jeon">전세</button><button type="button" class="${dealType === 'rent' && dealRentMode === 'wol' ? 'on' : ''}" data-dt="wol">월세</button></div>
+      <div class="dl-view"><button type="button" class="${dealView === 'list' ? 'on' : ''}" data-dv="list">거래 목록</button><button type="button" class="${dealView === 'rank' ? 'on' : ''}" data-dv="rank">단지별 순위</button></div>
       <div class="dl-size">${Object.entries(SIZE).map(([k, [n]]) => `<button type="button" class="${dealSize === k ? 'on' : ''}" data-ds="${k}">${n}</button>`).join('')}</div>
       ${list.length ? `<div class="dl-bar"><p class="dl-sum">${label} <b>${list.length.toLocaleString('ko-KR')}건</b> · 가운데 값 <b>${eok(mid)}</b>${dealType === 'trade' ? ` · 가장 비싼 거래 <b>${eok(prices[prices.length - 1])}</b>` : ''}</p>
-      <select class="dl-sort" aria-label="정렬">${Object.entries(SORT).map(([k, n]) => `<option value="${k}"${dealSort === k ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
-      <ul class="dl-list">${list.slice(0, 30).map((x, i) => `<li><button type="button" data-di="${all.indexOf(x)}"><span><b>${esc(x.apt)}</b><small>${esc(x.dong)} · 전용 ${Math.round(x.area)}㎡ · ${x.floor}층 · ${x.built}년</small></span><em>${eok(x.amt)}${x.rent ? ` / 월 ${x.rent.toLocaleString("ko-KR")}만` : ''}<small>${x.m}.${x.d}</small></em></button></li>`).join('')}</ul>
-      ${list.length > 30 ? `<p class="re-tip">최근 30건만 보여 드려요. 전체는 <a href="https://rt.molit.go.kr/" target="_blank" rel="noopener">국토부 실거래가 공개시스템 ↗</a>에서 볼 수 있어요.</p>` : ''}`
+      <select class="dl-sort" aria-label="정렬">${Object.entries(dealView === 'rank' ? { new: '거래 많은 순', high: '비싼 순', low: '싼 순' } : SORT).map(([k, n]) => `<option value="${k}"${dealSort === k ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
+      ${dealView === 'rank' ? rankHtml(all, list) : `<ul class="dl-list">${list.slice(0, 30).map((x, i) => `<li><button type="button" data-di="${all.indexOf(x)}"><span><b>${esc(x.apt)}</b><small>${esc(x.dong)} · 전용 ${Math.round(x.area)}㎡ · ${x.floor}층 · ${x.built}년</small></span><em>${eok(x.amt)}${x.rent ? ` / 월 ${x.rent.toLocaleString("ko-KR")}만` : ''}<small>${x.m}.${x.d}</small></em></button></li>`).join('')}</ul>`}
+      ${dealView === 'list' && list.length > 30 ? `<p class="re-tip">최근 30건만 보여 드려요. 전체는 <a href="https://rt.molit.go.kr/" target="_blank" rel="noopener">국토부 실거래가 공개시스템 ↗</a>에서 볼 수 있어요.</p>` : ''}`
         : '<p class="re-empty">이 조건의 거래가 아직 없어요. 실거래는 계약 후 30일 안에 신고돼서 이번 달은 적게 보여요.</p>'}`;
   }
-  let dealRentMode = 'jeon', dealSort = 'new';
+  // 단지별 순위 (아파트실거래가 '많이산단지·최고가'처럼): 같은 단지 거래를 모아 건수·최고가·최근 거래로 보여 줘요
+  function rankHtml(all, list) {
+    const by = new Map();
+    [...list].sort(byDate).forEach(x => { const k = `${x.dong}|${x.apt}`, c = by.get(k); if (c) { c.n++; c.max = Math.max(c.max, x.amt); c.min = Math.min(c.min, x.amt); } else by.set(k, { x, n: 1, max: x.amt, min: x.amt }); });
+    const rows = [...by.values()].sort((a, b) => dealSort === 'high' ? b.max - a.max : dealSort === 'low' ? a.min - b.min : b.n - a.n || b.max - a.max).slice(0, 30);
+    return `<ol class="dl-list dl-rank">${rows.map((r, i) => `<li><button type="button" data-di="${all.indexOf(r.x)}"><i class="dl-no">${i + 1}</i><span><b>${esc(r.x.apt)}</b><small>${esc(r.x.dong)} · ${r.n}건 · 최근 ${eok(r.x.amt)} (${r.x.m}.${r.x.d})</small></span><em>${eok(dealSort === 'low' ? r.min : r.max)}<small>${dealSort === 'low' ? '가장 싼 거래' : '가장 비싼 거래'}</small></em></button></li>`).join('')}</ol>`;
+  }
+  let dealRentMode = 'jeon', dealSort = 'new', dealView = 'list';
   $('re-deals').addEventListener('change', e => { if (e.target.matches('.dl-sort')) { dealSort = e.target.value; drawDeals(); } });
   $('re-deals').addEventListener('click', async e => {
     const t = e.target.closest('[data-dt]'), sz = e.target.closest('[data-ds]'), it = e.target.closest('[data-di]');
@@ -292,6 +335,7 @@
       drawDeals();
     }
     if (sz) { dealSize = sz.dataset.ds; drawDeals(); }
+    const dv = e.target.closest('[data-dv]'); if (dv) { dealView = dv.dataset.dv; dealSort = 'new'; drawDeals(); }
     if (it) { // 누르면 지도에서 그 단지를 찾아 보여 주고, 관심 부동산에 넣을 수 있게 해요
       const x = dealData[dealType][+it.dataset.di];
       try {
@@ -318,12 +362,35 @@
   const telFmt = v => String(v).replace(/^(02|0\d{2})(\d{3,4})(\d{4})$/, '$1-$2-$3');
   const norm = v => String(v).replace(/\(.*?\)|\s|아파트|APT/gi, '');
   let placeDeals = [];
+  // ── 최근 본 단지 (아파트실거래가 MY '최근조회'처럼): 정보 창을 연 단지 10곳을 이 기기에 기억해요 ──
+  const RR = 'donsem:re-recent', readRecent = () => { try { const v = JSON.parse(localStorage.getItem(RR)); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+  function saveRecent(r) {
+    if (!r || !r.name || !isFinite(r.lat)) return;
+    const raw = r.raw || {}, keep = { name: r.name, lat: r.lat, lng: r.lng, addr: r.addr || '', raw: { id: raw.id || '', place_name: raw.place_name || '', address_name: raw.address_name || '', road_address_name: raw.road_address_name || '', place_url: raw.place_url || '', category_name: raw.category_name || '', phone: raw.phone || '' } };
+    const list = [keep, ...readRecent().filter(x => x.name !== r.name)].slice(0, 10);
+    try { localStorage.setItem(RR, JSON.stringify(list)); } catch (e) { /* 괜찮아요 */ }
+    drawRecent();
+  }
+  function drawRecent() {
+    const box = $('re-recent'); if (!box) return;
+    const list = readRecent(); box.hidden = !list.length;
+    box.innerHTML = list.length ? `<span class="rr-cap">최근 본 단지</span>${list.map((x, i) => `<button type="button" data-rr="${i}">${esc(x.name.replace(/아파트$/, ''))}</button>`).join('')}<button type="button" class="rr-clear" data-rrx="1" aria-label="최근 본 단지 지우기">지우기</button>` : '';
+  }
+  if ($('re-recent')) $('re-recent').addEventListener('click', e => {
+    const b = e.target.closest('[data-rr]'), x = e.target.closest('[data-rrx]');
+    if (x) { try { localStorage.removeItem(RR); } catch (err) { /* 괜찮아요 */ } return drawRecent(); }
+    if (!b) return;
+    const r = readRecent()[+b.dataset.rr]; if (!r) return;
+    const was = full; if (!was) enter(); setTimeout(() => flyTo(r.lat, r.lng, 17), was ? 0 : 120); showPlace(r);
+  });
+  drawRecent();
   async function showPlace(r, aptName) {
     const box = $('re-place'), raw = r.raw || {}, jibun = raw.address_name || r.addr || '', cat = (raw.category_name || '').split(' > ').pop();
     const words = jibun.split(/[\s,]+/), gu = words.find(w => LAWD[w]) || '', dong = gu && raw.address_name ? words[words.indexOf(gu) + 1] : '';
     if (temp) temp.remove(); temp = map ? map.dot(r.lat, r.lng, () => { markTap = Date.now(); if (box.innerHTML) box.hidden = !box.hidden; }) : null; // 파란 마크를 누르면 정보 창이 열리고 닫혀요
     box.dataset.code = raw.id || '';
     pending = { name: r.name, lat: r.lat, lng: r.lng }; placeDeals = [];
+    saveRecent(r);
     $('re-fs-act').hidden = true; box.hidden = false;
     const tok = String(Date.now()); box.dataset.tok = tok; box.dataset.addr = raw.road_address_name || r.addr || '';
     const head = `<div class="pc-h"><div><b>${esc(r.name)}</b>${cat ? ` <small>${esc(cat)}</small>` : ''}</div><button type="button" class="pc-x" data-pc="x" aria-label="닫기">×</button></div>
