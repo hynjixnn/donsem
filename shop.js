@@ -5,8 +5,7 @@
   const API = 'https://donsem-counter.hjjung330.workers.dev', PRICE = 9900, NAME = '돈셈 가계부·재테크 엑셀 템플릿';
   const LIVE = CLIENT_KEY.startsWith('live_');
   const q = new URLSearchParams(location.search);
-  const local = !/doncalculator\.com$/.test(location.hostname);
-  const open = LIVE || local || q.has('test'); /* 진짜 키 전에는 테스트 주소로만 열어요 */
+  const open = true; /* 토스 심사 때 결제 화면까지 가는 길을 보여야 해서 열어 둬요 (진짜 키 전에는 테스트 결제라 돈이 오가지 않아요) */
   const $ = id => document.getElementById(id);
   const SK = 'donsem:orders';
   const load = () => { try { return JSON.parse(localStorage.getItem(SK)) || []; } catch (e) { return []; } };
@@ -23,7 +22,7 @@
     if (open && note) note.textContent = LIVE ? '카드·계좌이체·간편결제로 결제하고 바로 내려받아요.' : '지금은 테스트 결제만 돼요. 진짜 돈이 나가지 않아요.';
     buy.addEventListener('click', () => {
       if (!open) return say('결제를 준비하고 있어요. 곧 바로 구매할 수 있게 열어 드릴게요.');
-      location.href = '/shop/pay/' + (q.has('test') ? '?test=1' : '');
+      location.href = '/shop/pay/';
     });
     drawMine();
   }
@@ -90,7 +89,6 @@
     show('pay-fail');
     const code = q.get('code') || '';
     $('pay-fail-msg').textContent = code === 'PAY_PROCESS_CANCELED' ? '결제를 취소했어요. 돈은 나가지 않았어요.' : (q.get('message') || '결제가 되지 않았어요.') + ' 돈은 나가지 않았어요.';
-    if (!LIVE && !local) $('pay-retry').href = '/shop/pay/?test=1';
     return;
   }
   if (!open) return show('pay-closed');
