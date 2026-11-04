@@ -2266,3 +2266,17 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .rk-list em { flex: none; font-style: normal; font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; }
 .rk-note { padding: 8px 2px 0; font-size: 12px; color: var(--muted); }
 .rk-more { display: block; width: 100%; margin-top: 8px; padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+/* 호갱노노에서 영감: 구별 시세 말풍선 · 우리 집 팔면 얼마 */
+.re-gb { display: none; flex-direction: column; align-items: stretch; padding: 0; border: 0; background: none; font: inherit; cursor: pointer; transform: translateY(-50%); filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .25)); }
+.re-map.far .re-gb { display: flex; }
+.re-gb small { padding: 3px 9px; border-radius: 8px 8px 0 0; background: #fff; color: #1d1d1f; font-size: 12px; font-weight: 700; text-align: center; white-space: nowrap; }
+.re-gb b { padding: 4px 9px; border-radius: 0 0 8px 8px; background: #5e5ce6; color: #fff; font-size: 15px; font-weight: 800; text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mh-card .re-search { margin-top: 10px; }
+#mh-out:empty { display: none; } #mh-out { margin-top: 12px; }
+.mh-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; } .mh-h b { font-size: 18px; }
+.mh-areas button small { color: var(--muted); font-size: 11px; }
+.mh-big { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 14px 0 4px; } .mh-big small { width: 100%; font-size: 13px; color: var(--muted); }
+.mh-big b { font-size: 30px; font-weight: 800; color: var(--blue); font-variant-numeric: tabular-nums; }
+.mh-big em { font-style: normal; font-size: 13px; font-weight: 700; padding: 3px 8px; border-radius: 999px; } .mh-big em.up { color: #ff453a; background: rgba(255, 69, 58, .1); } .mh-big em.dn { color: #0a84ff; background: rgba(10, 132, 255, .1); }
+#mh-out .dl-list button { cursor: default; }
+.re-gb small { padding: 2px 7px; font-size: 11px; } .re-gb b { padding: 3px 7px; font-size: 13px; }

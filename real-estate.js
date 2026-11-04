@@ -111,7 +111,7 @@
     }); });
   }));
   kakaoMap().catch(() => { mapEl.innerHTML = ''; return libreMap(); })
-    .then(g => { map = g; mapEl.classList.toggle('kakao', !!g.kakao); const zc = z => { mapEl.classList.toggle('far', z < 12); mapEl.classList.toggle('mid', z < 14); }; g.onZoom(zc); zc(g.zoom()); /* 멀리서 보면 말풍선을 숨기고, 조금 멀면 가격만 */ draw(); if (items.length) fit(); })
+    .then(g => { map = g; setTimeout(drawGuBubbles, 600); mapEl.classList.toggle('kakao', !!g.kakao); const zc = z => { mapEl.classList.toggle('far', z < 12); mapEl.classList.toggle('mid', z < 14); }; g.onZoom(zc); zc(g.zoom()); /* 멀리서 보면 말풍선을 숨기고, 조금 멀면 가격만 */ draw(); if (items.length) fit(); })
     .catch(() => { mapEl.innerHTML = '<p class="re-off">지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; });
   const flyTo = (lat, lng, zoom) => map && map.fly(lat, lng, zoom);
   const fit = () => { if (map && items.length) map.fit(items); };
@@ -224,7 +224,7 @@
   // ── 주소·아파트 찾기 ──
   // 장소 찾기: 카카오맵이면 카카오 장소 검색(아파트 이름도 잘 찾아요), 아니면 Nominatim
   async function geo(q, n = 6, aptOnly = false) { // aptOnly: 실거래 단지를 찾을 때는 아파트만 (같은 이름 식당 말고)
-    if (map && map.kakao) { try { return (await kPlaces('keywordSearch', q, { size: aptOnly ? 15 : Math.min(15, n) }, aptOnly ? 15 : n)).filter(p => !aptOnly || /아파트|주거시설/.test(p.category_name)).slice(0, n).map(p => ({ name: p.place_name, addr: p.road_address_name || p.address_name, lat: +p.y, lng: +p.x, raw: p })); } catch (e) { /* 아래 Nominatim으로 */ } }
+    if (map && map.kakao) { try { return (await kPlaces('keywordSearch', q, { size: aptOnly ? 15 : Math.min(15, n) }, aptOnly ? 15 : n)).filter(p => !aptOnly || /아파트|주거시설/.test(p.category_name)).sort((a, b) => aptOnly ? /아파트$/.test(b.category_name) - /아파트$/.test(a.category_name) : 0).slice(0, n).map(p => ({ name: p.place_name, addr: p.road_address_name || p.address_name, lat: +p.y, lng: +p.x, raw: p })); } catch (e) { /* 아래 Nominatim으로 */ } }
     const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=${n}&countrycodes=kr&accept-language=ko&q=${encodeURIComponent(q)}`, { headers: { Accept: 'application/json' } });
     return (await r.json()).map(p => ({ name: p.name || p.display_name.split(',')[0], addr: p.display_name, lat: +p.lat, lng: +p.lon }));
   }
@@ -264,7 +264,9 @@
   const SORT = { new: '최신순', high: '비싼 순', low: '싼 순' };
   const byDate = (a, b) => (b.y * 1e4 + b.m * 100 + b.d) - (a.y * 1e4 + a.m * 100 + a.d);
   const months = {}; // 같은 구·달·종류는 한 번만 받아요 (목록과 단지 정보 창이 같이 써요)
-  const month = (gu, ym, type) => months[gu + ym + type] || (months[gu + ym + type] = fetch(`${API}?lawd=${LAWD[gu]}&ym=${ym}${type === 'rent' ? '&type=rent' : ''}`).then(r => r.ok ? r.json() : null).then(d => d && d.items).catch(() => null).then(v => { if (!v) delete months[gu + ym + type]; return v; }));
+  const get1 = (gu, ym, type) => fetch(`${API}?lawd=${LAWD[gu]}&ym=${ym}${type === 'rent' ? '&type=rent' : ''}`).then(r => r.ok ? r.json() : null).then(d => d && d.items).catch(() => null);
+  const month = (gu, ym, type) => months[gu + ym + type] || (months[gu + ym + type] = get1(gu, ym, type) // 한꺼번에 많이 부르면 가끔 실패해서, 한 번 더 물어봐요
+    .then(v => v || new Promise(ok => setTimeout(ok, 600 + Math.random() * 900)).then(() => get1(gu, ym, type))).then(v => { if (!v) delete months[gu + ym + type]; return v; }));
   async function loadDeals(type) {
     const list = await Promise.all(yms().map(ym => month(dealGu, ym, type)));
     if (list.every(x => !x)) return null;
@@ -278,6 +280,25 @@
     dealData.trade = await loadDeals('trade');
     drawDeals();
     if (dealGu === gu) drawBubbles(gu, dealData.trade);
+  }
+
+  // ── 멀리서 보면 구별 시세 말풍선 (호갱노노처럼 '강남구 26억'): 지난달 매매 가운데 값. 누르면 그 구 실거래가로 ──
+  const GU_XY = { 종로구: [37.5735, 126.979], 중구: [37.5641, 126.9979], 용산구: [37.5324, 126.99], 성동구: [37.5634, 127.0369], 광진구: [37.5385, 127.0823], 동대문구: [37.5744, 127.0396], 중랑구: [37.6066, 127.0927], 성북구: [37.5894, 127.0167], 강북구: [37.6397, 127.0256], 도봉구: [37.6688, 127.0471], 노원구: [37.6542, 127.0568], 은평구: [37.6027, 126.9291], 서대문구: [37.5791, 126.9368], 마포구: [37.5663, 126.9019], 양천구: [37.517, 126.8664], 강서구: [37.5509, 126.8495], 구로구: [37.4954, 126.8874], 금천구: [37.4569, 126.8955], 영등포구: [37.5264, 126.8962], 동작구: [37.5124, 126.9393], 관악구: [37.4784, 126.9516], 서초구: [37.4837, 127.0324], 강남구: [37.5172, 127.0473], 송파구: [37.5145, 127.1066], 강동구: [37.5301, 127.1238] }; // 구청 자리
+  let guBubs = [];
+  async function drawGuBubbles() {
+    if (!map) return;
+    const d = new Date(), pm = new Date(d.getFullYear(), d.getMonth() - 1, 1), ym = `${pm.getFullYear()}${String(pm.getMonth() + 1).padStart(2, '0')}`;
+    const res = await Promise.all(GU.map(async g => ({ g, t: await month(g, ym, 'trade') })));
+    guBubs.forEach(b => b.remove()); guBubs = [];
+    res.forEach(({ g, t }) => {
+      if (!t || !t.length || !GU_XY[g]) return;
+      const v = t.map(x => x.amt).sort((a, b) => a - b), med = v[Math.floor(v.length / 2)];
+      const el = document.createElement('button'); el.type = 'button'; el.className = 're-gb';
+      el.innerHTML = `<small>${g}</small><b>${short(med)}</b>`; el.title = `${g} ${pm.getMonth() + 1}월 아파트 매매 가운데 값 · ${t.length}건`;
+      el.addEventListener('click', ev => { ev.stopPropagation(); markTap = Date.now(); if (!full) enter(); const c = $('re-gu').querySelector(`[data-gu="${g}"]`); if (c && !c.classList.contains('on')) c.click(); });
+      guBubs.push(map.pin(GU_XY[g][0], GU_XY[g][1], el));
+    });
+    if (guBubs.length < GU.length && !drawGuBubbles.again) { drawGuBubbles.again = 1; setTimeout(drawGuBubbles, 4000); } // 빠진 구가 있으면 한 번 더
   }
 
   // ── 지도 위 단지별 실거래가 말풍선 (아파트실거래가 앱처럼 '84㎡ 25억') ──
@@ -473,6 +494,55 @@
     if (g) { focus(g.dataset.go); mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     if (d && confirm('이 관심 부동산을 지울까요?')) { items = items.filter(x => x.id !== d.dataset.del); save(); draw(); }
   });
+  // ── 우리 집, 지금 팔면 얼마일까? (호갱노노 '내집얼마'처럼): 같은 단지·같은 면적의 최근 6달 실거래로 어림해요 ──
+  (() => {
+    const q = $('mh-q'); if (!q) return;
+    const fee = v => { const r = v < 5e7 ? [0.006, 250000] : v < 2e8 ? [0.005, 800000] : v < 9e8 ? [0.004] : v < 12e8 ? [0.005] : v < 15e8 ? [0.006] : [0.007]; return Math.round(Math.min(v * r[0], r[1] || Infinity) * 1.1); }; // 매매 중개보수 상한(2021.10~) + 부가세
+    let cur = null, area = 0;
+    async function find() {
+      const v = q.value.trim(); if (!v) return;
+      const box = $('mh-results'); box.innerHTML = '<li class="re-empty">찾는 중…</li>';
+      let list = []; try { list = await geo(v, 6, !!(map && map.kakao)); } catch (e) { list = []; }
+      list = list.filter(p => /서울/.test((p.raw && p.raw.address_name) || p.addr || ''));
+      box.innerHTML = list.length ? list.map((p, i) => `<li><button type="button" data-mh="${i}"><b>${esc(p.name)}</b><small>${esc(p.addr)}</small></button></li>`).join('') : '<li class="re-empty">서울 아파트를 찾지 못했어요. 단지 이름을 다시 확인해 주세요.</li>';
+      box.onclick = e => { const b = e.target.closest('[data-mh]'); if (!b) return; box.innerHTML = ''; pick(list[+b.dataset.mh]); };
+    }
+    async function pick(p) {
+      const out = $('mh-out'), raw = p.raw || {}, words = (raw.address_name || p.addr || '').split(/[\s,]+/), gu = words.find(w => LAWD[w]) || '', dong = gu && raw.address_name ? words[words.indexOf(gu) + 1] : '';
+      if (!gu) { out.innerHTML = '<p class="re-tip">서울 아파트만 어림할 수 있어요.</p>'; return; }
+      out.innerHTML = `<p class="re-empty">${esc(p.name)} 실거래를 모으는 중…</p>`;
+      const key = norm(p.name), all = (await Promise.all(yms(6).map(ym => month(gu, ym, 'trade')))).filter(Boolean).flat()
+        .filter(x => (!dong || x.dong === dong) && norm(x.apt).length > 1 && (norm(x.apt).includes(key) || key.includes(norm(x.apt)))).sort(byDate);
+      if (!all.length) { out.innerHTML = `<p class="re-tip">${esc(p.name)}의 최근 6달 매매 신고를 찾지 못했어요. 거래가 없었거나 국토부 자료의 단지 이름이 달라서일 수 있어요.</p>`; return; }
+      const areas = {}; all.forEach(x => { const a = Math.round(x.area); areas[a] = (areas[a] || 0) + 1; });
+      cur = { p, all, areas }; area = +Object.entries(areas).sort((a, b) => b[1] - a[1])[0][0]; // 거래가 가장 많은 면적부터
+      draw3();
+    }
+    function draw3() {
+      const { p, all, areas } = cur, same = all.filter(x => Math.abs(x.area - area) <= 2), v = same.map(x => x.amt).sort((a, b) => a - b), med = v[Math.floor(v.length / 2)];
+      const ago = x => (Date.now() - new Date(x.y, x.m - 1, x.d)) / 864e5, near = same.filter(x => ago(x) <= 90).map(x => x.amt), far = same.filter(x => ago(x) > 90).map(x => x.amt);
+      const md = a => { const s2 = [...a].sort((x, y) => x - y); return s2[Math.floor(s2.length / 2)]; };
+      const trend = near.length && far.length ? (md(near) - md(far)) / md(far) * 100 : null, won0 = n => `${Math.round(n).toLocaleString('ko-KR')}원`;
+      $('mh-out').innerHTML = `<div class="mh-h"><b>${esc(p.name)}</b><button type="button" class="pc-copy" data-mhgo="1">지도에서 보기 ›</button></div>
+        <div class="dl-size mh-areas">${Object.keys(areas).map(Number).sort((a, b) => a - b).map(a => `<button type="button" class="${a === area ? 'on' : ''}" data-ma="${a}">전용 ${a}㎡ <small>${areas[a]}건</small></button>`).join('')}</div>
+        <div class="mh-big"><small>지금 팔면 약</small><b>${eok(med)}</b>${trend !== null ? `<em class="${trend >= 0 ? 'up' : 'dn'}">3달 전보다 ${trend >= 0 ? '+' : ''}${trend.toFixed(1)}%</em>` : ''}</div>
+        <table class="pc-tb">
+          <tr><th>시세 범위</th><td>${v.length > 1 ? `${eok(v[0])} ~ ${eok(v[v.length - 1])}` : eok(med)}<small>최근 6달 ${v.length}건 가운데 값으로 어림</small></td></tr>
+          <tr><th>팔 때 중개수수료</th><td>최대 ${won0(fee(med * 10000))}<small>부가세 포함 · <a href="/brokerage-fee/?bf_kind=buy&bf_amt=${med * 10000}">자세히 계산 ›</a></small></td></tr>
+          <tr><th>양도소득세</th><td>1주택·보유 기간에 따라 크게 달라요<small>1세대 1주택을 2년 넘게 가졌다면(살 때 조정대상지역이었으면 2년 거주도) 양도가 12억 원까지는 비과세, 넘는 부분만 세금이에요</small></td></tr></table>
+        <p class="pc-sub">최근 거래 · 전용 ${area}㎡ 안팎</p>
+        <ul class="dl-list">${same.slice(0, 5).map(x => `<li><button type="button" tabindex="-1"><span><b>${x.floor}층 · 전용 ${Math.round(x.area)}㎡</b><small>${x.y}.${x.m}.${x.d}</small></span><em>${eok(x.amt)}</em></button></li>`).join('')}</ul>
+        <p class="re-tip">국토교통부 실거래 신고로 어림한 값이에요. 실제로 팔리는 값은 층·향·집 상태에 따라 달라요.</p>`;
+    }
+    $('mh-out').addEventListener('click', e => {
+      const a = e.target.closest('[data-ma]'), go = e.target.closest('[data-mhgo]');
+      if (a) { area = +a.dataset.ma; draw3(); }
+      if (go && cur) { const p = cur.p; const was = full; if (!was) enter(); setTimeout(() => flyTo(p.lat, p.lng, 17), was ? 0 : 120); showPlace(p); }
+    });
+    q.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); find(); } });
+    $('mh-go').addEventListener('click', find);
+  })();
+
   // ── 서울 동네 랭킹 (다방 '동네정보 · 거래 랭킹'처럼): 지난달 25개 구 실거래를 모아 줄 세워요. 화면에 보일 때 불러와요 ──
   (() => {
     const card = $('re-rank'); if (!card) return;
