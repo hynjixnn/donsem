@@ -2360,3 +2360,12 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .pc-spark-x { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 2px; } .pc-spark-x span { flex: 1; text-align: center; } .pc-spark-x b { display: block; font-weight: 600; color: var(--text); font-size: 10px; white-space: nowrap; }
 .pc-share { margin: 10px 0 0; } .pc-share .btn { width: 100%; font: inherit; font-size: 15px; cursor: pointer; padding: 10px; background: transparent; }
 :root[data-theme="dark"] .pc-stats em a { color: #ff6961; } :root[data-theme="dark"] .pc-ch.up { color: #ff6961; } :root[data-theme="dark"] .pc-ch.dn { color: #64d2ff; }
+/* 주변 시설: 가까이 보면 이름, 고른 시설 강조, 다시 찾기, 장소 정보 창 */
+.re-map.near .re-poi-pin::after { content: attr(data-n); position: absolute; left: 50%; top: 31px; transform: translateX(-50%); white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; padding: 1px 6px; border-radius: 8px; background: rgba(255,255,255,.92); color: #1d1d1f; font: 600 11px/1.35 Pretendard, system-ui, sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,.18); pointer-events: none; }
+.re-map.near .re-poi-pin.show::after { left: 50%; top: 31px; transform: translateX(-50%); }
+.re-poi-pin.sel { transform: scale(1.25); box-shadow: 0 0 0 3px #ff9f0a, 0 2px 8px rgba(0,0,0,.35); z-index: 6; }
+.re-poi-again { display: none; }
+.re-mapwrap.full .re-poi-again:not([hidden]) { display: block; position: absolute; left: 50%; transform: translateX(-50%); top: calc(158px + env(safe-area-inset-top)); z-index: 6; border: 0; border-radius: 980px; background: #fff; color: #0071e3; font: inherit; font-size: 14px; font-weight: 700; padding: 8px 16px; box-shadow: 0 2px 10px rgba(0,0,0,.2); cursor: pointer; }
+:root[data-theme="dark"] .re-mapwrap.full .re-poi-again:not([hidden]) { background: #2c2c2e; color: #64d2ff; }
+.pc-cat { margin: 2px 0 8px; font-size: 12px; color: var(--muted); }
+.pc-acts a.btn.fill { color: #fff; }

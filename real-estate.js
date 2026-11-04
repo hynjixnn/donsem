@@ -34,11 +34,29 @@
     if (tok !== tapTok) return;
     if (apt) { const b = $('re-place'); if (!b.hidden && b.dataset.code === apt.raw.id) return; return showPlace(apt); }
     if (!$('re-place').hidden) { $('re-place').hidden = true; return; } // 정보 창만 닫고 파란 마크는 남겨요 (누르면 다시 열려요)
+    { const pl = await placeAt(lat, lng); if (tok !== tapTok) return; if (pl) { if (temp) { temp.remove(); temp = null; } $('re-fs-act').hidden = true; return showPoi(pl); } } // 가게·은행·호텔 같은 건물을 누르면 그 장소 정보
     if (temp) return clearPick(); // 마크가 있을 때 한 번 더 누르면 사라져요
     temp = map.dot(lat, lng, clearPick);
     pending = { name: '', lat, lng };
     $('re-fs-act').hidden = false;
   };
+  // 누른 자리의 장소 찾기: 그 자리 건물 이름으로 가까운 장소 (카카오맵에서 건물을 누른 것처럼)
+  async function placeAt(lat, lng) {
+    if (!map || !map.kakao) return null;
+    const S = kakao.maps.services, here = new kakao.maps.LatLng(lat, lng);
+    const ad = await new Promise(ok => new S.Geocoder().coord2Address(lng, lat, (r, st) => ok(st === S.Status.OK ? r[0] : null)));
+    const bname = ad && ad.road_address && ad.road_address.building_name, road = ad && ad.road_address && ad.road_address.address_name;
+    if (bname) { // 건물 이름이 있으면 그 이름의 장소
+      const list = await kPlaces('keywordSearch', bname, { location: here, radius: 150, sort: S.SortBy.DISTANCE }, 15).catch(() => []);
+      const k = norm(bname), hit = list.find(p => norm(p.place_name) === k) || list.find(p => k.length > 1 && (norm(p.place_name).includes(k) || k.includes(norm(p.place_name))));
+      if (hit) return hit;
+    }
+    if (road) { // 아니면 같은 도로명 주소(같은 건물)에 있는 가장 가까운 장소
+      const list = await kPlaces('keywordSearch', road, { location: here, radius: 60, sort: S.SortBy.DISTANCE }, 15).catch(() => []);
+      return list.find(p => p.road_address_name === road && +p.distance <= 40) || null;
+    }
+    return null;
+  }
   // 누른 자리의 아파트 찾기 (카카오: 그 자리 건물 이름 → 근처 아파트). 카카오맵이 아니면 없어요
   async function aptAt(lat, lng) {
     if (!map || !map.kakao) return null;
@@ -64,6 +82,7 @@
       m.setCopyrightPosition(K.CopyrightPosition.BOTTOMRIGHT, true); // 카카오 로고가 PC 왼쪽 목록에 가리지 않게
       K.event.addListener(m, 'click', e => onMapClick(e.latLng.getLat(), e.latLng.getLng()));
       return {
+        center: () => { const c = m.getCenter(); return [c.getLat(), c.getLng()]; },
         kakao: true,
         fly: (lat, lng, z) => { m.setLevel(lv(z)); m.setCenter(LL(lat, lng)); }, // 미끄러지는 중에 아래 창이 열려 지도 크기가 바뀌면 중간에 멈춰서, 바로 옮겨요
         fit: pts => { const b = new K.LatLngBounds(); pts.forEach(p => b.extend(LL(p.lat, p.lng))); m.setBounds(b, 60, 60, 60, 60); if (m.getLevel() < 3) m.setLevel(3); },
@@ -106,12 +125,13 @@
       onZoom: cb => m.on('zoomend', () => cb(m.getZoom())),
       stop: () => m.stop(),
       resize: () => m.resize(),
+      center: () => { const c = m.getCenter(); return [c.lat, c.lng]; },
       pin: (lat, lng, el) => new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(m),
       dot: (lat, lng, onTap) => { const k = new maplibregl.Marker({ color: '#ff3b30' }).setLngLat([lng, lat]).addTo(m); if (onTap) k.getElement().addEventListener('click', ev => { ev.stopPropagation(); onTap(); }); return k; },
     }); });
   }));
   kakaoMap().catch(() => { mapEl.innerHTML = ''; return libreMap(); })
-    .then(g => { map = g; setTimeout(drawGuBubbles, 600); mapEl.classList.toggle('kakao', !!g.kakao); const zc = z => { mapEl.classList.toggle('far', z < 12); mapEl.classList.toggle('mid', z < 14); }; g.onZoom(zc); zc(g.zoom()); /* 멀리서 보면 말풍선을 숨기고, 조금 멀면 가격만 */ draw(); if (!openShared() && items.length) fit(); })
+    .then(g => { map = g; setTimeout(drawGuBubbles, 600); mapEl.classList.toggle('kakao', !!g.kakao); const zc = z => { mapEl.classList.toggle('far', z < 12); mapEl.classList.toggle('mid', z < 14); mapEl.classList.toggle('near', z >= 16); }; g.onZoom(zc); zc(g.zoom()); /* 멀리서 보면 말풍선을 숨기고, 조금 멀면 가격만 */ draw(); if (!openShared() && items.length) fit(); })
     .catch(() => { mapEl.innerHTML = '<p class="re-off">지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; });
   const flyTo = (lat, lng, zoom) => map && map.fly(lat, lng, zoom);
   const fit = () => { if (map && items.length) map.fit(items); };
@@ -169,6 +189,7 @@
   $('re-fs-add').addEventListener('click', () => { const p = pending; exit(); if (p) openForm(p); });
   $('re-place').addEventListener('click', e => {
     const a = e.target.closest('[data-pa]'); if (a) { pcData.sel = +a.dataset.pa; return drawArea(); }
+    const h = e.target.closest('[data-ph]'); if (h) { const x = poiHere[+h.dataset.ph]; if (x) showPoi(x); return; }
     const b = e.target.closest('[data-pc], [data-pd]'); if (!b) return;
     if (b.dataset.pc === 'share') return shareApt(pending && pending.name);
     if (b.dataset.pc === 'x') { $('re-place').hidden = true; return; } // 마크는 남겨서 다시 누르면 열려요
@@ -187,8 +208,25 @@
 
   // ── 주변 생활 시설 (네이버지도 음식점·카페 칩처럼, 집 볼 때 중요한 것만) ──
   // 카카오맵이면 카카오 장소 자료, 아니면 OpenStreetMap(Overpass) 자료를 써요
-  const POI = { subway: ['🚇', '지하철역', 'node["railway"="station"]["subway"="yes"];node["station"="subway"];', 'SW8'], school: ['🏫', '학교', 'nwr["amenity"="school"];', 'SC4'],
-    mart: ['🛒', '마트', 'nwr["shop"~"^(supermarket|department_store)$"];', 'MT1'], hospital: ['🏥', '병원', 'nwr["amenity"="hospital"];', 'HP8'], park: ['🌳', '공원', 'nwr["leisure"="park"]["name"];', ''], cafe: ['☕', '카페', 'node["amenity"="cafe"];', 'CE7'] };
+  // [아이콘, 이름, OpenStreetMap 찾기, 카카오 { c: 분류 코드, k: 검색어(여러 개), keep: 남길 분류, drop: 뺄 분류 }]
+  const POI = {
+    subway: ['🚇', '지하철역', 'node["railway"="station"]["subway"="yes"];node["station"="subway"];', { c: 'SW8' }],
+    school: ['🏫', '학교', 'nwr["amenity"="school"];', { c: 'SC4' }],
+    mart: ['🛒', '마트', 'nwr["shop"="supermarket"];', { c: 'MT1', k: ['아울렛'], drop: /편의점/ }],
+    conv: ['🏪', '편의점', 'node["shop"="convenience"];', { c: 'CS2' }],
+    hospital: ['🏥', '병원', 'nwr["amenity"~"^(hospital|clinic)$"];', { c: 'HP8' }],
+    pharmacy: ['💊', '약국', 'node["amenity"="pharmacy"];', { c: 'PM9' }],
+    bank: ['🏦', '은행', 'node["amenity"="bank"];', { c: 'BK9', keep: /은행|금융/ }],
+    food: ['🍽️', '음식점', 'node["amenity"="restaurant"];', { c: 'FD6' }],
+    cafe: ['☕', '카페', 'node["amenity"="cafe"];', { c: 'CE7' }],
+    dept: ['🛍️', '백화점', 'nwr["shop"="department_store"];', { k: ['백화점'], kc: /> 백화점/, dn: /주차장|입구|출구|정문|후문|예정\)/ }],
+    hotel: ['🏨', '호텔', 'nwr["tourism"="hotel"];', { c: 'AD5', kc: /호텔/, dn: /주차장|입구/ }],
+    hair: ['💇', '헤어샵', 'node["shop"="hairdresser"];', { k: ['미용실', '헤어샵'], kc: /미용실|이발|헤어/ }],
+    fuel: ['⛽', '주유소', 'nwr["amenity"="fuel"];', { c: 'OL7', keep: /주유소/ }],
+    popup: ['✨', '팝업스토어', '', { k: ['팝업스토어', '팝업'], keep: /팝업/, dn: /주차장/ }],
+    parking: ['🅿️', '주차장', 'nwr["amenity"="parking"];', { c: 'PK6' }],
+    park: ['🌳', '공원', 'nwr["leisure"="park"]["name"];', { k: ['공원'], kc: /공원$/ }],
+  };
   // 카카오 장소 찾기: 한 쪽에 15곳씩, max만큼 모아요
   // 카카오가 오류를 주면(등록 안 된 주소 등) 실패로 알려서 OpenStreetMap 자료로 다시 찾게 해요
   const kPlaces = (fn, arg, opt, max = 45) => new Promise((ok, no) => {
@@ -204,24 +242,83 @@
   }
   let poiOn = '';
   $('re-poi').innerHTML = Object.entries(POI).map(([k, [i, n]]) => `<button type="button" data-poi="${k}">${i} ${n}</button>`).join('');
-  $('re-poi').addEventListener('click', async e => {
+  const poiAgain = document.createElement('button'); poiAgain.type = 'button'; poiAgain.className = 're-poi-again'; poiAgain.hidden = true; poiAgain.textContent = '↻ 이 지역에서 다시 찾기';
+  $('re-mapwrap').append(poiAgain);
+  poiAgain.addEventListener('click', () => poiOn && findPoi(poiOn));
+  $('re-poi').addEventListener('click', e => {
     const b = e.target.closest('[data-poi]'); if (!b || !map) return;
-    poiMarks.forEach(m => m.remove()); poiMarks = [];
-    $('re-poi').querySelectorAll('button').forEach(x => x.classList.remove('on'));
-    if (poiOn === b.dataset.poi) { poiOn = ''; return; }
-    map.stop(); if (map.zoom() < 13.5) map.zoomTo(14.5); // 너무 멀면 먼저 동네 크기로 다가가요
-    poiOn = b.dataset.poi; b.classList.add('on');
-    const [ico, name, q, cat] = POI[poiOn], bb = map.bounds();
-    try {
-      let found;
-      if (map.kakao) { const bounds = new kakao.maps.LatLngBounds(new kakao.maps.LatLng(bb[0], bb[1]), new kakao.maps.LatLng(bb[2], bb[3])); found = await kPlaces(cat ? 'categorySearch' : 'keywordSearch', cat || '공원', { bounds }).then(l => l.map(p => ({ lat: +p.y, lng: +p.x, name: p.place_name })), () => null); }
-      if (!found) found = await overpass(q, bb);
-      if (!found.length) return toast(`이 화면에는 ${name} 정보가 없어요.`);
-      poiMarks = found.map(x => { const el = document.createElement('div'); el.className = 're-poi-pin'; el.textContent = ico; el.dataset.n = x.name || name;
-        el.addEventListener('click', ev => { ev.stopPropagation(); el.classList.toggle('show'); }); return map.pin(x.lat, x.lng, el); });
-      toast(`${name} ${found.length}곳을 찾았어요. 아이콘을 누르면 이름이 보여요.`);
-    } catch (err) { toast('지금은 주변 시설을 불러오지 못했어요.'); }
+    if (poiOn === b.dataset.poi) { poiTok++; poiMarks.forEach(m => m.remove()); poiMarks = []; poiOn = ''; b.classList.remove('on'); poiAgain.hidden = true; return; }
+    if (!full) enter(); /* 시설은 큰 지도에서 봐요 */
+    $('re-poi').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    map.stop(); if (map.zoom() < 14) map.zoomTo(15); /* 너무 멀면 먼저 동네 크기로 다가가요 */
+    setTimeout(() => findPoi(b.dataset.poi), full ? 0 : 200);
   });
+  let poiTok = 0;
+  async function findPoi(key) {
+    poiOn = key; const tok = ++poiTok;
+    const [ico, name, q, K] = POI[key], bb = map.bounds();
+    let wideHit = false;
+    try {
+      let found = null;
+      if (map.kakao) {
+        const bounds = new kakao.maps.LatLngBounds(new kakao.maps.LatLng(bb[0], bb[1]), new kakao.maps.LatLng(bb[2], bb[3]));
+        const run = async opt => { const lists = await Promise.allSettled([...(K.c ? [kPlaces('categorySearch', K.c, opt)] : []), ...(K.k || []).map(w => kPlaces('keywordSearch', w, opt))]);
+          if (!lists.some(r => r.status === 'fulfilled')) return null;
+          const seen = new Set();
+          return lists.flatMap(r => r.status === 'fulfilled' ? r.value : []).filter(p => !seen.has(p.id) && seen.add(p.id))
+            .filter(p => (!K.keep || K.keep.test(p.category_name + ' ' + p.place_name)) && (!K.kc || K.kc.test(p.category_name)) && (!K.drop || !K.drop.test(p.category_name)) && (!K.dn || !K.dn.test(p.place_name)))
+            .map(p => ({ lat: +p.y, lng: +p.x, name: p.place_name, raw: p, d: +p.distance || 0 })); };
+        found = await run({ bounds });
+        if (found && !found.length) { /* 이 화면에 없으면 지도 가운데에서 5km 안 가까운 곳 */
+          const c = map.center(), wide = await run({ location: new kakao.maps.LatLng(c[0], c[1]), radius: 5000, sort: kakao.maps.services.SortBy.DISTANCE });
+          if (wide && wide.length) { found = wide.sort((a, b) => a.d - b.d).slice(0, 10); wideHit = true; }
+        }
+      }
+      if (!found && q) found = await overpass(q, bb);
+      if (tok !== poiTok) return;
+      poiMarks.forEach(m => m.remove()); poiMarks = [];
+      if (!found) throw 0;
+      poiAgain.hidden = false;
+      if (!found.length) return toast(`이 화면에는 ${name}이 없어요. 지도를 옮기고 「다시 찾기」를 눌러 보세요.`);
+      poiMarks = found.map(x => { const el = document.createElement('div'); el.className = 're-poi-pin'; el.textContent = ico; el.dataset.n = x.name || name;
+        el.addEventListener('click', ev => { ev.stopPropagation(); markTap = Date.now(); document.querySelectorAll('.re-poi-pin.sel').forEach(o => o.classList.remove('sel')); el.classList.add('sel'); if (x.raw) showPoi(x.raw); else { el.classList.toggle('show'); } });
+        return map.pin(x.lat, x.lng, el); });
+      if (wideHit) { map.fit(found); toast(`이 화면에는 없어서 가까운 ${name} ${found.length}곳을 찾았어요.`); }
+      else toast(`${name} ${found.length}곳을 찾았어요. 아이콘을 누르면 자세한 정보가 나와요.`);
+    } catch (err) { if (tok === poiTok) toast('지금은 주변 시설을 불러오지 못했어요.'); }
+  }
+  // ── 장소 정보 창 (카카오맵처럼): 이름·분류·주소·전화·길찾기 ──
+  function showPoi(p) {
+    const box = $('re-place'), lat = +p.y, lng = +p.x, cats = (p.category_name || '').split(' > '), cat = cats[cats.length - 1] || '';
+    if (/아파트$/.test(p.category_name || '')) return showPlace({ name: p.place_name.replace(/\s*\d+동$/, ''), addr: p.road_address_name || p.address_name, lat, lng, raw: p });
+    if (temp) temp.remove();
+    temp = map ? map.dot(lat, lng, () => { markTap = Date.now(); if (box.innerHTML) box.hidden = !box.hidden; }) : null; // 고른 곳에 파란 마크
+    pending = { name: p.place_name, lat, lng }; placeDeals = []; pcData = null;
+    box.dataset.code = p.id || ''; box.dataset.tok = String(Date.now()); box.dataset.addr = p.road_address_name || p.address_name || '';
+    $('re-fs-act').hidden = true;
+    const c = map && map.center ? map.center() : null;
+    const dist = (a, b) => { const R = 6371e3, t = Math.PI / 180, x = (b[1] - a[1]) * t * Math.cos((a[0] + b[0]) / 2 * t), y = (b[0] - a[0]) * t; return Math.round(Math.sqrt(x * x + y * y) * R); };
+    const route = `https://map.kakao.com/link/to/${encodeURIComponent(p.place_name)},${lat},${lng}`;
+    box.innerHTML = `<div class="pc-h"><div><b>${esc(p.place_name)}</b>${cat ? ` <small>${esc(cat)}</small>` : ''}</div><button type="button" class="pc-x" data-pc="x" aria-label="닫기">×</button></div>
+      ${cats.length > 1 ? `<p class="pc-cat">${esc(cats.slice(0, -1).join(' › '))}</p>` : ''}
+      <table class="pc-tb">
+        <tr><th>주소</th><td>${esc(p.road_address_name || p.address_name || '')}${p.road_address_name && p.address_name ? `<small>지번 ${esc(p.address_name)}</small>` : ''} <button type="button" class="pc-copy" data-pc="copy">복사</button></td></tr>
+        ${p.phone ? `<tr><th>전화</th><td><a href="tel:${esc(p.phone)}">${esc(p.phone)}</a></td></tr>` : ''}
+        ${c ? `<tr><th>거리</th><td>지도 가운데에서 약 ${(d => d >= 1000 ? (d / 1000).toFixed(1) + 'km' : d + 'm')(dist(c, [lat, lng]))}<small>걸어서 약 ${Math.max(1, Math.round(dist(c, [lat, lng]) / 67))}분</small></td></tr>` : ''}
+      </table>
+      <div class="pc-acts">${p.phone ? `<a class="btn fill" href="tel:${esc(p.phone)}">📞 전화</a>` : ''}<a class="btn ${p.phone ? '' : 'fill'}" href="${route}" target="_blank" rel="noopener">🧭 길찾기</a>${p.place_url ? `<a class="btn" href="${esc(p.place_url)}" target="_blank" rel="noopener">사진·영업시간·리뷰 (카카오맵) ↗</a>` : ''}</div>
+      <div id="pc-here"></div>
+      <p class="re-tip">장소 정보: 카카오</p>`;
+    box.hidden = false; peek(false);
+    const road = p.road_address_name, tok = box.dataset.tok; poiHere = [];
+    if (road && map && map.kakao) kPlaces('keywordSearch', road, { location: new kakao.maps.LatLng(lat, lng), radius: 80 }, 30).then(l => { // 같은 건물(같은 도로명 주소)에 있는 다른 곳
+      if (box.dataset.tok !== tok) return;
+      poiHere = l.filter(x => x.road_address_name === road && x.id !== p.id).slice(0, 12);
+      const el = document.getElementById('pc-here'); if (!el || !poiHere.length) return;
+      el.innerHTML = `<p class="pc-sub">이 건물에 있는 곳 <small>${poiHere.length}곳</small></p><ul class="dl-list">${poiHere.map((x, i) => `<li><button type="button" data-ph="${i}"><span><b>${esc(x.place_name)}</b><small>${esc((x.category_name || '').split(' > ').pop())}</small></span><em>›</em></button></li>`).join('')}</ul>`;
+    }, () => {});
+  }
+  let poiHere = [];
 
   // ── 주소·아파트 찾기 ──
   // 장소 찾기: 카카오맵이면 카카오 장소 검색(아파트 이름도 잘 찾아요), 아니면 Nominatim
