@@ -2242,3 +2242,27 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .re-recent button { flex: none; padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
 .re-recent .rr-clear { border: 0; background: none; color: var(--muted); font-size: 12px; text-decoration: underline; }
 .re-map.mid .re-bub small { display: none; } .re-map.mid .re-bub b { border-radius: 8px; }
+/* 다방에서 영감: 아래 창 끌어내리기 · 서울 동네 랭킹 */
+.fs-grip { display: none; }
+.re-mapwrap.full .fs-grip { display: block; position: sticky; top: -10px; z-index: 2; margin: -10px -12px 4px; padding: 10px 0 10px; background: var(--card); cursor: grab; touch-action: none; }
+.re-mapwrap.full .fs-grip i { display: block; width: 40px; height: 5px; margin: 0 auto; border-radius: 3px; background: var(--line); }
+.re-mapwrap.full .re-fs-sheet::before { display: none; }
+.re-mapwrap.full .re-fs-sheet { transition: max-height .25s ease, transform .2s ease; }
+.re-mapwrap.full .re-fs-sheet.dragging { transition: none; }
+.re-mapwrap.full .re-fs-sheet.sh-fold { max-height: calc(64px + env(safe-area-inset-bottom)); overflow: hidden; }
+@media (min-width: 900px) { .re-mapwrap.full .fs-grip { display: none; } .re-mapwrap.full .re-fs-sheet.sh-fold { max-height: none; overflow: auto; } }
+.rk-card h2 small { margin-left: 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.rk-share { margin: 12px 0 4px; } .rk-share:empty { display: none; }
+.rk-bar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--field); }
+.rk-bar i, .rk-legend i { display: block; } .rk-bar .t, .rk-legend .t { background: #3a3ff0; } .rk-bar .j, .rk-legend .j { background: #30b158; } .rk-bar .w, .rk-legend .w { background: #ff9f0a; }
+.rk-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; list-style: none; margin: 8px 0 0; padding: 0; font-size: 13px; }
+.rk-legend li { display: flex; align-items: center; gap: 5px; } .rk-legend i { width: 9px; height: 9px; border-radius: 50%; } .rk-legend small { color: var(--muted); }
+.rk-tabs { margin-top: 14px; }
+.rk-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.rk-list button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 2px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.rk-list li:first-child button { border-top: 0; }
+.rk-no { flex: none; width: 28px; font-style: normal; font-size: 20px; font-weight: 800; text-align: center; color: var(--muted); }
+.rk-list span { flex: 1; min-width: 0; } .rk-list span small { display: block; font-size: 12px; color: var(--muted); } .rk-list span b { font-size: 16px; }
+.rk-list em { flex: none; font-style: normal; font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; }
+.rk-note { padding: 8px 2px 0; font-size: 12px; color: var(--muted); }
+.rk-more { display: block; width: 100%; margin-top: 8px; padding: 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }

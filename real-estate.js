@@ -152,6 +152,16 @@
   }
   // 폰에서는 아래 실거래 시트만큼 지도를 줄여요 (카카오 로고가 시트에 가리지 않게)
   if (window.ResizeObserver) new ResizeObserver(() => { const h = full && innerWidth < 900 ? $('re-fs-sheet').offsetHeight : 0; if (wrap.style.getPropertyValue('--sh') !== h + 'px') { wrap.style.setProperty('--sh', h + 'px'); if (map) map.resize(); } }).observe($('re-fs-sheet'));
+  // 아래 창 끌어내리기 (휴대폰): 손잡이를 아래로 끌면 접혀서 지도가 넓어지고, 위로 끌거나 누르면 다시 펴져요
+  const sheetEl = $('re-fs-sheet'), grip = $('fs-grip');
+  const peek = on => { sheetEl.classList.toggle('sh-fold', on); grip.setAttribute('aria-expanded', String(!on)); if (!on) sheetEl.scrollTop = 0; };
+  let gY = null, gDy = 0;
+  grip.addEventListener('pointerdown', e => { gY = e.clientY; gDy = 0; try { grip.setPointerCapture(e.pointerId); } catch (err) { /* 괜찮아요 */ } sheetEl.classList.add('dragging'); });
+  grip.addEventListener('pointermove', e => { if (gY === null) return; gDy = e.clientY - gY; const open = !sheetEl.classList.contains('sh-fold'); sheetEl.style.transform = open && gDy > 0 ? `translateY(${gDy}px)` : !open && gDy < 0 ? `translateY(${Math.max(gDy, -40)}px)` : ''; });
+  const gEnd = () => { if (gY === null) return; gY = null; sheetEl.classList.remove('dragging'); sheetEl.style.transform = '';
+    if (Math.abs(gDy) < 6) peek(!sheetEl.classList.contains('sh-fold')); else if (gDy > 40) peek(true); else if (gDy < -20) peek(false); };
+  grip.addEventListener('pointerup', gEnd); grip.addEventListener('pointercancel', gEnd);
+  grip.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); peek(!sheetEl.classList.contains('sh-fold')); } });
   $('re-expand').addEventListener('click', enter);
   $('re-fs-close').addEventListener('click', () => exit());
   window.addEventListener('popstate', () => exit(true));
@@ -263,7 +273,7 @@
   async function deals(gu) {
     if (!LAWD[gu]) return;
     dealGu = gu; dealData = { trade: null, rent: null };
-    const box = $('re-deals'); box.hidden = false;
+    const box = $('re-deals'); box.hidden = false; peek(false);
     box.innerHTML = `<p class="re-empty">${gu} 실거래가를 불러오는 중…</p>`;
     dealData.trade = await loadDeals('trade');
     drawDeals();
@@ -391,7 +401,7 @@
     box.dataset.code = raw.id || '';
     pending = { name: r.name, lat: r.lat, lng: r.lng }; placeDeals = [];
     saveRecent(r);
-    $('re-fs-act').hidden = true; box.hidden = false;
+    $('re-fs-act').hidden = true; box.hidden = false; peek(false);
     const tok = String(Date.now()); box.dataset.tok = tok; box.dataset.addr = raw.road_address_name || r.addr || '';
     const head = `<div class="pc-h"><div><b>${esc(r.name)}</b>${cat ? ` <small>${esc(cat)}</small>` : ''}</div><button type="button" class="pc-x" data-pc="x" aria-label="닫기">×</button></div>
       <p class="pc-addr">${esc(raw.road_address_name || r.addr || '')}${raw.road_address_name && raw.address_name ? ` <small>(${esc(raw.address_name.split(' ').slice(2).join(' '))})</small>` : ''} <button type="button" class="pc-copy" data-pc="copy">복사</button></p>
@@ -463,5 +473,45 @@
     if (g) { focus(g.dataset.go); mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     if (d && confirm('이 관심 부동산을 지울까요?')) { items = items.filter(x => x.id !== d.dataset.del); save(); draw(); }
   });
+  // ── 서울 동네 랭킹 (다방 '동네정보 · 거래 랭킹'처럼): 지난달 25개 구 실거래를 모아 줄 세워요. 화면에 보일 때 불러와요 ──
+  (() => {
+    const card = $('re-rank'); if (!card) return;
+    const d = new Date(), pm = new Date(d.getFullYear(), d.getMonth() - 1, 1), ym = `${pm.getFullYear()}${String(pm.getMonth() + 1).padStart(2, '0')}`;
+    let view = 'dong', more = false, data = null;
+    const MEDAL = ['🥇', '🥈', '🥉'];
+    function draw2() {
+      if (!data) return;
+      const { trades, rents } = data, by = (f) => { const m = new Map(); trades.forEach(x => { const k = f(x); const c = m.get(k) || { k, gu: x.gu, dong: x.dong, n: 0, v: [] }; c.n++; c.v.push(x.amt); m.set(k, c); }); return [...m.values()]; };
+      const med = a => { const s2 = [...a].sort((p, q) => p - q); return s2[Math.floor(s2.length / 2)]; };
+      let rows;
+      if (view === 'gu') rows = by(x => x.gu).sort((a, b) => b.n - a.n).map(r => ({ t: r.gu, s: `가운데 값 ${eok(med(r.v))}`, v: `${r.n.toLocaleString('ko-KR')}건`, gu: r.gu }));
+      else if (view === 'price') rows = by(x => x.gu + ' ' + x.dong).filter(r => r.n >= 5).map(r => ({ ...r, m: med(r.v) })).sort((a, b) => b.m - a.m).map(r => ({ t: r.dong, s: `서울 ${r.gu} · ${r.n}건`, v: eok(r.m), gu: r.gu }));
+      else rows = by(x => x.gu + ' ' + x.dong).sort((a, b) => b.n - a.n).map(r => ({ t: r.dong, s: `서울 ${r.gu}`, v: `${r.n.toLocaleString('ko-KR')}건`, gu: r.gu }));
+      $('rk-list').innerHTML = rows.slice(0, more ? 10 : 5).map((r, i) => `<li><button type="button" data-rkgu="${esc(r.gu)}"><i class="rk-no">${MEDAL[i] || i + 1}</i><span><small>${esc(r.s)}</small><b>${esc(r.t)}</b></span><em>${r.v}</em></button></li>`).join('');
+      $('rk-more').hidden = rows.length <= 5; $('rk-more').textContent = more ? '접기' : '더보기';
+      if (view === 'price') $('rk-list').insertAdjacentHTML('beforeend', '<li class="rk-note">가운데 값 기준 · 지난달 거래가 5건 이상인 동네만</li>');
+    }
+    async function load() {
+      const res = await Promise.all(GU.map(async g => { const [t, r] = await Promise.all([month(g, ym, 'trade'), month(g, ym, 'rent')]); return { g, t: t || [], r: r || [], ok: !!t }; }));
+      const okN = res.filter(x => x.ok).length;
+      if (!okN) { $('rk-list').innerHTML = '<li class="re-empty">지금은 랭킹을 불러오지 못했어요. 잠시 뒤 다시 와 주세요.</li>'; return; }
+      const trades = res.flatMap(x => x.t.map(i => ({ ...i, gu: x.g }))), rents = res.flatMap(x => x.r);
+      data = { trades, rents };
+      $('rk-when').textContent = `${pm.getMonth() + 1}월 계약 기준${okN < GU.length ? ` · ${okN}개 구` : ''}`;
+      const jeon = rents.filter(x => !x.rent).length, wol = rents.length - jeon, all = trades.length + rents.length || 1, pc = n => Math.round(n / all * 1000) / 10;
+      $('rk-share').innerHTML = `<div class="rk-bar"><i style="width:${pc(trades.length)}%" class="t"></i><i style="width:${pc(jeon)}%" class="j"></i><i style="width:${pc(wol)}%" class="w"></i></div>
+        <ul class="rk-legend"><li><i class="t"></i>매매 <b>${pc(trades.length)}%</b> <small>${trades.length.toLocaleString('ko-KR')}건</small></li><li><i class="j"></i>전세 <b>${pc(jeon)}%</b> <small>${jeon.toLocaleString('ko-KR')}건</small></li><li><i class="w"></i>월세 <b>${pc(wol)}%</b> <small>${wol.toLocaleString('ko-KR')}건</small></li></ul>`;
+      draw2();
+    }
+    $('rk-tabs').addEventListener('click', e => { const b = e.target.closest('[data-rk]'); if (!b) return; view = b.dataset.rk; more = false; $('rk-tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); draw2(); });
+    $('rk-more').addEventListener('click', () => { more = !more; draw2(); });
+    $('rk-list').addEventListener('click', e => { // 누르면 그 구 실거래가를 지도에
+      const b = e.target.closest('[data-rkgu]'); if (!b) return;
+      const g = $('re-gu').querySelector(`[data-gu="${b.dataset.rkgu}"]`); if (!g) return;
+      if (!g.classList.contains('on')) g.click();
+      wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    if ('IntersectionObserver' in window) { const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: '300px' }); io.observe(card); } else load();
+  })();
   draw();
 })();
