@@ -3521,7 +3521,7 @@ const GUIDE_FOR = {
   const d = document.createElement('div');
   d.className = 'biz';
   d.innerHTML = `<p class="biz-links"><a href="/shop/">돈셈 스토어</a> · <a href="/terms/">이용약관</a> · <a href="/refund/">환불정책</a> · <a href="/privacy/"><b>개인정보처리방침</b></a></p>
-    <p>상호 돈셈 · 대표 정현진 · 사업자등록번호 589-37-01513 · 통신판매업 신고 준비 중<br>전북 순창군 순창읍 장류로 422 광명메이루즈 102동 602호<br>대표전화 <a href="tel:010-2277-8530">010-2277-8530</a> · <a href="mailto:hjjung330@gmail.com">hjjung330@gmail.com</a></p>`;
+    <p>상호 돈셈 · 대표 정현진 · 사업자등록번호 589-37-01513 · 통신판매업 신고 제2026-전북순창-54호<br>전북 순창군 순창읍 장류로 422 광명메이루즈 102동 602호<br>대표전화 <a href="tel:010-2277-8530">010-2277-8530</a> · <a href="mailto:hjjung330@gmail.com">hjjung330@gmail.com</a></p>`;
   ft.append(d);
 })();
 
