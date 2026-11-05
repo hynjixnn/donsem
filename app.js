@@ -1622,9 +1622,9 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   const active = HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : ESTATE.includes(path) ? 'estate' : 'calc';
   const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const tabs = [
-    ['home', '/', '홈', '<span class="tab-logo" aria-hidden="true"></span>'], // 위버스처럼 홈 버튼에는 집 모양 대신 돈셈 아이콘
+    ['home', '/', '홈', ic('<path d="M4 10.4 12 4l8 6.4v8.6a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z"/><path d="M9.5 16.2h5"/>')], // 크림처럼 집 모양 (가운데 짧은 선은 문)
     ['calc', '/calculators/', '계산기', ic('<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/>')],
-    ['estate', '/real-estate/', '부동산', ic('<path d="M3.5 10.5 12 4l8.5 6.5"/><path d="M5.5 9v10.5h13V9"/><path d="M10 19.5v-5h4v5"/>')],
+    ['estate', '/real-estate/', '부동산', ic('<path d="M3 20.5h18"/><path d="M5 20.5v-9.5l4-1.8"/><path d="M9 20.5V5.2L15 3v17.5"/><path d="M15 9l4 1.6v9.9"/><path d="M11.4 7.6h1.2M11.4 10.8h1.2M11.4 14h1.2M11.4 17.2h1.2M6.6 14.2h.8M6.6 17.2h.8M16.6 13.4h.8M16.6 16.6h.8"/>')], // 아파트실거래가 앱처럼 아파트 건물
     ['money', '/budget/', '캘린더', ic('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>')], // 누르면 가계부 달력이 맨 위에 보여요
     ['my', '/my/', '마이', ic('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')],
   ];
