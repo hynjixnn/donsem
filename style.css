@@ -2369,3 +2369,18 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 :root[data-theme="dark"] .re-mapwrap.full .re-poi-again:not([hidden]) { background: #2c2c2e; color: #64d2ff; }
 .pc-cat { margin: 2px 0 8px; font-size: 12px; color: var(--muted); }
 .pc-acts a.btn.fill { color: #fff; }
+/* 토스처럼: 최근 서비스 · 많이 쓴 곳 · 계산 제보 */
+.svc-recent { padding-top: 18px; padding-bottom: 14px; }
+.svc-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; } .svc-h h2 { margin: 0; font-size: 17px; }
+.svc-clear { border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; padding: 4px; }
+.svc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 6px; }
+@media (min-width: 768px) { .svc-grid { grid-template-columns: repeat(8, 1fr); } }
+.svc-grid a { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text); font-size: 12px; text-align: center; line-height: 1.3; word-break: keep-all; }
+.svc-grid a:hover { text-decoration: none; }
+.svc-ico { width: 46px; height: 46px; border-radius: 14px; background: var(--field); padding: 6px; box-sizing: border-box; object-fit: contain; }
+.svc-txt { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; color: var(--blue); }
+@media (hover: hover) { .svc-grid a:hover .svc-ico { transform: translateY(-2px); transition: transform .15s; } }
+.mh-top { display: block; } .mh-top strong { font-weight: 700; color: var(--text); }
+.calc-report { margin: 10px 0 0; text-align: center; }
+.calc-report button { border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px; }
+@media (hover: hover) { .calc-report button:hover { color: var(--blue); } }

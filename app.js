@@ -3332,7 +3332,11 @@ const GUIDE_FOR = {
   const prevYm = ymd(new Date(n.getFullYear(), n.getMonth() - 1, 1)).slice(0, 7), day = n.getDate();
   const out = entries.filter(e => e.type === 'out' && e.date.startsWith(ym)).reduce((s, e) => s + e.amt, 0);
   const prev = entries.filter(e => e.type === 'out' && e.date.startsWith(prevYm) && Number(e.date.slice(8)) <= day).reduce((s, e) => s + e.amt, 0);
-  if (entries.length) html += `<a class="mh-row" href="/budget/"><span>이번 달 지출</span><b>${out ? '-' : ''}${won(out)} ›</b>${prev ? `<small>지난달 같은 기간보다 ${man(prev - out)} ${out <= prev ? '덜' : '더'} 썼어요</small>` : ''}</a>`;
+  // 토스 '많이 쓴 카테고리'처럼: 이번 달 가장 많이 쓴 분류와 지난달 같은 기간 비교
+  const byCat = (m, upto) => entries.filter(e => e.type === 'out' && e.date.startsWith(m) && (!upto || Number(e.date.slice(8)) <= upto)).reduce((o, e) => { o[e.cat || '기타'] = (o[e.cat || '기타'] || 0) + e.amt; return o; }, {});
+  const cNow = byCat(ym), cPrev = byCat(prevYm, day), top = Object.entries(cNow).sort((p, q) => q[1] - p[1])[0];
+  const topTxt = top && out ? `<small class="mh-top">가장 많이 쓴 곳 <strong>${esc2h(top[0])} ${man(top[1])}</strong>${cPrev[top[0]] ? ` · 지난달보다 ${man(top[1] - cPrev[top[0]])} ${top[1] >= cPrev[top[0]] ? '더' : '덜'}` : ''}</small>` : '';
+  if (entries.length) html += `<a class="mh-row" href="/budget/"><span>이번 달 지출</span><b>${out ? '-' : ''}${won(out)} ›</b>${prev ? `<small>지난달 같은 기간보다 ${man(prev - out)} ${out <= prev ? '덜' : '더'} 썼어요</small>` : ''}${topTxt}</a>`;
   // ③ 다가오는 돈 일정: 월급날, 가장 가까운 고정지출
   const up = [];
   const pi = typeof paydayInfo === 'function' ? paydayInfo(b) : null;
@@ -3521,3 +3525,37 @@ const GUIDE_FOR = {
   ft.append(d);
 })();
 
+
+// ── 토스 '전체' 탭처럼 ①: 최근 서비스 — 계산기든 가계부든 열어 본 곳을 기억해 두고, 모든 계산기 맨 위에 아이콘으로 보여 줘요 ──
+(() => {
+  if (typeof MENU === 'undefined') return;
+  const K = 'donsem:svc', here = location.pathname, names = {};
+  MENU.forEach(([, items]) => items.forEach(([p, n]) => { const k = String(p).split('#')[0]; names[k] = names[k] || n; }));
+  let list = []; try { list = JSON.parse(localStorage.getItem(K)) || []; } catch (e) { list = []; }
+  if (names[here] && here !== '/calculators/') { list = [here, ...list.filter(p => p !== here)].slice(0, 8); try { localStorage.setItem(K, JSON.stringify(list)); } catch (e) { /* 괜찮아요 */ } }
+  const anchor = document.getElementById('calc-list');
+  if (!anchor || here !== '/calculators/') return;
+  list = list.filter(p => names[p]);
+  if (!list.length) return;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const sec = document.createElement('section');
+  sec.className = 'card svc-recent'; sec.setAttribute('aria-label', '최근 서비스');
+  sec.innerHTML = `<div class="svc-h"><h2>최근 서비스</h2><button type="button" class="svc-clear">지우기</button></div><div class="svc-grid">${list.map(p => { const ic = typeof iconOf === 'function' ? iconOf(p) : ''; return `<a href="${p}">${ic ? ic.replace('class="ico"', 'class="svc-ico"') : `<span class="svc-ico svc-txt" aria-hidden="true">${esc(names[p].slice(0, 1))}</span>`}<span>${esc(names[p])}</span></a>`; }).join('')}</div>`;
+  (anchor.closest('.card') || anchor).after(sec);
+  sec.querySelector('.svc-clear').addEventListener('click', () => { try { localStorage.removeItem(K); } catch (e) { /* 괜찮아요 */ } sec.remove(); });
+})();
+
+// ── 토스 '가격 오류 제보'처럼: 계산 결과가 이상하면 바로 알려 주기 (입력값과 결과를 메일에 담아요) ──
+(() => {
+  if (typeof result === 'undefined' || !result || !document.querySelector('.card h1')) return;
+  const p = document.createElement('p'); p.className = 'calc-report';
+  p.innerHTML = '<button type="button">계산이 이상한가요? 알려 주세요</button>';
+  result.after(p);
+  p.querySelector('button').addEventListener('click', () => {
+    const title = document.querySelector('.card h1').textContent.trim();
+    let inputs = ''; try { inputs = decodeURIComponent(readState().toString()).replace(/&/g, '\n'); } catch (e) { inputs = ''; }
+    const big = result.querySelector('.big'), body = `계산기: ${title}\n주소: ${location.href.split('?')[0]}\n\n[넣은 값]\n${inputs}\n\n[돈셈 결과]\n${big ? big.textContent.trim() : ''}\n\n[이상한 점 / 맞다고 생각하는 값]\n`;
+    location.href = `mailto:hjjung330@gmail.com?subject=${encodeURIComponent(`[돈셈 계산 제보] ${title}`)}&body=${encodeURIComponent(body)}`;
+    if (typeof toast === 'function') toast('메일 앱이 열려요. 이상한 점만 적어서 보내 주세요. 확인하고 고칠게요.');
+  });
+})();
