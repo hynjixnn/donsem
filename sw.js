@@ -1,6 +1,6 @@
 // 돈셈 서비스 워커: 인터넷이 끊겨도 가계부와 계산기가 열리게, 사이트 파일을 기기에 보관해요.
 // 사이트를 고쳐서 올릴 때 VERSION을 바꾸면, 예전 보관 파일을 지우고 새로 받아요.
-const VERSION = 'donsem-2026-11-05-165';
+const VERSION = 'donsem-2026-11-06-166';
 const CORE = ['/', '/budget/', '/assets/', '/fixed/', '/calculators/', '/my/', '/quiz/', '/money-type/', '/no-spend/', '/collection/', '/money-calendar/', '/style.css', '/app.js', '/budget.js', '/assets.js', '/fixed.js', '/vt.js', '/my.js', '/quiz.js', '/quiz-data.js', '/money-type.js', '/no-spend.js', '/collection.js', '/money-calendar.js', '/hidden-money.js', '/real-estate.js', '/favicon.svg', '/favicon.ico', '/favicon-32.png', '/favicon-96.png', '/logo-donsam.png', '/logo-d.png', '/icon-192.png', '/manifest.webmanifest', '/kb.json'];
 
 self.addEventListener('install', e => {
