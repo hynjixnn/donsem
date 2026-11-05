@@ -1,3 +1,7 @@
+// ── 돈셈 브랜드 글꼴: 로고·숫자는 Saira, 배너 큰 영문은 같은 집안의 Saira Stencil (크림처럼 사이트 전체가 한 목소리로) ──
+(() => { if (document.getElementById('f-brand')) return; const h = document.head;
+  [['preconnect', 'https://fonts.googleapis.com'], ['preconnect', 'https://fonts.gstatic.com']].forEach(([r, u]) => { const l = document.createElement('link'); l.rel = r; l.href = u; if (u.includes('gstatic')) l.crossOrigin = ''; h.append(l); });
+  const l = document.createElement('link'); l.id = 'f-brand'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Saira:ital,wght@0,600;0,700;0,800;1,800;1,900&family=Saira+Stencil+One&display=swap'; h.append(l); })();
 const MAX_REC = 1e11; // 가계부·고정지출·자산·목표에 넣을 수 있는 가장 큰 금액 (1,000억 원) — 실수로 0을 많이 눌러도 화면이 망가지지 않게
 const won = n => (Number.isFinite(n) ? Math.round(n).toLocaleString('ko-KR') + '원' : '계산할 수 없을 만큼 큰 금액'); // 숫자를 너무 크게 넣어도 '∞원'이 아니라 말로 알려 줘요
 const minus = n => (Math.round(n) ? '-' : '') + won(n); // 빼는 돈이 0원이면 '-0원' 대신 '0원'
@@ -2228,6 +2232,9 @@ const MENU = [
   inner.after(chips);
   const chipEnd = () => chips.classList.toggle('at-end', chips.scrollLeft + chips.clientWidth >= chips.scrollWidth - 4);
   chips.addEventListener('scroll', chipEnd, { passive: true }); requestAnimationFrame(chipEnd);
+  { const NEW = ['/shop/', '/real-estate/', '/loan-limit/', '/subscription-score/', '/jeonse-check/']; let seen = []; try { seen = JSON.parse(localStorage.getItem('donsem:svc')) || []; } catch (e) { seen = []; }
+    if (NEW.includes(path) && !seen.includes(path)) seen.push(path);
+    MENU.forEach(([, items], i) => { if (items.some(([href]) => NEW.includes(href) && !seen.includes(href))) document.querySelectorAll(`.gnav [data-g="${i}"], .gnav-chips [data-g="${i}"]`).forEach(b => b.classList.add('has-new')); }); }
   const sBtn = document.createElement('button');
   sBtn.type = 'button'; sBtn.className = 'search-btn'; sBtn.dataset.g = 'search'; sBtn.setAttribute('aria-label', '계산기 검색'); sBtn.setAttribute('aria-expanded', 'false');
   sBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';

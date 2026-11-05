@@ -2384,3 +2384,25 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .calc-report { margin: 10px 0 0; text-align: center; }
 .calc-report button { border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px; }
 @media (hover: hover) { .calc-report button:hover { color: var(--blue); } }
+/* ── 돈셈 브랜드 글꼴 (크림처럼 로고·배너·숫자를 한 목소리로): 로고 = Saira 900 이탤릭, 배너 영문 = Saira Stencil ── */
+:root { --f-brand: 'Saira', 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif; --f-stencil: 'Saira Stencil One', 'Saira', 'Pretendard Variable', Pretendard, sans-serif; }
+.brand-word { width: 126px; height: 22px; }
+.ph-top .brand-word { width: 74px; height: 13px; }
+@media (max-width: 640px) { .brand-word { width: 114px; height: 20px; } }
+.tab-logo::after { inset: 5px 5px 5px 4px; }
+.en-banner, .hero .en-banner { margin: 0 0 14px; max-width: none; font-family: var(--f-stencil); font-size: 64px; line-height: .95; letter-spacing: .01em; color: var(--text); }
+@media (max-width: 640px) { .en-banner, .hero .en-banner { font-size: 44px; margin-bottom: 12px; } }
+.en-kicker { display: block; margin: 0 0 6px; font-family: var(--f-stencil); font-style: normal; font-size: 15px; letter-spacing: .06em; color: var(--muted); }
+.mag-t .en-kicker { font-size: 12px; margin-bottom: 4px; color: inherit; opacity: .6; }
+.cd-clock { font-family: var(--f-stencil); font-weight: 400; font-size: 30px; letter-spacing: .03em; }
+/* 컴퓨터 위쪽 분류 메뉴: 크림 HOME·STYLE·SHOP처럼 크고 또렷하게 */
+@media (min-width: 641px) {
+  .gnav { gap: 6px; }
+  .gnav button { font-size: 16px; font-weight: 600; color: var(--text); opacity: .62; letter-spacing: -0.01em; }
+  .gnav button:hover, .gnav button.open { opacity: 1; }
+  .gnav button.here { opacity: 1; font-weight: 800; }
+}
+/* 새 기능 빨간 점 (크림처럼): 아직 안 가 본 새 기능이 있는 분류 */
+.gnav button.has-new, .gnav-chips button.has-new { position: relative; }
+.gnav button.has-new::after, .gnav-chips button.has-new::after { content: ''; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: #ff3b30; }
+.gnav-chips button.has-new::after { top: 3px; right: 3px; }
