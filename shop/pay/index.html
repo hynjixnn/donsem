@@ -36,7 +36,7 @@
     <div id="pay-checkout" hidden>
       <h1>결제하기</h1>
       <p class="pay-test" id="pay-test" hidden>테스트 결제예요. 진짜 돈이 나가지 않고, 진짜 상품 대신 확인용 파일을 받아요.</p>
-      <div class="pay-item"><img src="/shop/sheet-summary.png" alt="" width="64" height="48"><div><b>돈셈 가계부·재테크 엑셀 템플릿</b><small>엑셀 파일 1개 · 결제 후 바로 내려받기</small></div><strong>9,900원</strong></div>
+      <div class="pay-item"><img id="pay-pimg" src="/shop/sheet-summary.png" alt="" width="64" height="48"><div><b id="pay-iname">돈셈 가계부·재테크 엑셀 템플릿</b><small>엑셀 파일 1개 · 결제 후 바로 내려받기</small></div><strong id="pay-iprice">9,900원</strong></div>
       <label class="pay-label" for="pay-email">이메일 <small>다른 기기에서 다시 받거나 환불할 때 써요</small></label>
       <input class="pay-input" id="pay-email" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com" maxlength="160">
       <div class="pay-widget"><div id="payment-method"></div><div id="agreement"></div></div>
@@ -52,7 +52,7 @@
       <h1>결제가 끝났어요</h1>
       <p class="sub" id="pay-done-sub">아래 버튼을 눌러 엑셀 파일을 내려받으세요.</p>
       <a class="btn fill wide" id="pay-dl" href="#" rel="nofollow">엑셀 파일 내려받기</a>
-      <table class="pc-tb shop-tb"><tr><th>주문번호</th><td id="pay-oid"></td></tr><tr><th>상품</th><td>돈셈 가계부·재테크 엑셀 템플릿</td></tr><tr><th>결제 금액</th><td>9,900원</td></tr></table>
+      <table class="pc-tb shop-tb"><tr><th>주문번호</th><td id="pay-oid"></td></tr><tr><th>상품</th><td id="pay-pname"></td></tr><tr><th>결제 금액</th><td id="pay-pprice"></td></tr></table>
       <ul class="shop-list pay-tips"><li>이 기기에서는 <a href="/shop/">돈셈 스토어</a>에서 언제든 다시 받을 수 있어요.</li><li>다른 기기에서는 스토어의 「구매한 파일 다시 받기」에 주문번호와 이메일을 넣으세요.</li><li>파일은 1년 동안, 30번까지 내려받을 수 있어요.</li><li>휴대폰에서 받았다면 컴퓨터 엑셀이나 구글 시트에서 열면 가장 잘 보여요.</li></ul>
     </div>
 
