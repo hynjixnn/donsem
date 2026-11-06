@@ -2,7 +2,8 @@
 (() => {
   /* 클라이언트 키는 공개돼도 되는 키예요(시크릿 키는 워커 비밀에만 있어요). 심사가 끝나면 live_gck_… 로 바꿔요 */
   const CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
-  const API = 'https://donsem-counter.hjjung330.workers.dev', PRICE = 9900, NAME = '돈셈 가계부·재테크 엑셀 템플릿';
+  const API = 'https://donsem-counter.hjjung330.workers.dev';
+  const PRODUCTS = { budget: { name: '돈셈 가계부·재테크 엑셀 템플릿', price: 9900, img: '/shop/sheet-summary.png' }, yearend: { name: '돈셈 연말정산 준비 키트', price: 4900, img: '/shop/kit-yearend-card.png' }, starter: { name: '돈셈 사회초년생 돈 관리 키트', price: 6900, img: '/shop/kit-starter-fixed.png' } };
   const LIVE = CLIENT_KEY.startsWith('live_');
   const q = new URLSearchParams(location.search);
   const open = true; /* 토스 심사 때 결제 화면까지 가는 길을 보여야 해서 열어 둬요 (진짜 키 전에는 테스트 결제라 돈이 오가지 않아요) */
@@ -22,7 +23,7 @@
     if (open && note) note.textContent = LIVE ? '카드·계좌이체·간편결제로 결제하고 바로 내려받아요.' : '지금은 테스트 결제만 돼요. 진짜 돈이 나가지 않아요.';
     buy.addEventListener('click', () => {
       if (!open) return say('결제를 준비하고 있어요. 곧 바로 구매할 수 있게 열어 드릴게요.');
-      location.href = '/shop/pay/';
+      location.href = '/shop/pay/?p=' + (buy.dataset.product || 'budget');
     });
   }
   drawMine();
@@ -31,7 +32,7 @@
     const box = $('shop-mine'); if (!box) return;
     const list = load();
     const mine = $('shop-mine-list');
-    mine.innerHTML = list.length ? list.map(o => `<li><span><b>${o.live ? NAME : '테스트 결제'}</b><small>주문번호 ${o.orderId.replace(/[^\w-]/g, '')} · ${new Date(o.t).toLocaleDateString('ko-KR')}</small></span><a class="btn line" href="${dlUrl(o.token)}" rel="nofollow">내려받기</a></li>`).join('') : '';
+    mine.innerHTML = list.length ? list.map(o => `<li><span><b>${o.live ? (PRODUCTS[o.product] || PRODUCTS.budget).name : '테스트 결제'}</b><small>주문번호 ${o.orderId.replace(/[^\w-]/g, '')} · ${new Date(o.t).toLocaleDateString('ko-KR')}</small></span><a class="btn line" href="${dlUrl(o.token)}" rel="nofollow">내려받기</a></li>`).join('') : '';
     mine.hidden = !list.length;
     const form = $('shop-find');
     if (form && !form.dataset.on) {
@@ -42,7 +43,7 @@
         if (!orderId || !email) return say('주문번호와 이메일을 적어 주세요.');
         const btn = form.querySelector('button'); btn.disabled = true;
         post('/pay/find', { orderId, email }).then(j => {
-          save({ orderId: j.orderId, token: j.token, live: j.live, t: j.created || Date.now() });
+          save({ orderId: j.orderId, token: j.token, live: j.live, product: j.product, t: j.created || Date.now() });
           drawMine(); say('주문을 찾았어요. 내려받기를 눌러 주세요.');
         }).catch(j => say((j && j.message) || '찾지 못했어요. 잠시 뒤 다시 해 주세요.')).finally(() => { btn.disabled = false; });
       });
@@ -53,10 +54,12 @@
   if (!$('pay')) return;
   const show = id => ['pay-checkout', 'pay-wait', 'pay-done', 'pay-fail', 'pay-closed'].forEach(x => { $(x).hidden = x !== id; });
   const s = q.get('s');
+  const key = PRODUCTS[q.get('p')] ? q.get('p') : 'budget', G = PRODUCTS[key], money = n => n.toLocaleString('ko-KR') + '원';
 
   const done = o => {
     show('pay-done');
     $('pay-oid').textContent = o.orderId;
+    const D = PRODUCTS[o.product] || PRODUCTS.budget; $('pay-pname').textContent = D.name; $('pay-pprice').textContent = money(D.price);
     $('pay-dl').href = dlUrl(o.token);
     if (!o.live) { $('pay-done-sub').textContent = '테스트 결제라서 진짜 상품 대신 확인용 파일을 받아요.'; $('pay-dl').textContent = '확인용 파일 내려받기'; }
   };
@@ -65,11 +68,11 @@
     show('pay-wait');
     const paymentKey = q.get('paymentKey'), orderId = q.get('orderId'), amount = Number(q.get('amount'));
     let email = ''; try { email = sessionStorage.getItem('donsem:pay-email') || ''; } catch (e) { /* 없음 */ }
-    if (amount !== PRICE) { show('pay-fail'); $('pay-fail-msg').textContent = '결제 금액이 상품 가격과 달라서 승인하지 않았어요. 돈은 나가지 않았어요.'; return; }
-    const once = () => post('/pay/confirm', { paymentKey, orderId, amount, email });
+    if (amount !== G.price) { show('pay-fail'); $('pay-fail-msg').textContent = '결제 금액이 상품 가격과 달라서 승인하지 않았어요. 돈은 나가지 않았어요.'; return; }
+    const once = () => post('/pay/confirm', { paymentKey, orderId, amount, email, product: key });
     once().catch(j => (j && j.error ? Promise.reject(j) : new Promise(r => setTimeout(r, 1500)).then(once))) /* 인터넷이 끊겼을 때만 한 번 더 */
       .then(j => {
-        const o = { orderId: j.orderId, token: j.token, live: j.live, t: Date.now() };
+        const o = { orderId: j.orderId, token: j.token, live: j.live, product: j.product || key, t: Date.now() };
         save(o);
         history.replaceState(null, '', '/shop/pay/?s=done&o=' + encodeURIComponent(o.orderId));
         done(o);
@@ -96,6 +99,7 @@
   /* 결제창 그리기 */
   show('pay-checkout');
   $('pay-test').hidden = LIVE;
+  $('pay-pimg').src = G.img; $('pay-iname').textContent = G.name; $('pay-iprice').textContent = money(G.price); $('pay-go').textContent = money(G.price) + ' 결제하기';
   const msg = $('pay-msg'), go = $('pay-go'), agree = $('pay-agree'), mail = $('pay-email');
   try { mail.value = localStorage.getItem('donsem:pay-email') || ''; } catch (e) { /* 없음 */ }
   let widgets = null;
@@ -106,7 +110,7 @@
   sdk.onload = async () => {
     try {
       const w = TossPayments(CLIENT_KEY).widgets({ customerKey: TossPayments.ANONYMOUS });
-      await w.setAmount({ currency: 'KRW', value: PRICE });
+      await w.setAmount({ currency: 'KRW', value: G.price });
       await Promise.all([
         w.renderPaymentMethods({ selector: '#payment-method', variantKey: 'DEFAULT' }),
         w.renderAgreement({ selector: '#agreement', variantKey: 'AGREEMENT' }),
@@ -126,9 +130,9 @@
     go.disabled = true;
     try {
       await widgets.requestPayment({
-        orderId, orderName: NAME, customerEmail: email,
-        successUrl: location.origin + '/shop/pay/?s=ok',
-        failUrl: location.origin + '/shop/pay/?s=fail',
+        orderId, orderName: G.name, customerEmail: email,
+        successUrl: location.origin + '/shop/pay/?s=ok&p=' + key,
+        failUrl: location.origin + '/shop/pay/?s=fail&p=' + key,
       });
     } catch (e) {
       /* 결제창을 닫은 경우 등 */

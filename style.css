@@ -2450,3 +2450,4 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
   .topbar .brand-word { width: 92px; height: 16px; }
   .top-right { flex: none; }
 }
+.st-grid .st-item:first-child .st-img img, .st-img img { object-position: top left; }

@@ -1619,7 +1619,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/', '/money-calendar/'], MY = ['/my/', '/about/', '/privacy/', '/collection/'];
   const HOME = ['/', '/quiz/', '/money-type/', '/no-spend/']; // 퀴즈·돈BTI·무지출은 홈에서 들어가는 곳이라 '홈'이 켜져요 (예전엔 '계산기'가 켜졌어요)
   const ESTATE = ['/real-estate/', '/acquisition-tax/', '/brokerage-fee/', '/jeonse-check/', '/subscription-score/'];
-  const SHOP = ['/shop/', '/shop/budget-template/', '/shop/pay/', '/terms/', '/refund/'];
+  const SHOP = ['/shop/', '/shop/budget-template/', '/shop/year-end-kit/', '/shop/starter-kit/', '/shop/pay/', '/terms/', '/refund/'];
   const active = HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : ESTATE.includes(path) ? 'estate' : SHOP.includes(path) ? 'shop' : 'calc';
   const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const tabs = [
