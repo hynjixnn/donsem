@@ -2451,3 +2451,14 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
   .top-right { flex: none; }
 }
 .st-grid .st-item:first-child .st-img img, .st-img img { object-position: top left; }
+/* 쇼핑 탭: 돈셈 상품 | 쿠팡 추천 */
+.st-tabs { display: flex; justify-content: center; gap: 26px; padding: 12px 20px 0; background: var(--bg); border-bottom: 1px solid var(--line); }
+.st-tabs a { padding: 6px 2px 10px; font-size: 16px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.st-tabs a:hover { text-decoration: none; color: var(--text); } .st-tabs a.on { color: var(--text); font-weight: 800; border-bottom-color: var(--text); }
+.dl-head { padding-top: 22px; } .dl-head h1 { margin: 0 0 10px; font-size: 32px; letter-spacing: -0.03em; }
+.dl-notice { margin: 0 0 8px; padding: 10px 12px; border-radius: 12px; background: var(--card); font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.5; }
+.dl-chips { display: flex; gap: 8px; margin-top: 14px; overflow-x: auto; scrollbar-width: none; } .dl-chips::-webkit-scrollbar { display: none; }
+.dl-chips a { flex: none; padding: 7px 15px; border-radius: 980px; background: var(--card); color: var(--text); font-size: 14px; font-weight: 600; } .dl-chips a:hover { text-decoration: none; }
+.dl-sec { margin-top: 30px; scroll-margin-top: 90px; } .dl-sec h2 { margin: 0 0 12px; font-size: 22px; } .dl-sec .en-kicker { margin-bottom: 2px; font-size: 12px; }
+.dl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 12px 6px; justify-items: center; }
+.dl-grid iframe { display: block; width: 120px; height: 240px; border: 0; border-radius: 10px; background: #fff; }
