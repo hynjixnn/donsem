@@ -2479,3 +2479,4 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .ye-note { margin: 14px 2px 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
 :root[data-theme="dark"] .ye-kit, :root[data-theme="dark"] .ye-home { background: #1c1c1e; }
 .ye-list li { flex-wrap: wrap; gap: 4px 12px; } .ye-list label { flex: 1 1 100%; } .ye-list b { display: inline; } .ye-list a { margin: 0 0 0 30px; }
+.dl-grid a { display: block; width: 120px; } .dl-grid img { display: block; width: 120px; height: 240px; border-radius: 10px; background: #fff; }

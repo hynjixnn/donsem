@@ -2813,6 +2813,7 @@ document.addEventListener('click', e => {
 // ── 아이폰 같은 손맛 ⑥: 큰 제목이 화면 위로 지나가면, 위 메뉴바 가운데에 작은 제목으로 쏙 들어가요 (휴대폰) ──
 // 가계부처럼 칸이 여러 개인 화면은 지금 보고 있는 칸 제목(기록하기, 내역 …)으로 바뀌어요
 (() => {
+  return; // 2026-11-06: 위 메뉴바는 어느 화면에서든 로고와 아이콘 그대로 두기로 했어요 (제목이 겹쳐서 없앴어요)
   const h1 = document.querySelector('.wrap > .card h1'), bar = document.querySelector('.topbar'), inner = bar && bar.querySelector('.topbar-in');
   if (!h1 || !inner || document.body.classList.contains('home')) return;
   const t = document.createElement('button');
