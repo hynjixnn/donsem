@@ -15,7 +15,7 @@
     .then(r => r.json().catch(() => ({})).then(j => (r.ok ? j : Promise.reject(j))));
   const say = (msg) => (typeof toast === 'function' ? toast(msg) : alert(msg));
 
-  /* ── 상품 페이지 (/shop/) ── */
+  /* ── 상품 페이지 (/shop/budget-template/) ── */
   const buy = $('shop-buy');
   if (buy) {
     const note = $('shop-note');
@@ -24,8 +24,8 @@
       if (!open) return say('결제를 준비하고 있어요. 곧 바로 구매할 수 있게 열어 드릴게요.');
       location.href = '/shop/pay/';
     });
-    drawMine();
   }
+  drawMine();
 
   function drawMine() {
     const box = $('shop-mine'); if (!box) return;

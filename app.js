@@ -1619,14 +1619,15 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/', '/money-calendar/'], MY = ['/my/', '/about/', '/privacy/', '/collection/'];
   const HOME = ['/', '/quiz/', '/money-type/', '/no-spend/']; // 퀴즈·돈BTI·무지출은 홈에서 들어가는 곳이라 '홈'이 켜져요 (예전엔 '계산기'가 켜졌어요)
   const ESTATE = ['/real-estate/', '/acquisition-tax/', '/brokerage-fee/', '/jeonse-check/', '/subscription-score/'];
-  const active = HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : ESTATE.includes(path) ? 'estate' : 'calc';
+  const SHOP = ['/shop/', '/shop/budget-template/', '/shop/pay/', '/terms/', '/refund/'];
+  const active = HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : ESTATE.includes(path) ? 'estate' : SHOP.includes(path) ? 'shop' : 'calc';
   const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const tabs = [
     ['home', '/', '홈', ic('<path d="M4 10.4 12 4l8 6.4v8.6a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z"/><path d="M9.5 16.2h5"/>')], // 크림처럼 집 모양 (가운데 짧은 선은 문)
     ['calc', '/calculators/', '계산기', ic('<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/>')],
+    ['shop', '/shop/', '쇼핑', ic('<path d="M5.8 8h12.4l1.2 12.5H4.6z"/><path d="M9 10.8V7a3 3 0 0 1 6 0v3.8"/>')], // 가운데 쇼핑 (토스처럼). 마이는 오른쪽 위 사람 아이콘으로 옮겼어요
     ['estate', '/real-estate/', '부동산', ic('<path d="M3 20.5h18"/><path d="M5 20.5v-9.5l4-1.8"/><path d="M9 20.5V5.2L15 3v17.5"/><path d="M15 9l4 1.6v9.9"/><path d="M11.4 7.6h1.2M11.4 10.8h1.2M11.4 14h1.2M11.4 17.2h1.2M6.6 14.2h.8M6.6 17.2h.8M16.6 13.4h.8M16.6 16.6h.8"/>')], // 아파트실거래가 앱처럼 아파트 건물
     ['money', '/budget/', '캘린더', ic('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>')], // 누르면 가계부 달력이 맨 위에 보여요
-    ['my', '/my/', '마이', ic('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>')],
   ];
   const bar = document.createElement('div'); // <nav>는 계산기 메뉴용 스타일이 붙어 있어서 div로
   bar.className = 'tabbar';
@@ -3565,4 +3566,23 @@ const GUIDE_FOR = {
     location.href = `mailto:hjjung330@gmail.com?subject=${encodeURIComponent(`[돈셈 계산 제보] ${title}`)}&body=${encodeURIComponent(body)}`;
     if (typeof toast === 'function') toast('메일 앱이 열려요. 이상한 점만 적어서 보내 주세요. 확인하고 고칠게요.');
   });
+})();
+
+// ── 마이는 오른쪽 위 사람 아이콘으로 (샤넬·토스 쇼핑처럼). 컴퓨터 위쪽 메뉴에는 쇼핑 링크를 더해요 ──
+(() => {
+  const right = document.querySelector('.topbar .top-right'); if (!right) return;
+  const a = document.createElement('a'); a.className = 'my-btn' + (location.pathname === '/my/' ? ' on' : ''); a.href = '/my/'; a.setAttribute('aria-label', '마이');
+  a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>';
+  const theme = right.querySelector('.theme-btn'); theme ? theme.before(a) : right.append(a);
+  if (location.pathname.startsWith('/shop/')) document.querySelectorAll('.gnav .here, .gnav-chips .here').forEach(b => b.classList.remove('here')); /* 쇼핑 안에서는 '돈 관리'가 켜지지 않게 */
+  const g = document.querySelector('.gnav');
+  if (g) { const s = document.createElement('a'); s.className = 'gnav-shop' + (location.pathname.startsWith('/shop/') ? ' here' : ''); s.href = '/shop/'; s.textContent = '쇼핑'; g.append(s); }
+})();
+
+// ── 홈: 마이가 위로 올라가도 출석체크·미션은 잘 보이게 ──
+(() => {
+  const hero = document.querySelector('.home .wrap > .hero'); if (!hero) return;
+  const d = document.createElement('div'); d.className = 'home-my';
+  d.innerHTML = '<a href="/my/#my-attend"><span aria-hidden="true">✅</span><b>오늘 출석체크</b><i>›</i></a><a href="/my/#my-mission"><span aria-hidden="true">🎯</span><b>이달의 돈 미션</b><i>›</i></a>';
+  hero.before(d);
 })();

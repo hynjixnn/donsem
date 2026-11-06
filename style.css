@@ -2406,3 +2406,40 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .gnav button.has-new, .gnav-chips button.has-new { position: relative; }
 .gnav button.has-new::after, .gnav-chips button.has-new::after { content: ''; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: #ff3b30; }
 .gnav-chips button.has-new::after { top: 3px; right: 3px; }
+/* ── 돈셈 스토어 첫 화면: 애플·샤넬처럼 화면을 꽉 채우는 큰 배너 ── */
+.st-hero { background: #000; color: #f5f5f7; text-align: center; padding: 64px 20px 0; overflow: hidden; }
+.st-en { margin: 0 0 16px; font-family: var(--f-stencil); font-size: clamp(30px, 7vw, 64px); line-height: 1; letter-spacing: .02em; color: #fff; }
+.st-hero h1 { margin: 0; font-size: clamp(34px, 6vw, 60px); font-weight: 800; line-height: 1.12; letter-spacing: -0.035em; color: #fff; }
+.st-sub { margin: 14px 0 0; font-size: clamp(16px, 2.4vw, 21px); color: #a1a1a6; }
+.st-btns { display: flex; justify-content: center; gap: 12px; margin-top: 26px; }
+.st-btn { padding: 12px 24px; border-radius: 980px; font-size: 16px; font-weight: 600; border: 1px solid #2997ff; }
+.st-btn:hover { text-decoration: none; }
+.st-btn.fill { background: #0071e3; border-color: #0071e3; color: #fff; } .st-btn.line { color: #2997ff; }
+.st-screen { max-width: 760px; margin: 44px auto 0; padding: 10px 10px 0; border: 1px solid #3a3a3c; border-bottom: 0; border-radius: 18px 18px 0 0; background: #1c1c1e; box-shadow: 0 -20px 90px rgba(41, 151, 255, .22); }
+.st-screen img { display: block; width: 100%; height: auto; max-height: 460px; object-fit: cover; object-position: top; border-radius: 10px 10px 0 0; background: #fff; }
+.st-sec { margin: 44px 0 0; } .st-sec h2 { margin: 0 0 16px; font-size: 24px; }
+.st-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.st-item { display: block; color: var(--text); min-width: 0; } a.st-item:hover { text-decoration: none; }
+.st-img { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; margin-bottom: 10px; border-radius: 16px; background: var(--card); overflow: hidden; }
+.st-img img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.st-img em { font-family: var(--f-stencil); font-style: normal; font-size: 26px; letter-spacing: .06em; color: var(--muted); opacity: .55; }
+.st-item b { display: block; font-size: 15px; line-height: 1.35; } .st-item small { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.st-item strong { display: block; margin-top: 6px; font-size: 17px; font-weight: 800; }
+.st-panel { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 28px; margin-top: 48px; padding: 32px; border-radius: 24px; background: var(--card); overflow: hidden; }
+.st-panel h2 { margin: 0 0 10px; font-size: 32px; line-height: 1.2; letter-spacing: -0.03em; } .st-panel p { color: var(--muted); } .st-panel .en-kicker { margin-bottom: 8px; }
+.st-panel img { display: block; width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); background: #fff; }
+.st-why { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+.st-why div { padding: 18px; border-radius: 18px; background: var(--card); } .st-why b { display: block; font-size: 16px; } .st-why span { display: block; margin-top: 4px; font-size: 13px; color: var(--muted); line-height: 1.45; }
+@media (max-width: 640px) {
+  .st-hero { padding-top: 44px; }
+  .st-grid { grid-template-columns: repeat(2, 1fr); gap: 14px 10px; } .st-grid .st-item:first-child { grid-column: 1 / -1; } .st-grid .st-item:first-child .st-img { aspect-ratio: 4 / 3; }
+  .st-panel { grid-template-columns: 1fr; padding: 24px 20px; } .st-panel h2 { font-size: 26px; }
+  .st-why { grid-template-columns: 1fr; }
+}
+/* 오른쪽 위 마이, 컴퓨터 메뉴 쇼핑, 홈 출석·미션 입구 */
+.my-btn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; color: var(--text); flex: none; } .my-btn svg { width: 22px; height: 22px; } .my-btn.on { color: var(--blue); }
+.gnav-shop { padding: 8px 12px; font-size: 16px; font-weight: 600; color: var(--text); opacity: .62; white-space: nowrap; letter-spacing: -0.01em; }
+.gnav-shop:hover { opacity: 1; text-decoration: none; color: var(--text); } .gnav-shop.here { opacity: 1; font-weight: 800; }
+.home-my { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 16px; }
+.home-my a { display: flex; align-items: center; gap: 8px; padding: 13px 14px; border-radius: 16px; background: var(--card); color: var(--text); font-size: 14px; min-width: 0; }
+.home-my a:hover { text-decoration: none; } .home-my b { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .home-my i { font-style: normal; color: var(--muted); }
