@@ -2443,3 +2443,10 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .home-my { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 16px; }
 .home-my a { display: flex; align-items: center; gap: 8px; padding: 13px 14px; border-radius: 16px; background: var(--card); color: var(--text); font-size: 14px; min-width: 0; }
 .home-my a:hover { text-decoration: none; } .home-my b { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .home-my i { font-style: normal; color: var(--muted); }
+/* 창이 좁은 컴퓨터·태블릿: 위쪽 메뉴가 오른쪽 아이콘을 밀어내지 않게 */
+@media (min-width: 641px) and (max-width: 900px) {
+  .gnav { gap: 0; margin-left: 12px; min-width: 0; }
+  .gnav button, .gnav-shop { padding: 6px 5px; font-size: 13px; }
+  .topbar .brand-word { width: 92px; height: 16px; }
+  .top-right { flex: none; }
+}
