@@ -2051,7 +2051,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'shop', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'loan-limit', 'asset-rank', 'time-value', 'lump-sum'];
+const ICONS = ['year-end', 'savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'shop', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'loan-limit', 'asset-rank', 'time-value', 'lump-sum'];
 const iconOf = path => { const slug = String(path).split('#')[1] || String(path).replace(/\//g, ''); /* '/budget/#fixed' → 고정지출 아이콘 */ return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -2210,7 +2210,7 @@ const MENU = [
   ['대출 · 집', [['/real-estate/', '부동산 지도', '서울 아파트 지도 관심 단지 실거래가 시세 부동산 뉴스'], ['/acquisition-tax/', '취득세', '주택 아파트 취득세 다주택 중과 생애최초'], ['/brokerage-fee/', '중개수수료', '복비 부동산 중개보수 전세 월세 매매'], ['/jeonse-check/', '전세 안심 진단', '깡통전세 전세사기 보증금 근저당 전세가율 보증보험'], ['/subscription-score/', '청약 가점', '청약 가점 점수 무주택 부양가족 청약통장 84점 분양'], ['/loan-limit/', '대출 한도', 'DSR 대출 한도 주담대 신용대출 스트레스 얼마까지 빌릴 수'], ['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
   ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/time-value/', '내 시간 가치', '시급 노동 시간 가격 몇 시간 충동구매'], ['/lump-sum/', '목돈 굴리기 비교', '1000만원 예금 파킹통장 채권 ISA 어디에 넣을까 이자'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
-    ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금']]],
+    ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금'], ['/year-end/', '연말정산 모아보기', '미리보기 체크리스트 일정 환급']]],
   ['생활 · 사업', [['/vat/', '부가세', '공급가액 세금'], ['/income-tax/', '종합소득세', '프리랜서 3.3% 환급 개인사업자 5월'], ['/corporate-tax/', '법인세', '법인 사업자 세율'], ['/discount/', '할인율', '세일 가격'], ['/percent/', '퍼센트', '비율 증가율'], ['/unit-price/', '단가 비교', '100g당 가격'], ['/used-price/', '중고 시세', '중고거래 얼마에 팔까 감가 시세'], ['/delivery/', '배달비', '배달 음식 배달팁 멤버십 구독 포장 픽업 외식'], ['/fan-budget/', '덕질 비용', '덕질 아이돌 앨범 굿즈 포토카드 콘서트 팬미팅 멤버십 팬사인회'],
     ['/fuel/', '유류비', '기름값 연비'], ['/dutch-pay/', '더치페이', 'n빵 정산'], ['/date/', '날짜', '디데이 d-day 며칠']]],
 ];
@@ -3585,4 +3585,31 @@ const GUIDE_FOR = {
   const d = document.createElement('div'); d.className = 'home-my';
   d.innerHTML = '<a href="/my/#my-attend"><span aria-hidden="true">✅</span><b>오늘 출석체크</b><i>›</i></a><a href="/my/#my-mission"><span aria-hidden="true">🎯</span><b>이달의 돈 미션</b><i>›</i></a>';
   hero.before(d);
+})();
+
+// ── 연말정산 시즌: 모아보기 페이지, 홈 배너, 관련 페이지 연결 ──
+(() => {
+  const n = new Date(), mon = n.getMonth(), path = location.pathname, $ = id => document.getElementById(id);
+  const endY = mon === 0 || mon === 1 ? n.getFullYear() - 1 : n.getFullYear(), end = new Date(endY, 11, 31, 23, 59, 59), days = Math.ceil((end - n) / 864e5);
+  const ddayText = days > 0 ? `D-${days}` : days === 0 ? 'D-DAY' : '마감';
+  if ($('ye-dday')) {
+    $('ye-dday').textContent = ddayText;
+    const pay = $('ye-pay'), out = $('ye-out'), go = $('ye-go');
+    pay.addEventListener('input', () => {
+      const v = Number(pay.value.replace(/[^0-9]/g, '')); pay.value = v ? v.toLocaleString('ko-KR') : '';
+      if (!v) { out.textContent = '총급여의 25%를 넘게 쓴 돈부터 공제돼요.'; go.href = '/year-end-tax/'; return; }
+      out.innerHTML = `카드를 <b>${Math.round(v * 0.25).toLocaleString('ko-KR')}원</b> 넘게 쓴 돈부터 공제돼요. 넘은 뒤에는 체크카드·현금영수증이 유리해요.`;
+      go.href = '/year-end-tax/?ys_pay=' + v;
+    });
+    let seen = {}; try { seen = JSON.parse(localStorage.getItem('donsem:ye-check')) || {}; } catch (e) { seen = {}; }
+    const boxes = [...document.querySelectorAll('[data-ye]')], draw = () => { $('ye-count').textContent = `${boxes.filter(b => b.checked).length} / ${boxes.length}`; };
+    boxes.forEach(b => { b.checked = !!seen[b.dataset.ye]; b.addEventListener('change', () => { seen[b.dataset.ye] = b.checked; try { localStorage.setItem('donsem:ye-check', JSON.stringify(seen)); } catch (e) { /* 괜찮아요 */ } draw(); }); });
+    draw();
+  }
+  const inSeason = mon >= 9 || mon <= 1; // 10월~2월에만 보여요
+  const home = document.querySelector('.home .wrap > .hero');
+  if (home && inSeason) { const a = document.createElement('a'); a.className = 'ye-home'; a.href = '/year-end/'; a.innerHTML = `<span><em aria-hidden="true">YEAR-END 2026</em><b>연말정산, 올해 안에 끝내요</b></span><strong>${ddayText} ›</strong>`; (document.querySelector('.home-my') || home).before(a); }
+  if (['/year-end-tax/', '/guide/year-end-basics/', '/guide/year-end-preview/', '/guide/card-deduction/', '/guide/missed-deductions/', '/guide/irp-pension/', '/guide/irp-transfer/', '/pension/'].includes(path)) {
+    const f = document.querySelector('.wrap > footer'); if (f) { const a = document.createElement('a'); a.className = 'ye-home'; a.href = '/year-end/'; a.innerHTML = '<span><em aria-hidden="true">YEAR-END 2026</em><b>연말정산 모아보기 · 체크리스트와 일정</b></span><strong>›</strong>'; f.before(a); }
+  }
 })();

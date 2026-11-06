@@ -2462,3 +2462,20 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 .dl-sec { margin-top: 30px; scroll-margin-top: 90px; } .dl-sec h2 { margin: 0 0 12px; font-size: 22px; } .dl-sec .en-kicker { margin-bottom: 2px; font-size: 12px; }
 .dl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 12px 6px; justify-items: center; }
 .dl-grid iframe { display: block; width: 120px; height: 240px; border: 0; border-radius: 10px; background: #fff; }
+/* 연말정산 시즌 */
+.ye-hero { background: #000; color: #f5f5f7; text-align: center; padding: 56px 20px 48px; }
+.ye-hero h1 { margin: 0; font-size: clamp(32px, 6vw, 56px); font-weight: 800; line-height: 1.14; letter-spacing: -0.035em; color: #fff; }
+.ye-left { display: inline-flex; align-items: baseline; gap: 10px; margin: 24px 0 0; } .ye-left span { font-size: 15px; color: #a1a1a6; } .ye-left b { font-family: var(--f-stencil); font-weight: 400; font-size: 40px; color: #fff; letter-spacing: .03em; }
+.ye-card { margin-top: 16px; } .ye-card h2 { margin: 0 0 6px; font-size: 22px; }
+.ye-out { margin: 10px 0 0; font-size: 15px; line-height: 1.55; } .ye-out b { color: var(--blue); }
+.ye-list { list-style: none; margin: 12px 0 0; padding: 0; } .ye-list li { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.ye-list label { display: flex; gap: 10px; flex: 1; min-width: 0; cursor: pointer; } .ye-list input { width: 20px; height: 20px; margin: 1px 0 0; flex: none; accent-color: var(--blue); }
+.ye-list b { display: block; font-size: 15px; } .ye-list small { display: block; margin-top: 3px; font-size: 13px; line-height: 1.5; color: var(--muted); } .ye-list a { flex: none; font-size: 13px; white-space: nowrap; margin-top: 2px; }
+.ye-time { list-style: none; margin: 12px 0 0; padding: 0; } .ye-time li { display: grid; grid-template-columns: 96px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.5; } .ye-time b { font-weight: 700; }
+.ye-kit, .ye-home { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-radius: 18px; background: #111; color: #fff; } .ye-kit:hover, .ye-home:hover { text-decoration: none; color: #fff; }
+.ye-kit { margin-top: 16px; } .ye-home { margin: 0 0 12px; } .wrap > .ye-home { margin-top: 16px; }
+.ye-kit em, .ye-home em { display: block; font-family: var(--f-stencil); font-style: normal; font-size: 12px; letter-spacing: .06em; color: #a1a1a6; }
+.ye-kit b, .ye-home b { display: block; font-size: 16px; color: #fff; } .ye-kit small { display: block; margin-top: 2px; font-size: 12px; color: #a1a1a6; line-height: 1.4; } .ye-kit strong, .ye-home strong { flex: none; font-family: var(--f-stencil); font-weight: 400; font-size: 20px; color: #fff; } .ye-kit strong { font-family: inherit; font-weight: 800; font-size: 15px; }
+.ye-note { margin: 14px 2px 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+:root[data-theme="dark"] .ye-kit, :root[data-theme="dark"] .ye-home { background: #1c1c1e; }
+.ye-list li { flex-wrap: wrap; gap: 4px 12px; } .ye-list label { flex: 1 1 100%; } .ye-list b { display: inline; } .ye-list a { margin: 0 0 0 30px; }
