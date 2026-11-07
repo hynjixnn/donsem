@@ -129,9 +129,14 @@
 
   <section class="card sub-card rd-card" id="re-redev">
     <h2>재건축·재개발 정보 <small id="rd-when"></small></h2>
-    <p class="sub small">서울 주요 구역의 세대수, 층수, 시공사, 진행 단계를 모았어요. 단지를 누르면 지도와 정보표가 열려요.</p>
+    <p class="sub small">주요 구역은 시공사와 공사비까지, 서울 전체 구역은 세대수와 진행 단계를 볼 수 있어요. 단지를 누르면 지도와 정보표가 열려요.</p>
     <div class="dl-view rd-tabs" id="rd-tabs"></div>
     <table class="rd-zone" id="rd-table"></table>
+    <h3 class="rd-h3">서울 전체 구역 찾기 <small id="rd-sum"></small><small id="rd-when2"></small></h3>
+    <div class="field memo"><input id="rd-q" type="search" placeholder="구역이나 동네 이름 (예: 상계, 신림)" autocomplete="off" enterkeyhint="search" aria-label="구역 찾기"></div>
+    <div class="rd-filter"><select class="dl-sort" id="rd-gu" aria-label="구 고르기"></select><select class="dl-sort" id="rd-st" aria-label="단계 고르기"></select><select class="dl-sort" id="rd-kd" aria-label="종류 고르기"></select></div>
+    <ul class="rd-list" id="rd-list"><li class="re-empty">불러오는 중…</li></ul>
+    <button type="button" class="rk-more" id="rd-more" hidden>더보기</button>
   </section>
 
   <section class="card sub-card rk-card" id="re-rank">
