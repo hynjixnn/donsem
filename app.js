@@ -2225,7 +2225,7 @@ const MENU = [
   const btn = (t, i) => `<button type="button" data-g="${i}" aria-expanded="false" aria-controls="gnav-panel"${i === here ? ' class="here"' : ''}>${short(t)}</button>`;
   const gnav = document.createElement('div');
   gnav.className = 'gnav'; gnav.setAttribute('role', 'navigation'); gnav.setAttribute('aria-label', '계산기 분류');
-  gnav.innerHTML = MENU.map(([t], i) => btn(t, i)).join('');
+  gnav.innerHTML = MENU.slice(0, 2).map(([t], i) => btn(t, i)).join('') + `<a class="gnav-shop gnav-calc${here >= 2 || path === '/calculators/' ? ' here' : ''}" href="/calculators/">모든 계산기</a>`; // 컴퓨터 위쪽은 간단하게: 나머지 분류는 모든 계산기 화면에서 앱처럼 봐요
   inner.querySelector('.brand').after(gnav);
   const chips = document.createElement('div');
   chips.className = 'gnav-chips'; chips.setAttribute('role', 'navigation'); chips.setAttribute('aria-label', '계산기 분류');
