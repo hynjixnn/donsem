@@ -2573,3 +2573,6 @@ html.how-open { overflow: hidden; }
 }
 @media (hover: hover) { .cb-grid a:hover { background: var(--field); text-decoration: none; } .cb-side button:hover { color: var(--text); } }
 @media (min-width: 641px) { body.cb-on .wrap { max-width: 1024px; } }
+.how-phone { position: relative; }
+.how-ring { position: absolute; left: 2.5%; top: 0; width: 36%; aspect-ratio: 3.6 / 1; margin-top: 2%; border: 3px solid #ff3b30; border-radius: 999px; pointer-events: none; }
+.gnav { gap: 4px; }

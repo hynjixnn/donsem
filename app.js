@@ -2224,18 +2224,10 @@ const MENU = [
   // 컴퓨터: 로고 옆 분류 메뉴 / 휴대폰: 메뉴바 아래 한 줄 버튼 — 둘 다 같은 순서로 보여요 (돈 관리부터)
   const btn = (t, i) => `<button type="button" data-g="${i}" aria-expanded="false" aria-controls="gnav-panel"${i === here ? ' class="here"' : ''}>${short(t)}</button>`;
   const gnav = document.createElement('div');
-  gnav.className = 'gnav'; gnav.setAttribute('role', 'navigation'); gnav.setAttribute('aria-label', '계산기 분류');
-  gnav.innerHTML = MENU.slice(0, 2).map(([t], i) => btn(t, i)).join('') + `<a class="gnav-shop gnav-calc${here >= 2 || path === '/calculators/' ? ' here' : ''}" href="/calculators/">모든 계산기</a>`; // 컴퓨터 위쪽은 간단하게: 나머지 분류는 모든 계산기 화면에서 앱처럼 봐요
+  gnav.className = 'gnav'; gnav.setAttribute('role', 'navigation'); gnav.setAttribute('aria-label', '주요 메뉴');
+  const onTab = (document.querySelector('.tabbar a.on') || {}).pathname; // 위쪽 메뉴는 아래 독바와 같은 4칸: 돈셈의 핵심 기능만 (홈은 로고를 누르면 가요)
+  gnav.innerHTML = [['/calculators/', '계산기'], ['/shop/', '쇼핑'], ['/real-estate/', '부동산'], ['/budget/', '캘린더']].map(([h, t]) => `<a class="gnav-shop${h === onTab ? ' here' : ''}" href="${h}"${h === onTab ? ' aria-current="page"' : ''}>${t}</a>`).join('');
   inner.querySelector('.brand').after(gnav);
-  const chips = document.createElement('div');
-  chips.className = 'gnav-chips'; chips.setAttribute('role', 'navigation'); chips.setAttribute('aria-label', '계산기 분류');
-  chips.innerHTML = MENU.map(([t], i) => btn(t, i)).join('');
-  inner.after(chips);
-  const chipEnd = () => chips.classList.toggle('at-end', chips.scrollLeft + chips.clientWidth >= chips.scrollWidth - 4);
-  chips.addEventListener('scroll', chipEnd, { passive: true }); requestAnimationFrame(chipEnd);
-  { const NEW = ['/shop/', '/real-estate/', '/loan-limit/', '/subscription-score/', '/jeonse-check/']; let seen = []; try { seen = JSON.parse(localStorage.getItem('donsem:svc')) || []; } catch (e) { seen = []; }
-    if (NEW.includes(path) && !seen.includes(path)) seen.push(path);
-    MENU.forEach(([, items], i) => { if (items.some(([href]) => NEW.includes(href) && !seen.includes(href))) document.querySelectorAll(`.gnav [data-g="${i}"], .gnav-chips [data-g="${i}"]`).forEach(b => b.classList.add('has-new')); }); }
   const sBtn = document.createElement('button');
   sBtn.type = 'button'; sBtn.className = 'search-btn'; sBtn.dataset.g = 'search'; sBtn.setAttribute('aria-label', '계산기 검색'); sBtn.setAttribute('aria-expanded', 'false');
   sBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
@@ -3577,7 +3569,6 @@ const GUIDE_FOR = {
   const theme = right.querySelector('.theme-btn'); theme ? theme.before(a) : right.append(a);
   if (location.pathname.startsWith('/shop/')) document.querySelectorAll('.gnav .here, .gnav-chips .here').forEach(b => b.classList.remove('here')); /* 쇼핑 안에서는 '돈 관리'가 켜지지 않게 */
   const g = document.querySelector('.gnav');
-  if (g) { const s = document.createElement('a'); s.className = 'gnav-shop' + (location.pathname.startsWith('/shop/') ? ' here' : ''); s.href = '/shop/'; s.textContent = '쇼핑'; g.append(s); }
 })();
 
 // ── 홈: 마이가 위로 올라가도 출석체크·미션은 잘 보이게 ──
@@ -3621,10 +3612,11 @@ const GUIDE_FOR = {
   const bar = document.querySelector('.topbar-in'); if (!bar) return;
   const KEY = 'donsem:how-seen', app = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   const S = [
-    ['궁금한 계산을 골라 주세요', '아래 메뉴의 계산기에서 연봉, 대출, 세금 계산기를 찾을 수 있어요.', '/how/1.jpg'],
+    ['궁금한 계산을 골라 주세요', '계산기 메뉴에서 연봉, 대출, 세금 계산기를 찾을 수 있어요.', '/how/1.jpg'],
     ['숫자만 넣으면 바로 계산돼요', '가입도 설치도 필요 없어요. 금액을 바꾸면 결과도 함께 바뀌어요.', '/how/2.jpg'],
     ['캘린더에 쓴 돈을 적어 보세요', '가계부 기록은 이 기기에만 저장되고, 서버로 보내지 않아요.', '/how/3.jpg'],
-    ['부동산 정보도 한곳에서 보세요', '아파트 실거래가와 서울 재건축·재개발 구역을 지도로 볼 수 있어요.', '/how/4.jpg'],
+    ['부동산 정보도 한곳에서 보세요', '부동산 메뉴에서 아파트 실거래가와 서울 재건축·재개발 구역을 볼 수 있어요.', '/how/4.jpg'],
+    ['DONSAM 로고를 누르면 홈으로 가요', '어느 화면에 있어도 왼쪽 위 로고만 누르면 홈으로 돌아와요.', '/how/5.jpg', 1],
   ];
   if (!app) S.push(['홈 화면에 넣으면 앱처럼 쓸 수 있어요', '아이폰은 Safari 공유 버튼에서, 안드로이드는 브라우저 메뉴에서 「홈 화면에 추가」를 눌러 주세요.', '']);
   let seen = false; try { seen = !!localStorage.getItem(KEY); } catch (e) { /* 괜찮아요 */ }
@@ -3633,11 +3625,11 @@ const GUIDE_FOR = {
   place(); addEventListener('resize', place);
   let box = null, at = 0, x0 = null;
   const draw = () => {
-    const [h, p, img] = S[at], last = at === S.length - 1;
+    const [h, p, img, ring] = S[at], last = at === S.length - 1;
     box.querySelector('.how-dots').innerHTML = S.map((_, i) => `<i class="${i <= at ? 'on' : ''}"></i>`).join('');
     box.querySelector('.how-dots').setAttribute('aria-label', `${S.length}장 중 ${at + 1}번째`);
     box.querySelector('h2').textContent = h; box.querySelector('.how-p').textContent = p;
-    box.querySelector('.how-phone').innerHTML = img ? `<img src="${img}" alt="${h} 화면 예시">` : '<div class="how-home"><img src="/icon-192.png" alt=""><span>돈셈</span></div>';
+    box.querySelector('.how-phone').innerHTML = img ? `<img src="${img}" alt="${h} 화면 예시">${ring ? '<i class="how-ring" aria-hidden="true"></i>' : ''}` : '<div class="how-home"><img src="/icon-192.png" alt=""><span>돈셈</span></div>';
     const prev = box.querySelector('[data-how="prev"]'); prev.hidden = !at;
     box.querySelector('[data-how="next"]').textContent = last ? '시작하기' : '다음';
   };
