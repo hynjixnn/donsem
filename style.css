@@ -2480,3 +2480,49 @@ html.re-fs-open .tabbar, html.re-fs-open .topbar, html.re-fs-open .dock { visibi
 :root[data-theme="dark"] .ye-kit, :root[data-theme="dark"] .ye-home { background: #1c1c1e; }
 .ye-list li { flex-wrap: wrap; gap: 4px 12px; } .ye-list label { flex: 1 1 100%; } .ye-list b { display: inline; } .ye-list a { margin: 0 0 0 30px; }
 .dl-grid a { display: block; width: 120px; } .dl-grid img { display: block; width: 120px; height: 240px; border-radius: 10px; background: #fff; }
+
+/* 재건축·재개발 정보: 구역표와 단지 정보표 */
+.rd-tabs { margin-top: 14px; flex-wrap: wrap; }
+.rd-zone { width: 100%; margin-top: 12px; border-collapse: collapse; table-layout: fixed; border: 2px solid #17408b; background: var(--field); font-size: 14px; }
+.rd-zone th, .rd-zone td { padding: 10px; border: 1px solid var(--line); text-align: center; vertical-align: middle; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.45; }
+.rd-zone thead th { background: #17408b; border-color: #17408b; color: #fff; font-weight: 700; }
+.rd-zone tbody th { width: 86px; background: #17408b; border-color: rgba(255, 255, 255, .28); color: #fff; font-weight: 700; }
+.rd-zone thead th:first-child { width: 86px; }
+.rd-zone td button { width: 100%; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
+.rd-zone td button b { display: block; font-weight: 700; } .rd-zone td button small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+@media (hover: hover) { .rd-zone td button:hover b { text-decoration: underline; } }
+.rd-link { display: block; width: 100%; margin-top: 10px; padding: 11px 12px; border: 0; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; text-align: left; cursor: pointer; }
+html.rd-open { overflow: hidden; }
+.rd-modal { position: fixed; inset: 0; z-index: 400; display: flex; justify-content: center; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 32px 16px; background: rgba(0, 0, 0, .5); }
+.rd-modal[hidden] { display: none; }
+.rd-panel { position: relative; width: 100%; max-width: 620px; padding: 52px 18px 20px; border-radius: 20px; background: var(--bg); color: var(--text); }
+.rd-x { position: absolute; right: 10px; top: 8px; width: 38px; height: 38px; border: 0; border-radius: 50%; background: var(--card); color: var(--text); font-size: 24px; line-height: 1; cursor: pointer; }
+.rd-box { border: 2px solid var(--rd); background: var(--field); }
+.rd-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--rd); color: #fff; }
+.rd-kind { flex: none; padding-right: 12px; border-right: 1px solid rgba(255, 255, 255, .55); font-size: 17px; font-weight: 800; }
+.rd-head b { display: block; font-size: 19px; line-height: 1.3; word-break: keep-all; } .rd-head small { display: block; margin-top: 1px; font-size: 13px; opacity: .92; }
+.rd-map { position: relative; height: 230px; background: var(--card); }
+.rd-map.off { display: flex; align-items: center; justify-content: center; height: 72px; }
+.rd-mapa { position: absolute; left: 10px; top: 10px; z-index: 5; padding: 6px 11px; border-radius: 4px; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .28); color: #0066cc; font-size: 13px; font-weight: 600; }
+.rd-map.off .rd-mapa { position: static; box-shadow: none; }
+.rd-tb { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 15px; }
+.rd-tb th, .rd-tb td { padding: 10px 12px; border-top: 1px solid var(--line); white-space: normal; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; vertical-align: middle; }
+.rd-tb th { width: 30%; background: var(--rd); border-top-color: rgba(255, 255, 255, .32); color: #fff; font-weight: 700; text-align: center; }
+.rd-tb td { color: var(--text); text-align: left; } .rd-tb td small { display: block; margin-top: 1px; color: var(--muted); font-size: 13px; }
+.rd-steps { display: grid; grid-template-columns: repeat(8, 1fr); margin: 16px 0 0; padding: 0; list-style: none; }
+.rd-steps li { position: relative; text-align: center; font-size: 11px; line-height: 1.3; color: var(--muted); word-break: keep-all; }
+.rd-steps i { display: block; position: relative; z-index: 1; width: 12px; height: 12px; margin: 0 auto 6px; border-radius: 50%; background: var(--line); }
+.rd-steps li:not(:first-child)::before { content: ""; position: absolute; left: -50%; right: 50%; top: 5px; height: 2px; background: var(--line); }
+.rd-steps li.done i, .rd-steps li.now i, .rd-steps li.done::before, .rd-steps li.now::before { background: var(--accent); }
+.rd-steps li.now { color: var(--text); font-weight: 700; } .rd-steps li.now i { box-shadow: 0 0 0 4px var(--accent-soft); }
+.rd-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; } .rd-acts .btn { flex: 1 1 auto; width: auto; margin: 0; }
+.rd-note { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.rd-src { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+@media (max-width: 640px) {
+  .rd-modal { padding: 0; background: var(--bg); } .rd-panel { min-height: 100%; padding: calc(52px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom)); border-radius: 0; }
+  .rd-x { top: calc(8px + env(safe-area-inset-top)); }
+  .rd-zone tbody th, .rd-zone thead th:first-child { width: 62px; } .rd-zone th, .rd-zone td { padding: 9px 6px; font-size: 13px; }
+  .rd-steps { grid-template-columns: repeat(4, 1fr); row-gap: 12px; } .rd-steps li:nth-child(5)::before { display: none; }
+  .rd-tb th { width: 27%; }
+}
+.rd-card h2 small { display: block; margin-top: 2px; color: var(--muted); font-size: 13px; font-weight: 500; }

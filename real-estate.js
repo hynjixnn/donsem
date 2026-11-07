@@ -134,6 +134,7 @@
     .then(g => { map = g; setTimeout(drawGuBubbles, 600); mapEl.classList.toggle('kakao', !!g.kakao); const zc = z => { mapEl.classList.toggle('far', z < 12); mapEl.classList.toggle('mid', z < 14); mapEl.classList.toggle('near', z >= 16); }; g.onZoom(zc); zc(g.zoom()); /* 멀리서 보면 말풍선을 숨기고, 조금 멀면 가격만 */ draw(); if (!openShared() && items.length) fit(); })
     .catch(() => { mapEl.innerHTML = '<p class="re-off">지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; });
   const flyTo = (lat, lng, zoom) => map && map.fly(lat, lng, zoom);
+  window.donsemMapGo = (lat, lng) => { const was = full; if (!was) enter(); setTimeout(() => flyTo(lat, lng, 15), was ? 0 : 120); }; // 재건축 정보표에서 큰 지도로
   const fit = () => { if (map && items.length) map.fit(items); };
 
   // ── 핀과 목록 ──
@@ -525,7 +526,7 @@
     const tok = String(Date.now()); box.dataset.tok = tok; box.dataset.addr = raw.road_address_name || r.addr || '';
     const head = `<div class="pc-h"><div><b>${esc(r.name)}</b>${cat ? ` <small>${esc(cat)}</small>` : ''}</div><button type="button" class="pc-x" data-pc="x" aria-label="닫기">×</button></div>
       <p class="pc-addr">${esc(raw.road_address_name || r.addr || '')}${raw.road_address_name && raw.address_name ? ` <small>(${esc(raw.address_name.split(' ').slice(2).join(' '))})</small>` : ''} <button type="button" class="pc-copy" data-pc="copy">복사</button></p>
-      ${raw.phone ? `<p class="pc-addr"><a href="tel:${esc(raw.phone)}">${esc(raw.phone)}</a></p>` : ''}`;
+      ${raw.phone ? `<p class="pc-addr"><a href="tel:${esc(raw.phone)}">${esc(raw.phone)}</a></p>` : ''}${window.donsemRedev ? window.donsemRedev.btn(r.name, jibun) : ''}`;
     const acts = `<div class="pc-acts"><button type="button" class="btn fill" data-pc="add">📌 관심 부동산에 넣기</button>${raw.place_url ? `<a class="btn" href="${esc(raw.place_url)}" target="_blank" rel="noopener">사진·단지정보 (카카오맵) ↗</a>` : ''}<a class="btn" href="${naverAt(r.lat, r.lng)}" target="_blank" rel="noopener">시세 (네이버 부동산) ↗</a></div>`;
     const isApt = !raw.category_name || /아파트|주거/.test(raw.category_name);
     if (!gu || !/서울/.test(jibun) || !isApt) { box.innerHTML = head + `<p class="re-tip">실거래가는 서울 아파트만 보여 드려요.</p>` + acts; return; }
