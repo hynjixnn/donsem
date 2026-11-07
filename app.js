@@ -3614,3 +3614,54 @@ const GUIDE_FOR = {
     const f = document.querySelector('.wrap > footer'); if (f) { const a = document.createElement('a'); a.className = 'ye-home'; a.href = '/year-end/'; a.innerHTML = '<span><em aria-hidden="true">YEAR-END 2026</em><b>연말정산 모아보기 · 체크리스트와 일정</b></span><strong>›</strong>'; f.before(a); }
   }
 })();
+
+// ── 사용방법: 홈 위쪽 버튼을 누르면 처음 온 사람에게 돈셈 쓰는 법을 한 장씩 보여 줘요 (?how=1 로도 열려요) ──
+(() => {
+  if (!document.body.classList.contains('home')) return;
+  const bar = document.querySelector('.topbar-in'); if (!bar) return;
+  const KEY = 'donsem:how-seen', app = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  const S = [
+    ['궁금한 계산을 골라 주세요', '아래 메뉴의 계산기에서 연봉, 대출, 세금 계산기를 찾을 수 있어요.', '/how/1.jpg'],
+    ['숫자만 넣으면 바로 계산돼요', '가입도 설치도 필요 없어요. 금액을 바꾸면 결과도 함께 바뀌어요.', '/how/2.jpg'],
+    ['캘린더에 쓴 돈을 적어 보세요', '가계부 기록은 이 기기에만 저장되고, 서버로 보내지 않아요.', '/how/3.jpg'],
+    ['부동산 정보도 한곳에서 보세요', '아파트 실거래가와 서울 재건축·재개발 구역을 지도로 볼 수 있어요.', '/how/4.jpg'],
+  ];
+  if (!app) S.push(['홈 화면에 넣으면 앱처럼 쓸 수 있어요', '아이폰은 Safari 공유 버튼에서, 안드로이드는 브라우저 메뉴에서 「홈 화면에 추가」를 눌러 주세요.', '']);
+  let seen = false; try { seen = !!localStorage.getItem(KEY); } catch (e) { /* 괜찮아요 */ }
+  const pill = document.createElement('button'); pill.type = 'button'; pill.className = 'how-pill' + (seen ? '' : ' fresh'); pill.innerHTML = '사용방법 <i aria-hidden="true">›</i>';
+  const place = () => { const row = document.querySelector('.home-my'), small = innerWidth < 375 && row; pill.classList.toggle('row', !!small); if (small) row.before(pill); else bar.querySelector('.brand').after(pill); }; // 좁은 폰은 위쪽 아이콘이 잘리지 않게 아래 줄로
+  place(); addEventListener('resize', place);
+  let box = null, at = 0, x0 = null;
+  const draw = () => {
+    const [h, p, img] = S[at], last = at === S.length - 1;
+    box.querySelector('.how-dots').innerHTML = S.map((_, i) => `<i class="${i <= at ? 'on' : ''}"></i>`).join('');
+    box.querySelector('.how-dots').setAttribute('aria-label', `${S.length}장 중 ${at + 1}번째`);
+    box.querySelector('h2').textContent = h; box.querySelector('.how-p').textContent = p;
+    box.querySelector('.how-phone').innerHTML = img ? `<img src="${img}" alt="${h} 화면 예시">` : '<div class="how-home"><img src="/icon-192.png" alt=""><span>돈셈</span></div>';
+    const prev = box.querySelector('[data-how="prev"]'); prev.hidden = !at;
+    box.querySelector('[data-how="next"]').textContent = last ? '시작하기' : '다음';
+  };
+  const go = d => { const n = at + d; if (n < 0) return; if (n >= S.length) return close(); at = n; draw(); };
+  const open = push => {
+    if (!box) {
+      box = document.createElement('div'); box.className = 'how-modal'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '돈셈 사용방법');
+      box.innerHTML = '<div class="how-panel"><header><button type="button" data-how="x" aria-label="닫기">×</button><b>돈셈 사용방법</b></header><div class="how-dots"></div><h2></h2><p class="how-p"></p><div class="how-phone"></div><div class="how-nav"><button type="button" class="btn line" data-how="prev">이전</button><button type="button" class="btn fill" data-how="next">다음</button></div></div>';
+      document.body.append(box);
+      box.addEventListener('click', e => { if (e.target === box) return close(); const b = e.target.closest('[data-how]'); if (!b) return; const k = b.dataset.how; if (k === 'x') close(); else go(k === 'next' ? 1 : -1); });
+      box.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+      box.addEventListener('touchend', e => { if (x0 === null) return; const d = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(d) > 60) { if (d < 0 && at < S.length - 1) go(1); else if (d > 0) go(-1); } }, { passive: true });
+    }
+    at = 0; draw(); box.hidden = false; document.documentElement.classList.add('how-open'); box.querySelector('[data-how="next"]').focus({ preventScroll: true });
+    pill.classList.remove('fresh'); try { localStorage.setItem(KEY, '1'); } catch (e) { /* 괜찮아요 */ }
+    if (push) try { history.pushState({ how: 1 }, ''); } catch (e) { /* 괜찮아요 */ }
+  };
+  function close(fromPop) {
+    if (!box || box.hidden) return;
+    box.hidden = true; document.documentElement.classList.remove('how-open'); pill.focus({ preventScroll: true });
+    if (fromPop !== true) try { if (history.state && history.state.how) history.back(); } catch (e) { /* 괜찮아요 */ }
+  }
+  pill.addEventListener('click', () => open(true));
+  addEventListener('popstate', () => close(true));
+  addEventListener('keydown', e => { if (!box || box.hidden) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowRight' && at < S.length - 1) go(1); if (e.key === 'ArrowLeft') go(-1); });
+  if (new URLSearchParams(location.search).has('how')) open(false);
+})();
