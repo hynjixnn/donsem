@@ -3618,7 +3618,18 @@ const GUIDE_FOR = {
     ['부동산 정보도 한곳에서 보세요', '부동산 메뉴에서 아파트 실거래가와 서울 재건축·재개발 구역을 볼 수 있어요.', '/how/4.jpg'],
     ['DONSAM 로고를 누르면 홈으로 가요', '어느 화면에 있어도 왼쪽 위 로고만 누르면 홈으로 돌아와요.', '/how/5.jpg', 1],
   ];
-  if (!app) S.push(['홈 화면에 넣으면 앱처럼 쓸 수 있어요', '아이폰은 Safari 공유 버튼에서, 안드로이드는 브라우저 메뉴에서 「홈 화면에 추가」를 눌러 주세요.', '']);
+  if (!app) S.push(['홈 화면에 넣으면 앱처럼 쓸 수 있어요', '', 'install']);
+  let os = /android/i.test(navigator.userAgent) ? 'and' : 'ios'; // 아이폰·안드로이드에 맞는 방법을 먼저 보여 줘요 (컴퓨터는 아이폰부터)
+  const INS = {
+    ios: ['Safari 아래쪽 공유 버튼을 누르고 「홈 화면에 추가」 → 오른쪽 위 「추가」를 누르면 끝이에요. 공유 버튼이 안 보이면 주소창 옆 ⋯ 안에 있어요.',
+      `<div class="hi-page"><b>DONSAM</b><i></i><i></i><i class="s"></i></div>
+      <div class="hi-sheet"><p class="hi-cap"><em>2</em>「홈 화면에 추가」 누르기</p><ul><li>복사</li><li>즐겨찾기 추가</li><li class="on">홈 화면에 추가<span>＋</span></li><li>읽기 목록에 추가</li></ul><p class="hi-cap"><em>3</em>오른쪽 위 「추가」 누르면 끝</p></div>
+      <div class="hi-bar"><span>‹</span><span>›</span><span class="on" aria-label="공유"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg><em>1</em></span><span>▢</span><span>⧉</span></div>`],
+    and: ['크롬 오른쪽 위 ⋮ 메뉴를 누르고 「홈 화면에 추가」(또는 「앱 설치」)를 누른 뒤 「설치」를 누르면 끝이에요.',
+      `<div class="hi-top"><span class="url">doncalculator.com</span><span class="on">⋮<em>1</em></span></div>
+      <div class="hi-menu"><ul><li>새 탭</li><li>방문 기록</li><li>북마크</li><li class="on">홈 화면에 추가<em>2</em></li><li>설정</li></ul></div>
+      <div class="hi-page low"><b>DONSAM</b><i></i><i></i><i class="s"></i></div><p class="hi-cap bottom"><em>3</em>「설치」 누르면 끝</p>`],
+  };
   let seen = false; try { seen = !!localStorage.getItem(KEY); } catch (e) { /* 괜찮아요 */ }
   const pill = document.createElement('button'); pill.type = 'button'; pill.className = 'how-pill' + (seen ? '' : ' fresh'); pill.innerHTML = '사용방법 <i aria-hidden="true">›</i>';
   const place = () => { const row = document.querySelector('.home-my'), small = innerWidth < 375 && row; pill.classList.toggle('row', !!small); if (small) row.before(pill); else bar.querySelector('.brand').after(pill); }; // 좁은 폰은 위쪽 아이콘이 잘리지 않게 아래 줄로
@@ -3628,8 +3639,9 @@ const GUIDE_FOR = {
     const [h, p, img, ring] = S[at], last = at === S.length - 1;
     box.querySelector('.how-dots').innerHTML = S.map((_, i) => `<i class="${i <= at ? 'on' : ''}"></i>`).join('');
     box.querySelector('.how-dots').setAttribute('aria-label', `${S.length}장 중 ${at + 1}번째`);
-    box.querySelector('h2').textContent = h; box.querySelector('.how-p').textContent = p;
-    box.querySelector('.how-phone').innerHTML = img ? `<img src="${img}" alt="${h} 화면 예시">${ring ? '<i class="how-ring" aria-hidden="true"></i>' : ''}` : '<div class="how-home"><img src="/icon-192.png" alt=""><span>돈셈</span></div>';
+    box.querySelector('h2').textContent = h; box.querySelector('.how-p').textContent = img === 'install' ? INS[os][0] : p;
+    const osb = box.querySelector('.how-os'); osb.hidden = img !== 'install'; osb.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.os === os));
+    box.querySelector('.how-phone').innerHTML = img === 'install' ? `<div class="how-ins ${os}">${INS[os][1]}</div>` : img ? `<img src="${img}" alt="${h} 화면 예시">${ring ? '<i class="how-ring" aria-hidden="true"></i>' : ''}` : '<div class="how-home"><img src="/icon-192.png" alt=""><span>돈셈</span></div>';
     const prev = box.querySelector('[data-how="prev"]'); prev.hidden = !at;
     box.querySelector('[data-how="next"]').textContent = last ? '시작하기' : '다음';
   };
@@ -3637,9 +3649,9 @@ const GUIDE_FOR = {
   const open = push => {
     if (!box) {
       box = document.createElement('div'); box.className = 'how-modal'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '돈셈 사용방법');
-      box.innerHTML = '<div class="how-panel"><header><button type="button" data-how="x" aria-label="닫기">×</button><b>돈셈 사용방법</b></header><div class="how-dots"></div><h2></h2><p class="how-p"></p><div class="how-phone"></div><div class="how-nav"><button type="button" class="btn line" data-how="prev">이전</button><button type="button" class="btn fill" data-how="next">다음</button></div></div>';
+      box.innerHTML = '<div class="how-panel"><header><button type="button" data-how="x" aria-label="닫기">×</button><b>돈셈 사용방법</b></header><div class="how-dots"></div><h2></h2><p class="how-p"></p><div class="how-os" hidden><button type="button" data-os="ios">아이폰</button><button type="button" data-os="and">안드로이드</button></div><div class="how-phone"></div><div class="how-nav"><button type="button" class="btn line" data-how="prev">이전</button><button type="button" class="btn fill" data-how="next">다음</button></div></div>';
       document.body.append(box);
-      box.addEventListener('click', e => { if (e.target === box) return close(); const b = e.target.closest('[data-how]'); if (!b) return; const k = b.dataset.how; if (k === 'x') close(); else go(k === 'next' ? 1 : -1); });
+      box.addEventListener('click', e => { if (e.target === box) return close(); const o = e.target.closest('[data-os]'); if (o) { os = o.dataset.os; return draw(); } const b = e.target.closest('[data-how]'); if (!b) return; const k = b.dataset.how; if (k === 'x') close(); else go(k === 'next' ? 1 : -1); });
       box.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
       box.addEventListener('touchend', e => { if (x0 === null) return; const d = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(d) > 60) { if (d < 0 && at < S.length - 1) go(1); else if (d > 0) go(-1); } }, { passive: true });
     }

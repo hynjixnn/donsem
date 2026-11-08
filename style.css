@@ -2576,3 +2576,27 @@ html.how-open { overflow: hidden; }
 .how-phone { position: relative; }
 .how-ring { position: absolute; left: 2.5%; top: 0; width: 36%; aspect-ratio: 3.6 / 1; margin-top: 2%; border: 3px solid #ff3b30; border-radius: 999px; pointer-events: none; }
 .gnav { gap: 4px; }
+/* 사용방법 6번: 홈 화면에 추가 그림 */
+.how-os { flex: none; display: flex; gap: 6px; margin-top: 12px; } .how-os[hidden] { display: none; }
+.how-os button { padding: 6px 14px; border: 0; border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; } .how-os button.on { background: var(--text); color: var(--bg); }
+.how-ins { position: relative; height: 100%; min-height: 300px; overflow: hidden; background: #eef0f4; color: #1d1d1f; font-size: 12px; }
+.hi-page { padding: 14px 14px 0; filter: blur(1.5px); opacity: .7; } .hi-page b { font-family: var(--f-brand, sans-serif); font-style: italic; font-weight: 900; font-size: 15px; }
+.hi-page i { display: block; height: 46px; margin-top: 10px; border-radius: 10px; background: #d8dbe3; } .hi-page i.s { height: 22px; width: 60%; }
+.hi-page.low { margin-top: 0; }
+.hi-sheet { position: absolute; left: 6px; right: 6px; bottom: 50px; padding: 8px 10px 10px; border-radius: 16px; background: #fff; box-shadow: 0 -4px 20px rgba(0, 0, 0, .12); }
+.hi-sheet ul, .hi-menu ul { margin: 4px 0; padding: 0; list-style: none; }
+.hi-sheet li, .hi-menu li { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 8px 8px; border-top: 1px solid #eceef2; } .hi-sheet li:first-child, .hi-menu li:first-child { border-top: 0; }
+.hi-sheet li.on, .hi-menu li.on { border-radius: 10px; background: rgba(0, 113, 227, .12); color: #0066cc; font-weight: 700; box-shadow: inset 0 0 0 2px #ff3b30; }
+.hi-sheet li span { font-size: 14px; }
+.hi-bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; align-items: center; height: 46px; background: rgba(250, 250, 252, .96); border-top: 1px solid #dfe1e6; color: #0a84ff; font-size: 18px; }
+.hi-bar span { position: relative; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; }
+.hi-bar span.on { border-radius: 50%; box-shadow: 0 0 0 2px #ff3b30; } .hi-bar svg { width: 20px; height: 20px; }
+.how-ins em { position: absolute; display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: #ff3b30; color: #fff; font-size: 11px; font-style: normal; font-weight: 800; }
+.hi-bar em { top: -12px; right: -10px; } .hi-menu li em { right: -6px; top: -8px; } .hi-top span.on em { right: -8px; top: 22px; }
+.hi-cap { position: relative; display: flex; align-items: center; gap: 6px; margin: 2px 0; font-size: 12px; font-weight: 700; } .hi-cap em { position: static; flex: none; }
+.hi-top { display: flex; align-items: center; gap: 8px; padding: 10px 10px 8px; background: #fff; border-bottom: 1px solid #dfe1e6; }
+.hi-top .url { flex: 1; padding: 7px 10px; border-radius: 999px; background: #eef0f4; color: #555; font-size: 11px; }
+.hi-top span.on { position: relative; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-shadow: 0 0 0 2px #ff3b30; font-size: 18px; font-weight: 800; }
+.hi-menu { position: absolute; right: 8px; top: 46px; z-index: 2; width: 62%; padding: 4px 6px; border-radius: 12px; background: #fff; box-shadow: 0 6px 24px rgba(0, 0, 0, .18); }
+.hi-cap.bottom { position: absolute; left: 12px; right: 12px; bottom: 14px; padding: 10px 12px; border-radius: 12px; background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .1); }
+.how-phone:has(.how-ins) { -webkit-mask-image: none; mask-image: none; }
