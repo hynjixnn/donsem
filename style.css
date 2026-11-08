@@ -2600,3 +2600,5 @@ html.how-open { overflow: hidden; }
 .hi-menu { position: absolute; right: 8px; top: 46px; z-index: 2; width: 62%; padding: 4px 6px; border-radius: 12px; background: #fff; box-shadow: 0 6px 24px rgba(0, 0, 0, .18); }
 .hi-cap.bottom { position: absolute; left: 12px; right: 12px; bottom: 14px; padding: 10px 12px; border-radius: 12px; background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, .1); }
 .how-phone:has(.how-ins) { -webkit-mask-image: none; mask-image: none; }
+.hi-sheet.low { bottom: 12px; } .hi-top span.on svg { width: 16px; height: 16px; }
+.how-os { flex-wrap: wrap; }
