@@ -84,9 +84,13 @@
     <a href="/date/">날짜</a>
   </nav>
 
-  <section class="card" id="my">
+  <section class="card my-theme-card" id="my-theme-card">
     <h1>마이</h1>
-    <p class="sub">화면 모드, 앱 설치, 백업을 한곳에서 관리해요.</p>
+    <h2>화면 모드</h2>
+    <div class="theme-list" id="my-theme" role="radiogroup" aria-label="화면 모드"><button type="button" role="radio" data-v="light"><span class="tm-pic tm-light" aria-hidden="true"><span class="tm-half"><i class="tm-logo"></i><i class="tm-dots"></i><i class="tm-box a"></i><i class="tm-box b"></i></span></span><span class="tm-text"><b>라이트 모드</b></span><i class="tm-radio" aria-hidden="true"></i></button><button type="button" role="radio" data-v="dark"><span class="tm-pic tm-dark" aria-hidden="true"><span class="tm-half"><i class="tm-logo"></i><i class="tm-dots"></i><i class="tm-box a"></i><i class="tm-box b"></i></span></span><span class="tm-text"><b>다크 모드</b></span><i class="tm-radio" aria-hidden="true"></i></button><button type="button" role="radio" data-v="auto"><span class="tm-pic tm-auto" aria-hidden="true"><span class="tm-half tm-light"><i class="tm-logo"></i><i class="tm-dots"></i><i class="tm-box a"></i><i class="tm-box b"></i></span><span class="tm-half tm-dark"><i class="tm-logo"></i><i class="tm-dots"></i><i class="tm-box a"></i><i class="tm-box b"></i></span></span><span class="tm-text"><b>기기 설정 사용</b><small>휴대폰 화면 설정에 맞춰 라이트·다크가 바뀌어요</small></span><i class="tm-radio" aria-hidden="true"></i></button></div>
+  </section>
+
+  <section class="card" id="my">
     <div class="pf" id="my-pf"><button type="button" class="pf-av" id="pf-av" aria-label="프로필 스티커 바꾸기">🐷</button><div class="pf-txt"><b id="pf-name">돈셈이</b><span class="pf-temp" id="pf-temp"></span></div><button type="button" class="pf-edit" id="pf-edit" aria-expanded="false" aria-controls="pf-panel">꾸미기</button></div>
     <div class="pf-panel" id="pf-panel" hidden><p class="pf-cap">내가 원하는 스티커로 바꿔 보세요</p><div class="pf-stk" id="pf-stk" role="radiogroup" aria-label="프로필 스티커"></div><label for="pf-in">별명</label><div class="field"><input id="pf-in" type="text" maxlength="12" placeholder="돈셈이" autocomplete="off"></div><button type="button" class="btn fill" id="pf-save">저장하기</button></div>
     <a class="col-link" href="/collection/"><img src="/icons/collection.webp" alt="" width="40" height="40"><span><b>내 컬렉션</b>돈나무, 배지, 돈BTI를 한눈에</span><i>›</i></a>
@@ -119,11 +123,6 @@
   <section class="card sub-card" id="my-likes-card">
     <h2>내 계산기</h2>
     <div id="my-likes"></div>
-  </section>
-
-  <section class="card sub-card">
-    <h2>화면 모드</h2>
-    <div class="theme-list" id="my-theme" role="radiogroup" aria-label="화면 모드"><button type="button" role="radio" data-v="light"><span class="tm-pic tm-light" aria-hidden="true"><span class="tm-half"><i class="tm-logo"></i><i class="tm-dots"></i><i class="tm-box a"></i><i class="tm-box b"></i></span></span><span class="tm-text"><b>라이트 모드</b></span><i class="tm-radio" aria-hidden="true"></i></button><button type="button" role="radio" data-v="dark"><span class="tm-pic tm-dark" aria-hidden="true"><span class="tm-half"><i class="tm-logo"></i><i class="tm-dots"></i><i class="tm-box a"></i><i class="tm-box b"></i></span></span><span class="tm-text"><b>다크 모드</b></span><i class="tm-radio" aria-hidden="true"></i></button><button type="button" role="radio" data-v="auto"><span class="tm-pic tm-auto" aria-hidden="true"><span class="tm-half tm-light"><i class="tm-logo"></i><i class="tm-dots"></i><i class="tm-box a"></i><i class="tm-box b"></i></span><span class="tm-half tm-dark"><i class="tm-logo"></i><i class="tm-dots"></i><i class="tm-box a"></i><i class="tm-box b"></i></span></span><span class="tm-text"><b>기기 설정 사용</b><small>휴대폰 화면 설정에 맞춰 라이트·다크가 바뀌어요</small></span><i class="tm-radio" aria-hidden="true"></i></button></div>
   </section>
 
   <section class="card sub-card">
