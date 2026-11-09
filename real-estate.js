@@ -10,7 +10,7 @@
   const KIND = { buy: '매매', jeonse: '전세', rent: '월세' };
   // 법정동 시군구 코드 (국토교통부 실거래가 자료를 찾을 때 써요)
   const LAWD = { 종로구: 11110, 중구: 11140, 용산구: 11170, 성동구: 11200, 광진구: 11215, 동대문구: 11230, 중랑구: 11260, 성북구: 11290, 강북구: 11305, 도봉구: 11320, 노원구: 11350, 은평구: 11380, 서대문구: 11410, 마포구: 11440, 양천구: 11470, 강서구: 11500, 구로구: 11530, 금천구: 11545, 영등포구: 11560, 동작구: 11590, 관악구: 11620, 서초구: 11650, 강남구: 11680, 송파구: 11710, 강동구: 11740 };
-  const API = 'https://donsem-counter.hjjung330.workers.dev/apt';
+  const API = 'https://donsem-counter.hjjung330.workers.dev/apt', TR = 'https://donsem-counter.hjjung330.workers.dev/transit/';
   const load = () => { try { const d = JSON.parse(localStorage.getItem(KEY)); return d && Array.isArray(d.items) ? d.items : []; } catch (e) { return []; } };
   let items = load(), map = null, marks = [], pending = null, kind = 'buy', full = false, temp = null, poiMarks = [];
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ items })); } catch (e) { toast('이 브라우저에서는 저장할 수 없어요.'); } };
@@ -212,6 +212,7 @@
   // [아이콘, 이름, OpenStreetMap 찾기, 카카오 { c: 분류 코드, k: 검색어(여러 개), keep: 남길 분류, drop: 뺄 분류 }]
   const POI = {
     subway: ['🚇', '지하철역', 'node["railway"="station"]["subway"="yes"];node["station"="subway"];', { c: 'SW8' }],
+    bus: ['🚌', '버스정류장', '', { bus: true }],
     school: ['🏫', '학교', 'nwr["amenity"="school"];', { c: 'SC4' }],
     mart: ['🛒', '마트', 'nwr["shop"="supermarket"];', { c: 'MT1', k: ['아울렛'], drop: /편의점/ }],
     conv: ['🏪', '편의점', 'node["shop"="convenience"];', { c: 'CS2' }],
@@ -261,7 +262,8 @@
     let wideHit = false;
     try {
       let found = null;
-      if (map.kakao) {
+      if (K.bus) { const c = map.center(), d = await (await fetch(`${TR}near?lat=${c[0]}&lng=${c[1]}&r=500`)).json(); if (d.error) { if (tok === poiTok) toast(d.error === 'api' || d.error === 'nokey' ? '버스 정보 연결을 준비하고 있어요. 조금만 기다려 주세요.' : '지금은 버스 정보를 불러오지 못했어요.'); return; } found = d.list.map(x => ({ lat: x.lat, lng: x.lng, name: x.name, raw: { id: 'bus' + x.ars, place_name: x.name, x: x.lng, y: x.lat, category_name: '교통,수송 > 버스정류장', address_name: `정류장 번호 ${x.ars}`, ars: x.ars } })); }
+      else if (map.kakao) {
         const bounds = new kakao.maps.LatLngBounds(new kakao.maps.LatLng(bb[0], bb[1]), new kakao.maps.LatLng(bb[2], bb[3]));
         const run = async opt => { const lists = await Promise.allSettled([...(K.c ? [kPlaces('categorySearch', K.c, opt)] : []), ...(K.k || []).map(w => kPlaces('keywordSearch', w, opt))]);
           if (!lists.some(r => r.status === 'fulfilled')) return null;
@@ -290,6 +292,7 @@
   }
   // ── 장소 정보 창 (카카오맵처럼): 이름·분류·주소·전화·길찾기 ──
   function showPoi(p) {
+    lastPoi = p;
     const box = $('re-place'), lat = +p.y, lng = +p.x, cats = (p.category_name || '').split(' > '), cat = cats[cats.length - 1] || '';
     if (/아파트$/.test(p.category_name || '')) return showPlace({ name: p.place_name.replace(/\s*\d+동$/, ''), addr: p.road_address_name || p.address_name, lat, lng, raw: p });
     if (temp) temp.remove();
@@ -308,9 +311,11 @@
         ${c ? `<tr><th>거리</th><td>지도 가운데에서 약 ${(d => d >= 1000 ? (d / 1000).toFixed(1) + 'km' : d + 'm')(dist(c, [lat, lng]))}<small>걸어서 약 ${Math.max(1, Math.round(dist(c, [lat, lng]) / 67))}분</small></td></tr>` : ''}
       </table>
       <div class="pc-acts">${p.phone ? `<a class="btn fill" href="tel:${esc(p.phone)}">📞 전화</a>` : ''}<a class="btn ${p.phone ? '' : 'fill'}" href="${route}" target="_blank" rel="noopener">🧭 길찾기</a>${p.place_url ? `<a class="btn" href="${esc(p.place_url)}" target="_blank" rel="noopener">사진·영업시간·리뷰 (카카오맵) ↗</a>` : ''}</div>
+      ${p.ars || p.category_group_code === 'SW8' || /지하철|전철역/.test(p.category_name || '') ? '<div id="pc-transit" class="tr-box"><p class="re-empty">실시간 도착 정보를 불러오는 중…</p></div>' : ''}
       <div id="pc-here"></div>
       <p class="re-tip">장소 정보: 카카오</p>`;
     box.hidden = false; peek(false);
+    if (document.getElementById('pc-transit')) transitLoad(p, box.dataset.tok);
     const road = p.road_address_name, tok = box.dataset.tok; poiHere = [];
     if (road && map && map.kakao) kPlaces('keywordSearch', road, { location: new kakao.maps.LatLng(lat, lng), radius: 80 }, 30).then(l => { // 같은 건물(같은 도로명 주소)에 있는 다른 곳
       if (box.dataset.tok !== tok) return;
@@ -320,6 +325,32 @@
     }, () => {});
   }
   let poiHere = [];
+
+  // ── 지하철·버스 실시간 도착 (네이버지도처럼: 방면별로 몇 분 뒤 오는지) ──
+  const LINE = { 1001: ['1호선', '#0052A4'], 1002: ['2호선', '#00A84D'], 1003: ['3호선', '#EF7C1C'], 1004: ['4호선', '#00A5DE'], 1005: ['5호선', '#996CAC'], 1006: ['6호선', '#CD7C2F'], 1007: ['7호선', '#747F00'], 1008: ['8호선', '#E6186C'], 1009: ['9호선', '#BDB092'], 1061: ['중앙선', '#77C4A3'], 1063: ['경의중앙선', '#77C4A3'], 1065: ['공항철도', '#0090D2'], 1067: ['경춘선', '#0C8E72'], 1075: ['수인분당선', '#F5A200'], 1077: ['신분당선', '#D4003B'], 1081: ['경강선', '#003DA5'], 1092: ['우이신설선', '#B7C452'], 1093: ['서해선', '#8FC31F'], 1032: ['GTX-A', '#9A6292'] };
+  const BUS = { 1: ['공항', '#00A0E9'], 2: ['마을', '#53B332'], 3: ['간선', '#0068B7'], 4: ['지선', '#53B332'], 5: ['순환', '#F2B70A'], 6: ['광역', '#E60012'], 7: ['인천', '#0068B7'], 8: ['경기', '#0068B7'], 0: ['공용', '#8e8e93'] };
+  const mins = x => x.sec > 0 ? (x.sec < 60 ? '곧 도착' : `${Math.round(x.sec / 60)}분`) : (x.msg || '').replace(/\s*\(.*\)/, '').replace('전역 도착', '전역 도착').replace('당역 도착', '도착') || '정보 없음';
+  const busMsg = m => (m || '').replace(/\[(\d+)번째 전\]/, ' · $1정류장 전').replace('곧 도착', '곧 도착').replace(/(\d+)분(\d+)초후/, '$1분').replace('운행종료', '운행 끝').replace('출발대기', '출발 기다리는 중');
+  async function transitLoad(p, tok) {
+    const el = () => { const b = $('re-place'); return b.dataset.tok === tok ? document.getElementById('pc-transit') : null; };
+    const again = '<button type="button" class="tr-re" data-tr="re">↻ 새로고침</button>';
+    try {
+      if (p.ars) {
+        const d = await (await fetch(`${TR}bus?ars=${encodeURIComponent(p.ars)}`)).json(); const box = el(); if (!box) return;
+        if (d.error) { box.innerHTML = `<p class="re-empty">실시간 버스 정보를 준비하고 있어요.</p>`; return; }
+        box.innerHTML = `<p class="pc-sub">실시간 버스 <small>서울시 · 정류장 ${esc(p.ars)}</small>${again}</p><ul class="tr-bus">${d.list.map(x => { const t = BUS[x.type] || BUS[0]; return `<li><span class="tr-no" style="color:${t[1]}"><b>${esc(x.no)}</b><small>${t[0]}</small></span><span class="tr-dir">${esc(x.dir || x.next || '')} 방면</span><span class="tr-t"><b>${esc(busMsg(x.m1))}</b><small>${esc(busMsg(x.m2))}</small></span></li>`; }).join('') || '<li class="re-empty">지금은 오는 버스가 없어요.</li>'}</ul>`;
+      } else {
+        const name = (p.place_name || '').replace(/역.*$/, '').trim(), lineNm = ((p.place_name || '').match(/(\d호선|[가-힣]+선)$/) || [])[1];
+        const d = await (await fetch(`${TR}subway?name=${encodeURIComponent(name)}`)).json(); const box = el(); if (!box) return;
+        if (d.error) { box.innerHTML = `<p class="re-empty">실시간 지하철 정보를 준비하고 있어요.${p.place_url ? ` <a href="${esc(p.place_url)}" target="_blank" rel="noopener">시간표·출구 (카카오맵) ↗</a>` : ''}</p>`; return; }
+        let list = d.list; const mine = lineNm && list.filter(x => (LINE[x.line] || [])[0] === lineNm); if (mine && mine.length) list = mine;
+        const groups = {}; list.forEach(x => { const k = x.line + '|' + x.dir; (groups[k] = groups[k] || []).push(x); });
+        box.innerHTML = `<p class="pc-sub">실시간 도착 <small>서울시 · ${esc(name)}역</small>${again}</p><div class="tr-sub">${Object.values(groups).map(g => { const L = LINE[g[0].line] || ['지하철', '#8e8e93'], side = (g[0].to || '').split(' - ')[1] || g[0].dir; return `<div class="tr-card"><p><i style="background:${L[1]}">${esc(L[0].replace('호선', ''))}</i><b>${esc(side)}</b></p>${g.sort((a, b) => (a.sec || 9e9) - (b.sec || 9e9)).slice(0, 2).map(x => `<div class="tr-row"><span>${esc(x.end)}행${x.exp && x.exp !== '일반' ? ` <em>${esc(x.exp)}</em>` : ''}</span><b>${esc(mins(x))}</b></div>`).join('')}</div>`; }).join('') || '<p class="re-empty">지금은 도착 정보가 없어요.</p>'}</div>`;
+      }
+    } catch (e) { const box = el(); if (box) box.innerHTML = '<p class="re-empty">지금은 실시간 정보를 불러오지 못했어요.</p>'; }
+  }
+  $('re-place').addEventListener('click', e => { if (!e.target.closest('[data-tr="re"]')) return; const b = $('re-place'), raw = lastPoi; if (raw) { document.getElementById('pc-transit').innerHTML = '<p class="re-empty">불러오는 중…</p>'; transitLoad(raw, b.dataset.tok); } });
+  let lastPoi = null;
 
   // ── 주소·아파트 찾기 ──
   // 장소 찾기: 카카오맵이면 카카오 장소 검색(아파트 이름도 잘 찾아요), 아니면 Nominatim
