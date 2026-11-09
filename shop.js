@@ -1,7 +1,7 @@
 /* 돈셈 스토어: 토스페이먼츠 결제위젯으로 결제하고, 워커가 승인한 뒤 산 사람만 파일을 받아요 */
 (() => {
   /* 클라이언트 키는 공개돼도 되는 키예요(시크릿 키는 워커 비밀에만 있어요). 심사가 끝나면 live_gck_… 로 바꿔요 */
-  const CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm';
+  const CLIENT_KEY = 'live_gck_c19weG0gk7hCw83pftwraGuHV5slsB97Bp';
   const API = 'https://donsem-counter.hjjung330.workers.dev';
   const PRODUCTS = { budget: { name: '돈셈 가계부·재테크 엑셀 템플릿', price: 9900, img: '/shop/sheet-summary.png' }, yearend: { name: '돈셈 연말정산 준비 키트', price: 4900, img: '/shop/kit-yearend-card.png' }, starter: { name: '돈셈 사회초년생 돈 관리 키트', price: 6900, img: '/shop/kit-starter-fixed.png' } };
   const LIVE = CLIENT_KEY.startsWith('live_');
