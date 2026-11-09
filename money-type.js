@@ -152,7 +152,7 @@ const mtClash = code => mtFlip(code, [0, 1, 2, 3]); // 환장의 조합: 모든 
     c.font = `500 44px ${FONT}`;
     wrap(desc, 860).slice(0, 5).forEach((l, i) => text(l, W / 2, 1200 + i * 64, 44, 500, '#1d1d1f'));
     text('너의 돈 성격은? 👀', W / 2, 1640, 52, 700, '#1d1d1f');
-    text('doncalculator.com/money-type', W / 2, 1740, 40, 700, '#0071e3');
+    text('doncalculator.com/money-type', W / 2, 1740, 40, 700, '#7040A1');
     text('12문제 · 1분 · 무료', W / 2, 1800, 32, 500, '#6e6e73');
     return new Promise(r => cv.toBlob(r, 'image/png'));
   }

@@ -179,7 +179,7 @@
       if (tree) c.drawImage(tree, 130, 1470, 160, 160);
       text(`내 돈나무 · Lv.${t.lv + 1}`, 330, 1530, 34, 500, '#6e6e73', 'left');
       text(`${t.name}${t.fruit ? ` · 열매 ${t.fruit}개` : ''}${quizStreak(s) ? ` · 🔥${quizStreak(s)}일` : ''}`, 330, 1600, 52, 700, '#1d1d1f', 'left');
-      text('doncalculator.com/quiz', W / 2, 1770, 40, 700, '#0071e3');
+      text('doncalculator.com/quiz', W / 2, 1770, 40, 700, '#7040A1');
       text('매일 한 문제 돈 퀴즈 풀고 금전운 보기 · 재미로 봐 주세요', W / 2, 1830, 30, 500, '#6e6e73');
       return new Promise(r => cv.toBlob(r, 'image/png'));
     }
