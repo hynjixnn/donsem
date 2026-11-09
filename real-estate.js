@@ -330,7 +330,7 @@
   const LINE = { 1001: ['1호선', '#0052A4'], 1002: ['2호선', '#00A84D'], 1003: ['3호선', '#EF7C1C'], 1004: ['4호선', '#00A5DE'], 1005: ['5호선', '#996CAC'], 1006: ['6호선', '#CD7C2F'], 1007: ['7호선', '#747F00'], 1008: ['8호선', '#E6186C'], 1009: ['9호선', '#BDB092'], 1061: ['중앙선', '#77C4A3'], 1063: ['경의중앙선', '#77C4A3'], 1065: ['공항철도', '#0090D2'], 1067: ['경춘선', '#0C8E72'], 1075: ['수인분당선', '#F5A200'], 1077: ['신분당선', '#D4003B'], 1081: ['경강선', '#003DA5'], 1092: ['우이신설선', '#B7C452'], 1093: ['서해선', '#8FC31F'], 1032: ['GTX-A', '#9A6292'] };
   const BUS = { 1: ['공항', '#00A0E9'], 2: ['마을', '#53B332'], 3: ['간선', '#0068B7'], 4: ['지선', '#53B332'], 5: ['순환', '#F2B70A'], 6: ['광역', '#E60012'], 7: ['인천', '#0068B7'], 8: ['경기', '#0068B7'], 0: ['공용', '#8e8e93'] };
   const mins = x => x.sec > 0 ? (x.sec < 60 ? '곧 도착' : `${Math.round(x.sec / 60)}분`) : (x.msg || '').replace(/\s*\(.*\)/, '').replace('전역 도착', '전역 도착').replace('당역 도착', '도착') || '정보 없음';
-  const busMsg = m => (m || '').replace(/\[(\d+)번째 전\]/, ' · $1정류장 전').replace('곧 도착', '곧 도착').replace(/(\d+)분(\d+)초후/, '$1분').replace('운행종료', '운행 끝').replace('출발대기', '출발 기다리는 중');
+  const busMsg = m => (m || '').replace(/\[차고지출발\]\s*/, '차고지 출발 ').replace(/\[막차\]\s*/, '막차 · ').replace(/\[첫차\]\s*/, '첫차 · ').trim().replace(/\[(\d+)번째 전\]/, ' · $1정류장 전').replace('곧 도착', '곧 도착').replace(/(\d+)분(\d+)초후/, '$1분').replace('운행종료', '운행 끝').replace('출발대기', '출발 기다리는 중').replace(/(\d+)분후/, '$1분 후');
   async function transitLoad(p, tok) {
     const el = () => { const b = $('re-place'); return b.dataset.tok === tok ? document.getElementById('pc-transit') : null; };
     const again = '<button type="button" class="tr-re" data-tr="re">↻ 새로고침</button>';
@@ -338,7 +338,7 @@
       if (p.ars) {
         const d = await (await fetch(`${TR}bus?ars=${encodeURIComponent(p.ars)}`)).json(); const box = el(); if (!box) return;
         if (d.error) { box.innerHTML = `<p class="re-empty">실시간 버스 정보를 준비하고 있어요.</p>`; return; }
-        box.innerHTML = `<p class="pc-sub">실시간 버스 <small>서울시 · 정류장 ${esc(p.ars)}</small>${again}</p><ul class="tr-bus">${d.list.map(x => { const t = BUS[x.type] || BUS[0]; return `<li><span class="tr-no" style="color:${t[1]}"><b>${esc(x.no)}</b><small>${t[0]}</small></span><span class="tr-dir">${esc(x.dir || x.next || '')} 방면</span><span class="tr-t"><b>${esc(busMsg(x.m1))}</b><small>${esc(busMsg(x.m2))}</small></span></li>`; }).join('') || '<li class="re-empty">지금은 오는 버스가 없어요.</li>'}</ul>`;
+        box.innerHTML = `<p class="pc-sub">실시간 버스 <small>서울시 · 정류장 ${esc(p.ars)}</small>${again}</p><ul class="tr-bus">${d.list.map(x => { const t = BUS[x.type] || BUS[0]; return `<li><span class="tr-no" style="color:${t[1]}"><b>${esc(x.no)}</b><small>${t[0]}</small></span><span class="tr-dir">${esc(x.dir || x.next || '')} 방면</span><span class="tr-t"><b>${esc(busMsg(x.m1))}</b><small>${busMsg(x.m2) === busMsg(x.m1) ? '' : esc(busMsg(x.m2))}</small></span></li>`; }).join('') || '<li class="re-empty">지금은 오는 버스가 없어요.</li>'}</ul>`;
       } else {
         const name = (p.place_name || '').replace(/역.*$/, '').trim(), lineNm = ((p.place_name || '').match(/(\d호선|[가-힣]+선)$/) || [])[1];
         const d = await (await fetch(`${TR}subway?name=${encodeURIComponent(name)}`)).json(); const box = el(); if (!box) return;
