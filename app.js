@@ -1699,7 +1699,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
           return;
         }
         if (t.dataset.close) close();
-        else if (t.dataset.v) { type = t.dataset.v; cat = CATS[type][0]; drawCats(); sheet.querySelector('.qa-save').textContent = type === 'out' ? '지출 기록하기' : '수입 기록하기'; }
+        else if (t.dataset.v) { type = t.dataset.v; cat = CATS[type][0]; drawCats(); sheet.querySelectorAll('.qa-type button').forEach(x => x.classList.toggle('on', x === t)); /* 보라색이 수입 쪽으로 스르륵 미끄러져요 (캘린더 달력/목록처럼) */ sheet.querySelector('.qa-save').textContent = type === 'out' ? '지출 기록하기' : '수입 기록하기'; }
         else if (t.dataset.cat) { cat = t.dataset.cat; drawCats(); }
       });
       sheet.querySelector('.qa-save').addEventListener('click', save);
@@ -3665,6 +3665,7 @@ const GUIDE_FOR = {
     ['캘린더에 쓴 돈을 적어 보세요', '가계부 기록은 이 기기에만 저장되고, 서버로 보내지 않아요.', '/how/3.jpg'],
     ['부동산 정보도 한곳에서 보세요', '부동산 메뉴에서 아파트 실거래가와 서울 재건축·재개발 구역을 볼 수 있어요.', '/how/4.jpg'],
     ['DONSAM 로고를 누르면 홈으로 가요', '어느 화면에 있어도 왼쪽 위 로고만 누르면 홈으로 돌아와요.', '/how/5.jpg', 1],
+    ['궁금하면 셈이에게 물어보세요', '오른쪽 위 보라색 셈이를 누르면 세금·금융 상식과 이번 달 쓴 돈까지 찾아 알려 드려요.', '/how/6.jpg'],
   ];
   S.push([app ? '다른 폰에도 이렇게 넣을 수 있어요' : '홈 화면에 넣으면 앱처럼 쓸 수 있어요', '', 'install']); // 앱으로 연 사람에게도 보여 줘요 (가족·친구 폰에 넣어 줄 때)
   const ua = navigator.userAgent; let os = /android/i.test(ua) ? 'and' : /CriOS/.test(ua) ? 'iosc' : 'ios'; // 아이폰·안드로이드에 맞는 방법을 먼저 보여 줘요 (컴퓨터는 아이폰부터)
