@@ -2602,3 +2602,4 @@ html.how-open { overflow: hidden; }
 .how-phone:has(.how-ins) { -webkit-mask-image: none; mask-image: none; }
 .hi-sheet.low { bottom: 12px; } .hi-top span.on svg { width: 16px; height: 16px; }
 .how-os { flex-wrap: wrap; }
+.rd-morebar { display: flex; gap: 8px; } .rd-morebar .rk-more { flex: 1; } .rd-morebar .rk-more[hidden] { display: none; }
