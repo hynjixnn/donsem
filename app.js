@@ -2498,7 +2498,7 @@ async function storyCard(o) {
     });
   }
   text(o.foot || '너는 어때? 👀', W / 2, 1680, 50, 700, '#1d1d1f');
-  text(o.link.replace(/^https?:\/\//, ''), W / 2, 1770, 40, 700, '#0071e3');
+  text(o.link.replace(/^https?:\/\//, ''), W / 2, 1770, 40, 700, '#7040A1');
   text('돈셈 · 무료 · 가입 없이 바로', W / 2, 1830, 30, 500, '#6e6e73');
   return new Promise(r => cv.toBlob(r, 'image/png'));
 }
@@ -2539,11 +2539,11 @@ function storyButton(label, make, fileName, link) {
       draw: (c, top, { text, round, W }) => { // 하위 ↔ 상위 막대에 내 위치
         const x0 = 140, w = W - 280, x = x0 + w * Math.min(0.99, Math.max(0.01, (100 - t) / 100)), y = top + 120;
         round(90, top, W - 180, 260, 36, 'rgba(255,255,255,.85)');
-        const g = c.createLinearGradient(x0, 0, x0 + w, 0); g.addColorStop(0, '#e8e8ed'); g.addColorStop(1, '#0071e3');
+        const g = c.createLinearGradient(x0, 0, x0 + w, 0); g.addColorStop(0, '#e8e8ed'); g.addColorStop(1, '#7040A1');
         c.beginPath(); if (c.roundRect) c.roundRect(x0, y - 14, w, 28, 14); else c.rect(x0, y - 14, w, 28); c.fillStyle = g; c.fill();
         c.beginPath(); c.arc(x, y, 30, 0, Math.PI * 2); c.fillStyle = '#ffffff'; c.fill();
-        c.beginPath(); c.arc(x, y, 20, 0, Math.PI * 2); c.fillStyle = '#0071e3'; c.fill();
-        text('나', x, y - 50, 36, 800, '#0071e3');
+        c.beginPath(); c.arc(x, y, 20, 0, Math.PI * 2); c.fillStyle = '#7040A1'; c.fill();
+        text('나', x, y - 50, 36, 800, '#7040A1');
         text('하위', x0, y + 80, 30, 500, '#6e6e73', 'left'); text('상위', x0 + w, y + 80, 30, 500, '#6e6e73', 'right');
         text(`100명 중 ${Math.max(1, Math.round(100 - t))}명보다 많이 벌어요`, W / 2, y + 80, 32, 600, '#1d1d1f');
         return 260;
