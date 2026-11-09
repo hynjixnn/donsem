@@ -2995,8 +2995,12 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   let uid = 0;
   const spark = size => { const id = 'aig' + (++uid); return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="${id}" x1="6" y1="5" x2="17" y2="18" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#34d399"/><stop offset=".5" stop-color="#38bdf8"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><path fill="url(#${id})" d="M11 3c.5 4.6 3.4 7.5 8 8-4.6.5-7.5 3.4-8 8-.5-4.6-3.4-7.5-8-8 4.6-.5 7.5-3.4 8-8z"/><path fill="url(#${id})" d="M19 1.5c.2 1.6 1 2.4 2.5 2.5-1.5.2-2.3 1-2.5 2.5-.2-1.5-1-2.3-2.5-2.5 1.5-.1 2.3-.9 2.5-2.5z" opacity=".85"/></svg>`; };
   const btn = document.createElement('button');
-  btn.type = 'button'; btn.className = 'ai-btn'; btn.setAttribute('aria-label', '돈셈 도우미에게 물어보기'); btn.innerHTML = spark(24);
+  const semi = (size, cls = '', face = 'default') => `<img class="semi ${cls}" src="/icons/semi-${face}.svg" width="${size}" height="${size}" alt="" aria-hidden="true">`;
+  btn.type = 'button'; btn.className = 'ai-btn'; btn.setAttribute('aria-label', '셈이에게 물어보기'); btn.innerHTML = semi(32);
   right.prepend(btn);
+  // 마우스를 올리면 찡긋 (장난)
+  btn.addEventListener('pointerenter', () => { btn.firstChild.src = '/icons/semi-wink.svg'; });
+  btn.addEventListener('pointerleave', () => { btn.firstChild.src = '/icons/semi-default.svg'; });
 
   const SUGGEST = ['이번 달 얼마 썼어?', '내 순자산은?', '다음 결제는 언제야?', '연말정산 월세 공제 조건', 'ISA랑 연금저축 차이', '주휴수당 받는 조건', '실업급여 자진퇴사', '백업은 어떻게 해?', '적금 이자가 생각보다 적은 이유'];
   let box = null, kb = null, kbWait = null;
@@ -3086,8 +3090,8 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   function build() {
     box = document.createElement('div');
     box.className = 'ai'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '돈셈 도우미');
-    box.innerHTML = `<div class="ai-head"><button type="button" class="ai-x" aria-label="닫기">×</button><div class="ai-title"><b>돈셈 도우미</b><span>Beta</span></div><span class="ai-sp"></span></div>
-      <div class="ai-body"><div class="ai-hello">${spark(44)}<b>무엇이 궁금하세요?</b><p>계산 방법, 세금·금융 상식, 돈셈 쓰는 법을 찾아 드려요.<br>"이번 달 얼마 썼어?"처럼 내 기록도 물어볼 수 있어요.</p></div><div class="ai-log" aria-live="polite"></div></div>
+    box.innerHTML = `<div class="ai-head"><button type="button" class="ai-x" aria-label="닫기">×</button><div class="ai-title"><b>셈이</b><span>돈셈 도우미 · Beta</span></div><span class="ai-sp"></span></div>
+      <div class="ai-body"><div class="ai-hello">${semi(96, 'semi-bob', 'happy')}<b>안녕하세요, 셈이예요!</b><p>계산 방법, 세금·금융 상식, 돈셈 쓰는 법을 찾아 드려요.<br>"이번 달 얼마 썼어?"처럼 내 기록도 물어볼 수 있어요.</p></div><div class="ai-log" aria-live="polite"></div></div>
       <div class="ai-foot"><div class="ai-chips">${SUGGEST.map(t => `<button type="button">${t}</button>`).join('')}</div>
         <form class="ai-form"><input type="text" placeholder="궁금한 점을 물어보세요" aria-label="질문" enterkeyhint="send" autocomplete="off"><button type="submit" aria-label="보내기">↑</button></form>
         <p class="ai-note">돈셈에 정리된 내용으로 답해요. 세금·투자 결정 전에는 국세청 등 공식 안내도 확인하세요.</p></div>`;
@@ -3097,7 +3101,11 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       q = q.trim(); if (!q) return;
       box.classList.add('chatting');
       log.insertAdjacentHTML('beforeend', `<div class="ai-q">${esc(q)}</div>`);
-      if (!kb || !kb.length) await loadKb();
+      // 셈이가 생각하는 표정으로 잠깐 찾아보는 척해요 (바로 답이 튀어나오면 기계 같아서)
+      log.insertAdjacentHTML('beforeend', `<div class="ai-who ai-thinking">${semi(32, '', 'think')}<span>셈이가 찾아보고 있어요<i>.</i><i>.</i><i>.</i></span></div>`);
+      const thinking = log.lastElementChild; requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
+      await Promise.all([!kb || !kb.length ? loadKb() : 0, new Promise(r => setTimeout(r, 650))]);
+      thinking.remove();
       const hits = search(q), calc = calcFor(q), my = mine(q);
       let html = '';
       if (my) html = `<div class="ai-a"><span class="ai-src">내 기록</span>${my}</div>`;
@@ -3109,11 +3117,13 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
         if (hits.length > 1) html += `<div class="ai-more"><span>이것도 볼까요?</span>${hits.slice(1).map(h => `<button type="button" data-q="${esc(h.q)}">${esc(h.q)}</button>`).join('')}</div>`;
         html += '</div>';
       } else {
-        html = `<div class="ai-a"><p>아직 그 질문에 맞는 설명을 찾지 못했어요. 다른 말로 물어봐 주세요.${calc ? '' : ' 계산이 필요하면 모든 계산기에서 찾아볼 수 있어요.'}</p>${calc ? `<a class="ai-go" href="${calc[0]}">${esc(calc[1])} 계산기 열기 ›</a>` : '<a class="ai-go" href="/calculators/">모든 계산기 보기 ›</a>'}</div>`;
+        html = `<div class="ai-a"><p>음… 그건 아직 잘 모르겠어요. 다른 말로 물어봐 주세요.${calc ? '' : ' 계산이 필요하면 모든 계산기에서 찾아볼 수 있어요.'}</p>${calc ? `<a class="ai-go" href="${calc[0]}">${esc(calc[1])} 계산기 열기 ›</a>` : '<a class="ai-go" href="/calculators/">모든 계산기 보기 ›</a>'}</div>`;
       }
-      log.insertAdjacentHTML('beforeend', html);
+      const face = my ? 'default' : hits.length ? 'happy' : 'worry'; // 답을 찾으면 웃고, 못 찾으면 고민해요
+      log.insertAdjacentHTML('beforeend', `<div class="ai-who">${semi(32, '', face)}<span>셈이</span></div>` + html);
       requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
     };
+    box.__ask = ask;
     box.querySelector('.ai-form').addEventListener('submit', e => { e.preventDefault(); ask(input.value); input.value = ''; });
     box.addEventListener('click', e => {
       const b = e.target.closest('.ai-chips button, .ai-more button'); if (b) ask(b.dataset.q || b.textContent);
@@ -3135,6 +3145,8 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   }
   function close() { if (!box) return; box.classList.remove('show'); document.documentElement.classList.remove('ai-open'); box.style.top = box.style.height = ''; btn.focus({ preventScroll: true }); }
   btn.addEventListener('click', open);
+  // 다른 곳(홈 '셈이가 챙겨 줄게요' 카드)에서도 셈이를 불러요. q가 있으면 바로 물어봐요
+  window.donsemAsk = q => { open(); if (q) setTimeout(() => box.__ask(q), 350); };
   // 아이폰에서 자판이 올라오면 화면이 위로 밀리면서 아래가 비어 보였어요 → 도우미 창을 '자판 위 보이는 부분'에 딱 맞춰요
   const vv = window.visualViewport, desk = matchMedia('(min-width: 641px)');
   function fit() {
@@ -3478,6 +3490,42 @@ const GUIDE_FOR = {
     clock.textContent = `${Math.floor(s / 86400) ? `${Math.floor(s / 86400)}일 ` : ''}${p2(Math.floor(s % 86400 / 3600))}:${p2(Math.floor(s % 3600 / 60))}:${p2(s % 60)}`;
   };
   tick(); setInterval(tick, 1000);
+})();
+
+// ── 홈: 셈이가 챙겨 줄게요 (피클 '둘러보기'처럼, 내 기록과 날짜를 보고 해 드릴 만한 일을 먼저 제안해요) ──
+(() => {
+  const daily = document.getElementById('daily');
+  if (!document.body.classList.contains('home') || !daily) return;
+  const rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const n = new Date(), m = n.getMonth() + 1, ym = `${n.getFullYear()}-${String(m).padStart(2, '0')}`;
+  const b = rd('donsem:budget'), es = b && Array.isArray(b.entries) ? b.entries : [];
+  const used = es.filter(e => e.type === 'out' && e.date.startsWith(ym)).reduce((a, e) => a + e.amt, 0);
+  const out = []; // [이모지, 굵은 제목, 설명, 누르면: 질문(q) 또는 주소(href)]
+  if (b && b.budget > 0) out.push(['📊', used <= b.budget ? `이번 달 예산이 ${won(b.budget - used)} 남았어요.` : `이번 달 예산을 ${won(used - b.budget)} 넘었어요.`, `예산 ${won(b.budget)} 중 ${Math.round(used / b.budget * 100)}%를 썼어요. 어디에 많이 썼는지 알려 드릴까요?`, { q: '이번 달 어디에 많이 썼어?' }]);
+  else if (es.length) out.push(['🧾', `이번 달은 ${won(used)}을 썼어요.`, '지난달 같은 기간과 비교해 드릴까요?', { q: '이번 달 얼마 썼어?' }]);
+  const pi = typeof paydayInfo === 'function' ? paydayInfo(b) : null;
+  if (pi) out.push(['💸', pi.days ? `월급날까지 ${pi.days}일 남았어요.` : '오늘은 월급날이에요!', `${pi.next.getMonth() + 1}월 ${pi.next.getDate()}일이에요. 들어오면 실수령액이 맞는지 확인해 드릴게요.`, { href: '/salary/' }]);
+  const f = rd('donsem:fixed'), fx = f && Array.isArray(f.items) ? f.items.filter(x => +x.amt > 0 && +x.day > 0) : [];
+  const soon = fx.map(x => [x, +x.day - n.getDate()]).filter(([, d]) => d >= 0 && d <= 3).sort((a, c) => a[1] - c[1])[0];
+  if (soon) out.push(['🔔', `${soon[1] ? `${soon[1]}일 뒤` : '오늘'} ${esc(soon[0].name || soon[0].cat)} ${won(+soon[0].amt)}이 빠져나가요.`, '통장에 돈이 있는지 미리 확인해 두세요.', { href: '/budget/#fixed' }]);
+  if (m >= 10 || m <= 1) out.push(['🧮', '연말정산 환급액을 미리 계산해 드릴 수 있어요.', '올해 카드 쓴 돈과 월세만 넣으면, 13월의 월급이 얼마일지 미리 볼 수 있어요.', { href: '/year-end-tax/' }]);
+  if (!es.length) out.push(['📒', '이번 달 쓴 돈을 챙겨 드릴 수 있어요.', '캘린더에 한 번만 적어 두면, 예산이 얼마 남았는지 셈이가 먼저 알려 드려요.', { href: '/budget/' }]);
+  out.push(['🔍', '아직 안 받은 숨은 돈을 찾아 드릴 수 있어요.', '월세·의료비 환급, 근로장려금처럼 신청만 하면 받는 돈이 있는지 확인해 보세요.', { href: '/hidden-money/' }]);
+  const sec = document.createElement('section');
+  sec.className = 'semi-card'; sec.setAttribute('aria-label', '셈이가 챙겨 줄게요');
+  sec.innerHTML = `<div class="semi-head"><button type="button" class="semi-poke" aria-label="셈이 쓰다듬기"><img class="semi semi-bob" src="/icons/semi-wink.svg" width="58" height="58" alt=""></button><div><b>셈이가 챙겨 줄게요</b><span>내 기록과 오늘 날짜를 보고 골랐어요</span></div></div>
+    <ul>${out.slice(0, 3).map(([ico, t, d, go]) => `<li><${go.href ? `a href="${go.href}"` : `button type="button" data-q="${esc(go.q)}"`} class="semi-row"><span class="semi-ico" aria-hidden="true">${ico}</span><span><b>${t}</b><small>${esc(d)}</small></span></${go.href ? 'a' : 'button'}></li>`).join('')}</ul>
+    <button type="button" class="semi-ask">셈이에게 물어보기</button>`;
+  // 출석체크·미션 줄 바로 아래 (그 줄은 뒤에서 만들어져서 한 박자 늦게 자리를 잡아요)
+  daily.before(sec);
+  setTimeout(() => { const my = document.querySelector('.home-my'); if (my) my.after(sec); });
+  sec.addEventListener('click', e => {
+    const q = e.target.closest('[data-q]'); if (q && window.donsemAsk) window.donsemAsk(q.dataset.q);
+    if (e.target.closest('.semi-ask') && window.donsemAsk) window.donsemAsk();
+    const pk = e.target.closest('.semi-poke'); // 누르면 행복한 표정으로 통 튀어요
+    if (pk) { const im = pk.firstChild; im.src = '/icons/semi-happy.svg'; pk.classList.remove('hop'); void pk.offsetWidth; pk.classList.add('hop'); clearTimeout(pk._t); pk._t = setTimeout(() => { im.src = '/icons/semi-wink.svg'; }, 1400); }
+  });
 })();
 
 // ── 모든 계산기 (휴대폰): 무신사 카테고리처럼 왼쪽에 분류, 오른쪽에 아이콘 격자. 왼쪽을 누르면 그 분류로 내려가요 ──

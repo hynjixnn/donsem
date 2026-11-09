@@ -1515,7 +1515,9 @@ html { background: var(--bg); }
 /* 돈셈 도우미: 오른쪽 위 알록달록한 버튼 + 위버스 AI처럼 전체 화면 대화 */
 .ai-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; flex: none; }
 @media (hover: hover) { .ai-btn:hover { background: var(--soft-hover); } }
-@media (prefers-reduced-motion: no-preference) { .ai-btn svg { animation: ai-twinkle 3.2s ease-in-out infinite; } }
+@media (prefers-reduced-motion: no-preference) { .ai-btn svg { animation: ai-twinkle 3.2s ease-in-out infinite; } .ai-btn .semi, .semi-bob { animation: semi-bob 2.8s ease-in-out infinite; transform-origin: 50% 90%; } }
+@keyframes semi-bob { 0%, 100% { transform: translateY(0) scale(1, 1); } 45% { transform: translateY(-2px) scale(.97, 1.03); } 60% { transform: translateY(0) scale(1.04, .96); } }
+.semi { display: block; flex: none; }
 @keyframes ai-twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.08) rotate(8deg); } }
 html.ai-open { overflow: hidden; }
 .ai { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; background: var(--bg); color: var(--text);
@@ -2634,3 +2636,26 @@ html.how-open { overflow: hidden; }
 .tr-no b { display: block; font-size: 16px; } .tr-no small { font-size: 11px; font-weight: 600; }
 .tr-dir { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tr-t { text-align: right; } .tr-t b { display: block; color: #e5322d; } .tr-t small { display: block; color: var(--muted); font-size: 11px; }
+
+/* 셈이: 돈셈 도우미 캐릭터 (보라색 복주머니) */
+.ai-who { display: flex; align-items: center; gap: 6px; margin-bottom: -6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.semi-card { margin: 0 0 28px; padding: 18px 18px 14px; border-radius: 24px; background: linear-gradient(160deg, color-mix(in srgb, var(--blue) 12%, var(--card)), var(--card) 60%); }
+.semi-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.semi-head b { display: block; font-size: 18px; letter-spacing: -0.02em; }
+.semi-head span { font-size: 13px; color: var(--muted); }
+.semi-card ul { list-style: none; margin: 0; padding: 0; }
+.semi-card li + li { border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+.semi-row { display: flex; gap: 12px; width: 100%; padding: 14px 2px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+a.semi-row:hover { text-decoration: none; }
+.semi-ico { font-size: 24px; line-height: 1.2; flex: none; }
+.semi-row b { display: block; font-size: 15px; line-height: 1.4; }
+.semi-row small { display: block; margin-top: 3px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.semi-ask { display: block; width: 100%; margin-top: 6px; padding: 12px; border: 0; border-radius: 14px; background: var(--blue); color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+@media (min-width: 900px) { .semi-card ul { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 18px; } .semi-card li + li { border-top: 0; } .semi-ask { width: auto; padding: 10px 22px; } }
+.ai-thinking span { font-weight: 500; }
+.ai-thinking i { font-style: normal; animation: semi-dot 1s infinite; }
+.ai-thinking i:nth-child(2) { animation-delay: .15s; } .ai-thinking i:nth-child(3) { animation-delay: .3s; }
+@keyframes semi-dot { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+.semi-poke { padding: 0; border: 0; background: none; cursor: pointer; flex: none; }
+.semi-poke.hop { animation: semi-hop .5s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes semi-hop { 0% { transform: scale(1, 1); } 30% { transform: translateY(-10px) scale(.92, 1.08); } 100% { transform: none; } }
