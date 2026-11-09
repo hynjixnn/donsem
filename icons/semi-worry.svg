@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="20 10 160 160"><defs>
+<radialGradient id="g" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#EDE2FF"/><stop offset=".55" stop-color="#C9B0F2"/><stop offset="1" stop-color="#A285DB"/></radialGradient>
+<filter id="fur" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+<filter id="tex"><feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="7" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .35 0" result="w"/><feComposite in="w" in2="SourceGraphic" operator="in" result="wi"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="wi"/></feMerge></filter>
+<filter id="sh"><feGaussianBlur stdDeviation="4"/></filter>
+</defs><ellipse cx="100" cy="160" rx="52" ry="7" fill="#7040A1" opacity=".18" filter="url(#sh)"/>
+<g filter="url(#fur)"><path d="M100 38c30 0 58 18 64 50 7 34-12 66-64 66S29 122 36 88c6-32 34-50 64-50z" fill="url(#g)" filter="url(#tex)"/></g>
+<path d="M100 40c0-8 2-14 6-18" stroke="#5E3290" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M105 24c6-10 18-12 24-8-4 10-15 14-24 8z" fill="#7040A1"/><path d="M101 28c-6-8-16-9-21-5 4 8 13 11 21 5z" fill="#8B5CC9"/>
+<path d="M77 100 L92 96" stroke="#241536" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><ellipse cx="116" cy="97" rx="5" ry="7.5" fill="#241536"/><circle cx="118" cy="93" r="2" fill="#fff" opacity=".8"/></svg>
