@@ -317,7 +317,7 @@
         ${c ? `<tr><th>거리</th><td>지도 가운데에서 약 ${(d => d >= 1000 ? (d / 1000).toFixed(1) + 'km' : d + 'm')(dist(c, [lat, lng]))}<small>걸어서 약 ${Math.max(1, Math.round(dist(c, [lat, lng]) / 67))}분</small></td></tr>` : ''}
       </table>
       <div class="pc-acts">${p.phone ? `<a class="btn fill" href="tel:${esc(p.phone)}">📞 전화</a>` : ''}<a class="btn ${p.phone ? '' : 'fill'}" href="${route}" target="_blank" rel="noopener">🧭 길찾기</a>${p.place_url ? `<a class="btn" href="${esc(p.place_url)}" target="_blank" rel="noopener">사진·영업시간·리뷰 (카카오맵) ↗</a>` : ''}</div>
-      ${p.ars || p.category_group_code === 'SW8' || /지하철|전철역/.test(p.category_name || '') ? '<div id="pc-transit" class="tr-box"><p class="re-empty">실시간 도착 정보를 불러오는 중…</p></div>' : ''}
+      ${p.ars || p.category_group_code === 'SW8' || /지하철|전철역/.test(p.category_name || '') ? '<div id="pc-transit" class="tr-box"><p class="re-empty semi-wait">실시간 도착 정보를 불러오고 있어요</p></div>' : ''}
       <div id="pc-here"></div>
       <p class="re-tip">장소 정보: 카카오</p>`;
     box.hidden = false; peek(false);
@@ -355,7 +355,7 @@
       }
     } catch (e) { const box = el(); if (box) box.innerHTML = '<p class="re-empty">지금은 실시간 정보를 불러오지 못했어요.</p>'; }
   }
-  $('re-place').addEventListener('click', e => { if (!e.target.closest('[data-tr="re"]')) return; const b = $('re-place'), raw = lastPoi; if (raw) { document.getElementById('pc-transit').innerHTML = '<p class="re-empty">불러오는 중…</p>'; transitLoad(raw, b.dataset.tok); } });
+  $('re-place').addEventListener('click', e => { if (!e.target.closest('[data-tr="re"]')) return; const b = $('re-place'), raw = lastPoi; if (raw) { document.getElementById('pc-transit').innerHTML = '<p class="re-empty semi-wait">도착 정보를 다시 불러오고 있어요</p>'; transitLoad(raw, b.dataset.tok); } });
   let lastPoi = null;
 
   // ── 주소·아파트 찾기 ──
@@ -368,7 +368,7 @@
   async function search(q) {
     const box = $('re-results');
     if (!q.trim()) return;
-    box.innerHTML = '<li class="re-empty">찾는 중…</li>';
+    box.innerHTML = '<li class="re-empty semi-wait">찾고 있어요</li>';
     try {
       const list = await geo(q);
       box.innerHTML = list.length ? list.map((p, i) => `<li><button type="button" data-pick="${i}"><b>${esc(p.name)}</b><small>${esc(p.addr)}</small></button></li>`).join('')
@@ -413,7 +413,7 @@
     if (!LAWD[gu]) return;
     dealGu = gu; dealData = { trade: null, rent: null };
     const box = $('re-deals'); box.hidden = false; peek(false);
-    box.innerHTML = `<p class="re-empty">${gu} 실거래가를 불러오는 중…</p>`;
+    box.innerHTML = `<p class="re-empty semi-wait">${gu} 실거래가를 불러오고 있어요</p>`;
     dealData.trade = await loadDeals('trade');
     drawDeals();
     if (dealGu === gu) drawBubbles(gu, dealData.trade);
@@ -507,7 +507,7 @@
     if (t || sz || e.target.closest('[data-dv]')) dealShown = 5; // 조건을 바꾸면 다시 5건부터
     if (t) {
       dealType = t.dataset.dt === 'trade' ? 'trade' : 'rent'; dealRentMode = t.dataset.dt === 'wol' ? 'wol' : 'jeon';
-      if (dealType === 'rent' && !dealData.rent) { $('re-deals').querySelector('.dl-sum, .dl-list, .re-empty')?.replaceWith(Object.assign(document.createElement('p'), { className: 're-empty', textContent: '전월세 실거래를 불러오는 중…' })); dealData.rent = await loadDeals('rent'); }
+      if (dealType === 'rent' && !dealData.rent) { $('re-deals').querySelector('.dl-sum, .dl-list, .re-empty')?.replaceWith(Object.assign(document.createElement('p'), { className: 're-empty semi-wait', textContent: '전월세 실거래를 불러오고 있어요' })); dealData.rent = await loadDeals('rent'); }
       drawDeals();
     }
     if (sz) { dealSize = sz.dataset.ds; drawDeals(); }
@@ -575,7 +575,7 @@
     const acts = `<div class="pc-acts"><button type="button" class="btn fill" data-pc="add">📌 관심 부동산에 넣기</button>${raw.place_url ? `<a class="btn" href="${esc(raw.place_url)}" target="_blank" rel="noopener">사진·단지정보 (카카오맵) ↗</a>` : ''}<a class="btn" href="${naverAt(r.lat, r.lng)}" target="_blank" rel="noopener">시세 (네이버 부동산) ↗</a></div>`;
     const isApt = !raw.category_name || /아파트|주거/.test(raw.category_name);
     if (!gu || !/서울/.test(jibun) || !isApt) { box.innerHTML = head + `<p class="re-tip">실거래가는 서울 아파트만 보여 드려요.</p>` + acts; return; }
-    box.innerHTML = head + '<p class="re-empty">이 단지 실거래가를 찾는 중…</p>' + acts;
+    box.innerHTML = head + '<p class="re-empty semi-wait">이 단지 실거래가를 찾고 있어요</p>' + acts;
     const key = norm(aptName || r.name);
     const [tr, rt, k] = await Promise.all([Promise.all(yms(6).map(ym => month(gu, ym, 'trade'))), Promise.all(yms(3).map(ym => month(gu, ym, 'rent'))), kaptInfo(gu, aptName || r.name, dong)]);
     if (box.dataset.tok !== tok) return; // 그사이 다른 곳을 골랐어요
@@ -693,7 +693,7 @@
     let cur = null, area = 0;
     async function find() {
       const v = q.value.trim(); if (!v) return;
-      const box = $('mh-results'); box.innerHTML = '<li class="re-empty">찾는 중…</li>';
+      const box = $('mh-results'); box.innerHTML = '<li class="re-empty semi-wait">찾고 있어요</li>';
       let list = []; try { list = await geo(v, 6, !!(map && map.kakao)); } catch (e) { list = []; }
       list = list.filter(p => /서울/.test((p.raw && p.raw.address_name) || p.addr || ''));
       box.innerHTML = list.length ? list.map((p, i) => `<li><button type="button" data-mh="${i}"><b>${esc(p.name)}</b><small>${esc(p.addr)}</small></button></li>`).join('') : '<li class="re-empty">서울 아파트를 찾지 못했어요. 단지 이름을 다시 확인해 주세요.</li>';
@@ -702,7 +702,7 @@
     async function pick(p) {
       const out = $('mh-out'), raw = p.raw || {}, words = (raw.address_name || p.addr || '').split(/[\s,]+/), gu = words.find(w => LAWD[w]) || '', dong = gu && raw.address_name ? words[words.indexOf(gu) + 1] : '';
       if (!gu) { out.innerHTML = '<p class="re-tip">서울 아파트만 어림할 수 있어요.</p>'; return; }
-      out.innerHTML = `<p class="re-empty">${esc(p.name)} 실거래를 모으는 중…</p>`;
+      out.innerHTML = `<p class="re-empty semi-wait">${esc(p.name)} 실거래를 모으고 있어요</p>`;
       const key = norm(p.name), all = (await Promise.all(yms(6).map(ym => month(gu, ym, 'trade')))).filter(Boolean).flat()
         .filter(x => (!dong || x.dong === dong) && norm(x.apt).length > 1 && (norm(x.apt).includes(key) || key.includes(norm(x.apt)))).sort(byDate);
       if (!all.length) { out.innerHTML = `<p class="re-tip">${esc(p.name)}의 최근 6달 매매 신고를 찾지 못했어요. 거래가 없었거나 국토부 자료의 단지 이름이 달라서일 수 있어요.</p>`; return; }

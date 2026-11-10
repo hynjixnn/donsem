@@ -2695,3 +2695,9 @@ a.semi-row:hover { text-decoration: none; }
 .re-poi button.rdz-btn.on i { background: #C9B3EA; border-color: #fff; }
 .rdz-chip.sm span { display: none; } .rdz-chip.sm b { padding: 2px 6px; font-size: 11px; }
 .re-mapwrap.full .re-fs-chips .re-poi button.rdz-btn.on { background: #7040A1; border-color: #7040A1; color: #fff; }
+
+/* 불러오는 동안: 셈이(생각 중)가 옆에서 통통 — 「~하고 있어요…」 */
+.semi-wait { display: flex; align-items: center; gap: 10px; list-style: none; }
+.semi-wait::before { content: ''; flex: none; width: 34px; height: 34px; background: url(/icons/semi-think.svg) center / contain no-repeat; }
+.semi-wait::after { content: '…'; margin-left: -6px; animation: semi-dot 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: no-preference) { .semi-wait::before { animation: semi-bob 2.8s ease-in-out infinite; transform-origin: 50% 90%; } }
