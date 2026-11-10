@@ -489,8 +489,8 @@
   function planHTML() {
     if (!selDay) return '';
     const ps = plansOn(selDay);
-    return `<div class="plan-box"><p class="deco-h">일정 <span>${dayLabel(selDay)}</span></p>
-      ${ps.map(p => `<div class="plan-row"><i class="pc-${p.c}"></i><b>${esc(p.t)}</b><span>${p.e && p.e !== p.s ? `${mdLabel(p.s)} ~ ${mdLabel(p.e)}` : ''}</span><button type="button" data-pdel="${esc(p.id)}" aria-label="${esc(p.t)} 일정 지우기">×</button></div>`).join('')}
+    // 그날 일정 목록은 위 「날짜 상세」에 같이 보여요 (지우기 ×도 거기)
+    return `<div class="plan-box">${planOpen ? `<p class="deco-h">일정 <span>${dayLabel(selDay)}</span></p>` : ''}
       ${planOpen ? `<div class="plan-form"><div class="field"><input id="p-title" maxlength="20" placeholder="일정 이름 (예: 제주도 여행)" autocomplete="off" enterkeyhint="done" aria-label="일정 이름"></div>
         <div class="plan-opt"><span class="plan-lab">언제까지</span><span class="field"><input id="p-end" type="date" value="${selDay}" min="${selDay}" aria-label="일정이 끝나는 날"></span><small>여행처럼 며칠 이어지면 바꿔요</small></div>
         <div class="plan-opt"><span class="plan-lab">색깔</span><div class="plan-colors" role="group" aria-label="일정 색">${PCOLORS.map(c => `<button type="button" class="pc-${c}${c === pColor ? ' on' : ''}" data-pc="${c}" aria-label="${c} 색"></button>`).join('')}</div></div>
@@ -601,6 +601,21 @@
   // 토스 가계부처럼: 칸 아래에 그날 수입(보라)·지출(회색) 금액. 일정이 많으면 첫 번째만 보이고 「+n개」로 줄여요
   const calWon = n => n < 1e6 ? n.toLocaleString('ko-KR') : short(n);
   const calTags = a => a.length > 1 ? a[0] + `<span class="cal-more">+${a.length - 1}개</span>` : a.join('');
+  // 토스처럼 날짜를 누르면 달력 바로 밑에 그날 요약: 지출·수입 합계와 그날 이벤트(일정·월급·고정지출·돈 일정)
+  function daySumHTML(list, y, m, last, payKey) {
+    if (!selDay || !selDay.startsWith(month)) return '';
+    const dt = new Date(selDay + 'T00:00:00'), es = list.filter(e => e.date === selDay);
+    const out = es.filter(e => e.type === 'out').reduce((a, e) => a + e.amt, 0), inn = es.filter(e => e.type === 'in').reduce((a, e) => a + e.amt, 0);
+    const ev = [
+      ...plansOn(selDay).map(p => `<li><i class="pc-${p.c}"></i><b>${esc(p.t)}</b><span>일정${p.e && p.e !== p.s ? ` · ${mdLabel(p.s)}~${mdLabel(p.e)}` : ''}</span><button type="button" class="ds-del" data-pdel="${esc(p.id)}" aria-label="${esc(p.t)} 일정 지우기">×</button></li>`),
+      ...(selDay === payKey ? ['<li><i class="ds-pay"></i><b>💰 월급날</b><span>수입</span></li>'] : []),
+      ...(fixedByDay(y, m, last)[dt.getDate()] || []).map(x => `<li><i class="ds-fx"></i><b>${esc(x.name || x.cat || '고정지출')}</b><span>고정지출 ${won(Number(x.amt))}</span></li>`),
+      ...mcOn(selDay).map(e => `<li><i class="ds-mc ${MC_TAG[e.tag] || ''}"></i><b>${esc(e.t)}</b><span>${esc(e.tag)}</span></li>`),
+    ];
+    return `<div class="day-sum"><div class="ds-head"><b>${dt.getDate()}일 ${W[dt.getDay()]}요일</b>${selDay === iso(today) ? '<em>오늘</em>' : ''}<span>${es.length ? `기록 ${es.length}건` : ''}</span></div>
+      <div class="ds-tot"><div><span>지출</span><b class="out">${out ? '-' + won(out) : '0원'}</b></div><div><span>수입</span><b class="in">${inn ? '+' + won(inn) : '0원'}</b></div></div>
+      ${ev.length ? `<p class="ds-h">이날 이벤트 ${ev.length}</p><ul class="ds-ev">${ev.join('')}</ul>` : ''}</div>`;
+  }
   function drawCal(list) {
     const [y, m] = month.split('-').map(Number), first = new Date(y, m - 1, 1).getDay(), last = new Date(y, m, 0).getDate();
     const rows = Math.ceil((first + last) / 7), by = {}, fx = fixedByDay(y, m, last);
@@ -634,8 +649,8 @@
         <button type="button" data-cm="1" aria-label="다음 달">›</button>${month !== nowYm ? '<button type="button" class="cal-today" data-ctoday>오늘</button>' : ''}</div>
       ${sumHTML}<div class="cal-tools"><button type="button" class="heat-btn${heat ? ' on' : ''}" data-heat aria-pressed="${heat}">🔥 지출 히트맵</button>${heat ? '<span class="heat-key">적게<i></i><i></i><i></i><i></i>많이</span>' : ''}</div>${nsDays.length ? `<a class="cal-ns" href="/no-spend/"><i></i>이번 달 무지출 <b>총 ${nsDays.length}일</b><span>›</span></a>` : ''}<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div><button type="button" class="cal-fold" data-fold aria-expanded="${!fold}">${fold ? '﹀ 달력 펼치기' : '︿ 한 주만 보기'}</button></div>`;
     // 달력 바로 밑: 일정·꾸미기 → (그날 내역) → 놓치면 손해 → 그날 돈 일정
-    $('b-cal-mid').innerHTML = planHTML() + decoHTML();
-    $('b-cal-more').innerHTML = lossHTML(month) + mcDayHTML(selDay);
+    $('b-cal-mid').innerHTML = daySumHTML(list, y, m, last, payKey) + planHTML();
+    $('b-cal-more').innerHTML = decoHTML() + lossHTML(month) + mcDayHTML(selDay);
   }
   const calBoxes = ['b-cal', 'b-cal-mid', 'b-cal-more'].map($);
   calBoxes.forEach(box => {
@@ -684,7 +699,8 @@
       drawCal(list);
       if (!selDay || !selDay.startsWith(month)) { ul.innerHTML = '<li class="empty">날짜를 누르면 그날 내역이 보여요.</li>'; return; }
       list = list.filter(e => e.date === selDay);
-      if (!list.length) { ul.innerHTML = `<li class="empty">${Number(selDay.slice(5, 7))}월 ${Number(selDay.slice(8))}일에는 기록이 없어요.</li>`; return; }
+      if (!list.length) { ul.innerHTML = `<li class="empty">${Number(selDay.slice(5, 7))}월 ${Number(selDay.slice(8))}일에는 기록이 없어요. 아래 「＋ 기록」으로 남겨 보세요.</li>`; return; }
+      ul.innerHTML = `<li class="day ds-list"><span>이날 내역</span><span></span></li>` + itemsHTML(list).replace(/^<li class="day">.*?<\/li>/, ''); return; // 위 요약에 날짜·합계가 있어서 머리줄은 빼요
     }
     if (!list.length) {
       ul.innerHTML = `<li class="empty">${month === iso(today).slice(0, 7) ? '이번 달 첫 기록을 남겨 보세요. 위에서 금액과 카테고리만 고르면 돼요.' : '이 달에는 기록이 없어요.'}</li>`;
