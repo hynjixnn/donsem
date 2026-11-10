@@ -2735,3 +2735,8 @@ a.semi-row:hover { text-decoration: none; }
 .ai-ex-go:hover { text-decoration: none; background: var(--soft-hover); }
 .ai-hello { margin-top: 6vh; }
 .ai.chatting .ai-hello { margin-top: 12px; }
+/* 둘러보기가 생겨서 첫 인사는 조금 작게 (카드가 더 많이 보이게) */
+.ai-hello { margin-top: 2vh; gap: 6px; }
+.ai-hello .semi { width: 72px; height: 72px; }
+.ai-hello b { font-size: 20px; }
+.ai-ex { margin-top: 16px; }
