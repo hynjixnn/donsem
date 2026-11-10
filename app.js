@@ -136,6 +136,8 @@ function prepayment() {
   const s = document.querySelector('input[data-k="p_start"]').value, e = document.querySelector('input[data-k="p_pay"]').value;
   if (!s || !e) { out.innerHTML = '대출받은 날과 갚는 날을 넣어 주세요.'; return; }
   const DAY = 86400000, start = new Date(s + 'T00:00:00Z'), pay = new Date(e + 'T00:00:00Z');
+  if (isNaN(start) || isNaN(pay)) { out.innerHTML = '날짜를 다시 확인해 주세요.'; return; }
+  if (val('p_years') > 50) { out.innerHTML = '수수료 부과 기간은 보통 3년이에요. 50년 안으로 넣어 주세요.'; return; } // 너무 큰 숫자는 날짜가 넘쳐서 계산이 멈췄어요
   const end = new Date(start); end.setUTCMonth(end.getUTCMonth() + Math.round(val('p_years') * 12)); // 수수료 부과가 끝나는 날
   const total = Math.round((end - start) / DAY), left = Math.round((end - pay) / DAY);
   if (pay < start) { out.innerHTML = '갚는 날이 대출받은 날보다 뒤여야 해요.'; return; }

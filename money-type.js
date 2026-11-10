@@ -105,6 +105,7 @@ const mtClash = code => mtFlip(code, [0, 1, 2, 3]); // 환장의 조합: 모든 
       <a class="mt-quiz" href="/quiz/">${iconOf('/quiz/')}오늘의 돈 퀴즈도 풀어 보기 ›</a>
     </div>`;
     counter('mt:all').then(c => { // 전체 참여자 중 이 유형 비율
+      if (c && !shared && !c[code]) c = { ...c, [code]: 1 }; // 방금 낸 내 결과가 아직 안 세어졌으면(저장보다 먼저 읽었거나, 다시 해서 유형이 바뀐 경우) 나를 넣어서 보여 줘요
       const total = c ? Object.values(c).reduce((a, n) => a + n, 0) : 0, el = box.querySelector('.mt-crowd');
       if (!total || !el) return;
       const mineN = c[code] || 0, rank = Object.keys(MT_TYPES).sort((a, b) => (c[b] || 0) - (c[a] || 0)).indexOf(code) + 1;

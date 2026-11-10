@@ -22,6 +22,7 @@ try { tbNav = sessionStorage.getItem('donsem:tb-nav') || ''; } catch (e) { tbNav
 if ((tbNav === 'next' || tbNav === 'prev') && !mmTab) document.documentElement.classList.add('tb-in-' + tbNav);
 window.addEventListener('pagereveal', e => {
   if (!e.viewTransition) return;
+  [e.viewTransition.ready, e.viewTransition.finished, e.viewTransition.updateCallbackDone].forEach(p => p && p.catch(() => {})); // 전환을 건너뛰면 '건너뜀' 오류가 남아서 조용히 넘겨요
   if (mmTab || tbNav) { e.viewTransition.skipTransition(); return; } // 브라우저 전환과 겹치지 않게
   const act = window.navigation && navigation.activation;
   if (!act || !act.from) return; // 방향을 알 수 없으면 브라우저 기본(겹쳐 바뀌기)
