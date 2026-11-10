@@ -1661,7 +1661,9 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     const e = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
     box.querySelector('.qa-fav-list').innerHTML = list.map(x => `<button type="button" data-fav="${e(JSON.stringify([x.cat, x.amt, x.memo]))}">${catIcon(x.cat)}<span>${e(x.memo || x.cat)}</span><b>${x.amt.toLocaleString('ko-KR')}원</b></button>`).join('');
   }
-  function open() {
+  let qaDate = ''; // 달력에서 '이날 쓴 돈 적기'를 누르면 그 날짜로 적어요 (없으면 오늘)
+  function open(day) {
+    qaDate = typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : '';
     if (!sheet) {
       sheet = document.createElement('div');
       sheet.className = 'qa';
@@ -1722,6 +1724,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       sheet.offsetHeight; // 처음 만든 창도 '아래에 숨은 모습'을 한 번 그린 뒤에 올려야 주르륵 올라와요 (안 그러면 처음엔 띡 하고 나타나요)
     }
     drawFav();
+    sheet.querySelector('#qa-title').textContent = qaDate && qaDate !== today() ? `${Number(qaDate.slice(5, 7))}월 ${Number(qaDate.slice(8))}일에 기록하기` : '바로 기록하기';
     sheet.classList.add('show');
     document.documentElement.classList.add('qa-open');
     setTimeout(() => sheet.querySelector('.qa-amt input').focus(), 60);
@@ -1740,7 +1743,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
     if (!b || !Array.isArray(b.entries)) b = { entries: [], budget: (b && b.budget) || 0 };
     const before = budgetStreak(b.entries);
-    b.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, amt, cat, date: today(), memo: sheet.querySelector('.qa-memo').value.trim().slice(0, 40) });
+    b.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, amt, cat, date: qaDate || today(), memo: sheet.querySelector('.qa-memo').value.trim().slice(0, 40) });
     try { localStorage.setItem('donsem:budget', JSON.stringify(b)); }
     catch (e) { sheet.querySelector('.qa-err').textContent = '이 브라우저에서는 저장할 수 없어요.'; return; }
     amtEl.value = ''; sheet.querySelector('.qa-memo').value = ''; sheet.querySelector('.qa-kr').textContent = '';
@@ -1748,7 +1751,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     toast(streakCheer(before, b.entries) || `${cat} ${won(amt)}을 가계부에 기록했어요.`);
     markDailyFull();
     if (typeof window.drawToday === 'function') window.drawToday();
-    if (path === '/budget/') setTimeout(() => location.reload(), 1200); // 가계부를 보고 있었다면 바로 반영
+    if (path === '/budget/') { try { if (qaDate) sessionStorage.setItem('donsem:selday', qaDate); } catch (e) { /* 괜찮아요 */ } setTimeout(() => location.reload(), 1200); } // 가계부를 보고 있었다면 바로 반영
   }
   window.openQuickAdd = open; // 아래 탭에서는 빠졌지만, 첫 화면 '오늘 쓴 돈 정리 → 기록'에서 이 창을 열어요
   // 떠 있는 '+ 기록' 버튼 (홈·캘린더, 휴대폰): 아래 탭 바로 위 오른쪽이라 엄지로 바로 눌러요
