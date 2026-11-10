@@ -3087,11 +3087,37 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
     return best;
   }
 
+  // 셈이 둘러보기 (피클 '둘러보기'처럼): 분류를 고르면 셈이가 '해 드릴 수 있는 일'을 보여 주고, 누르면 그 계산기로 가요
+  const EXPLORE = [
+    ['⭐', '추천', [['🔍', '아직 안 받은 숨은 돈을 찾아 드릴게요.', '월세·의료비 환급, 근로장려금처럼 신청만 하면 받는 돈이 있는지 하나씩 확인해요.', '/hidden-money/'],
+      ['🧮', '올해 연말정산 환급액을 미리 계산해 드릴게요.', '카드 쓴 돈과 월세만 넣으면 13월의 월급이 얼마일지 미리 볼 수 있어요.', '/year-end-tax/'],
+      ['💸', '연봉 실수령액을 바로 계산해 드릴게요.', '4대 보험·세금을 빼고 통장에 실제로 들어오는 돈을 알려 드려요.', '/salary/']]],
+    ['🎁', '혜택·환급', [['🏛️', '받을 수 있는 정부 지원금이 있는지 찾아 드릴게요.', '근로·자녀장려금, 청년 지원처럼 놓치기 쉬운 돈을 모아 봤어요.', '/hidden-money/'],
+      ['🏠', '월세 세액공제로 얼마 돌려받는지 계산해 드릴게요.', '1년 월세의 최대 17%를 연말정산에서 돌려받을 수 있어요.', '/year-end-tax/'],
+      ['📅', '놓치면 손해인 돈 일정을 챙겨 드릴게요.', '신고·신청 마감일을 달력으로 보고 알림도 받을 수 있어요.', '/money-calendar/']]],
+    ['💼', '직장·월급', [['🧑‍💼', '실업급여를 얼마나, 몇 달 받는지 알려 드릴게요.', '나이와 일한 기간, 월급만 넣으면 예상 금액이 나와요.', '/unemployment/'],
+      ['🎒', '퇴직금이 얼마인지 계산해 드릴게요.', '입사일·퇴사일과 최근 3달 월급으로 법대로 계산해요.', '/severance/'],
+      ['⏰', '알바 주휴수당을 받을 수 있는지 확인해 드릴게요.', '주 15시간 이상이면 받을 수 있어요. 얼마인지 바로 계산해요.', '/holiday-pay/'],
+      ['📊', '내 연봉이 상위 몇 %인지 알려 드릴게요.', '국세청 자료로 우리나라 직장인 중 몇 번째쯤인지 보여 드려요.', '/salary-rank/']]],
+    ['🏡', '집', [['🗺️', '관심 아파트 실거래가를 지도에서 찾아 드릴게요.', '구를 고르면 최근 거래와 단지별 순위, 재건축 구역까지 보여요.', '/real-estate/'],
+      ['🧾', '집 살 때 내는 취득세를 계산해 드릴게요.', '집값과 주택 수만 넣으면 취득세·지방교육세까지 나와요.', '/acquisition-tax/'],
+      ['🛡️', '전세 사기 위험이 있는지 확인해 드릴게요.', '전세가율과 꼭 볼 서류를 하나씩 체크해요.', '/jeonse-check/'],
+      ['🎯', '청약 가점이 몇 점인지 계산해 드릴게요.', '무주택 기간·부양가족·통장 기간으로 내 점수를 알려 드려요.', '/subscription-score/']]],
+    ['💰', '저축·투자', [['🐷', '적금 만기에 실제로 받는 이자를 알려 드릴게요.', '이자 세금 15.4%를 빼고 손에 쥐는 돈으로 보여 드려요.', '/savings/'],
+      ['🌱', 'ISA로 세금을 얼마나 아끼는지 계산해 드릴게요.', '일반 계좌와 비교해서 절세 금액을 보여 드려요.', '/isa/'],
+      ['👵', '노후에 필요한 돈을 계산해 드릴게요.', '지금 나이와 생활비로 은퇴 전에 모아야 할 돈을 알려 드려요.', '/retirement/']]],
+    ['🧺', '생활', [['📒', '이번 달 쓴 돈을 정리해 드릴게요.', '캘린더 가계부에 적으면 예산이 얼마 남았는지 셈이가 알려 드려요.', '/budget/'],
+      ['🙅', '무지출 챌린지를 같이 해 드릴게요.', '돈 안 쓴 날에 도장을 찍고 이번 달 기록을 모아요.', '/no-spend/'],
+      ['🍕', '더치페이를 깔끔하게 나눠 드릴게요.', '사람 수와 금액만 넣으면 1인당 얼마인지 바로 나와요.', '/dutch-pay/'],
+      ['🔮', '오늘의 돈 퀴즈와 금전운을 봐 드릴게요.', '하루 한 문제 풀면 돈나무가 자라요.', '/quiz/']]],
+  ];
+  const exploreHtml = i => `<div class="ai-ex-tabs" role="tablist">${EXPLORE.map(([ico, n], k) => `<button type="button" role="tab" data-ex="${k}" class="${k === i ? 'on' : ''}" aria-selected="${k === i}"><span aria-hidden="true">${ico}</span>${n}</button>`).join('')}</div>
+    <ul class="ai-ex-list">${EXPLORE[i][2].map(([ico, t, d, u]) => `<li><span class="ai-ex-ico" aria-hidden="true">${ico}</span><div><b>${t}</b><p>${d}</p></div><a class="ai-ex-go" href="${u}">해 보기</a></li>`).join('')}</ul>`;
   function build() {
     box = document.createElement('div');
     box.className = 'ai'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '돈셈 도우미');
     box.innerHTML = `<div class="ai-head"><button type="button" class="ai-x" aria-label="닫기">×</button><div class="ai-title"><b>셈이</b><span>돈셈 도우미 · Beta</span></div><span class="ai-sp"></span></div>
-      <div class="ai-body"><div class="ai-hello">${semi(96, 'semi-bob', 'happy')}<b>안녕하세요, 셈이예요!</b><p>계산 방법, 세금·금융 상식, 돈셈 쓰는 법을 찾아 드려요.<br>"이번 달 얼마 썼어?"처럼 내 기록도 물어볼 수 있어요.</p></div><div class="ai-log" aria-live="polite"></div></div>
+      <div class="ai-body"><div class="ai-hello">${semi(96, 'semi-bob', 'happy')}<b>안녕하세요, 셈이예요!</b><p>계산 방법, 세금·금융 상식, 돈셈 쓰는 법을 찾아 드려요.<br>"이번 달 얼마 썼어?"처럼 내 기록도 물어볼 수 있어요.</p></div><div class="ai-ex"><b class="ai-ex-h">셈이 둘러보기</b><div class="ai-ex-in">${exploreHtml(0)}</div></div><div class="ai-log" aria-live="polite"></div></div>
       <div class="ai-foot"><div class="ai-chips">${SUGGEST.map(t => `<button type="button">${t}</button>`).join('')}</div>
         <form class="ai-form"><input type="text" placeholder="궁금한 점을 물어보세요" aria-label="질문" enterkeyhint="send" autocomplete="off"><button type="submit" aria-label="보내기">↑</button></form>
         <p class="ai-note">돈셈에 정리된 내용으로 답해요. 세금·투자 결정 전에는 국세청 등 공식 안내도 확인하세요.</p></div>`;
@@ -3127,6 +3153,7 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
     box.querySelector('.ai-form').addEventListener('submit', e => { e.preventDefault(); ask(input.value); input.value = ''; });
     box.addEventListener('click', e => {
       const b = e.target.closest('.ai-chips button, .ai-more button'); if (b) ask(b.dataset.q || b.textContent);
+      const ex = e.target.closest('[data-ex]'); if (ex) box.querySelector('.ai-ex-in').innerHTML = exploreHtml(+ex.dataset.ex);
       if (e.target.closest('.ai-x')) close();
     });
     box.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
