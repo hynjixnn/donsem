@@ -482,21 +482,29 @@
       <div class="dl-size">${Object.entries(SIZE).map(([k, [n]]) => `<button type="button" class="${dealSize === k ? 'on' : ''}" data-ds="${k}">${n}</button>`).join('')}</div>
       ${list.length ? `<div class="dl-bar"><p class="dl-sum">${label} <b>${list.length.toLocaleString('ko-KR')}건</b> · 가운데 값 <b>${eok(mid)}</b>${dealType === 'trade' ? ` · 가장 비싼 거래 <b>${eok(prices[prices.length - 1])}</b>` : ''}</p>
       <select class="dl-sort" aria-label="정렬">${Object.entries(dealView === 'rank' ? { new: '거래 많은 순', high: '비싼 순', low: '싼 순' } : SORT).map(([k, n]) => `<option value="${k}"${dealSort === k ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
-      ${dealView === 'rank' ? rankHtml(all, list) : `<ul class="dl-list">${list.slice(0, 30).map((x, i) => `<li><button type="button" data-di="${all.indexOf(x)}"><span><b>${esc(x.apt)}</b><small>${esc(x.dong)} · 전용 ${Math.round(x.area)}㎡ · ${x.floor}층 · ${x.built}년</small></span><em>${eok(x.amt)}${x.rent ? ` / 월 ${x.rent.toLocaleString("ko-KR")}만` : ''}<small>${x.m}.${x.d}</small></em></button></li>`).join('')}</ul>`}
-      ${dealView === 'list' && list.length > 30 ? `<p class="re-tip">최근 30건만 보여 드려요. 전체는 <a href="https://rt.molit.go.kr/" target="_blank" rel="noopener">국토부 실거래가 공개시스템 ↗</a>에서 볼 수 있어요.</p>` : ''}`
+      ${dealView === 'rank' ? rankHtml(all, list) : `<ul class="dl-list">${list.slice(0, Math.min(dealShown, 30)).map((x, i) => `<li><button type="button" data-di="${all.indexOf(x)}"><span><b>${esc(x.apt)}</b><small>${esc(x.dong)} · 전용 ${Math.round(x.area)}㎡ · ${x.floor}층 · ${x.built}년</small></span><em>${eok(x.amt)}${x.rent ? ` / 월 ${x.rent.toLocaleString("ko-KR")}만` : ''}<small>${x.m}.${x.d}</small></em></button></li>`).join('')}</ul>`}
+      ${moreBar(dealView === 'rank' ? Math.min(rankCount(list), 30) : Math.min(list.length, 30))}
+      ${dealView === 'list' && list.length > 30 && dealShown >= 30 ? `<p class="re-tip">최근 30건만 보여 드려요. 전체는 <a href="https://rt.molit.go.kr/" target="_blank" rel="noopener">국토부 실거래가 공개시스템 ↗</a>에서 볼 수 있어요.</p>` : ''}`
         : '<p class="re-empty">이 조건의 거래가 아직 없어요. 실거래는 계약 후 30일 안에 신고돼서 이번 달은 적게 보여요.</p>'}`;
   }
   // 단지별 순위 (아파트실거래가 '많이산단지·최고가'처럼): 같은 단지 거래를 모아 건수·최고가·최근 거래로 보여 줘요
   function rankHtml(all, list) {
     const by = new Map();
     [...list].sort(byDate).forEach(x => { const k = `${x.dong}|${x.apt}`, c = by.get(k); if (c) { c.n++; c.max = Math.max(c.max, x.amt); c.min = Math.min(c.min, x.amt); } else by.set(k, { x, n: 1, max: x.amt, min: x.amt }); });
-    const rows = [...by.values()].sort((a, b) => dealSort === 'high' ? b.max - a.max : dealSort === 'low' ? a.min - b.min : b.n - a.n || b.max - a.max).slice(0, 30);
+    const rows = [...by.values()].sort((a, b) => dealSort === 'high' ? b.max - a.max : dealSort === 'low' ? a.min - b.min : b.n - a.n || b.max - a.max).slice(0, Math.min(dealShown, 30));
     return `<ol class="dl-list dl-rank">${rows.map((r, i) => `<li><button type="button" data-di="${all.indexOf(r.x)}"><i class="dl-no">${i + 1}</i><span><b>${esc(r.x.apt)}</b><small>${esc(r.x.dong)} · ${r.n}건 · 최근 ${eok(r.x.amt)} (${r.x.m}.${r.x.d})</small></span><em>${eok(dealSort === 'low' ? r.min : r.max)}<small>${dealSort === 'low' ? '가장 싼 거래' : '가장 비싼 거래'}</small></em></button></li>`).join('')}</ol>`;
   }
   let dealRentMode = 'jeon', dealSort = 'new', dealView = 'list';
-  $('re-deals').addEventListener('change', e => { if (e.target.matches('.dl-sort')) { dealSort = e.target.value; drawDeals(); } });
+  // 목록이 너무 길어서 처음엔 5건만, 「더보기」로 10건씩 (재건축 구역 목록처럼)
+  let dealShown = 5;
+  const rankCount = list => new Set(list.map(x => `${x.dong}|${x.apt}`)).size;
+  const moreBar = n => n <= 5 ? '' : `<div class="rd-morebar dl-morebar">${dealShown < n ? `<button type="button" class="rk-more" data-dmore="1">더보기 (${Math.min(10, n - dealShown)}건 더)</button>` : ''}${dealShown > 5 ? '<button type="button" class="rk-more rd-less" data-dless="1">간략히 보기</button>' : ''}</div>`;
+  $('re-deals').addEventListener('change', e => { if (e.target.matches('.dl-sort')) { dealSort = e.target.value; dealShown = 5; drawDeals(); } });
   $('re-deals').addEventListener('click', async e => {
     const t = e.target.closest('[data-dt]'), sz = e.target.closest('[data-ds]'), it = e.target.closest('[data-di]');
+    if (e.target.closest('[data-dmore]')) { dealShown += 10; return drawDeals(); }
+    if (e.target.closest('[data-dless]')) { dealShown = 5; drawDeals(); return $('re-deals').scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+    if (t || sz || e.target.closest('[data-dv]')) dealShown = 5; // 조건을 바꾸면 다시 5건부터
     if (t) {
       dealType = t.dataset.dt === 'trade' ? 'trade' : 'rent'; dealRentMode = t.dataset.dt === 'wol' ? 'wol' : 'jeon';
       if (dealType === 'rent' && !dealData.rent) { $('re-deals').querySelector('.dl-sum, .dl-list, .re-empty')?.replaceWith(Object.assign(document.createElement('p'), { className: 're-empty', textContent: '전월세 실거래를 불러오는 중…' })); dealData.rent = await loadDeals('rent'); }
