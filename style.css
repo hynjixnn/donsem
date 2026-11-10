@@ -2659,3 +2659,39 @@ a.semi-row:hover { text-decoration: none; }
 .semi-poke { padding: 0; border: 0; background: none; cursor: pointer; flex: none; }
 .semi-poke.hop { animation: semi-hop .5s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes semi-hop { 0% { transform: scale(1, 1); } 30% { transform: translateY(-10px) scale(.92, 1.08); } 100% { transform: none; } }
+
+/* 지도: 재건축·재개발 구역 (연보라로 칠하고 이름·단계 이름표) */
+.rdz-btn { display: inline-flex; align-items: center; gap: 6px; }
+.rdz-btn i { width: 12px; height: 12px; border-radius: 3px; background: #C9B3EA; border: 1.5px solid #8B5CC9; }
+.rdz-btn.on i { background: #A47FD6; }
+.rdz-chip { display: flex; flex-direction: column; align-items: stretch; padding: 0; border: 0; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 6px rgba(40, 20, 70, .25); background: #fff; font: inherit; cursor: pointer; transform: translateY(-50%); white-space: nowrap; }
+.rdz-chip b { padding: 3px 8px; background: #51247A; color: #fff; font-size: 12px; font-weight: 700; line-height: 1.35; }
+.rdz-chip span { padding: 2px 8px 3px; color: #51247A; font-size: 11.5px; font-weight: 600; line-height: 1.35; text-align: center; }
+.rdz-chip.on { outline: 2.5px solid #A47FD6; }
+.rdz-card { position: absolute; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 30; max-width: 420px; margin: 0 auto; padding: 18px 18px 14px; border-radius: 20px; background: var(--card-solid, var(--bg)); color: var(--text); box-shadow: 0 12px 40px -8px rgba(30, 10, 60, .35); }
+.rdz-x { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--seg-bg); color: var(--text); font-size: 20px; cursor: pointer; }
+.rdz-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; background: #EFE7F9; color: #5E3290; font-size: 12px; font-weight: 700; }
+.rdz-name { display: block; margin: 6px 34px 2px 0; font-size: 19px; letter-spacing: -0.02em; }
+.rdz-st { margin: 0; font-size: 14px; font-weight: 600; color: var(--text); }
+.rdz-sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.rdz-biz { display: flex; align-items: center; gap: 18px; margin: 14px 0 4px; }
+.rdz-donut { position: relative; flex: none; width: 92px; height: 92px; border-radius: 50%; }
+.rdz-donut span { position: absolute; inset: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%; background: var(--card-solid, var(--bg)); font-size: 11px; color: var(--muted); }
+.rdz-donut span b { font-size: 15px; color: var(--text); }
+.rdz-biz ul { flex: 1; margin: 0; padding: 0; list-style: none; font-size: 13.5px; }
+.rdz-biz li { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.rdz-biz li i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.rdz-biz li b { margin-left: auto; font-weight: 700; }
+.rdz-biz li small { font-weight: 500; color: var(--muted); }
+.rdz-bizn { margin: 2px 0 10px; font-size: 11.5px; color: var(--muted); }
+.rdz-go { margin-top: 4px; }
+.rd-biz-slot:empty { display: none; }
+.rd-biz-slot { margin: 18px 0 0; }
+.rd-h3 { margin: 0 0 4px; font-size: 16px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .rdz-tag { background: rgba(182, 154, 216, .2); color: #D6C4EE; } }
+:root[data-theme="dark"] .rdz-tag { background: rgba(182, 154, 216, .2); color: #D6C4EE; }
+.rdz-src { margin: 0 0 8px; font-size: 11px; color: var(--muted); }
+.re-poi button.rdz-btn.on { background: #7040A1; border-color: #7040A1; color: #fff; }
+.re-poi button.rdz-btn.on i { background: #C9B3EA; border-color: #fff; }
+.rdz-chip.sm span { display: none; } .rdz-chip.sm b { padding: 2px 6px; font-size: 11px; }
+.re-mapwrap.full .re-fs-chips .re-poi button.rdz-btn.on { background: #7040A1; border-color: #7040A1; color: #fff; }
