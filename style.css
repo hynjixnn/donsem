@@ -2924,3 +2924,13 @@ a.mk-seller:hover { text-decoration: none; }
   .mk-heart { width: 34px; padding-right: 8px; font-size: 22px; }
   .mk-temp { min-width: 80px; }
 }
+
+/* 달력 칸 금액 (토스처럼): 아래쪽에 수입 보라 · 지출 회색 */
+.cal-amt { display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-top: 2px; max-width: 100%; }
+.cal-amt .cal-in { color: #7040A1; font-weight: 600; }
+.cal-amt .cal-out { color: var(--muted); }
+:root[data-theme="dark"] .cal-amt .cal-in { color: #B69AD8; }
+.cal-amt span { max-width: 100%; overflow: hidden; text-overflow: clip; letter-spacing: -.3px; }
+.cal-more { align-self: stretch; text-align: left; padding-left: 2px; font-weight: 600; }
+@media (max-width: 640px) { .cal-amt .cal-in, .cal-amt .cal-out { font-size: 9.5px; letter-spacing: -.4px; } }
+@media (prefers-color-scheme: dark) { :root[data-theme="auto"] .cal-amt .cal-in { color: #B69AD8; } }

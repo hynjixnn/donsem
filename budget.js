@@ -598,6 +598,9 @@
     if (p.early !== false) while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
     return iso(d);
   }
+  // 토스 가계부처럼: 칸 아래에 그날 수입(보라)·지출(회색) 금액. 일정이 많으면 첫 번째만 보이고 「+n개」로 줄여요
+  const calWon = n => n < 1e6 ? n.toLocaleString('ko-KR') : short(n);
+  const calTags = a => a.length > 1 ? a[0] + `<span class="cal-more">+${a.length - 1}개</span>` : a.join('');
   function drawCal(list) {
     const [y, m] = month.split('-').map(Number), first = new Date(y, m - 1, 1).getDay(), last = new Date(y, m, 0).getDate();
     const rows = Math.ceil((first + last) / 7), by = {}, fx = fixedByDay(y, m, last);
@@ -614,12 +617,12 @@
       const dt = new Date(y, m - 1, i - first + 1), key = iso(dt), dow = i % 7, own = key.startsWith(month), t = own && by[key];
       const ps = plansOn(key), fs = own ? fx[dt.getDate()] || [] : [], ms = own ? mcOn(key) : [];
       const hv = heat && own && t && t.out ? Math.max(.12, Math.sqrt(t.out / heatMax)) : 0; // 제곱근으로 눌러서 작은 지출도 보이게
-      const chips = ps.slice(0, 2).map(p => { const st = p.s === key || dow === 0, en = (p.e || p.s) === key || dow === 6;
+      const chips = ps.map(p => { const st = p.s === key || dow === 0, en = (p.e || p.s) === key || dow === 6;
         // 여러 날 일정은 이름이 이번 주 끝(또는 일정 끝)까지 이어지게 폭을 넓혀요
         const span = st ? Math.min(Math.round((new Date((p.e || p.s) + 'T00:00:00') - dt) / 864e5), 6 - dow) + 1 : 1;
-        return `<span class="cal-plan pc-${p.c}${st ? ' st' : ''}${en ? ' en' : ''}${span > 1 ? ' long' : ''}"${span > 1 ? ` style="--span:${span}"` : ''}>${st ? esc(p.t) : '&nbsp;'}</span>`; }).join('') + (ps.length > 2 ? `<span class="cal-more">+${ps.length - 2}</span>` : '');
+        return `<span class="cal-plan pc-${p.c}${st ? ' st' : ''}${en ? ' en' : ''}${span > 1 ? ' long' : ''}"${span > 1 ? ` style="--span:${span}"` : ''}>${st ? esc(p.t) : '&nbsp;'}</span>`; });
       cells += `<button type="button"${hv ? ` style="--heat:${hv.toFixed(2)}"` : ''} class="cal-day${hv ? ' hot' : ''}${own && nsDays.includes(key) ? ' ns' : ''}${own ? '' : ' out'}${dow === 0 ? ' sun' : dow === 6 ? ' sat' : ''}${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${dt.getMonth() + 1}월 ${dt.getDate()}일${ps.length ? ' 일정 ' + ps.map(p => p.t).join(', ') : ''}${fs.length ? ' 고정지출 ' + fs.map(x => `${x.name || x.cat} ${won(Number(x.amt))}`).join(', ') : ''}${ms.length ? ' 돈 일정 ' + ms.map(e => e.t).join(', ') : ''}${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
-        <span class="cal-n">${dt.getDate()}</span>${chips}${key === payKey ? '<span class="cal-pay">💰 월급</span>' : ''}${ms.map(e => `<span class="cal-mc ${MC_TAG[e.tag] || ''}">${esc(e.t)}</span>`).join('')}${fs.map(x => `<span class="cal-fx">${esc(x.name || x.cat || '고정지출')}</span>`).join('')}${t && t.out ? `<span class="cal-out">-${short(t.out)}</span>` : ''}${t && t.in ? `<span class="cal-in">+${short(t.in)}</span>` : ''}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
+        <span class="cal-n">${dt.getDate()}</span>${calTags([...chips, ...(key === payKey ? ['<span class="cal-pay">💰 월급</span>'] : []), ...ms.map(e => `<span class="cal-mc ${MC_TAG[e.tag] || ''}">${esc(e.t)}</span>`), ...fs.map(x => `<span class="cal-fx">${esc(x.name || x.cat || '고정지출')}</span>`)])}${t && (t.in || t.out) ? `<span class="cal-amt">${t.in ? `<span class="cal-in">+${calWon(t.in)}</span>` : ''}${t.out ? `<span class="cal-out">-${calWon(t.out)}</span>` : ''}</span>` : ''}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
     }
     const nowYm = iso(today).slice(0, 7);
     // 토스처럼 달력 위에 이달 지출·수입 합계
