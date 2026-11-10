@@ -2914,3 +2914,13 @@ a.mk-seller:hover { text-decoration: none; }
 .mk-admbtn { display: flex; flex-wrap: wrap; gap: 6px; }
 .mk-admbtn button { padding: 7px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
 .mk-admbtn button.warn { border-color: #d0342c; color: #d0342c; }
+.mk-pr b, .mk-pr small { white-space: nowrap; }
+@media (max-width: 480px) {
+  .mk-buy { gap: 8px; padding: 10px 12px; }
+  .mk-buy .btn { padding: 11px 14px; font-size: 14.5px; }
+  .mk-buy .btn.line { padding: 10px 10px; }
+  .mk-buy select { padding: 9px 6px; font-size: 14px; }
+  .mk-pr b { font-size: 17px; }
+  .mk-heart { width: 34px; padding-right: 8px; font-size: 22px; }
+  .mk-temp { min-width: 80px; }
+}
