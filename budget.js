@@ -87,12 +87,12 @@
     $('b-month').textContent = `${y}년 ${m}월`;
     const list = data.entries.filter(e => e.date.startsWith(month));
     const sumIn = list.filter(e => e.type === 'in').reduce((s, e) => s + e.amt, 0);
-    const sumOut = list.filter(e => e.type === 'out').reduce((s, e) => s + e.amt, 0);
+    const sumOut = list.filter(e => e.type === 'out').reduce((s, e) => s + e.amt, 0), outAll = sumOut + fixedPaid(y, m); // 이미 지난 고정지출도 쓴 돈이에요
     setRoll($('b-in'), won(sumIn));
-    setRoll($('b-out'), won(sumOut));
-    setRoll($('b-left'), (sumIn - sumOut < 0 ? '-' : '') + won(Math.abs(sumIn - sumOut)));
-    $('b-left').classList.toggle('minus', sumIn - sumOut < 0);
-    drawBudget(sumOut, y, m, list);
+    setRoll($('b-out'), won(outAll));
+    setRoll($('b-left'), (sumIn - outAll < 0 ? '-' : '') + won(Math.abs(sumIn - outAll)));
+    $('b-left').classList.toggle('minus', sumIn - outAll < 0);
+    drawBudget(outAll, y, m, list);
     drawPayday();
     drawStreak();
     drawUpcoming();
@@ -592,6 +592,13 @@
       .forEach(x => { const d = Math.min(Number(x.day), last); (out[d] = out[d] || []).push(x); });
     return out;
   }
+  // 이 달 고정지출 중 오늘까지 지난 것의 합 (지난달은 전부, 다음 달은 0)
+  function fixedPaid(y, m) {
+    const last = new Date(y, m, 0).getDate(), ym = `${y}-${String(m).padStart(2, '0')}`, now = iso(today).slice(0, 7);
+    const upTo = ym < now ? last : ym > now ? 0 : today.getDate(), fx = fixedByDay(y, m, last);
+    let sum = 0; for (let d = 1; d <= upTo; d++) (fx[d] || []).forEach(x => { sum += Number(x.amt); });
+    return sum;
+  }
   function payDayOf(y, m) { // 이 달 월급날 (주말이면 금요일로 당겨요, 32는 말일)
     const p = data.payday;
     if (!p) return '';
@@ -646,7 +653,7 @@
     }
     const nowYm = iso(today).slice(0, 7);
     // 토스처럼 달력 위에 이달 지출·수입 합계
-    const tot = list.reduce((o, e) => (o[e.type] += e.amt, o), { in: 0, out: 0 });
+    const tot = list.reduce((o, e) => (o[e.type] += e.amt, o), { in: 0, out: fixedPaid(y, m) }); // 오늘까지 지난 고정지출(애플뮤직 같은 구독)도 지출에 넣어요. 아직 안 온 날은 빼요
     const sumHTML = `<div class="cal-sum"><div class="cal-tot"><div><span>지출</span><b>${tot.out ? '-' : ''}${won(tot.out)}</b></div><div><span>수입</span><b>${tot.in ? '+' : ''}${won(tot.in)}</b></div></div>${paceHTML(y, m)}${budgetLine(tot.out)}</div>`;
     $('b-cal').dataset.th = deco.th;
     $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-head"><button type="button" data-cm="-1" aria-label="이전 달">‹</button>
