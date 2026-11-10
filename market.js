@@ -1,5 +1,5 @@
 /* 돈셈 중고거래: 동네 직거래 장터 (당근처럼). 돈은 오가지 않고 글·사진·채팅만 이어 줘요.
-   화면은 한 페이지에서 주소 뒤 #로 바뀌어요: (목록) #i=글 #new 글쓰기 #chats 채팅 #c=채팅방 #my 내 판매 #region 동네 */
+   화면은 한 페이지에서 주소 뒤 #로 바뀌어요: (목록) #i=글 #new 글쓰기 #chats 채팅 #c=채팅방 #my 내 판매 #region 동네 #u=이웃 프로필 #admin 관리자 */
 (() => {
   const API = 'https://donsem-counter.hjjung330.workers.dev';
   const KAKAO_KEY = '659255150dcc2175d56e029a25d0d460'; // 지도용 카카오 키 (동네 찾기에 써요)
@@ -14,6 +14,12 @@
   const ST = { sale: '', hold: '<span class="mk-badge hold">예약중</span>', done: '<span class="mk-badge done">거래완료</span>' };
   const img = id => id ? `${API}/m/img/${id}` : '';
   const wait = t => `<p class="re-empty semi-wait">${t}</p>`;
+  // 매너온도 (당근처럼 36.5도에서 시작): 숫자·막대·얼굴
+  const tempEl = (t, big) => { const c = t >= 50 ? '#FF6B00' : t >= 40 ? '#FF9F0A' : t >= 36.5 ? '#3182F6' : '#8E8E93', f = t >= 50 ? '😆' : t >= 40 ? '😊' : t >= 36.5 ? '🙂' : '😐';
+    return `<span class="mk-temp${big ? ' big' : ''}" title="매너온도: 거래 후기가 좋으면 올라가요"><b style="color:${c}">${t.toFixed(1)}°C ${f}</b><i><s style="width:${Math.min(100, t)}%;background:${c}"></s></i><small>매너온도</small></span>`; };
+  let unread = 0;
+  const unBadge = () => unread ? `<em class="mk-un dot">${unread > 99 ? '99+' : unread}</em>` : '';
+  const setUnread = n => { unread = n || 0; document.querySelectorAll('.mk-ico.chat').forEach(a => { a.innerHTML = '💬' + unBadge(); }); document.title = (unread ? `(${unread}) ` : '') + document.title.replace(/^\(\d+\+?\) /, ''); };
 
   // 로그인: 카카오에서 돌아오면 주소 끝에 #t=열쇠가 붙어 와요
   let token = get(TK), me = null, cats = [], loginOn = false;
@@ -45,7 +51,7 @@
   async function loadList(reset) {
     if (loading) return; loading = true;
     if (reset) { list = []; more = true; }
-    const before = list.length ? list[list.length - 1].id : '';
+    const before = list.length ? list[list.length - 1].bumped : ''; // 끌어올린 글이 위로 오니까 끌올 시각으로 다음 쪽을 불러요
     try {
       const d = await api(`/m/items?${new URLSearchParams({ sgg: wide || !region ? '' : region.sgg, q, cat, before })}`);
       list = list.concat(d.items); more = d.items.length === 30;
@@ -53,10 +59,10 @@
     loading = false; if (view() === 'list') drawList();
   }
   const row = x => `<li><a class="mk-row" href="#i=${x.id}"><span class="mk-th">${x.imgs[0] ? `<img src="${img(x.imgs[0])}" alt="" loading="lazy">` : '<i aria-hidden="true">📦</i>'}</span>
-    <span class="mk-info"><b>${esc(x.title)}</b><small>${esc(x.region)} · ${ago(x.created)}</small><em>${ST[x.status] || ''}${wonTxt(x.price)}</em>${x.chats ? `<small class="mk-meta">💬 ${x.chats}</small>` : ''}</span></a></li>`;
+    <span class="mk-info"><b>${esc(x.title)}</b><small>${esc(x.region)} · ${x.bumped - x.created > 6e4 ? '끌올 ' : ''}${ago(x.bumped || x.created)}</small><em>${ST[x.status] || ''}${wonTxt(x.price)}</em>${x.chats || x.likes ? `<small class="mk-meta">${x.chats ? `💬 ${x.chats}` : ''}${x.likes ? ` ♡ ${x.likes}` : ''}</small>` : ''}</span></a></li>`;
   function drawList() {
     root.innerHTML = `<div class="mk-top"><button type="button" class="mk-where" data-go="#region">📍 ${region ? esc(wide ? '전국' : region.region.split(' ')[0]) : '내 동네 정하기'} <i aria-hidden="true">▾</i></button>
-        <div class="mk-topbtns"><a href="#chats" class="mk-ico" aria-label="채팅">💬</a><a href="#my" class="mk-ico" aria-label="내 판매">👤</a></div></div>
+        <div class="mk-topbtns"><a href="#chats" class="mk-ico chat" aria-label="채팅">💬${unBadge()}</a><a href="#my" class="mk-ico" aria-label="나의 중고거래">👤</a></div></div>
       <form class="mk-search" data-act="search"><input type="search" placeholder="${region && !wide ? esc(region.region.split(' ')[0]) + ' 근처에서' : '전국에서'} 찾기 (예: 아이폰, 유모차)" value="${esc(q)}" enterkeyhint="search" aria-label="물건 찾기"></form>
       <div class="mk-chips"><button type="button" class="${!cat ? 'on' : ''}" data-cat="">전체</button>${cats.map(c => `<button type="button" class="${cat === c ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>
       ${region ? `<div class="mk-scope"><button type="button" class="${!wide ? 'on' : ''}" data-wide="0">${esc(region.region.split(' ')[0])}</button><button type="button" class="${wide ? 'on' : ''}" data-wide="1">전국</button></div>` : ''}
@@ -74,15 +80,15 @@
     root.innerHTML = `<div class="mk-bar"><a href="#" class="mk-back" aria-label="목록으로">‹</a><span></span>${mine ? '' : '<button type="button" class="mk-rep" data-act="report">신고</button>'}</div>
       <div class="mk-pics">${x.imgs.length ? x.imgs.map(i => `<img src="${img(i)}" alt="${esc(x.title)} 사진">`).join('') : '<div class="mk-nopic">📦</div>'}</div>
       ${x.imgs.length > 1 ? `<p class="mk-pn">사진 ${x.imgs.length}장 · 옆으로 밀어서 보기</p>` : ''}
-      <div class="mk-seller"><span class="mk-av">${esc(x.seller.nick.slice(0, 1))}</span><div><b>${esc(x.seller.nick)}</b><small>${esc(x.region)}</small></div></div>
+      <a class="mk-seller" href="#u=${x.seller.id}"><span class="mk-av">${esc(x.seller.nick.slice(0, 1))}</span><div><b>${esc(x.seller.nick)}</b><small>${esc(x.region)}</small></div>${tempEl(x.seller.temp || 36.5)}</a>
       <h1 class="mk-title">${ST[x.status] || ''}${esc(x.title)}</h1>
-      <p class="mk-sub">${esc(x.cat)} · ${ago(x.created)} · 관심 있는 이웃 💬 ${x.chats} · 조회 ${x.views}</p>
+      <p class="mk-sub">${esc(x.cat)} · ${x.bumped - x.created > 6e4 ? '끌올 ' : ''}${ago(x.bumped || x.created)} · 채팅 ${x.chats} · 관심 ${x.likes} · 조회 ${x.views}</p>
       <div class="mk-body">${esc(x.body).replace(/\n/g, '<br>') || '<span class="mk-muted">설명이 없어요.</span>'}</div>
       <div class="mk-price-hint" id="mk-hint"></div>
       ${d.more.length ? `<h3 class="mk-h">${esc(x.seller.nick)}님의 다른 물건</h3><ul class="mk-list">${d.more.map(row).join('')}</ul>` : ''}
-      <div class="mk-buy"><b>${wonTxt(x.price)}</b>${mine ? `<select data-act="status" aria-label="거래 상태"><option value="sale"${x.status === 'sale' ? ' selected' : ''}>판매중</option><option value="hold"${x.status === 'hold' ? ' selected' : ''}>예약중</option><option value="done"${x.status === 'done' ? ' selected' : ''}>거래완료</option></select><button type="button" class="btn line" data-act="del">지우기</button>`
-        : `<button type="button" class="btn fill" data-act="chat">채팅하기</button>`}</div>`;
-    root.dataset.item = x.id; root.dataset.title = x.title;
+      <div class="mk-buy">${mine ? '' : `<button type="button" class="mk-heart${x.liked ? ' on' : ''}" data-act="like" aria-pressed="${x.liked}" aria-label="관심 목록에 넣기">${x.liked ? '❤️' : '🤍'}</button>`}<div class="mk-pr"><b>${wonTxt(x.price)}</b>${x.price ? `<small class="${x.nego ? 'nego' : ''}">${x.nego ? '가격 제안 받아요' : '가격 제안 안 받아요'}</small>` : ''}</div>${mine ? `<button type="button" class="btn line" data-act="bump" title="하루에 한 번 목록 맨 위로 올려요">⬆️ 끌올</button><select data-act="status" aria-label="거래 상태"><option value="sale"${x.status === 'sale' ? ' selected' : ''}>판매중</option><option value="hold"${x.status === 'hold' ? ' selected' : ''}>예약중</option><option value="done"${x.status === 'done' ? ' selected' : ''}>거래완료</option></select><button type="button" class="btn line" data-act="del">지우기</button>`
+        : `${x.nego && x.status === 'sale' ? '<button type="button" class="btn line" data-act="offer">가격 제안</button>' : ''}<button type="button" class="btn fill" data-act="chat">채팅하기</button>`}</div>`;
+    root.dataset.item = x.id; root.dataset.title = x.title; root.dataset.price = x.price;
     hint(x.title, document.getElementById('mk-hint'), x.price);
   }
   // 셈이 시세: 비슷한 이름으로 올라온 물건 가격을 모아서 알려 줘요
@@ -106,7 +112,7 @@
         <label>제목<input name="title" maxlength="40" placeholder="예: 아이폰 15 128GB 블루" required></label>
         <label>분류<select name="cat">${cats.map(c => `<option>${esc(c)}</option>`).join('')}</select></label>
         <label>가격<div class="mk-won"><input name="price" inputmode="numeric" placeholder="0" autocomplete="off"><span>원</span></div></label>
-        <label class="mk-free"><input type="checkbox" name="free"> 나눔할게요 (0원)</label>
+        <div class="mk-opts"><label class="mk-free"><input type="checkbox" name="nego"> 가격 제안 받기</label><label class="mk-free"><input type="checkbox" name="free"> 나눔할게요 (0원)</label></div>
         <div class="mk-price-hint" id="mk-hint"></div>
         <label>자세한 설명<textarea name="body" rows="7" maxlength="2000" placeholder="산 때, 쓴 기간, 흠집 같은 상태를 솔직하게 적어 주세요.&#10;만날 곳이나 시간도 적으면 좋아요."></textarea></label>
         <p class="mk-where2">📍 거래할 동네: <b>${esc(region.region)}</b> <a href="#region">바꾸기</a></p>
@@ -116,7 +122,7 @@
     let t = 0; const form = root.querySelector('form');
     form.title.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => hint(form.title.value, document.getElementById('mk-hint'), +form.price.value.replace(/\D/g, '')), 500); });
     form.price.addEventListener('input', () => { const d = form.price.value.replace(/\D/g, ''); form.price.value = d ? (+d).toLocaleString('ko-KR') : ''; if (d) form.free.checked = false; });
-    form.free.addEventListener('change', () => { if (form.free.checked) form.price.value = ''; });
+    form.free.addEventListener('change', () => { if (form.free.checked) { form.price.value = ''; form.nego.checked = false; } });
   }
   // 사진을 1200px 아래 JPEG로 줄여서 올려요 (아이폰 HEIC도 여기서 JPEG로 바뀌어요)
   const shrink = f => new Promise((ok, no) => { const u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const k = Math.min(1, 1200 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob(b => b ? ok(b) : no(), 'image/jpeg', .82); }; im.onerror = no; im.src = u; });
@@ -143,6 +149,7 @@
     room = id; lastMsg = 0;
     root.innerHTML = `<div class="mk-bar"><a href="#chats" class="mk-back">‹</a><b id="mk-other">채팅</b><span></span></div><a class="mk-ritem" id="mk-ritem" href="#"></a>
       <div class="mk-msgs" id="mk-msgs">${wait('대화를 불러오고 있어요')}</div>
+      <div id="mk-rv"></div>
       <p class="mk-warn">🛡️ 만나기 전에 돈을 먼저 보내 달라는 말은 사기일 수 있어요.</p>
       <form class="mk-send" data-act="send"><input name="t" maxlength="500" placeholder="메시지 보내기" autocomplete="off" enterkeyhint="send" aria-label="메시지"><button type="submit" aria-label="보내기">↑</button></form>`;
     await pull(true);
@@ -151,26 +158,67 @@
   async function pull(first, sent) {
     let d; try { d = sent || await api(`/m/msgs?chat=${room}&after=${lastMsg}`); } catch (e) { if (first) document.getElementById('mk-msgs').innerHTML = '<p class="re-empty">채팅방을 열 수 없어요.</p>'; return; }
     const box = document.getElementById('mk-msgs'); if (!box) return;
-    if (first) { box.innerHTML = ''; document.getElementById('mk-other').textContent = d.other || '채팅'; const it = d.item, ri = document.getElementById('mk-ritem'); if (it) { ri.href = '#i=' + it.id; ri.innerHTML = `${it.img ? `<img src="${img(it.img)}" alt="">` : '<i>📦</i>'}<span><b>${ST[it.status] || ''}${esc(it.title)}</b><small>${wonTxt(it.price)}</small></span>`; } }
+    if (first) { box.innerHTML = ''; document.getElementById('mk-other').textContent = d.other || '채팅'; const it = d.item, ri = document.getElementById('mk-ritem'); if (it) { ri.href = '#i=' + it.id; ri.innerHTML = `${it.img ? `<img src="${img(it.img)}" alt="">` : '<i>📦</i>'}<span><b>${ST[it.status] || ''}${esc(it.title)}</b><small>${wonTxt(it.price)}</small></span>`; }
+      document.getElementById('mk-other').innerHTML = d.otherId ? `<a href="#u=${d.otherId}">${esc(d.other || '채팅')}</a>` : esc(d.other || '채팅');
+      reviewBox(d); }
     if (d.msgs.some(m => m.id > lastMsg)) { const h = box.querySelector('.mk-hello'); if (h) h.remove(); } // 첫 메시지를 보내면 인사 안내는 치워요
     d.msgs.filter(m => m.id > lastMsg).forEach(m => { const el = document.createElement('div'); el.className = 'mk-msg' + (m.uid === d.me ? ' me' : ''); el.innerHTML = `<p>${esc(m.text)}</p><small>${new Date(m.created).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' })}</small>`; box.append(el); lastMsg = m.id; });
     if (first && !d.msgs.length) box.innerHTML = '<p class="mk-hello">상대에게 첫 인사를 보내 보세요. 예: "안녕하세요! 아직 판매 중인가요?"</p>';
     box.scrollTop = box.scrollHeight;
   }
 
+  // 거래 후기: 거래완료가 되면 채팅방에서 서로 남겨요 → 매너온도가 바뀌어요
+  function reviewBox(d) {
+    const el = document.getElementById('mk-rv'); if (!el || !d.item || d.item.status !== 'done') return;
+    if (d.reviewed) { el.innerHTML = `<p class="mk-rvdone">${d.reviewed === 'good' ? '😊' : '😞'} ${esc(d.other)}님에게 후기를 남겼어요. 고마워요!</p>`; return; }
+    el.innerHTML = `<form class="mk-review" data-act="review"><img src="/icons/semi-happy.svg" width="40" height="40" alt=""><div><b>${esc(d.other)}님과 거래는 어떠셨나요?</b>
+      <div class="mk-rvbtn"><button type="button" data-good="1">😊 좋았어요</button><button type="button" data-good="0">😞 아쉬웠어요</button></div>
+      <input name="t" maxlength="200" placeholder="한 줄 후기 (선택) 예: 친절하고 시간 약속을 잘 지켜요"><button type="submit" class="btn fill" disabled>후기 남기기</button></div></form>`;
+  }
+
+  // ── 이웃 프로필 (당근 프로필처럼) ──
+  async function drawUser(id) {
+    const bar = `<div class="mk-bar"><a href="javascript:history.back()" class="mk-back" aria-label="뒤로">‹</a><b>프로필</b><span></span></div>`;
+    root.innerHTML = bar + wait('프로필을 불러오고 있어요');
+    let d; try { d = await api('/m/user?id=' + id); } catch (e) { root.innerHTML = bar + `<div class="mk-empty"><b>${esc(e.message || '프로필을 찾지 못했어요.')}</b></div>`; return; }
+    const u = d.user, sale = d.items.filter(x => x.status !== 'done'), done = d.items.length - sale.length;
+    root.innerHTML = bar + `<div class="mk-prof"><span class="mk-av big">${esc(u.nick.slice(0, 1))}</span><div><b>${esc(u.nick)}</b><small>📍 ${esc(u.region || '동네 미정')} · ${new Date(u.since).getFullYear()}년 ${new Date(u.since).getMonth() + 1}월 가입</small></div></div>
+      ${tempEl(u.temp, 1)}
+      <div class="mk-stat"><span><b>${sale.length}</b>판매 물건</span><span><b>${done}</b>거래완료</span><span><b>${u.good}</b>좋은 후기</span></div>
+      <h3 class="mk-h">판매 물건</h3>${d.items.length ? `<ul class="mk-list">${d.items.map(row).join('')}</ul>` : '<p class="mk-muted">아직 올린 물건이 없어요.</p>'}
+      <h3 class="mk-h">받은 거래 후기 ${u.reviews}</h3>${d.revs.length ? `<ul class="mk-revs">${d.revs.map(r => `<li><span class="mk-av">${esc(r.nick.slice(0, 1))}</span><div><b>${esc(r.nick)} <small>${ago(r.created)}</small></b><p>${r.good ? '😊' : '😞'} ${esc(r.text || (r.good ? '좋은 거래였어요.' : '조금 아쉬웠어요.'))}</p></div></li>`).join('')}</ul>` : '<p class="mk-muted">아직 받은 후기가 없어요.</p>'}`;
+  }
+
+  // ── 관리자 (돈셈 운영자만 보여요) ──
+  async function drawAdmin() {
+    const bar = `<div class="mk-bar"><a href="#my" class="mk-back">‹</a><b>관리자 · 신고 처리</b><span></span></div>`;
+    if (!me || !me.admin) { root.innerHTML = bar + '<div class="mk-empty"><b>운영자만 볼 수 있어요.</b></div>'; return; }
+    root.innerHTML = bar + wait('신고를 불러오고 있어요');
+    let d; try { d = await api('/m/admin/reports'); } catch (e) { root.innerHTML = bar + '<p class="re-empty">불러오지 못했어요.</p>'; return; }
+    root.innerHTML = bar + `<div class="mk-stat"><span><b>${d.stats.users}</b>회원</span><span><b>${d.stats.items}</b>글</span><span><b>${d.stats.chats}</b>채팅</span></div>
+      ${d.reports.length ? `<ul class="mk-adm">${d.reports.map(r => `<li data-item="${r.id}" data-uid="${r.uid}"><a href="#i=${r.id}" class="mk-th">${r.img ? `<img src="${img(r.img)}" alt="">` : '<i>📦</i>'}</a>
+        <div><b>${esc(r.title)}</b><small>${esc(r.nick)} · 신고 ${r.n}번 · ${ago(r.last)} ${r.hidden ? '· <em class="mk-badge hold">숨김</em>' : ''}${r.status === 'del' ? ' · <em class="mk-badge done">지움</em>' : ''}${r.banned ? ' · <em class="mk-badge done">이용 제한</em>' : ''}</small><p>${esc(r.reasons)}</p>
+        <div class="mk-admbtn">${r.hidden ? '<button type="button" data-adm="show">다시 보이기</button>' : '<button type="button" data-adm="hide">숨기기</button>'}<button type="button" data-adm="del">지우기</button><button type="button" data-adm="clear">문제없음</button><button type="button" data-adm="${r.banned ? 'unban' : 'ban'}" class="warn">${r.banned ? '제한 풀기' : '이용 제한'}</button></div></div></li>`).join('')}</ul>`
+        : '<div class="mk-empty"><img src="/icons/semi-happy.svg" width="72" height="72" alt=""><b>들어온 신고가 없어요</b></div>'}`;
+  }
+
   // ── 내 판매 · 내 정보 ──
   async function drawMy() {
     if (!me) { root.innerHTML = `<div class="mk-bar"><a href="#" class="mk-back">‹</a><b>나의 중고거래</b><span></span></div>` + needLogin('내 판매 글을 보려면 로그인해 주세요'); return; }
     root.innerHTML = `<div class="mk-bar"><a href="#" class="mk-back">‹</a><b>나의 중고거래</b><span></span></div>` + wait('내 글을 불러오고 있어요');
-    let d; try { d = await api('/m/mine'); } catch (e) { return; }
-    const by = s => d.items.filter(x => x.status === s).length;
+    let d, lk; try { [d, lk] = await Promise.all([api('/m/mine'), api('/m/liked')]); } catch (e) { return; }
+    const by = s => d.items.filter(x => x.status === s).length, tab = myTab;
     root.innerHTML = `<div class="mk-bar"><a href="#" class="mk-back">‹</a><b>나의 중고거래</b><span></span></div>
-      <div class="mk-me"><span class="mk-av big">${esc(me.nick.slice(0, 1))}</span><div><b>${esc(me.nick)}</b><small>📍 ${esc(region ? region.region : '동네를 정해 주세요')}</small></div><button type="button" class="btn line" data-act="nick">닉네임 바꾸기</button></div>
+      <div class="mk-me"><span class="mk-av big">${esc(me.nick.slice(0, 1))}</span><div><b>${esc(me.nick)}</b><small>📍 ${esc(region ? region.region : '동네를 정해 주세요')}</small><a href="#u=${me.id}" class="mk-link">내 프로필 보기 ›</a></div><button type="button" class="btn line" data-act="nick">닉네임 바꾸기</button></div>
+      ${me.admin ? '<a class="mk-admin" href="#admin">🛠️ 관리자 · 신고 처리 ›</a>' : ''}
       <div class="mk-stat"><span><b>${by('sale')}</b>판매중</span><span><b>${by('hold')}</b>예약중</span><span><b>${by('done')}</b>거래완료</span></div>
-      ${d.items.length ? `<ul class="mk-list">${d.items.map(row).join('')}</ul>` : '<div class="mk-empty"><b>아직 올린 물건이 없어요</b><p><a href="#new">첫 물건 올리기 ›</a></p></div>'}
-      <p class="mk-out"><button type="button" class="mk-link" data-act="logout">로그아웃</button></p>`;
+      <div class="mk-tabs" role="tablist"><button type="button" role="tab" class="${tab === 'sell' ? 'on' : ''}" data-tab="sell">판매내역 ${d.items.length}</button><button type="button" role="tab" class="${tab === 'like' ? 'on' : ''}" data-tab="like">관심목록 ${lk.items.length}</button></div>
+      ${tab === 'sell' ? (d.items.length ? `<ul class="mk-list">${d.items.map(row).join('')}</ul>` : '<div class="mk-empty"><b>아직 올린 물건이 없어요</b><p><a href="#new">첫 물건 올리기 ›</a></p></div>')
+        : (lk.items.length ? `<ul class="mk-list">${lk.items.map(row).join('')}</ul>` : '<div class="mk-empty"><img src="/icons/semi-default.svg" width="72" height="72" alt=""><b>관심 있는 물건이 없어요</b><p>물건 글에서 🤍를 누르면 여기에 모여요.</p></div>')}
+      <p class="mk-out"><button type="button" class="mk-link" data-act="logout">로그아웃</button> · <button type="button" class="mk-link" data-act="leave">계정 지우기</button></p>`;
   }
 
+  let myTab = 'sell';
   // ── 동네 정하기 ──
   function drawRegion() {
     root.innerHTML = `<div class="mk-bar"><a href="#" class="mk-back">‹</a><b>내 동네 정하기</b><span></span></div>
@@ -192,25 +240,50 @@
   }
 
   // ── 화면 고르기 ──
-  const view = () => { const h = location.hash; return /^#i=\d+/.test(h) ? 'item' : h === '#new' ? 'new' : h === '#chats' ? 'chats' : /^#c=\d+/.test(h) ? 'room' : h === '#my' ? 'my' : h === '#region' ? 'region' : 'list'; };
+  const view = () => { const h = location.hash; return /^#i=\d+/.test(h) ? 'item' : h === '#new' ? 'new' : h === '#chats' ? 'chats' : /^#c=\d+/.test(h) ? 'room' : h === '#my' ? 'my' : h === '#region' ? 'region' : /^#u=\d+/.test(h) ? 'user' : h === '#admin' ? 'admin' : 'list'; };
   function route() {
     clearInterval(poll); delete root.dataset.item;
     const v = view(), n = +(location.hash.split('=')[1] || 0);
     document.body.classList.toggle('mk-in', v !== 'list');
-    if (v === 'item') drawItem(n); else if (v === 'new') drawNew(); else if (v === 'chats') drawChats(); else if (v === 'room') drawRoom(n); else if (v === 'my') drawMy(); else if (v === 'region') drawRegion();
+    if (v === 'item') drawItem(n); else if (v === 'new') drawNew(); else if (v === 'chats') drawChats(); else if (v === 'room') drawRoom(n); else if (v === 'my') drawMy(); else if (v === 'region') drawRegion(); else if (v === 'user') drawUser(n); else if (v === 'admin') drawAdmin();
     else { drawList(); if (!list.length) loadList(true); }
     window.scrollTo(0, 0);
   }
   addEventListener('hashchange', route);
 
   root.addEventListener('click', async e => {
-    const t = e.target.closest('[data-act], [data-go], [data-cat], [data-wide], [data-rg]'); if (!t) return;
+    const t = e.target.closest('[data-act], [data-go], [data-cat], [data-wide], [data-rg], [data-tab], [data-good], [data-adm]'); if (!t) return;
     const a = t.dataset.act;
     if (t.dataset.go) location.hash = t.dataset.go;
     else if (t.dataset.cat !== undefined) { cat = t.dataset.cat; loadList(true); drawList(); }
     else if (t.dataset.wide !== undefined) { wide = t.dataset.wide === '1'; loadList(true); drawList(); }
     else if (t.dataset.rg) { setRegion(JSON.parse(t.dataset.rg)); wide = false; say(`내 동네를 ${region.region}(으)로 정했어요.`); location.hash = ''; loadList(true); }
+    else if (t.dataset.tab) { myTab = t.dataset.tab; drawMy(); }
+    else if (t.dataset.good !== undefined) { const f = t.closest('form'); f.dataset.good = t.dataset.good; f.querySelectorAll('[data-good]').forEach(b => b.classList.toggle('on', b === t)); f.querySelector('[type=submit]').disabled = false; }
+    else if (t.dataset.adm) {
+      const li = t.closest('li'), act = t.dataset.adm, msg = { del: '이 글을 지울까요?', ban: '이 사람의 이용을 막을까요? 글이 모두 숨겨지고 로그아웃돼요.' }[act];
+      if (msg && !confirm(msg)) return;
+      try { await post('/m/admin/act', { act, item: +li.dataset.item, uid: +li.dataset.uid }); say('처리했어요.'); drawAdmin(); } catch (err) { say('처리하지 못했어요.'); }
+    }
     else if (a === 'login') login();
+    else if (a === 'like') {
+      if (!me) return login();
+      try { const d = await post('/m/like', { item: +root.dataset.item }); t.classList.toggle('on', d.liked); t.textContent = d.liked ? '❤️' : '🤍'; t.setAttribute('aria-pressed', d.liked); say(d.liked ? '관심 목록에 넣었어요. 「나의 중고거래」에서 볼 수 있어요.' : '관심 목록에서 뺐어요.'); list = []; } catch (err) { say('지금은 누르지 못했어요.'); }
+    }
+    else if (a === 'bump') {
+      try { await post('/m/bump', { id: +root.dataset.item }); say('⬆️ 끌어올렸어요! 목록 맨 위에 보여요.'); list = []; } catch (err) { say(err.message || '끌어올리지 못했어요.'); }
+    }
+    else if (a === 'offer') {
+      if (!me) return login();
+      const v = prompt(`얼마에 사고 싶나요? (판매 가격 ${wonTxt(+root.dataset.price)})`); if (!v) return;
+      const n = +v.replace(/\D/g, ''); if (!n) return say('숫자로 적어 주세요.');
+      try { const d = await post('/m/chat/open', { item: +root.dataset.item }); await post('/m/msgs', { chat: d.chat, text: `💬 가격 제안: ${n.toLocaleString('ko-KR')}원에 살 수 있을까요?` }); location.hash = '#c=' + d.chat; } catch (err) { say(err.message || '제안하지 못했어요.'); }
+    }
+    else if (a === 'leave') {
+      if (!confirm('계정을 지울까요?\n내가 올린 글·사진·채팅·관심목록·후기가 모두 지워지고 되돌릴 수 없어요.')) return;
+      if (prompt('정말 지우려면 「지우기」라고 적어 주세요.') !== '지우기') return say('계정을 지우지 않았어요.');
+      try { await post('/m/account/delete', {}); token = null; me = null; put(TK, null); list = []; say('계정을 지웠어요. 그동안 고마웠어요.'); location.hash = ''; } catch (err) { say('지우지 못했어요. 잠시 뒤 다시 해 주세요.'); }
+    }
     else if (a === 'more') loadList();
     else if (a === 'gps') {
       if (!navigator.geolocation) return say('이 기기에서는 위치를 알 수 없어요. 이름으로 찾아 주세요.');
@@ -252,10 +325,14 @@
       const v = f.t.value.trim(); if (!v) return; f.t.value = '';
       try { const d = await post('/m/msgs?after=' + lastMsg, { chat: room, text: v }); pull(false, d); } catch (err) { f.t.value = v; say(err.message || '보내지 못했어요.'); }
     }
+    else if (a === 'review') {
+      const b = f.querySelector('[type=submit]'); b.disabled = true;
+      try { await post('/m/review', { chat: room, good: f.dataset.good === '1', text: f.t.value }); say('후기를 남겼어요. 이웃의 매너온도에 반영돼요!'); document.getElementById('mk-rv').innerHTML = `<p class="mk-rvdone">${f.dataset.good === '1' ? '😊' : '😞'} 후기를 남겼어요. 고마워요!</p>`; } catch (err) { b.disabled = false; say(err.message || '후기를 남기지 못했어요.'); }
+    }
     else if (a === 'submit') {
       const b = f.querySelector('button[type=submit]'); b.disabled = true; b.textContent = '올리고 있어요…';
       try {
-        const d = await post('/m/items', { title: f.title.value, cat: f.cat.value, price: f.free.checked ? 0 : +f.price.value.replace(/\D/g, ''), body: f.body.value, region: region.region, sgg: region.sgg, imgs: pics });
+        const d = await post('/m/items', { title: f.title.value, cat: f.cat.value, price: f.free.checked ? 0 : +f.price.value.replace(/\D/g, ''), body: f.body.value, region: region.region, sgg: region.sgg, imgs: pics, nego: f.nego.checked });
         say('물건을 올렸어요!'); list = []; location.hash = '#i=' + d.id;
       } catch (err) { b.disabled = false; b.textContent = '올리기'; say(err.message || '올리지 못했어요.'); }
     }
@@ -263,5 +340,11 @@
 
   // 시작: 내 정보 → 화면
   api('/m/me').then(d => { me = d.me; cats = d.cats || []; loginOn = d.login; if (me && me.sgg && !region) { region = { sgg: me.sgg, region: me.region }; put(RG, JSON.stringify(region)); } else if (me && region && me.sgg !== region.sgg) post('/m/me', { region: region.region, sgg: region.sgg }).catch(() => {}); })
-    .catch(() => {}).finally(route);
+    .catch(() => {}).finally(() => { route(); if (me) setUnread(me.unread); });
+  // 새 채팅 알림: 30초마다 안 읽은 메시지를 세어 💬 위에 숫자로 보여 줘요
+
+  setInterval(async () => {
+    if (!token || document.visibilityState !== 'visible' || view() === 'room') return;
+    try { const d = await api('/m/me'); if (!d.me) return; if (d.me.unread > unread) say(`💬 새 메시지 ${d.me.unread - unread}개가 왔어요.`); setUnread(d.me.unread); } catch (e) { /* 다음에 다시 */ }
+  }, 30000);
 })();

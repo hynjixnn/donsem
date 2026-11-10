@@ -2855,3 +2855,62 @@ a.semi-row:hover { text-decoration: none; }
 .mk-region .mk-search { width: 100%; }
 .mk-legal { margin: 6px 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
 body.mk-in .st-tabs { display: none; }
+
+/* 중고거래 2단계: 관심·매너온도·프로필·후기·끌올·가격제안·관리자 (당근 벤치마킹) */
+.mk-ico { position: relative; }
+.mk-un.dot { position: absolute; top: -4px; right: -6px; min-width: 18px; padding: 1px 5px; font-size: 11px; line-height: 16px; }
+a.mk-seller { color: var(--text); }
+a.mk-seller:hover { text-decoration: none; }
+.mk-seller .mk-temp { margin-left: auto; }
+.mk-temp { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 3px; min-width: 92px; }
+.mk-temp b { font-size: 14.5px !important; white-space: nowrap; }
+.mk-temp i { display: block; width: 100%; height: 5px; border-radius: 99px; background: color-mix(in srgb, var(--line) 70%, transparent); overflow: hidden; }
+.mk-temp s { display: block; height: 100%; border-radius: 99px; }
+.mk-temp small { font-size: 11.5px !important; color: var(--muted); text-decoration: underline dotted; }
+.mk-temp.big { display: flex; align-items: stretch; margin: 4px 0 14px; padding: 14px 16px; border-radius: 14px; background: var(--card); }
+.mk-temp.big b { font-size: 20px !important; }
+.mk-temp.big i { height: 8px; }
+.mk-heart { flex: none; width: 44px; height: 44px; border: 0; border-right: 1px solid var(--line); background: none; font-size: 24px; cursor: pointer; padding: 0 10px 0 0; transition: transform .15s; }
+.mk-heart.on { animation: mk-pop .3s; }
+@keyframes mk-pop { 50% { transform: scale(1.3); } }
+.mk-pr { flex: 1; min-width: 0; }
+.mk-pr b { display: block; font-size: 19px; }
+.mk-pr small { font-size: 12px; color: var(--muted); }
+.mk-pr small.nego { color: var(--blue); font-weight: 600; }
+.mk-buy .btn.line { padding: 11px 14px; }
+.mk-opts { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.mk-tabs { display: flex; margin: 16px 0 4px; border-bottom: 1px solid var(--line); }
+.mk-tabs button { flex: 1; padding: 12px 0; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; color: var(--muted); font: inherit; font-weight: 600; cursor: pointer; }
+.mk-tabs button.on { color: var(--text); border-color: var(--text); }
+.mk-me > div { min-width: 0; }
+.mk-me .mk-link { display: inline-block; margin-top: 2px; font-size: 13px; }
+.mk-admin { display: block; margin: 0 0 12px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, #7040A1 12%, var(--card)); color: #7040A1; font-weight: 700; }
+.mk-prof { display: flex; align-items: center; gap: 14px; margin: 16px 0 10px; }
+.mk-prof b { display: block; font-size: 18px; }
+.mk-prof small { font-size: 13px; color: var(--muted); }
+.mk-revs { list-style: none; margin: 0 0 100px; padding: 0; }
+.mk-revs li { display: flex; gap: 10px; padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.mk-revs b { font-size: 14px; }
+.mk-revs b small { font-weight: 400; color: var(--muted); font-size: 12px; }
+.mk-revs p { margin: 3px 0 0; font-size: 14.5px; }
+.mk-review { display: flex; gap: 10px; margin: 8px 0; padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--blue) 8%, var(--card)); }
+.mk-review > div { flex: 1; display: grid; gap: 8px; min-width: 0; }
+.mk-review b { font-size: 14.5px; }
+.mk-rvbtn { display: flex; gap: 8px; }
+.mk-rvbtn button { flex: 1; padding: 10px 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+.mk-rvbtn button.on { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 14%, var(--bg)); color: var(--blue); font-weight: 700; }
+.mk-review input { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: inherit; font-size: 14px; min-width: 0; }
+.mk-review .btn { padding: 10px; }
+.mk-review .btn:disabled { opacity: .45; }
+.mk-rvdone { margin: 8px 0; padding: 12px 14px; border-radius: 12px; background: var(--card); font-size: 14px; }
+#mk-other a { color: inherit; }
+.mk-adm { list-style: none; margin: 10px 0 100px; padding: 0; }
+.mk-adm li { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.mk-adm .mk-th { flex: none; width: 64px; height: 64px; }
+.mk-adm li > div { flex: 1; min-width: 0; }
+.mk-adm b { display: block; font-size: 15px; }
+.mk-adm small { font-size: 12.5px; color: var(--muted); }
+.mk-adm p { margin: 4px 0 8px; font-size: 13.5px; color: #d0342c; }
+.mk-admbtn { display: flex; flex-wrap: wrap; gap: 6px; }
+.mk-admbtn button { padding: 7px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.mk-admbtn button.warn { border-color: #d0342c; color: #d0342c; }
