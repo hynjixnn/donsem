@@ -2740,3 +2740,118 @@ a.semi-row:hover { text-decoration: none; }
 .ai-hello .semi { width: 72px; height: 72px; }
 .ai-hello b { font-size: 20px; }
 .ai-ex { margin-top: 16px; }
+
+/* ── 돈셈 중고거래 (동네 직거래) ── */
+.mk-wrap { max-width: 720px; }
+.mk-top { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 10px; }
+.mk-where { padding: 6px 4px; border: 0; background: none; color: var(--text); font: inherit; font-size: 21px; font-weight: 800; letter-spacing: -0.02em; cursor: pointer; }
+.mk-where i { font-style: normal; font-size: 13px; color: var(--muted); }
+.mk-topbtns { display: flex; gap: 6px; }
+.mk-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--card); font-size: 19px; }
+.mk-ico:hover { text-decoration: none; }
+.mk-search { margin: 0 0 10px; }
+.mk-search input { width: 100%; padding: 12px 16px; border: 0; border-radius: 14px; background: var(--card); color: var(--text); font: inherit; font-size: 16px; }
+.mk-chips, .mk-scope { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 0 8px; }
+.mk-chips::-webkit-scrollbar { display: none; }
+.mk-chips button, .mk-scope button { flex: none; padding: 7px 13px; border: 1px solid color-mix(in srgb, var(--line) 80%, transparent); border-radius: 999px; background: var(--bg); color: var(--text); font: inherit; font-size: 13.5px; cursor: pointer; white-space: nowrap; }
+.mk-chips button.on, .mk-scope button.on { border-color: var(--text); background: var(--text); color: var(--bg); font-weight: 700; }
+.mk-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.mk-list li + li { border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.mk-row { display: flex; gap: 14px; padding: 14px 0; color: var(--text); }
+.mk-row:hover { text-decoration: none; }
+.mk-th { flex: none; display: grid; place-items: center; width: 108px; height: 108px; border-radius: 12px; overflow: hidden; background: var(--card); font-size: 34px; }
+.mk-th img { width: 100%; height: 100%; object-fit: cover; }
+.mk-th i { font-style: normal; }
+.mk-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding-top: 2px; }
+.mk-info b { font-size: 15.5px; font-weight: 500; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.mk-info small { font-size: 12.5px; color: var(--muted); }
+.mk-info em { font-style: normal; font-size: 16px; font-weight: 800; }
+.mk-meta { margin-top: auto; text-align: right; }
+.mk-badge { display: inline-block; margin-right: 6px; padding: 2px 6px; border-radius: 5px; font-size: 11.5px; font-weight: 700; vertical-align: 2px; }
+.mk-badge.hold { background: #E6F4EA; color: #137333; }
+.mk-badge.done { background: var(--seg-bg); color: var(--muted); }
+.mk-empty, .mk-login, .mk-region { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 36px 16px; text-align: center; }
+.mk-empty b, .mk-login b { font-size: 17px; }
+.mk-empty p, .mk-login p, .mk-region p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.6; }
+.mk-kakao { margin-top: 8px; padding: 13px 26px; border: 0; border-radius: 12px; background: #FEE500; color: #191600; font: inherit; font-size: 15.5px; font-weight: 700; cursor: pointer; }
+.mk-safe { margin: 22px 0 90px; padding: 16px 18px; border-radius: 16px; background: var(--card); font-size: 13.5px; }
+.mk-safe ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); line-height: 1.7; }
+.mk-fab { position: fixed; right: max(16px, calc(50% - 344px)); bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 20; padding: 13px 20px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 15.5px; font-weight: 700; box-shadow: 0 8px 24px -6px rgba(112, 64, 161, .5); }
+.mk-fab:hover { text-decoration: none; }
+.mk-bar { position: sticky; top: 0; z-index: 5; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; margin: 0 -4px 8px; padding: 6px 0; background: var(--bg); }
+.mk-bar b { text-align: center; font-size: 16.5px; }
+.mk-back { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-size: 30px; line-height: 1; color: var(--text); }
+.mk-back:hover { text-decoration: none; background: var(--card); }
+.mk-rep { justify-self: end; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; cursor: pointer; }
+.mk-pics { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 16px; background: var(--card); scrollbar-width: none; }
+.mk-pics::-webkit-scrollbar { display: none; }
+.mk-pics img { flex: none; width: 100%; aspect-ratio: 1; object-fit: cover; scroll-snap-align: center; }
+.mk-nopic { width: 100%; aspect-ratio: 16 / 9; display: grid; place-items: center; font-size: 60px; }
+.mk-pn { margin: 6px 0 0; text-align: center; font-size: 12px; color: var(--muted); }
+.mk-seller, .mk-me { display: flex; align-items: center; gap: 12px; margin: 16px 0 12px; padding-bottom: 14px; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.mk-seller b, .mk-me b { display: block; font-size: 15.5px; }
+.mk-seller small, .mk-me small { font-size: 13px; color: var(--muted); }
+.mk-me .btn { margin-left: auto; padding: 8px 12px; font-size: 13px; }
+.mk-av { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: color-mix(in srgb, var(--blue) 18%, var(--card)); color: var(--blue); font-weight: 800; }
+.mk-av.big { width: 56px; height: 56px; font-size: 20px; }
+.mk-title { margin: 0; font-size: 21px; line-height: 1.4; letter-spacing: -0.02em; }
+.mk-sub { margin: 6px 0 14px; font-size: 13px; color: var(--muted); }
+.mk-body { font-size: 15.5px; line-height: 1.75; white-space: normal; word-break: break-word; }
+.mk-muted { color: var(--muted); }
+.mk-h { margin: 26px 0 0; font-size: 16px; }
+.mk-price-hint:not(:empty) { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0; padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--blue) 9%, var(--card)); }
+.mk-price-hint b { font-size: 14px; }
+.mk-price-hint p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.55; }
+.mk-buy { position: sticky; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 5; display: flex; align-items: center; gap: 10px; margin: 20px -4px 90px; padding: 12px 14px; border-radius: 18px; background: var(--card-solid, var(--bg)); box-shadow: 0 8px 30px -10px rgba(0, 0, 0, .25); }
+.mk-buy b { flex: 1; font-size: 19px; }
+.mk-buy .btn { flex: none; padding: 12px 22px; }
+.mk-buy select { padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: inherit; }
+.mk-form { display: flex; flex-direction: column; gap: 14px; margin-bottom: 100px; }
+.mk-form label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 700; }
+.mk-form input:not([type=checkbox]):not([type=file]), .mk-form select, .mk-form textarea { padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--line) 90%, transparent); border-radius: 12px; background: var(--bg); color: var(--text); font: inherit; font-size: 16px; font-weight: 400; }
+.mk-form textarea { resize: vertical; line-height: 1.6; }
+.mk-won { position: relative; } .mk-won input { width: 100%; padding-right: 40px !important; } .mk-won span { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 400; }
+.mk-form .mk-free { flex-direction: row; align-items: center; gap: 8px; font-weight: 500; }
+.mk-pics-up { display: flex; gap: 8px; overflow-x: auto; }
+.mk-pics-up #mk-pv { display: flex; gap: 8px; }
+.mk-add { flex: none; display: flex !important; align-items: center; justify-content: center; gap: 0 !important; width: 76px; height: 76px; border: 1px dashed var(--line); border-radius: 12px; cursor: pointer; }
+.mk-add span { font-size: 24px; } .mk-add small { font-weight: 500; color: var(--muted); font-size: 12px; }
+.mk-pv { position: relative; flex: none; width: 76px; height: 76px; border-radius: 12px; background: var(--card) center / cover; }
+.mk-pv.loading::after { content: '…'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+.mk-pv button { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border: 0; border-radius: 50%; background: #111; color: #fff; font-size: 14px; line-height: 1; cursor: pointer; }
+.mk-where2 { margin: 0; font-size: 14px; }
+.mk-ban summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
+.mk-ban p { margin: 8px 0 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.mk-chats { list-style: none; margin: 0; padding: 0; }
+.mk-chats a { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); color: var(--text); }
+.mk-chats a:hover { text-decoration: none; }
+.mk-ci { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mk-ci b { font-size: 15px; } .mk-ci b small { font-weight: 400; color: var(--muted); font-size: 12px; }
+.mk-ci > small { font-size: 13.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mk-chats img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; }
+.mk-un { min-width: 20px; padding: 1px 6px; border-radius: 999px; background: #ff5b2e; color: #fff; font-style: normal; font-size: 12px; font-weight: 700; text-align: center; }
+.mk-ritem { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; padding: 10px 12px; border-radius: 12px; background: var(--card); color: var(--text); }
+.mk-ritem:hover { text-decoration: none; }
+.mk-ritem:empty { display: none; }
+.mk-ritem img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+.mk-ritem span { display: flex; flex-direction: column; font-size: 14px; } .mk-ritem small { color: var(--muted); }
+.mk-msgs { display: flex; flex-direction: column; gap: 8px; min-height: 40vh; max-height: calc(100vh - 330px); overflow-y: auto; padding: 8px 2px; }
+.mk-msg { display: flex; align-items: flex-end; gap: 6px; max-width: 80%; }
+.mk-msg p { margin: 0; padding: 9px 13px; border-radius: 16px 16px 16px 4px; background: var(--card); font-size: 15px; line-height: 1.5; word-break: break-word; }
+.mk-msg small { flex: none; font-size: 11px; color: var(--muted); }
+.mk-msg.me { align-self: flex-end; flex-direction: row-reverse; }
+.mk-msg.me p { border-radius: 16px 16px 4px 16px; background: var(--blue); color: #fff; }
+.mk-hello { margin: auto; text-align: center; font-size: 13.5px; color: var(--muted); }
+.mk-warn { margin: 4px 0; font-size: 12px; color: var(--muted); text-align: center; }
+.mk-send { position: sticky; bottom: calc(84px + env(safe-area-inset-bottom)); display: flex; gap: 8px; padding: 6px 6px 6px 14px; margin-bottom: 90px; border: 1px solid color-mix(in srgb, var(--line) 90%, transparent); border-radius: 999px; background: var(--card-solid, var(--bg)); }
+.mk-send input { flex: 1; min-width: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 16px; outline: none; }
+.mk-send button { width: 38px; height: 38px; border: 0; border-radius: 50%; background: var(--blue); color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; }
+.mk-stat { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 10px; padding: 14px 0; border-radius: 14px; background: var(--card); text-align: center; font-size: 13px; color: var(--muted); }
+.mk-stat b { display: block; font-size: 19px; color: var(--text); }
+.mk-out { margin: 24px 0 100px; text-align: center; }
+.mk-link { border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; text-decoration: underline; cursor: pointer; }
+.mk-rlist { list-style: none; width: 100%; margin: 0; padding: 0; }
+.mk-rlist button { width: 100%; padding: 13px 4px; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); background: none; color: var(--text); font: inherit; font-size: 15px; text-align: left; cursor: pointer; }
+.mk-region .mk-search { width: 100%; }
+.mk-legal { margin: 6px 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+body.mk-in .st-tabs { display: none; }
