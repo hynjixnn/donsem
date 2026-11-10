@@ -19,7 +19,7 @@
   let token = get(TK), me = null, cats = [], loginOn = false;
   const h0 = location.hash;
   if (/^#t=[a-f0-9]{48}/.test(h0)) { token = h0.slice(3, 51); put(TK, token); history.replaceState(null, '', location.pathname); }
-  if (/#login=(fail|cancel|ban)/.test(h0)) { setTimeout(() => say(/ban/.test(h0) ? '이용이 제한된 계정이에요.' : /cancel/.test(h0) ? '로그인을 취소했어요.' : '로그인하지 못했어요. 다시 해 주세요.'), 300); history.replaceState(null, '', location.pathname); }
+  if (/#login=(fail|cancel|ban)/.test(h0)) { setTimeout(() => say(/ban/.test(h0) ? '이용이 제한된 계정이에요.' : /cancel/.test(h0) ? '로그인을 취소했어요.' : `로그인하지 못했어요. 다시 해 주세요.${(h0.match(/e=([^&]+)/) || [])[1] ? ` (코드 ${decodeURIComponent(h0.match(/e=([^&]+)/)[1])})` : ''}`), 300); history.replaceState(null, '', location.pathname); }
   const api = async (path, opt = {}) => {
     const r = await fetch(API + path, { ...opt, headers: { ...(opt.body && !(opt.body instanceof Blob) ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: 'Bearer ' + token } : {}), ...(opt.headers || {}) } });
     const j = await r.json().catch(() => ({}));
