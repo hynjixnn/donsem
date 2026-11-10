@@ -51,11 +51,14 @@
     { id: 'ys', type2: '아파트', brandName: '래미안 (삼성물산)', g: '여의도·목동', short: '시범', name: '여의도 시범아파트', brand: '래미안 소넬리', kind: '재건축', c: C.삼성, addr: '서울 영등포구 여의도동 50', addrText: '서울특별시 영등포구 여의도동 일대', dong: '여의도동',
       before: '시범아파트', units: '2,491세대 (공공임대 344세대 포함)', floors: '지하 6층 ~ 지상 59층', builder: '삼성물산', cost: '2조 2,685억 원', at: 3, stage: '2026년 10월 사업시행인가·시공사 선정', plan: '2029년 착공 제시', move: '미정',
       keys: ['시범'], src: [['파이낸셜뉴스', 'https://www.fnnews.com/news/202610190907596825'], ['네이트 뉴스', 'https://m.news.nate.com/view/20261020n22011']] },
+    { id: 'yh', type2: '아파트', brandName: '디에이치 (현대건설)', ll: [37.52147, 126.9325], g: '여의도·목동', short: '한양', name: '여의도 한양아파트', brand: '디에이치 여의도퍼스트', kind: '재건축', c: '#141414', addr: '서울 영등포구 여의도동 42', addrText: '서울특별시 영등포구 여의도동 42', dong: '여의도동',
+      before: '한양아파트', beforeN: '588세대', units: '아파트 992세대, 오피스텔 60실', floors: '지하 5층 ~ 지상 57층', dongs: '4개동', park: '2,152대 (세대당 1.9대)', builder: '현대건설', cost: '협의 중 (현대건설이 약 1,206억 원 증액 요청)', at: 3, stage: '2025년 10월 사업시행인가', plan: '공사비 협의 후 착공', move: '2032년 7월 예정',
+      keys: ['한양', '여의도한양', '디에이치 여의도'], src: [['나무위키', 'https://namu.wiki/w/%EB%94%94%EC%97%90%EC%9D%B4%EC%B9%98%20%EC%97%AC%EC%9D%98%EB%8F%84%ED%8D%BC%EC%8A%A4%ED%8A%B8'], ['뉴스토마토', 'https://www.newstomato.com/ReadNews.aspx?no=1284620'], ['스마트투데이', 'https://www.smarttoday.co.kr/ko-kr/articles/110766']] },
     { id: 'md6', type2: '아파트', brandName: '아크로 (DL이앤씨)', ll: [37.5347, 126.8848], g: '여의도·목동', short: '목동6', name: '목동 6단지', brand: '아크로 목동 리젠시', kind: '재건축', c: C.DL, addr: '서울 양천구 목동 911', addrText: '서울특별시 양천구 목동 일대', dong: '목동',
       before: '목동신시가지 6단지', units: '2,173세대', floors: '지하 2층 ~ 지상 49층', dongs: '14개동', builder: 'DL이앤씨', cost: '1조 2,868억 원', at: 2, stage: '2026년 6월 시공사 선정', move: '미정',
       keys: ['신시가지6단지', '목동6단지'], src: [['서울경제', 'https://www.sedaily.com/article/20060867'], ['핀포인트뉴스', 'https://www.pinpointnews.co.kr/news/articleView.html?idxno=463589']] },
   ];
-  const CODE = { hn2: '2476', ap2: '1003', ap3: '1004', ap4: '1005', ap5: '1006', ss1: '1220', ss2: '1221', ss3: '1222', ss4: '1223', hn3: '2477', hn4: '2478', hn5: '2479', em: '1007', js5: '1342', bp: '1303', ys: '1822', md6: '2608' }; // 서울시 자료의 구역 번호
+  const CODE = { hn2: '2476', ap2: '1003', ap3: '1004', ap4: '1005', ap5: '1006', ss1: '1220', ss2: '1221', ss3: '1222', ss4: '1223', hn3: '2477', hn4: '2478', hn5: '2479', em: '1007', js5: '1342', bp: '1303', ys: '1822', md6: '2608', yh: '1824' }; // 서울시 자료의 구역 번호
   const BY_CODE = Object.fromEntries(Object.entries(CODE).map(([id, c]) => [c, id]));
   // 서울 전체 구역은 서울 열린데이터광장 '도시정비사업 통계' 파일을 redev-seoul.json으로 바꿔서 써요 (분기마다 새 파일이 나와요)
   const PSTEPS = ['구역 지정', '추진위', '조합 설립', '건축심의', '사업시행인가', '관리처분인가', '착공'];
@@ -83,6 +86,7 @@
       <table class="rd-tb"><tbody>${pubRows(x)}</tbody></table>
     </div>
     ${stepsHtml(x)}
+    <div class="rd-biz-slot" data-code="${x.pub ? x.id.slice(1) : CODE[x.id] || ''}"></div>
     <div class="rd-acts"><button type="button" class="btn fill" data-rdgo="1">돈셈 지도에서 보기</button><a class="btn" href="https://search.naver.com/search.naver?where=news&amp;sort=1&amp;query=${encodeURIComponent(x.name + ' ' + x.kind)}" target="_blank" rel="noopener">최신 뉴스 ↗</a><button type="button" class="btn" data-rdshare="1">링크 복사</button></div>
     <p class="rd-note">서울시가 ${esc(asof)} 말 기준으로 정리한 자료예요. 그 뒤 진행된 내용은 빠져 있을 수 있고, 시공사는 이 자료에 없어요. 계약이나 투자 전에는 <a href="https://cleanup.seoul.go.kr/" target="_blank" rel="noopener">정비사업 정보몽땅</a>과 조합 공고를 꼭 확인해 주세요.</p>
     <p class="rd-src">출처 <a href="https://data.seoul.go.kr/dataList/OA-22856/F/1/datasetView.do" target="_blank" rel="noopener">서울 열린데이터광장 도시정비사업 통계</a></p>`;
@@ -107,6 +111,7 @@
       </tbody></table>
     </div>
     ${stepsHtml(x)}
+    <div class="rd-biz-slot" data-code="${x.pub ? x.id.slice(1) : CODE[x.id] || ''}"></div>
     <div class="rd-acts"><button type="button" class="btn fill" data-rdgo="1">돈셈 지도에서 보기</button><a class="btn" href="https://search.naver.com/search.naver?where=news&amp;sort=1&amp;query=${encodeURIComponent(x.name + ' ' + x.kind)}" target="_blank" rel="noopener">최신 뉴스 ↗</a><button type="button" class="btn" data-rdshare="1">링크 복사</button></div>
     <p class="rd-note">${x.brand ? '단지 이름은 시공사가 제안한 이름이라 바뀔 수 있어요. ' : ''}세대수·층수는 서울시 고시와 조합·시공사 발표를 전한 보도를 기준으로 했고, 종류·동수·주차대수는 나무위키도 함께 참고했어요. 자료마다 숫자가 조금씩 다를 수 있고, 사업이 진행되면 바뀌어요. 공개되지 않은 칸은 비워 두지 않고 그렇다고 적었어요. 투자나 계약 전에는 조합 공고와 <a href="https://cleanup.seoul.go.kr/" target="_blank" rel="noopener">정비사업 정보몽땅</a>을 꼭 확인해 주세요.</p>
     <p class="rd-src">${UPDATED} 기준 · 출처 ${x.src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`).join(' · ')}</p>`;
@@ -120,6 +125,8 @@
       pos = { lat, lng };
       const ll = new kakao.maps.LatLng(lat, lng), m = new kakao.maps.Map(el, { center: ll, level: 5, draggable: false, scrollwheel: false, disableDoubleClickZoom: true });
       new kakao.maps.Marker({ position: ll }).setMap(m);
+      const code = x.pub ? x.id.slice(1) : CODE[x.id]; // 구역 모양이 있으면 작은 지도에도 연보라로 칠해요
+      if (code) loadPoly().then(P => { const g = P[code]; if (g && my === tok) new kakao.maps.Polygon({ map: m, path: g.map(r => { const a = []; for (let i = 0; i < r.length; i += 2) a.push(new kakao.maps.LatLng(r[i], r[i + 1])); return a; }), strokeWeight: 2, strokeColor: '#8B5CC9', fillColor: '#C9B3EA', fillOpacity: .45 }); });
       const a = document.getElementById('rd-mapa'); a.href = `https://map.kakao.com/link/map/${encodeURIComponent(x.name)},${lat},${lng}`; el.append(a);
     };
     if (x.ll) return show(x.ll[0], x.ll[1]); // 지번이 지도에서 안 잡히는 구역은 좌표를 직접 넣었어요
@@ -141,6 +148,7 @@
     modal.querySelector('.rd-x').focus({ preventScroll: true });
     if (push) try { history.pushState({ rd: id }, ''); } catch (e) { /* 괜찮아요 */ }
     drawMap(x);
+    const slot = document.querySelector('#rd-body .rd-biz-slot'); if (slot && slot.dataset.code && window.donsemRedevBiz) window.donsemRedevBiz(slot.dataset.code).then(h => { if (h && slot.isConnected) slot.innerHTML = '<h3 class="rd-h3">사업성 분석</h3>' + h; });
   }
   function close(fromPop) {
     if (!modal || modal.hidden) return;
@@ -198,4 +206,60 @@
   const q = new URLSearchParams(location.search).get('rd');
   if (q) { const x = RD.find(r => r.id === q); if (x && root) draw0(x); open(q); }
   function draw0(x) { const b = document.querySelector(`#rd-tabs [data-g="${x.g}"]`); if (b) b.click(); }
+
+  // ── 지도에 재건축·재개발 구역 칠하기 (연보라) + 이름·단계 이름표 ──
+  // 구역 모양은 OpenStreetMap 단지 경계(ODbL)로 그렸어요. 모양이 없는 구역은 이름표만 보여요
+  let polyP = null;
+  const loadPoly = () => polyP || (polyP = fetch('/redev-poly.json').then(r => r.json()).then(d => d.p).catch(() => (polyP = null, {})));
+  const ST = { line: '#8B5CC9', fill: '#C9B3EA' }, STON = { line: '#5E3290', fill: '#A47FD6', op: .55, w: 2.5 };
+  const shortStage = s => ({ 사업시행: '사업시행인가', 관리처분: '관리처분인가', 구역지정: '구역 지정', 조합설립: '조합 설립', 건축심의: '건축심의', 추진위: '추진위 승인', 착공: '착공' })[s] || s;
+  // 사업성: 조합원(기존 세대 기준) · 일반분양 · 임대 — 서울시 자료로 어림해요
+  const biz = r => { const [, , , , , , , before, units, sale, rent] = r; if (!units || !sale) return null; const mem = Math.min(before || 0, sale), gen = Math.max(sale - mem, 0); return mem ? { units, mem, gen, rent: rent || 0 } : null; };
+  const donut = b => { const t = b.mem + b.gen + b.rent, p1 = b.mem / t * 100, p2 = p1 + b.gen / t * 100, pc = v => Math.round(v / t * 100);
+    return `<div class="rdz-biz"><div class="rdz-donut" style="background:conic-gradient(#3182F6 0 ${p1}%,#FF9F0A ${p1}% ${p2}%,#34C759 ${p2}% 100%)"><span><b>${num(b.units)}</b>세대</span></div>
+      <ul><li><i style="background:#3182F6"></i>조합원<b>${num(b.mem)} <small>${pc(b.mem)}%</small></b></li><li><i style="background:#FF9F0A"></i>일반분양<b>${num(b.gen)} <small>${pc(b.gen)}%</small></b></li><li><i style="background:#34C759"></i>임대<b>${num(b.rent)} <small>${pc(b.rent)}%</small></b></li></ul></div>
+      <p class="rdz-bizn">조합원 수는 기존 세대수로 어림했어요. 일반분양이 많을수록 조합원 부담이 줄어요.</p>`; };
+  window.donsemRedevBiz = code => loadAll().then(rows => { const r = rows.find(y => y[0] === code); const b = r && biz(r); return b ? donut(b) : ''; });
+  const poiBox = document.getElementById('re-poi'), wrapEl = document.getElementById('re-mapwrap');
+  if (poiBox && wrapEl) {
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'rdz-btn'; btn.innerHTML = '<i aria-hidden="true"></i>재개발·재건축';
+    poiBox.prepend(btn);
+    const card = document.createElement('div'); card.className = 'rdz-card'; card.hidden = true; wrapEl.append(card);
+    let on = false, shapes = [], chips = [], rows = null, polys = null, sel = '', hooked = false;
+    const clear = () => { shapes.forEach(x => x.remove()); chips.forEach(x => x.remove()); shapes = []; chips = []; };
+    const pick = code => {
+      const r = rows.find(y => y[0] === code); if (!r) return;
+      sel = code; drawAll();
+      const id = BY_CODE[code], x = id && RD.find(y => y.id === id), b = biz(r), kind = /재개발/.test(r[5]) ? '재개발' : '재건축';
+      card.innerHTML = `<button type="button" class="rdz-x" aria-label="닫기">×</button><span class="rdz-tag">${kind}</span><b class="rdz-name">${esc(x ? x.brand || x.name : r[2])}</b>
+        <p class="rdz-st">${esc(shortStage(r[6]))}${r[8] ? ` · 총 ${num(r[8])}세대 예정` : ''}</p>${b ? `<p class="rdz-sub">일반분양 ${num(b.gen)}세대 · 일반분양 비율 ${Math.round(b.gen / (b.mem + b.gen + b.rent) * 100)}%</p>` : ''}
+        ${b ? donut(b) : ''}<p class="rdz-src">구역 모양 © OpenStreetMap · 구역 정보 서울시 ${esc(asof)} 기준</p><button type="button" class="btn fill wide rdz-go" data-rd="${id || 'c' + code}">상세보기</button>`;
+      card.hidden = false;
+    };
+    const drawAll = () => {
+      const m = window.donsemMapApi && window.donsemMapApi(); if (!m || !on || !rows) return;
+      clear();
+      const z = m.zoom(), [s0, w0, n0, e0] = m.bounds(), inView = ll => ll && ll[0] >= s0 && ll[0] <= n0 && ll[1] >= w0 && ll[1] <= e0;
+      if (z < 12) return; // 너무 멀면 서울 전체가 보라색 점투성이라, 동네 크기에서만 보여요
+      const vis = rows.filter(r => inView(r[12]) || (polys[r[0]] && polys[r[0]].some(g => inView([g[0], g[1]]))));
+      vis.forEach(r => { const g = polys[r[0]]; if (g) shapes.push(m.poly(g, r[0] === sel ? STON : ST, () => pick(r[0]))); });
+      if (z < 13.5) return;
+      vis.slice(0, 120).forEach(r => {
+        const el = document.createElement('button'); el.type = 'button'; el.className = 'rdz-chip' + (r[0] === sel ? ' on' : '') + (z < 15.5 ? ' sm' : ''); // 조금 멀면 이름만, 가까이 가면 단계까지
+        el.innerHTML = `<b>${esc(r[2].replace(/아파트$/, ''))}</b><span>${esc(shortStage(r[6]))}</span>`;
+        el.addEventListener('click', ev => { ev.stopPropagation(); pick(r[0]); });
+        chips.push(m.pin(r[12][0], r[12][1], el));
+      });
+    };
+    btn.addEventListener('click', async () => {
+      on = !on; btn.classList.toggle('on', on); if (!on) { clear(); card.hidden = true; sel = ''; return; }
+      window.donsemMapEnter && window.donsemMapEnter();
+      try { [rows, polys] = await Promise.all([loadAll(), loadPoly()]); } catch (e) { on = false; btn.classList.remove('on'); return say('지금은 구역 정보를 불러오지 못했어요.'); }
+      const m = window.donsemMapApi && window.donsemMapApi(); if (!m) return;
+      if (!hooked) { hooked = true; m.onIdle(() => on && drawAll()); }
+      if (m.zoom() < 13.5) m.zoomTo(14.5);
+      drawAll(); say('연보라색이 재건축·재개발 구역이에요. 이름표를 누르면 사업성이 나와요.');
+    });
+    card.addEventListener('click', e => { if (e.target.closest('.rdz-x')) { card.hidden = true; sel = ''; drawAll(); } });
+  }
 })();

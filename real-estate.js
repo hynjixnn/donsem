@@ -95,6 +95,9 @@
         resize: () => { const c = m.getCenter(); m.relayout(); m.setCenter(c); },
         pin: (lat, lng, el) => { const o = new K.CustomOverlay({ position: LL(lat, lng), content: el, clickable: true }); o.setMap(m); return { remove: () => o.setMap(null) }; },
         dot: (lat, lng, onTap) => { const k = new K.Marker({ position: LL(lat, lng), clickable: !!onTap }); k.setMap(m); if (onTap) K.event.addListener(k, 'click', onTap); return { remove: () => k.setMap(null) }; },
+        // 재건축·재개발 구역 칠하기 (연보라): rings = [[lat,lng,lat,lng…], …]
+        poly: (rings, st, onTap) => { const g = new K.Polygon({ path: rings.map(r => { const a = []; for (let i = 0; i < r.length; i += 2) a.push(LL(r[i], r[i + 1])); return a; }), strokeWeight: st.w || 1.5, strokeColor: st.line, strokeOpacity: .95, fillColor: st.fill, fillOpacity: st.op || .42, zIndex: 1 }); g.setMap(m); if (onTap) K.event.addListener(g, 'click', onTap); return { remove: () => g.setMap(null) }; },
+        onIdle: cb => K.event.addListener(m, 'idle', cb),
       };
     });
   }
@@ -128,12 +131,15 @@
       center: () => { const c = m.getCenter(); return [c.lat, c.lng]; },
       pin: (lat, lng, el) => new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(m),
       dot: (lat, lng, onTap) => { const k = new maplibregl.Marker({ color: '#ff3b30' }).setLngLat([lng, lat]).addTo(m); if (onTap) k.getElement().addEventListener('click', ev => { ev.stopPropagation(); onTap(); }); return k; },
+      poly: () => ({ remove() {} }), // 예비 지도에서는 칠하지 않고 이름표만 보여요
+      onIdle: cb => m.on('moveend', cb),
     }); });
   }));
   kakaoMap().catch(() => { mapEl.innerHTML = ''; return libreMap(); })
     .then(g => { map = g; setTimeout(drawGuBubbles, 600); mapEl.classList.toggle('kakao', !!g.kakao); const zc = z => { mapEl.classList.toggle('far', z < 12); mapEl.classList.toggle('mid', z < 14); mapEl.classList.toggle('near', z >= 16); }; g.onZoom(zc); zc(g.zoom()); /* 멀리서 보면 말풍선을 숨기고, 조금 멀면 가격만 */ draw(); if (!openShared() && items.length) fit(); })
     .catch(() => { mapEl.innerHTML = '<p class="re-off">지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p>'; });
   const flyTo = (lat, lng, zoom) => map && map.fly(lat, lng, zoom);
+  window.donsemMapApi = () => map; window.donsemMapEnter = () => { if (!full) enter(); }; // 재건축·재개발 구역 칠하기(redev.js)에서 써요
   window.donsemMapGo = (lat, lng) => { const was = full; if (!was) enter(); setTimeout(() => flyTo(lat, lng, 15), was ? 0 : 120); }; // 재건축 정보표에서 큰 지도로
   const fit = () => { if (map && items.length) map.fit(items); };
 
