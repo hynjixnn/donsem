@@ -98,6 +98,7 @@
         // 재건축·재개발 구역 칠하기 (연보라): rings = [[lat,lng,lat,lng…], …]
         poly: (rings, st, onTap) => { const g = new K.Polygon({ path: rings.map(r => { const a = []; for (let i = 0; i < r.length; i += 2) a.push(LL(r[i], r[i + 1])); return a; }), strokeWeight: st.w || 1.5, strokeColor: st.line, strokeOpacity: .95, fillColor: st.fill, fillOpacity: st.op || .42, zIndex: 1 }); g.setMap(m); if (onTap) K.event.addListener(g, 'click', onTap); return { remove: () => g.setMap(null) }; },
         onIdle: cb => K.event.addListener(m, 'idle', cb),
+        line: (pts, st) => { const l = new K.Polyline({ path: pts.map(p => LL(p[0], p[1])), strokeWeight: st.w || 6, strokeColor: st.color, strokeOpacity: st.op || .85, strokeStyle: st.dash ? 'shortdash' : 'solid', zIndex: 2 }); l.setMap(m); return { remove: () => l.setMap(null) }; },
       };
     });
   }
@@ -133,6 +134,7 @@
       dot: (lat, lng, onTap) => { const k = new maplibregl.Marker({ color: '#ff3b30' }).setLngLat([lng, lat]).addTo(m); if (onTap) k.getElement().addEventListener('click', ev => { ev.stopPropagation(); onTap(); }); return k; },
       poly: () => ({ remove() {} }), // 예비 지도에서는 칠하지 않고 이름표만 보여요
       onIdle: cb => m.on('moveend', cb),
+      line: () => ({ remove() {} }),
     }); });
   }));
   kakaoMap().catch(() => { mapEl.innerHTML = ''; return libreMap(); })
@@ -248,10 +250,41 @@
     }
     throw 0;
   }
+  // ── 개발 호재: 짓고 있거나 짓기로 한 지하철·GTX (아파트실거래가 앱의 '○○선 준공예정'처럼). 2026년 11월 확인 ──
+  // 확정된 날짜가 있는 것만 넣어요. 역 위치·노선은 발표 자료를 보고 대략 그린 거예요
+  const HOJAE = [
+    { name: '신분당선 신사~용산', tag: '신분당선 강남용산', when: '2032년 개통 목표', color: '#D31145', path: [[37.5163, 127.0204], [37.5213, 127.0050], [37.5226, 126.9935], [37.5236, 126.9806], [37.5299, 126.9648]],
+      st: [['신사역', 37.5163, 127.0204], ['국립중앙박물관역', 37.5236, 126.9806, 1], ['용산역', 37.5299, 126.9648]], mid: [37.5226, 126.9935],
+      note: '신사역에서 용산역까지 연장. 국립중앙박물관역이 새로 생기고, 동빙고역은 위치를 조정하고 있어요.', src: 'https://news.mtn.co.kr/news-detail/2025061022392194618' },
+    { name: 'GTX-A 삼성역', tag: 'GTX-A 삼성역', when: '2028년 개통 예정', color: '#9A6292', path: [],
+      st: [['GTX-A 삼성역', 37.5110, 127.0617, 1]], mid: [37.5110, 127.0617],
+      note: '영동대로 복합환승센터 안에 생겨요. 2027년부터 열차가 서기 시작하고 2028년에 역 전체가 열려요.', src: 'https://mediahub.seoul.go.kr/archives/2018271' },
+  ];
+  let hjOn = false, hjMarks = [];
+  const hjBtn = document.createElement('button'); hjBtn.type = 'button'; hjBtn.className = 'hj-btn'; hjBtn.textContent = '🚆 개발 호재';
+  const hjClear = () => { hjMarks.forEach(x => x.remove()); hjMarks = []; };
+  const hjDraw = () => {
+    hjClear(); if (!hjOn || !map) return;
+    HOJAE.forEach(h => {
+      if (h.path.length > 1 && map.line) { hjMarks.push(map.line(h.path, { color: '#fff', w: 9, op: .9 })); hjMarks.push(map.line(h.path, { color: h.color, w: 5, dash: true })); }
+      h.st.forEach(([n, la, ln, isNew]) => { const el = document.createElement('div'); el.className = 'hj-st' + (isNew ? ' new' : ''); el.style.setProperty('--c', h.color); el.textContent = n; hjMarks.push(map.pin(la, ln, el)); });
+      const t = document.createElement('button'); t.type = 'button'; t.className = 'hj-tag'; t.style.setProperty('--c', h.color);
+      t.innerHTML = `<b>${esc(h.tag)}</b><span>${esc(h.when)}</span>`;
+      t.addEventListener('click', ev => { ev.stopPropagation(); markTap = Date.now(); toast(`${h.name} · ${h.when}. ${h.note} (노선·역 위치는 대략이에요)`); });
+      hjMarks.push(map.pin(h.mid[0] - .006, h.mid[1], t));
+    });
+  };
+  hjBtn.addEventListener('click', () => {
+    hjOn = !hjOn; hjBtn.classList.toggle('on', hjOn);
+    if (!hjOn) return hjClear();
+    if (!full) enter();
+    setTimeout(() => { if (map) { map.fly(37.5225, 126.993, 12.8); hjDraw(); toast('점선은 짓고 있거나 짓기로 한 노선이에요. 이름표를 누르면 자세히 나와요.'); } }, full ? 0 : 200);
+  });
   let poiOn = '';
   $('re-poi').innerHTML = Object.entries(POI).map(([k, [i, n]]) => `<button type="button" data-poi="${k}">${i} ${n}</button>`).join('');
   const poiAgain = document.createElement('button'); poiAgain.type = 'button'; poiAgain.className = 're-poi-again'; poiAgain.hidden = true; poiAgain.textContent = '↻ 이 지역에서 다시 찾기';
   $('re-mapwrap').append(poiAgain);
+  $('re-poi').prepend(hjBtn);
   poiAgain.addEventListener('click', () => poiOn && findPoi(poiOn));
   $('re-poi').addEventListener('click', e => {
     const b = e.target.closest('[data-poi]'); if (!b || !map) return;
@@ -399,6 +432,12 @@
   const eok = v => { const e = Math.floor(v / 10000), r = v % 10000; return e ? `${e}억${r ? ` ${r.toLocaleString('ko-KR')}` : ''}` : `${v.toLocaleString('ko-KR')}만`; }; // v는 만 원
   const SIZE = { all: ['전체', () => true], s: ['59㎡ 안팎', a => a >= 50 && a < 70], m: ['84㎡ 안팎', a => a >= 76 && a < 90], l: ['100~134㎡', a => a >= 100 && a < 135], xl: ['135~164㎡', a => a >= 135 && a < 165], xxl: ['165㎡ 이상', a => a >= 165] };
   const SORT = { new: '최신순', high: '비싼 순', low: '싼 순' };
+  // 아파트실거래가 앱의 '입주년차·매매실거래가' 거름망처럼: 목록과 지도 말풍선에 함께 써요
+  const YR = new Date().getFullYear();
+  const AGE = { all: ['전체', () => true], a5: ['5년 이내', b => YR - b <= 5], a10: ['10년 이내', b => YR - b <= 10], a20: ['20년 이내', b => YR - b <= 20], old: ['20년 넘은', b => YR - b > 20], re: ['30년+ (재건축)', b => YR - b >= 30] };
+  const PRICE = { all: ['전체', () => true], p5: ['5억 이하', v => v <= 50000], p10: ['5~10억', v => v > 50000 && v <= 100000], p20: ['10~20억', v => v > 100000 && v <= 200000], p30: ['20~30억', v => v > 200000 && v <= 300000], top: ['30억 넘게', v => v > 300000] };
+  let dealAge = 'all', dealPrice = 'all';
+  const bubList = () => (dealData.trade || []).filter(x => SIZE[dealSize][1](x.area) && AGE[dealAge][1](x.built) && PRICE[dealPrice][1](x.amt));
   const byDate = (a, b) => (b.y * 1e4 + b.m * 100 + b.d) - (a.y * 1e4 + a.m * 100 + a.d);
   const months = {}; // 같은 구·달·종류는 한 번만 받아요 (목록과 단지 정보 창이 같이 써요)
   const get1 = (gu, ym, type) => fetch(`${API}?lawd=${LAWD[gu]}&ym=${ym}${type === 'rent' ? '&type=rent' : ''}`).then(r => r.ok ? r.json() : null).then(d => d && d.items).catch(() => null);
@@ -411,7 +450,7 @@
   }
   async function deals(gu) {
     if (!LAWD[gu]) return;
-    dealGu = gu; dealData = { trade: null, rent: null };
+    dealGu = gu; dealData = { trade: null, rent: null }; dealAge = 'all'; dealPrice = 'all';
     const box = $('re-deals'); box.hidden = false; peek(false);
     box.innerHTML = `<p class="re-empty semi-wait">${gu} 실거래가를 불러오고 있어요</p>`;
     dealData.trade = await loadDeals('trade');
@@ -472,7 +511,7 @@
   function drawDeals() {
     const box = $('re-deals'), all = dealData[dealType];
     if (!all) { box.innerHTML = `<p class="re-empty">지금은 실거래가를 불러오지 못했어요. 잠시 뒤 다시 눌러 주세요.</p>`; return; }
-    const list = all.filter(x => SIZE[dealSize][1](x.area) && (dealType === 'trade' || (x.rent ? 1 : 0) === (dealType === 'rent' ? (dealRentMode === 'wol' ? 1 : 0) : 0)));
+    const list = all.filter(x => SIZE[dealSize][1](x.area) && AGE[dealAge][1](x.built) && (dealType !== 'trade' || PRICE[dealPrice][1](x.amt)) && (dealType === 'trade' || (x.rent ? 1 : 0) === (dealType === 'rent' ? (dealRentMode === 'wol' ? 1 : 0) : 0)));
     if (dealSort !== 'new') list.sort((a, b) => dealSort === 'high' ? b.amt - a.amt || b.rent - a.rent : a.amt - b.amt || a.rent - b.rent);
     const prices = list.map(x => x.amt).sort((a, b) => a - b), mid = prices.length ? prices[Math.floor(prices.length / 2)] : 0;
     const label = dealType === 'trade' ? '매매' : dealRentMode === 'wol' ? '월세' : '전세';
@@ -480,6 +519,8 @@
       <div class="dl-tabs"><button type="button" class="${dealType === 'trade' ? 'on' : ''}" data-dt="trade">매매</button><button type="button" class="${dealType === 'rent' && dealRentMode !== 'wol' ? 'on' : ''}" data-dt="jeon">전세</button><button type="button" class="${dealType === 'rent' && dealRentMode === 'wol' ? 'on' : ''}" data-dt="wol">월세</button></div>
       <div class="dl-view"><button type="button" class="${dealView === 'list' ? 'on' : ''}" data-dv="list">거래 목록</button><button type="button" class="${dealView === 'rank' ? 'on' : ''}" data-dv="rank">단지별 순위</button></div>
       <div class="dl-size">${Object.entries(SIZE).map(([k, [n]]) => `<button type="button" class="${dealSize === k ? 'on' : ''}" data-ds="${k}">${n}</button>`).join('')}</div>
+      <div class="dl-size dl-f"><span>입주</span>${Object.entries(AGE).map(([k, [n]]) => `<button type="button" class="${dealAge === k ? 'on' : ''}" data-da="${k}">${n}</button>`).join('')}</div>
+      ${dealType === 'trade' ? `<div class="dl-size dl-f"><span>가격</span>${Object.entries(PRICE).map(([k, [n]]) => `<button type="button" class="${dealPrice === k ? 'on' : ''}" data-dp="${k}">${n}</button>`).join('')}</div>` : ''}
       ${list.length ? `<div class="dl-bar"><p class="dl-sum">${label} <b>${list.length.toLocaleString('ko-KR')}건</b> · 가운데 값 <b>${eok(mid)}</b>${dealType === 'trade' ? ` · 가장 비싼 거래 <b>${eok(prices[prices.length - 1])}</b>` : ''}</p>
       <select class="dl-sort" aria-label="정렬">${Object.entries(dealView === 'rank' ? { new: '거래 많은 순', high: '비싼 순', low: '싼 순' } : SORT).map(([k, n]) => `<option value="${k}"${dealSort === k ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
       ${dealView === 'rank' ? rankHtml(all, list) : `<ul class="dl-list">${list.slice(0, Math.min(dealShown, 30)).map((x, i) => `<li><button type="button" data-di="${all.indexOf(x)}"><span><b>${esc(x.apt)}</b><small>${esc(x.dong)} · 전용 ${Math.round(x.area)}㎡ · ${x.floor}층 · ${x.built}년</small></span><em>${eok(x.amt)}${x.rent ? ` / 월 ${x.rent.toLocaleString("ko-KR")}만` : ''}<small>${x.m}.${x.d}</small></em></button></li>`).join('')}</ul>`}
@@ -510,7 +551,9 @@
       if (dealType === 'rent' && !dealData.rent) { $('re-deals').querySelector('.dl-sum, .dl-list, .re-empty')?.replaceWith(Object.assign(document.createElement('p'), { className: 're-empty semi-wait', textContent: '전월세 실거래를 불러오고 있어요' })); dealData.rent = await loadDeals('rent'); }
       drawDeals();
     }
-    if (sz) { dealSize = sz.dataset.ds; drawDeals(); }
+    if (sz) { dealSize = sz.dataset.ds; drawDeals(); drawBubbles(dealGu, bubList()); }
+    const fa = e.target.closest('[data-da]'), fp = e.target.closest('[data-dp]');
+    if (fa || fp) { if (fa) dealAge = fa.dataset.da; if (fp) dealPrice = fp.dataset.dp; dealShown = 5; drawDeals(); drawBubbles(dealGu, bubList()); }
     const dv = e.target.closest('[data-dv]'); if (dv) { dealView = dv.dataset.dv; dealSort = 'new'; drawDeals(); }
     if (it) { // 누르면 지도에서 그 단지를 찾아 보여 주고, 관심 부동산에 넣을 수 있게 해요
       const x = dealData[dealType][+it.dataset.di];

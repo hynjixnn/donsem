@@ -2701,3 +2701,16 @@ a.semi-row:hover { text-decoration: none; }
 .semi-wait::before { content: ''; flex: none; width: 34px; height: 34px; background: url(/icons/semi-think.svg) center / contain no-repeat; }
 .semi-wait::after { content: '…'; margin-left: -6px; animation: semi-dot 1.2s ease-in-out infinite; }
 @media (prefers-reduced-motion: no-preference) { .semi-wait::before { animation: semi-bob 2.8s ease-in-out infinite; transform-origin: 50% 90%; } }
+
+/* 지도: 개발 호재 (짓고 있는 지하철·GTX) */
+.re-poi button.hj-btn.on, .re-mapwrap.full .re-fs-chips .re-poi button.hj-btn.on { background: #D31145; border-color: #D31145; color: #fff; }
+.hj-st { padding: 3px 7px; border: 2px solid var(--c); border-radius: 5px; background: #fff; color: #111; font-size: 12px; font-weight: 800; white-space: nowrap; transform: translateY(-50%); box-shadow: 0 1px 4px rgba(0, 0, 0, .18); }
+.hj-st.new { background: var(--c); color: #fff; }
+.hj-tag { display: flex; flex-direction: column; align-items: center; padding: 5px 10px; border: 0; border-radius: 8px; background: var(--c); color: #fff; font: inherit; line-height: 1.3; white-space: nowrap; cursor: pointer; box-shadow: 0 3px 10px rgba(0, 0, 0, .25); transform: translateY(-100%); }
+.hj-tag b { font-size: 12.5px; font-weight: 800; }
+.hj-tag span { font-size: 11px; font-weight: 600; opacity: .92; }
+.dl-f span { flex: none; align-self: center; margin-right: 2px; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+/* 실거래 거름망: 한 줄로, 옆으로 밀어서 보기 (세로로 길어지지 않게) */
+#re-deals .dl-size { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+#re-deals .dl-size::-webkit-scrollbar { display: none; }
+#re-deals .dl-size button { flex: none; white-space: nowrap; }
