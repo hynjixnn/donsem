@@ -18,7 +18,8 @@
   // 로그인: 카카오에서 돌아오면 주소 끝에 #t=열쇠가 붙어 와요
   let token = get(TK), me = null, cats = [], loginOn = false;
   const h0 = location.hash;
-  if (/^#t=[a-f0-9]{48}/.test(h0)) { token = h0.slice(3, 51); put(TK, token); history.replaceState(null, '', location.pathname); }
+  const tm = h0.match(/#t=([a-f0-9]{48})/); // '#my#t=…'처럼 앞에 다른 화면이 붙어 와도 열쇠를 찾아요
+  if (tm) { token = tm[1]; put(TK, token); const rest = h0.slice(0, tm.index); history.replaceState(null, '', location.pathname + (rest && rest !== '#' ? rest : '')); setTimeout(() => say('카카오로 로그인했어요. 반가워요! 👋'), 400); }
   if (/#login=(fail|cancel|ban)/.test(h0)) { setTimeout(() => say(/ban/.test(h0) ? '이용이 제한된 계정이에요.' : /cancel/.test(h0) ? '로그인을 취소했어요.' : `로그인하지 못했어요. 다시 해 주세요.${(h0.match(/e=([^&]+)/) || [])[1] ? ` (코드 ${decodeURIComponent(h0.match(/e=([^&]+)/)[1])})` : ''}`), 300); history.replaceState(null, '', location.pathname); }
   const api = async (path, opt = {}) => {
     const r = await fetch(API + path, { ...opt, headers: { ...(opt.body && !(opt.body instanceof Blob) ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: 'Bearer ' + token } : {}), ...(opt.headers || {}) } });
