@@ -1161,8 +1161,9 @@ document.querySelectorAll('input[inputmode="numeric"]').forEach(el => {
 });
 document.addEventListener('input', runAll);
 document.querySelectorAll('.seg').forEach(g => g.addEventListener('click', e => {
-  if (e.target.tagName !== 'BUTTON') return;
-  g.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === e.target));
+  const t = e.target.closest('button'); // 버튼 안 작은 글씨(예: 고령자·장애인·경력단절)를 눌러도 눌리게
+  if (!t || !g.contains(t)) return;
+  g.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === t));
   runAll();
 }));
 
@@ -3032,8 +3033,19 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
         if (inQ) sc += 3 + w.length; else if (T.includes(w)) sc += 2 + w.length / 2; if (A.includes(w)) sc += 1 + w.length / 3;
       });
       const kg = grams(Q); let hit = 0; qg.forEach(g => { if (kg.has(g)) hit++; }); sc += qg.size ? 6 * hit / qg.size : 0;
+      if (k.t === '돈 상식') sc *= .6; // 퀴즈 문제보다 '어떻게 하나요' 설명을 먼저 보여 줘요
       return [sc, k];
     }).filter(([sc]) => sc >= 4).sort((a, b) => b[0] - a[0]).slice(0, 4).map(([, k]) => k);
+  }
+  // 인사·잡담: 돈 이야기가 아니어도 셈이답게 대답해요
+  function smallTalk(q) {
+    const t = q.replace(/\s+/g, ''), go = (h, l) => `<a class="ai-go" href="${h}">${l} ›</a>`;
+    if (/^(안녕|하이|hi|hello|헬로|반가|ㅎㅇ)/i.test(t)) return '<b>안녕하세요! 셈이예요 🌱</b><p>계산 방법, 세금·금융 상식, 돈셈 쓰는 법을 찾아 드려요. "연봉 4천 실수령액", "이번 달 얼마 썼어?"처럼 물어보세요.</p>';
+    if (/(고마워|고맙|감사|땡큐|thank)/i.test(t)) return '<b>천만에요! 😊</b><p>또 궁금한 게 생기면 언제든 불러 주세요.</p>';
+    if (/(누구|이름이뭐|너뭐야|넌뭐|정체)/.test(t)) return '<b>저는 돈셈 도우미 셈이예요</b><p>연보라 새싹 털뭉치예요. 돈셈에 정리된 설명과 내 기록(이 기기에 저장된 가계부)을 찾아서 알려 드려요.</p>';
+    if (/(뭐먹|메뉴|점심|저녁|배고|맛집)/.test(t)) return '<b>메뉴는 못 골라 드려요 🍚</b><p>대신 식비 아끼는 건 도와드릴 수 있어요. 오늘 쓴 밥값을 캘린더에 적어 두면, 이번 달 식비가 얼마인지 알려 드려요.</p>' + go('/budget/', '캘린더에 적기');
+    if (/(심심|놀아|재밌는거)/.test(t)) return '<b>그럼 돈 퀴즈 한 판 어때요? 🎯</b><p>하루 한 문제 풀면 돈나무가 자라요.</p>' + go('/quiz/', '오늘의 돈 퀴즈');
+    return null;
   }
   // 내 기록으로 답하기 (카카오뱅크 AI '내 금융정보 조회'처럼): 이 기기에 적어 둔 가계부·고정지출·내 자산만 봐요
   function mine(q) {
@@ -3137,9 +3149,10 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       const thinking = log.lastElementChild; requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
       await Promise.all([!kb || !kb.length ? loadKb() : 0, new Promise(r => setTimeout(r, 650))]);
       thinking.remove();
-      const hits = search(q), calc = calcFor(q), my = mine(q);
+      const talk = smallTalk(q), hits = talk ? [] : search(q), calc = talk ? null : calcFor(q), my = talk ? null : mine(q);
       let html = '';
-      if (my) html = `<div class="ai-a"><span class="ai-src">내 기록</span>${my}</div>`;
+      if (talk) html = `<div class="ai-a">${talk}</div>`;
+      else if (my) html = `<div class="ai-a"><span class="ai-src">내 기록</span>${my}</div>`;
       else if (hits.length) {
         const k = hits[0];
         html = `<div class="ai-a"><span class="ai-src">${esc(k.t)}</span><b>${esc(k.q)}</b><p>${esc(k.a)}</p>`;
@@ -3150,7 +3163,7 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       } else {
         html = `<div class="ai-a"><p>음… 그건 아직 잘 모르겠어요. 다른 말로 물어봐 주세요.${calc ? '' : ' 계산이 필요하면 모든 계산기에서 찾아볼 수 있어요.'}</p>${calc ? `<a class="ai-go" href="${calc[0]}">${esc(calc[1])} 계산기 열기 ›</a>` : '<a class="ai-go" href="/calculators/">모든 계산기 보기 ›</a>'}</div>`;
       }
-      const face = my ? 'default' : hits.length ? 'happy' : 'worry'; // 답을 찾으면 웃고, 못 찾으면 고민해요
+      const face = talk ? 'wink' : my ? 'default' : hits.length ? 'happy' : 'worry'; // 답을 찾으면 웃고, 못 찾으면 고민해요
       log.insertAdjacentHTML('beforeend', `<div class="ai-who">${semi(32, '', face)}<span>셈이</span></div>` + html);
       requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
     };

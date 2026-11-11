@@ -625,7 +625,7 @@ html { -webkit-tap-highlight-color: transparent; }
 .cal-sum b { display: block; margin-top: 2px; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 640px) {
   /* 휴대폰: 달력 칸을 넓히려고 좌우 여백을 줄여요 */
-  .cal-card { margin-left: -12px; margin-right: -12px; padding-left: 14px; padding-right: 14px; }
+  .cal-card { padding-left: 14px; padding-right: 14px; } /* 좌우 폭은 모든 페이지 공통(.wrap 8px)으로 맞췄어요 */
   .cal-card .cal { margin-left: -8px; margin-right: -8px; }
   .cal[data-th]:not([data-th="basic"]) .cal-paper { padding: 8px 4px 6px; }
   .cal-week, .cal-grid { gap: 3px; }
@@ -3105,3 +3105,10 @@ a.mk-seller:hover { text-decoration: none; }
 .cal-tot > div:nth-child(2) b { color: #7040A1; }
 :root[data-theme="dark"] .cal-tot > div:nth-child(2) b { color: #B69AD8; }
 @media (prefers-color-scheme: dark) { :root[data-theme="auto"] .cal-tot > div:nth-child(2) b { color: #B69AD8; } }
+.seg button small, .seg button .seg-sub { pointer-events: none; } /* 버튼 안 글씨를 눌러도 버튼이 눌려요 */
+
+/* 휴대폰: 모든 페이지(홈·계산기·쇼핑·부동산·캘린더) 카드 폭을 캘린더처럼 넓게, 똑같이 (화면 끝에서 8px) */
+@media (max-width: 640px) {
+  .wrap { padding-left: 8px; padding-right: 8px; }
+  .wrap > footer, .wrap > h1, .wrap > p, .group > h2, .cat-tabs > h2, .group > .g-head, .wrap > .crumbs { padding-left: 8px; padding-right: 8px; } /* 카드 밖 제목·글은 살짝 안쪽으로 */
+}
