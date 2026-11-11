@@ -3244,6 +3244,32 @@ function mcSubToggle(e) {
 const mcDays = d => { const t = new Date(), a = new Date(t.getFullYear(), t.getMonth(), t.getDate()), [y, m, dd] = d.split('-').map(Number); return Math.round((new Date(y, m - 1, dd) - a) / 864e5); };
 const mcUpcoming = () => MONEY_CAL.filter(e => mcDays(e.d) >= 0).sort((a, b) => a.d.localeCompare(b.d));
 const esc2h = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+// 알림함 문구: 토스 알림처럼 한눈에 눈길이 가게 (일정마다 맞춤, 없으면 분류별 기본 문구)
+function mcHook(e, n) {
+  const D = n ? `D-${n}` : '오늘', H = {
+    '11.11 쇼핑 할인 (광군제)': n ? `광군제 ${D} 🛒 장바구니 미리 담아 두면 더 싸게 사요` : '🛒 오늘 자정에 끝나요! 광군제 할인, 진짜 싼지 10초 만에 확인',
+    '블랙프라이데이': `블프 ${D} 🔥 1년 중 가장 싼 날, 직구 관세 함정만 피하세요`,
+    '사이버먼데이': n ? `블프 놓쳤다면? ${D} 사이버먼데이에 한 번 더 기회가 와요` : '🔥 오늘이 사이버먼데이! 블프 때 놓친 물건 다시 확인하세요',
+    '박싱데이': `연말 재고 떨이 🎁 박싱데이 ${D}, 해외 쇼핑몰이 크게 할인해요`,
+    '한국은행 기준금리 결정': `${D} 기준금리 발표 📉 내 대출 이자, 오를까 내릴까?`,
+    '한국은행 기준금리 결정 (2027년 첫 회의)': `${D} 새해 첫 금리 발표 📉 예금 만기·대출 갈아타기 전에 꼭 보세요`,
+    '미국 FOMC 금리 결정': `${D} 미국 금리 발표 🇺🇸 환율·주식이 크게 흔들릴 수 있어요`,
+    '종합소득세 중간예납 납부': `${D} 세금 고지서 💣 안 내면 가산세가 붙어요`,
+    '종합부동산세 납부': `종부세 ${D} 🏠 고지서 확인 안 하면 가산세 폭탄`,
+    '연금저축·IRP 납입 마감': `${D} 마감! 💰 지금 넣으면 최대 148만 원 돌려받아요`,
+    '연말정산 미리보기 열림': '13월의 월급 미리보기 열려요 💰 올해 얼마 돌려받을까?',
+    '최저임금 시급 10,700원 적용': '내년 시급 10,700원 ⬆️ 내 월급, 제대로 받고 있을까?',
+    '연말정산 간소화 자료 공개': `${D} 연말정산 시작 📄 놓친 공제 하나로 수십만 원이 갈려요`,
+    '부가세 2기 확정신고·납부': `사장님 ${D}! 🧾 부가세 신고 안 하면 가산세`,
+    '자동차세 연납 신청·납부': `🚗 1월에 한 번에 내면 자동차세 할인! ${D}`,
+    '근로장려금 반기 신청': `신청만 하면 받는 돈 💸 근로장려금 ${D}`,
+    '법인세 신고·납부': `🏢 법인세 신고 ${D}, 늦으면 가산세가 붙어요`,
+    '종합소득세 신고·납부': `프리랜서 주목! 3.3% 떼였다면 환급받을 수도 💸 ${D}`,
+    '근로·자녀장려금 정기 신청': `최대 330만 원 💰 신청 안 하면 0원! 장려금 ${D}`,
+  };
+  if (H[e.t]) return H[e.t];
+  return { 세금: `${D} ${e.t} 💣 놓치면 가산세가 붙어요`, 쇼핑: `${D} ${e.t} 🛍️ 진짜 싼지 먼저 확인하세요`, 금리: `${D} ${e.t} 📈 내 이자가 바뀔 수 있어요`, 연말정산: `${D} ${e.t} 💰 돌려받을 돈이 달라져요`, 지원금: `${D} ${e.t} 🎁 신청 안 하면 0원이에요`, 월급: `${e.t} 💵 내 월급 확인해 보세요` }[e.tag] || `${D} ${e.t}`;
+}
 const mcBadge = e => { const n = mcDays(e.d); return e.soft ? '예정' : n === 0 ? 'D-DAY' : `D-${n}`; }; // 날짜가 아직 발표 전이면 '예정' (날짜 칸에 '11월 중'이 따로 보여요)
 // 내 달력에 넣기(.ics): 마감일 하루짜리 일정 + 하루 전 오전 9시 알림
 // ── 내 일정 (캘린더) 반복·알림: 가계부 달력과 알림(종)에서 같이 써요 ──
@@ -3520,10 +3546,11 @@ const GUIDE_FOR = {
     const mon = new Date(t0); mon.setDate(t0.getDate() - ((t0.getDay() + 6) % 7) - 7);
     const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
     const wk = entries.filter(e => e.type === 'out' && e.date >= ymd(mon) && e.date <= ymd(sun));
-    if (wk.length) out.push({ id: 'wk-' + ymd(mon), ico: '📅', t: '주간 지출', m: `지난주(${md(mon)}~${md(sun)})에 총 ${won(wk.reduce((s, e) => s + e.amt, 0))}을 썼어요. 어디에 많이 썼는지 확인해 보세요.`, go: '/budget/', more: `${wk.length}건 보기` });
+    if (wk.length) { const byc = {}; wk.forEach(e => { byc[e.cat] = (byc[e.cat] || 0) + e.amt; }); const top = Object.entries(byc).sort((a, c) => c[1] - a[1])[0];
+      out.push({ id: 'wk-' + ymd(mon), ico: '📊', bg: '#E8F1FF', t: '주간 리포트', m: `지난주 ${won(wk.reduce((s, e) => s + e.amt, 0))} 썼어요. 1위는 ${top[0]} 👀 진짜 필요했던 걸까요?`, sub: `${md(mon)}~${md(sun)} · ${wk.length}건`, go: '/budget/', r: '이번 주', u: 2 }); }
     // ② 월급날
     const pi = typeof paydayInfo === 'function' ? paydayInfo(b) : null;
-    if (pi && pi.days <= 3) out.push({ id: 'pay-' + ymd(pi.next), ico: '💰', t: '월급날', m: pi.days ? `월급날까지 ${pi.days}일 남았어요. 남은 돈을 확인해 보세요.` : '오늘은 월급날이에요! 고정지출이 빠져나가기 전에 저축부터 해 보세요.', go: '/budget/' });
+    if (pi && pi.days <= 3) out.push({ id: 'pay-' + ymd(pi.next), ico: '💰', bg: '#E7F8EC', t: '월급날', m: pi.days ? `월급까지 D-${pi.days} ⏳ 지금 남은 돈으로 버틸 수 있을까요?` : '💸 월급 들어왔어요! 카드값이 털어 가기 전에 저축부터 떼 두세요', go: '/budget/', r: pi.days ? `D-${pi.days}` : '오늘', u: pi.days });
     // ③ 고정지출 결제 예정 (3일 안)
     const f = read('donsem:fixed');
     (f && Array.isArray(f.items) ? f.items : []).forEach(x => {
@@ -3532,28 +3559,34 @@ const GUIDE_FOR = {
         const d = new Date(t0); d.setDate(t0.getDate() + k);
         const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
         if (Math.min(Number(x.day), last) !== d.getDate() || (x.cycle === 'year' && Number(x.month) !== d.getMonth() + 1)) continue;
-        out.push({ id: `fx-${x.id}-${ymd(d)}`, ico: '↻', t: '결제 예정', m: `${k === 0 ? '오늘' : k === 1 ? '내일' : `${k}일 뒤`} ${x.name || x.cat} ${won(Number(x.amt))}이 결제돼요.`, go: '/budget/#fixed' });
+        out.push({ id: `fx-${x.id}-${ymd(d)}`, ico: '💳', bg: '#FFF1E6', t: '결제 예정', m: `${k === 0 ? '오늘' : k === 1 ? '내일' : `${k}일 뒤`} ${x.name || x.cat} ${won(Number(x.amt))}이 빠져나가요 💸 안 쓰는 구독이면 지금 끊으세요`, go: '/budget/#fixed', r: k === 0 ? '오늘' : `D-${k}`, u: k });
         break;
       }
     });
     // ④ 이번 달 예산
     if (b && b.budget > 0) {
       const used = entries.filter(e => e.type === 'out' && e.date.startsWith(today.slice(0, 7))).reduce((s, e) => s + e.amt, 0), r = used / b.budget;
-      if (r >= 0.8) out.push({ id: `bud-${today.slice(0, 7)}-${r >= 1 ? 100 : 80}`, ico: r >= 1 ? '🚨' : '⚠️', t: '이번 달 예산', m: r >= 1 ? `예산을 ${won(used - b.budget)} 넘었어요. 남은 날은 꼭 필요한 데만 써 볼까요?` : `예산의 ${Math.floor(r * 100)}%를 썼어요. 남은 돈은 ${won(b.budget - used)}이에요.`, go: '/budget/' });
+      const leftDays = new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate() - n.getDate() + 1;
+      if (r >= 0.8) out.push({ id: `bud-${today.slice(0, 7)}-${r >= 1 ? 100 : 80}`, ico: r >= 1 ? '🚨' : '⚠️', bg: '#FFE9E9', t: '이번 달 예산', r: '지금', u: 0, m: r >= 1 ? `🚨 예산 ${won(used - b.budget)} 초과! 이대로면 다음 달 카드값 폭탄이에요` : `⚠️ 예산 ${Math.floor(r * 100)}% 소진! 남은 ${won(b.budget - used)}으로 ${leftDays}일을 버텨야 해요`, go: '/budget/' });
     }
     // ⑤ 연속 기록
     if (typeof budgetStreak === 'function' && entries.length) {
       const s = budgetStreak(entries);
-      if (s.current && !s.recordedToday) out.push({ id: 'streak-' + today, ico: '🔥', t: '연속 기록', m: `오늘 기록하면 ${s.current + 1}일 연속이에요. 돈을 안 썼다면 무지출 도장도 괜찮아요.`, go: '/budget/' });
+      if (s.current && !s.recordedToday) out.push({ id: 'streak-' + today, ico: '🔥', bg: '#FFF0E0', t: '연속 기록', m: s.current === 1 ? '🔥 어제 시작한 기록, 오늘 안 적으면 처음부터예요! 딱 1개만 적으면 2일 연속' : `🔥 ${s.current}일 연속 기록, 오늘 자정에 끊겨요! 딱 1개만 적으면 ${s.current + 1}일째`, sub: '돈을 안 썼다면 무지출 도장도 괜찮아요', go: '/budget/', r: '오늘', u: 0 });
     }
-    // ⑥ 놓치면 손해 (중요도 ★★ 이상, 7일 안)
+    // ⑥ 놓치면 손해: 이번 달 남은 돈 일정 전부 + 알림 받기로 한 일정 (토스 알림처럼 눈에 띄는 말로)
     if (typeof MONEY_CAL !== 'undefined' && typeof mcDays === 'function') {
-      { const subs = mcSubs(); MONEY_CAL.filter(e => subs.has(mcSubKey(e)) && mcDays(e.d) >= 0 && mcDays(e.d) <= 3).forEach(e => out.push({ id: 'mc-' + e.d + e.t, ico: '🔔', t: '알림 받기로 한 일정', m: `${mcDays(e.d) ? `D-${mcDays(e.d)}` : '오늘'} ${e.t}`, go: '/budget/' })); }
-      MONEY_CAL.filter(e => (e.imp || 2) >= 2 && !e.soft && mcDays(e.d) >= 0 && mcDays(e.d) <= 7 && !out.some(o => o.id === 'mc-' + e.d + e.t)).forEach(e => out.push({ id: 'mc-' + e.d + e.t, ico: '⏰', t: '놓치면 손해', m: `${mcDays(e.d) ? `D-${mcDays(e.d)}` : '오늘'} ${e.t}`, go: '/budget/' })); }
+      const subs = mcSubs(), ym = today.slice(0, 7);
+      MONEY_CAL.filter(e => mcDays(e.d) >= 0 && (e.d.startsWith(ym) || (subs.has(mcSubKey(e)) && mcDays(e.d) <= 14))).sort((a, c) => a.d.localeCompare(c.d)).forEach(e => {
+        const dn = mcDays(e.d), sub = subs.has(mcSubKey(e)), tagIco = { 세금: '🧾', 쇼핑: '🛍️', 금리: '📈', 연말정산: '💰', 월급: '💵', 지원금: '🎁' }[e.tag] || '⏰';
+        out.push({ id: 'mc-' + e.d + e.t, ico: sub ? '🔔' : tagIco, bg: dn === 0 ? '#FFE3E3' : { 세금: '#FFF4D6', 쇼핑: '#FFE6F0', 금리: '#E3F2FD', 연말정산: '#EEE6FA', 지원금: '#E7F8EC' }[e.tag] || 'var(--field)',
+          t: `놓치면 손해 · ${e.tag}${sub ? ' · 알림 받는 중' : ''}`, m: mcHook(e, dn), sub: e.t, go: e.go ? e.go[0] : '/budget/', r: e.soft ? '예정' : dn ? `D-${dn}` : 'D-DAY', hot: dn === 0 || (sub && dn <= 3), u: dn + 0.5 });
+      });
+    }
     // ⑦ 내 일정 알림
-    if (typeof planAlarmsDue === 'function') planAlarmsDue().forEach(a => out.push({ id: a.id, ico: '📅', t: '일정 알림', m: `${a.when} ${a.p.t}${a.p.allDay === false && a.p.st ? ` ${a.p.st}` : ''}${a.p.place ? ` · ${a.p.place}` : ''}`, go: '/budget/' }));
+    if (typeof planAlarmsDue === 'function') planAlarmsDue().forEach(a => out.push({ id: a.id, ico: '📅', bg: '#EEE6FA', t: '내 일정', m: `⏰ ${a.when}${a.p.allDay === false && a.p.st ? ` ${a.p.st}` : ''} 「${a.p.t}」 잊지 마세요!`, sub: a.p.place ? `📍 ${a.p.place}` : '', go: '/budget/', r: a.when, hot: a.when === '오늘', u: a.when === '오늘' ? 0 : 1 }));
     if (!out.length) out.push({ id: 'hello', ico: '👋', t: '돈셈 알림', m: entries.length ? '지금은 새 알림이 없어요. 결제 예정, 월급날, 예산을 넘을 때 여기서 알려 드려요.' : '가계부에 첫 기록을 남겨 보세요. 주간 지출과 결제 예정 알림을 여기서 보여 드려요.', go: '/budget/' });
-    return out;
+    return out.map((x, i) => [x, i]).sort((a, c) => (a[0].u ?? 5) - (c[0].u ?? 5) || a[1] - c[1]).map(a => a[0]); // 급한 것부터
   }
   const seen = () => new Set(read('donsem:noti-seen') || []);
   const btn = document.createElement('button');
@@ -3572,7 +3605,7 @@ const GUIDE_FOR = {
     const list = build(), s = seen();
     panel = document.createElement('div');
     panel.className = 'noti-panel'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', '알림');
-    panel.innerHTML = `<div class="noti-h"><b>알림</b><small>내 기록으로 만든 알림이에요</small></div>` + list.map(x => `<a class="noti-it${s.has(x.id) ? '' : ' new'}" href="${x.go}"><span class="noti-ico">${x.ico}</span><span><b>${x.t}</b><em>${esc2h(x.m)}</em>${x.more ? `<u>${x.more}</u>` : ''}</span></a>`).join('');
+    panel.innerHTML = `<div class="noti-h"><b>알림</b><small>내 기록으로 만든 알림이에요</small></div>` + list.map(x => `<a class="noti-it${s.has(x.id) ? '' : ' new'}${x.hot ? ' hot' : ''}" href="${x.go}"><span class="noti-ico"${x.bg ? ` style="background:${x.bg}"` : ''}>${x.ico}</span><span class="noti-tx"><b>${x.t}</b><em>${esc2h(x.m)}</em>${x.sub ? `<small>${esc2h(x.sub)}</small>` : ''}${x.more ? `<u>${x.more}</u>` : ''}</span>${x.r ? `<span class="noti-r">${esc2h(x.r)}</span>` : ''}</a>`).join('');
     document.body.append(panel);
     btn.setAttribute('aria-expanded', 'true');
     try { localStorage.setItem('donsem:noti-seen', JSON.stringify([...new Set([...s, ...list.map(x => x.id)])].slice(-200))); } catch (err) { /* 괜찮아요 */ }

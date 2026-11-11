@@ -3116,3 +3116,18 @@ a.mk-seller:hover { text-decoration: none; }
 #b-in, #b-left:not(.minus) { color: #7040A1; }
 :root[data-theme="dark"] #b-in, :root[data-theme="dark"] #b-left:not(.minus) { color: #B69AD8; }
 @media (prefers-color-scheme: dark) { :root[data-theme="auto"] #b-in, :root[data-theme="auto"] #b-left:not(.minus) { color: #B69AD8; } }
+
+/* 알림함 (토스 알림처럼): 큰 아이콘 · 작은 출처 · 굵은 한 줄 · 오른쪽 D-day */
+.noti-panel { max-height: min(78vh, 640px); }
+.noti-it { align-items: flex-start; gap: 12px; padding: 14px 10px; }
+.noti-ico { width: 42px; height: 42px; border-radius: 13px; font-size: 21px; }
+.noti-tx { flex: 1; min-width: 0; }
+.noti-it b { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.noti-it em { margin-top: 3px; font-size: 15.5px; font-weight: 700; line-height: 1.42; color: var(--text); letter-spacing: -.2px; }
+.noti-it small { display: block; margin-top: 4px; font-size: 12.5px; color: var(--muted); }
+.noti-r { flex: none; margin-top: 1px; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.noti-it.hot .noti-r { padding: 2px 7px; border-radius: 99px; background: #ff3b30; color: #fff; font-weight: 800; }
+.noti-it.hot em { color: #e5302a; }
+:root[data-theme="dark"] .noti-it.hot em { color: #ff7a73; }
+@media (prefers-color-scheme: dark) { :root[data-theme="auto"] .noti-it.hot em { color: #ff7a73; } }
+:root[data-theme="dark"] .noti-ico { filter: saturate(.9); background-blend-mode: multiply; }
