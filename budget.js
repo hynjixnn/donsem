@@ -387,7 +387,8 @@
   }
 
   // ── 달력 꾸미기: 테마와 날짜별 스티커 (donsem:deco, 이 기기에만 저장) ──
-  const THEMES = [['basic', '기본', ''], ['berry', '딸기우유', '🍓'], ['mint', '민트초코', '🌿'], ['butter', '버터', '🌼'], ['lilac', '라벤더', '💜'], ['night', '밤하늘', '🌙']];
+  // 테마: 기본은 색이 없고, 나머지는 보이는 색 이름 그대로 (예전 이름 berry·mint·butter·night는 저장값이라 그대로 둬요)
+  const THEMES = [['basic', '기본'], ['berry', '연분홍'], ['peach', '연주황'], ['ivory', '아이보리'], ['butter', '노랑'], ['sage', '연초록'], ['mint', '민트'], ['sky', '연하늘'], ['night', '남색'], ['lilac', '라벤더'], ['gray', '회색']];
   const STICKERS = '🍎 🍓 🍰 ☕ 🧋 🍜 🍕 🍗 🛍️ 💄 👗 🎁 💸 💰 🐷 🧾 🚕 ✈️ 🎬 🎮 💖 ⭐ 🌸 🍀 😎 🥳 😭 💪'.split(' ');
   const ST_MAX = 3;
   function loadDeco() {
@@ -403,7 +404,7 @@
   function decoHTML() {
     const mine = (selDay && selDay.startsWith(month) && deco.st[selDay]) || [];
     return `<div class="deco"><button type="button" class="deco-toggle${decoOpen ? ' on' : ''}" data-deco="toggle" aria-expanded="${decoOpen}">🎨 달력 꾸미기</button>${decoOpen ? `
-      <p class="deco-h">테마</p><div class="deco-th">${THEMES.map(([k, n, e]) => `<button type="button" class="th-${k}${deco.th === k ? ' on' : ''}" data-pick="${k}"><i></i>${e ? e + ' ' : ''}${n}</button>`).join('')}</div>
+      <p class="deco-h">테마</p><div class="deco-th">${THEMES.map(([k, n]) => `<button type="button" class="th-${k}${deco.th === k ? ' on' : ''}" data-pick="${k}"><i${k === 'basic' ? ' class="none"' : ''}></i>${n}</button>`).join('')}</div>
       <p class="deco-h">스티커 <span>${selDay && selDay.startsWith(month) ? `${dayLabel(selDay)}에 붙여요 (최대 ${ST_MAX}개)` : '먼저 달력에서 날짜를 눌러 주세요'}</span></p>
       ${mine.length ? `<div class="deco-mine">${mine.map((c, i) => `<button type="button" data-rm="${i}" aria-label="${c} 스티커 떼기">${c}<b>×</b></button>`).join('')}</div>` : ''}
       <div class="deco-st">${STICKERS.map(c => `<button type="button" data-st="${c}" aria-label="${c} 스티커 붙이기">${c}</button>`).join('')}</div>` : ''}</div>`;
@@ -634,6 +635,12 @@
     done: SV('<rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/>'), dday: SV('<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 8.5v7h1.5a3.5 3.5 0 0 0 0-7z"/>'),
     cal: SV('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'), trash: SV('<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/>'),
   };
+  // 일정 색 (네이버 캘린더처럼 7가지 색 × 5단계 = 35색). c1~c35로 저장하고, 예전 6색(pink 등)도 그대로 보여요
+  const PAL = [['#D52A55', '#EA5476', '#FF7F9E', '#FFCFDC', '#FBE4EA'], ['#C7491A', '#E86B3F', '#FF8F66', '#FFD9C2', '#FFEEDD'], ['#C78400', '#E3A100', '#F6BE1A', '#F9EA8E', '#F8F5BF'],
+    ['#1C7A6A', '#18A98A', '#52C9A0', '#BEEDD2', '#E2F8E4'], ['#2546AE', '#3D73E3', '#6EA6FF', '#BDDBFF', '#DCEBFC'], ['#5E1DC2', '#7D42E6', '#AE85FF', '#DDC8FF', '#EFE3FF'], ['#4F555C', '#747A80', '#9AA5A8', '#CFD2D3', '#E8E8E8']];
+  (() => { if (document.getElementById('pal-css')) return; const st = document.createElement('style'); st.id = 'pal-css'; // 진한 3단계까지는 흰 글씨
+    st.textContent = PAL.flat().map((h, i) => `.pc-c${i + 1}{--pc:${h};${i % 5 < 3 ? '--pct:#fff;--pctb:#fff;' : ''}}`).join(''); document.head.append(st); })();
+  const palHTML = cur => `<div class="pe-pal" id="pe-pal" hidden role="group" aria-label="일정 색 고르기">${PAL.flat().map((h, i) => `<button type="button" class="pc-c${i + 1}${cur === 'c' + (i + 1) ? ' on' : ''}" data-pec="c${i + 1}" aria-label="색 ${i + 1}"></button>`).join('')}</div>`;
   let peEl = null, peCur = null, peMode = 'plan';
   const peShell = () => {
     if (peEl) return peEl;
@@ -667,7 +674,8 @@
         <div class="pe-files" id="pe-files">${peFilesHTML()}</div>
         <label class="pe-line"><span class="pe-ico">${PI.bell}</span><b>알림</b><select id="pe-alarm">${Object.entries(PALARM).map(([k, v]) => `<option value="${k}"${(p.alarm || 'none') === k ? ' selected' : ''}>${v}</option>`).join('')}</select><span class="pe-chev">›</span></label>
         <p class="pe-hint" id="pe-ahint"${!p.alarm || p.alarm === 'none' ? ' hidden' : ''}>돈셈을 켜 두거나 열면 알려 드려요. 휴대폰 알림을 허락하면 알림으로도 와요.</p>
-        <div class="pe-line"><span class="pe-ico">${PI.pal}</span><b>색</b><div class="pe-colors" role="group" aria-label="일정 색">${PCOLORS.map(c => `<button type="button" class="pc-${c}${c === p.c ? ' on' : ''}" data-pec="${c}" aria-label="${c} 색"></button>`).join('')}</div></div>
+        <button type="button" class="pe-line pe-cline" data-pecol aria-expanded="false"><span class="pe-ico">${PI.pal}</span><b>색</b><i class="pe-dot pc-${p.c}"></i><span class="pe-chev">›</span></button>
+        ${palHTML(p.c)}
         <div class="pe-line"><span class="pe-ico">${PI.done}</span><b>완료</b>${swHTML('pe-done', p.done, '완료')}</div>
         <div class="pe-line"><span class="pe-ico">${PI.dday}</span><b>D-day 보기</b><small>달력 위에 남은 날을 보여 줘요</small>${swHTML('pe-dday', p.dday, 'D-day 보기')}</div>
         <div class="pe-foot">${src ? `<button type="button" class="pe-fb" data-peics>${PI.cal}휴대폰 달력에 넣기</button><button type="button" class="pe-fb del" data-pedel>${PI.trash}지우기</button>` : ''}</div>
@@ -717,7 +725,8 @@
     if (save()) { closePe(); render(); toast('기록을 고쳤어요.'); }
   }
   function onPe(e) {
-    const b = e.target.closest('[data-pex],[data-pesave],[data-pedel],[data-peics],[data-pec],[data-pefx],[data-pet],[data-pecat]'); if (!b) return;
+    const b = e.target.closest('[data-pex],[data-pesave],[data-pedel],[data-peics],[data-pec],[data-pefx],[data-pet],[data-pecat],[data-pecol]'); if (!b) return;
+    if (b.hasAttribute('data-pecol')) { const pal = $('pe-pal'); pal.hidden = !pal.hidden; b.setAttribute('aria-expanded', String(!pal.hidden)); if (!pal.hidden) pal.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
     if (b.hasAttribute('data-pex')) closePe();
     else if (b.hasAttribute('data-pesave')) (peMode === 'plan' ? savePlanEd : saveRecEd)();
     else if (b.hasAttribute('data-pedel')) {
@@ -726,7 +735,7 @@
       closePe(); render();
     }
     else if (b.hasAttribute('data-peics')) { if (typeof planIcs === 'function') planIcs(readPlanForm()); }
-    else if (b.dataset.pec) { peCur.c = b.dataset.pec; peEl.querySelectorAll('[data-pec]').forEach(x => x.classList.toggle('on', x === b)); peEl.querySelector('.pe-dot').className = `pe-dot pc-${peCur.c}`; }
+    else if (b.dataset.pec) { peCur.c = b.dataset.pec; peEl.querySelectorAll('[data-pec]').forEach(x => x.classList.toggle('on', x === b)); peEl.querySelectorAll('.pe-dot').forEach(d => { d.className = `pe-dot pc-${peCur.c}`; }); $('pe-pal').hidden = true; }
     else if (b.dataset.pefx !== undefined) { peCur.files.splice(Number(b.dataset.pefx), 1); $('pe-files').innerHTML = peFilesHTML(); }
     else if (b.dataset.pet) { peCur.type = b.dataset.pet; peCur.cat = CATS[peCur.type][0]; peEl.querySelectorAll('[data-pet]').forEach(x => x.classList.toggle('on', x === b)); $('pe-cats').innerHTML = peCatsHTML(); $('pe-h').textContent = `${peCur.type === 'in' ? '수입' : '지출'} 고치기`; }
     else if (b.dataset.pecat) { peCur.cat = b.dataset.pecat; $('pe-cats').innerHTML = peCatsHTML(); }
