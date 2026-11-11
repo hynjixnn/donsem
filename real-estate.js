@@ -46,7 +46,8 @@
   const landWeak = p => /> 전시관$|미술관|> 빌딩$|> 호텔|> 광장|지하철,전철|도심공항/.test(p.category_name || '');
   const nrm = t => String(t || '').replace(/\s+/g, '').toLowerCase();
   // 누른 곳에서 찾은 가게가 큰 장소 안에 있는 곳이면(예: '오설록 현대백화점 무역점', '경복궁 사정전') 큰 장소를 보여 줘요
-  const inside = (hit, L) => !!(L && !landWeak(L) && hit && hit.id !== L.id && nrm(L.place_name.split(' ')[0]).length >= 2 && nrm(hit.place_name).includes(nrm(L.place_name.split(' ')[0])));
+  const JUNK = /화장실|주차장|출입구|출구|입구|ATM|흡연|자전거|무인민원|택배함|공중전화/; // 이런 건 장소 카드로 보여 주지 않아요
+  const inside = (hit, L) => !!(L && !/> 전시관$|미술관|> 빌딩$|> 호텔|> 광장/.test(L.category_name || '') && hit && hit.id !== L.id && nrm(L.place_name.split(' ')[0]).length >= 2 && nrm(hit.place_name).includes(nrm(L.place_name.split(' ')[0])));
   async function landmarkAt(lat, lng) {
     if (!map || !map.kakao) return null;
     const S = kakao.maps.services, here = new kakao.maps.LatLng(lat, lng), seen = new Set(), near = { location: here, radius: 400, sort: S.SortBy.DISTANCE }, best5 = { location: here, radius: 400, sort: S.SortBy.ACCURACY };
@@ -73,13 +74,13 @@
     if (bname) { // 건물 이름이 있으면 그 이름의 장소
       const list = await kPlaces('keywordSearch', bname, { location: here, radius: 150, sort: S.SortBy.DISTANCE }, 15).catch(() => []);
       const k = norm(bname), hit = list.find(p => norm(p.place_name) === k) || list.find(p => k.length > 1 && (norm(p.place_name).includes(k) || k.includes(norm(p.place_name))));
-      if (hit) { const L0 = await land; return inside(hit, L0) ? L0 : hit; }
+      if (hit && !JUNK.test(hit.place_name)) { const L0 = await land; return inside(hit, L0) ? L0 : hit; }
     }
     const L = await land;
     if (L && +L.distance <= 100) return L; // 큰 장소 바로 위를 눌렀으면 그 장소 (안에 있는 가게보다 먼저)
     if (road) { // 아니면 같은 도로명 주소(같은 건물)에 있는 가장 가까운 장소
       const list = await kPlaces('keywordSearch', road, { location: here, radius: 60, sort: S.SortBy.DISTANCE }, 15).catch(() => []);
-      const r = list.find(p => p.road_address_name === road && +p.distance <= 40); if (r) return inside(r, L) ? L : r;
+      const r = list.find(p => p.road_address_name === road && +p.distance <= 40 && !JUNK.test(p.place_name)); if (r) return inside(r, L) ? L : r;
     }
     return L; // 공원 한가운데처럼 주소가 없는 곳: 가까운 큰 장소
   }
