@@ -38,7 +38,7 @@
     $('a-name').placeholder = kind === 'asset' ? '토스뱅크 통장' : '○○은행 신용대출';
   }
   $('a-kind').addEventListener('click', e => {
-    const v = e.target.dataset && e.target.dataset.v;
+    const v = e.target.closest && e.target.closest('[data-v]') && e.target.closest('[data-v]').dataset.v;
     if (!v) return;
     kind = v; cat = CATS[kind][0]; drawCats();
     $('a-save').textContent = kind === 'asset' ? '자산 추가하기' : '부채 추가하기';

@@ -42,7 +42,7 @@
   }
   const picked = new Set();
   $('g-mode').addEventListener('click', e => {
-    const v = e.target.dataset && e.target.dataset.v;
+    const v = e.target.closest && e.target.closest('[data-v]') && e.target.closest('[data-v]').dataset.v;
     if (!v) return;
     mode = v;
     $('g-manual-wrap').hidden = mode !== 'manual';

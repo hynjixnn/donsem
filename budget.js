@@ -38,7 +38,7 @@
     $('b-cats').innerHTML = CATS[type].map(c => `<button type="button" class="${c === cat ? 'on' : ''}" data-cat="${esc(c)}">${catIcon(c)}${esc(c)}</button>`).join('');
   }
   $('b-type').addEventListener('click', e => {
-    const v = e.target.dataset && e.target.dataset.v;
+    const v = e.target.closest && e.target.closest('[data-v]') && e.target.closest('[data-v]').dataset.v;
     if (!v) return;
     type = v; cat = CATS[type][0];
     drawCats();
@@ -841,7 +841,7 @@
     selDay = b.dataset.day; planOpen = false; render();
   }
   $('b-view').addEventListener('click', e => {
-    const v = e.target.dataset && e.target.dataset.v;
+    const v = e.target.closest && e.target.closest('[data-v]') && e.target.closest('[data-v]').dataset.v;
     if (!v) return;
     view = v;
     try { localStorage.setItem('donsem:budget-view', v); } catch (err) { /* 저장 안 돼도 괜찮아요 */ }
