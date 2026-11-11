@@ -45,11 +45,18 @@
   const LAND_C = /(> 백화점|> 복합쇼핑몰|> 아울렛|공원$|> 운동장|운동장$|경기장$|야구장$|체육관$|> 대학교|고궁|> 타워|전망대|> 시장|종합병원|대학병원|> 호텔|컨벤션|> 전시관$|박물관|미술관|> 광장|테마파크|놀이공원|아쿠아리움|동물원|기차역|터미널|공항|> 빌딩$|지하철,전철)/;
   async function landmarkAt(lat, lng) {
     if (!map || !map.kakao) return null;
-    const S = kakao.maps.services, here = new kakao.maps.LatLng(lat, lng), seen = new Set();
-    const all = (await Promise.all(LAND_W.map(w => kPlaces('keywordSearch', w, { location: here, radius: 400, sort: S.SortBy.DISTANCE }, 15).catch(() => [])))).flat();
+    const S = kakao.maps.services, here = new kakao.maps.LatLng(lat, lng), seen = new Set(), near = { location: here, radius: 400, sort: S.SortBy.DISTANCE }, best5 = { location: here, radius: 400, sort: S.SortBy.ACCURACY };
+    let all = (await Promise.all([...LAND_W.map(w => kPlaces('keywordSearch', w, near, 15).catch(() => [])), ...['백화점', '쇼핑몰', '아울렛'].map(w => kPlaces('keywordSearch', w, best5, 5).catch(() => []))])).flat();
+    // 백화점 안 가게들 이름('셀린느 갤러리아백화점 EAST점')에서 큰 장소 이름을 뽑아 한 번 더 찾아요 (가게가 많으면 백화점 자체가 묻혀서)
+    const cnt = {}; all.forEach(p => (p.place_name.match(/[가-힣A-Za-z0-9]*(백화점|아울렛|쇼핑몰|몰)[가-힣A-Za-z0-9]*/g) || []).forEach(t => { cnt[t] = (cnt[t] || 0) + 1; }));
+    const toks = Object.entries(cnt).filter(([, k]) => k >= 2).sort((x, y) => y[1] - x[1]).slice(0, 2).map(x => x[0]);
+    if (toks.length) all = all.concat((await Promise.all(toks.map(t => kPlaces('keywordSearch', t, best5, 5).catch(() => [])))).flat());
     const c = all.filter(p => !seen.has(p.id) && seen.add(p.id) && LAND_C.test(p.category_name || '') && !/주차장|출입구|정문|후문|매표소|관리사무소|화장실/.test(p.place_name) && +p.distance <= 350).sort((a, b) => a.distance - b.distance);
-    let best = c[0]; if (!best) return null;
-    const parent = c.find(p => p !== best && best.place_name.startsWith(p.place_name + ' ')); // '경복궁 연생전'보다 '경복궁'
+    if (!c.length) return null;
+    const weak = p => /> 전시관$|미술관|> 빌딩$|> 호텔|> 광장|지하철,전철|도심공항/.test(p.category_name || ''); // 이런 곳은 큰 장소 안에 있는 경우가 많아서 뒤로
+    let best = c.slice().sort((a, b) => (+a.distance + (weak(a) ? 120 : 0)) - (+b.distance + (weak(b) ? 120 : 0)))[0];
+    const n = t => String(t).replace(/\s+/g, '').toLowerCase();
+    const parent = c.find(p => p !== best && n(best.place_name).includes(n(p.place_name)) && n(p.place_name).length >= 2); // '경복궁 연생전'·'아트스페이스 갤러리아백화점EAST점'보다 '경복궁'·'갤러리아백화점 EAST점'
     return parent || best;
   }
   // 누른 자리의 장소 찾기: 그 자리 건물 이름으로 가까운 장소 (카카오맵에서 건물을 누른 것처럼)
