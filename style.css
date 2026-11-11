@@ -3162,3 +3162,4 @@ button.pe-line { width: 100%; border: 0; border-bottom: 1px solid color-mix(in s
 .pe-pal button.on { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--text); }
 @media (max-width: 380px) { .pe-pal { padding-left: 4px; gap: 12px 6px; } .pe-pal button { width: 40px; height: 40px; } }
 .pe-line b { white-space: nowrap; } .pe-line small { text-align: right; }
+.pc-acts a[href*="place.map.kakao"] { flex-basis: 100%; } /* 카카오맵 사진·후기 보기는 한 줄 전체로 */
