@@ -3050,7 +3050,7 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   // 내 기록으로 답하기 (카카오뱅크 AI '내 금융정보 조회'처럼): 이 기기에 적어 둔 가계부·고정지출·내 자산만 봐요
   function mine(q) {
     const t = q.replace(/\s+/g, ''), rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
-    const b = rd('donsem:budget'), es = b && Array.isArray(b.entries) ? b.entries : [];
+    const b = rd('donsem:budget'), es = withFixed(b && Array.isArray(b.entries) ? b.entries : []);
     const n = new Date(), ym = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`, pm = new Date(n.getFullYear(), n.getMonth() - 1, 1);
     const pym = `${pm.getFullYear()}-${String(pm.getMonth() + 1).padStart(2, '0')}`, outs = k => es.filter(e => e.type === 'out' && e.date.startsWith(k));
     const go = (h, l) => `<a class="ai-go" href="${h}">${l} ›</a>`, none = w => `<p>아직 ${w}에 적은 게 없어요. 적어 두면 여기서 바로 알려 드려요.</p>`;
@@ -3272,6 +3272,22 @@ function mcHook(e, n) {
 }
 const mcBadge = e => { const n = mcDays(e.d); return e.soft ? '예정' : n === 0 ? 'D-DAY' : `D-${n}`; }; // 날짜가 아직 발표 전이면 '예정' (날짜 칸에 '11월 중'이 따로 보여요)
 // 내 달력에 넣기(.ics): 마감일 하루짜리 일정 + 하루 전 오전 9시 알림
+// ── 이번 달 지출은 어디서나 같은 기준: 가계부 기록 + 날짜가 이미 지난 고정지출 (캘린더와 똑같이) ──
+// 고정지출을 가계부에 따로 기록했다면(id fx-…) 두 번 세지 않아요. 지난달·이번 달만 만들어요
+function withFixed(entries) {
+  let items = []; try { const f = JSON.parse(localStorage.getItem('donsem:fixed')); items = f && Array.isArray(f.items) ? f.items : []; } catch (e) { items = []; }
+  if (!items.length) return entries;
+  const have = new Set(entries.map(e => e.id)), n = new Date(), out = [];
+  [-1, 0].forEach(k => {
+    const d0 = new Date(n.getFullYear(), n.getMonth() + k, 1), y = d0.getFullYear(), m = d0.getMonth() + 1, ym = `${y}-${String(m).padStart(2, '0')}`, last = new Date(y, m, 0).getDate(), upTo = k ? last : n.getDate();
+    items.forEach(x => {
+      if (!(Number(x.amt) > 0 && Number(x.day) > 0) || (x.cycle === 'year' && Number(x.month) !== m) || have.has(`fx-${x.id}-${ym}`)) return;
+      const dd = Math.min(Number(x.day), last); if (dd > upTo) return;
+      out.push({ id: `fx-${x.id}-${ym}`, type: 'out', amt: Number(x.amt), cat: x.cat || '고정지출', memo: x.name || '', date: `${ym}-${String(dd).padStart(2, '0')}`, fx: true });
+    });
+  });
+  return out.length ? entries.concat(out) : entries;
+}
 // ── 내 일정 (캘린더) 반복·알림: 가계부 달력과 알림(종)에서 같이 써요 ──
 const plK = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const plD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
@@ -3467,8 +3483,9 @@ const GUIDE_FOR = {
   if (!anchor || !document.body.classList.contains('home')) return;
   const read = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
   const b = read('donsem:budget'), a = read('donsem:assets'), f = read('donsem:fixed');
-  const entries = b && Array.isArray(b.entries) ? b.entries : [], items = a && Array.isArray(a.items) ? a.items : [], fixed = f && Array.isArray(f.items) ? f.items : [];
-  if (!entries.length && !items.length && !fixed.length) return;
+  const entries0 = b && Array.isArray(b.entries) ? b.entries : [], items = a && Array.isArray(a.items) ? a.items : [], fixed = f && Array.isArray(f.items) ? f.items : [];
+  if (!entries0.length && !items.length && !fixed.length) return;
+  const entries = withFixed(entries0); // 캘린더와 같은 이번 달 지출 (지난 고정지출 포함)
   const n = new Date(), ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, today = ymd(n), ym = today.slice(0, 7);
   const sgn = v => (v < 0 ? '-' : '') + won(Math.abs(v)), man = v => (Math.abs(v) >= 1e4 ? `${Math.round(Math.abs(v) / 1e4).toLocaleString('ko-KR')}만 원` : won(Math.abs(v)));
   let html = '';
@@ -3565,7 +3582,7 @@ const GUIDE_FOR = {
     });
     // ④ 이번 달 예산
     if (b && b.budget > 0) {
-      const used = entries.filter(e => e.type === 'out' && e.date.startsWith(today.slice(0, 7))).reduce((s, e) => s + e.amt, 0), r = used / b.budget;
+      const used = withFixed(entries).filter(e => e.type === 'out' && e.date.startsWith(today.slice(0, 7))).reduce((s, e) => s + e.amt, 0), r = used / b.budget;
       const leftDays = new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate() - n.getDate() + 1;
       if (r >= 0.8) out.push({ id: `bud-${today.slice(0, 7)}-${r >= 1 ? 100 : 80}`, ico: r >= 1 ? '🚨' : '⚠️', bg: '#FFE9E9', t: '이번 달 예산', r: '지금', u: 0, m: r >= 1 ? `🚨 예산 ${won(used - b.budget)} 초과! 이대로면 다음 달 카드값 폭탄이에요` : `⚠️ 예산 ${Math.floor(r * 100)}% 소진! 남은 ${won(b.budget - used)}으로 ${leftDays}일을 버텨야 해요`, go: '/budget/' });
     }
@@ -3649,7 +3666,7 @@ const GUIDE_FOR = {
   const rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const n = new Date(), m = n.getMonth() + 1, ym = `${n.getFullYear()}-${String(m).padStart(2, '0')}`;
-  const b = rd('donsem:budget'), es = b && Array.isArray(b.entries) ? b.entries : [];
+  const b = rd('donsem:budget'), es = withFixed(b && Array.isArray(b.entries) ? b.entries : []);
   const used = es.filter(e => e.type === 'out' && e.date.startsWith(ym)).reduce((a, e) => a + e.amt, 0);
   const out = []; // [이모지, 굵은 제목, 설명, 누르면: 질문(q) 또는 주소(href)]
   if (b && b.budget > 0) out.push(['📊', used <= b.budget ? `이번 달 예산이 ${won(b.budget - used)} 남았어요.` : `이번 달 예산을 ${won(used - b.budget)} 넘었어요.`, `예산 ${won(b.budget)} 중 ${Math.round(used / b.budget * 100)}%를 썼어요. 어디에 많이 썼는지 알려 드릴까요?`, { q: '이번 달 어디에 많이 썼어?' }]);
