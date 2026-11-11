@@ -3010,3 +3010,17 @@ a.mk-seller:hover { text-decoration: none; }
   .qa-link { display: block; text-align: center; margin-top: 14px; font-size: 14px; }
   html.qa-open { overflow: hidden; }
 }
+
+/* 캘린더 정리 (2026-11-11): 제목·검색·달력/목록 없애고, 날짜 칸은 네이버 캘린더처럼 세로로 길게 */
+#calendar > h2, #calendar .bq-wrap, #calendar #b-view { display: none !important; }
+#calendar .cal-sum { margin-top: 0; }
+.cal-pace b em { font-style: normal; color: #7040A1; }
+:root[data-theme="dark"] .cal-pace b em { color: #B69AD8; }
+@media (prefers-color-scheme: dark) { :root[data-theme="auto"] .cal-pace b em { color: #B69AD8; } }
+.pace-chart { flex: none; overflow: visible; }
+.pace-chart .pc-area { fill: color-mix(in srgb, var(--muted) 14%, transparent); }
+.pace-chart .pc-last { fill: none; stroke: color-mix(in srgb, var(--muted) 70%, transparent); stroke-width: 1.6; stroke-linejoin: round; }
+.pace-chart .pc-now { fill: none; stroke: #7040A1; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.pace-chart .pc-dot { fill: #7040A1; stroke: var(--field, #fff); stroke-width: 1.5; }
+.cal-day { min-height: 118px; justify-content: flex-start; }
+@media (max-width: 640px) { .cal-day { min-height: 96px; } }

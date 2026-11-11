@@ -31,7 +31,7 @@
   let type = 'out', cat = CATS.out[0], editingBudget = false, editingCats = false, editingPay = false;
   let view = 'cal', selDay = iso(today); // 내역을 달력으로 볼지 목록으로 볼지, 달력에서 고른 날
   try { const k = sessionStorage.getItem('donsem:selday'); if (k && /^\d{4}-\d{2}-\d{2}$/.test(k)) { selDay = k; month = k.slice(0, 7); } sessionStorage.removeItem('donsem:selday'); } catch (e) { /* 기본은 오늘 */ } // 달력에서 다른 날에 기록하고 돌아오면 그 날을 다시 보여 줘요
-  try { if (localStorage.getItem('donsem:budget-view') === 'list') view = 'list'; } catch (e) { /* 기본은 달력 */ }
+  // 달력/목록 고르기는 없앴어요: 늘 달력으로 보여요 (2026-11-11)
 
   // ── 기록하기 ──
   function drawCats() {
@@ -475,7 +475,7 @@
   try { fold = localStorage.getItem('donsem:cal-fold') === '1'; } catch (e) { /* 기본은 펼침 */ }
   // 지출 히트맵: 많이 쓴 날일수록 칸이 진해져요 (주식 테마 캘린더처럼 한눈에)
   let heat = false;
-  try { heat = localStorage.getItem('donsem:heat') === '1'; } catch (e) { /* 기본은 끔 */ }
+  // 히트맵 버튼은 없앴어요 (2026-11-11)
 
   // ── 일정: 여행·생일 같은 계획 (donsem:plans, 이 기기에만 저장) ──
   const PCOLORS = ['pink', 'orange', 'yellow', 'green', 'blue', 'purple'];
@@ -542,7 +542,8 @@
   function paceHTML(y, m) {
     const ym = `${y}-${String(m).padStart(2, '0')}`, prev = iso(new Date(y, m - 2, 1)).slice(0, 7);
     const days = new Date(y, m, 0).getDate(), pdays = new Date(y, m - 1, 0).getDate();
-    const daily = k => { const a = []; data.entries.forEach(e => { if (e.type === 'out' && e.date.startsWith(k)) a[Number(e.date.slice(8))] = (a[Number(e.date.slice(8))] || 0) + e.amt; }); return a; };
+    const daily = k => { const a = [], [ky, km] = k.split('-').map(Number), fx = fixedByDay(ky, km, new Date(ky, km, 0).getDate()); data.entries.forEach(e => { if (e.type === 'out' && e.date.startsWith(k)) a[Number(e.date.slice(8))] = (a[Number(e.date.slice(8))] || 0) + e.amt; });
+      Object.keys(fx).forEach(d => fx[d].forEach(x => { a[d] = (a[d] || 0) + Number(x.amt); })); return a; }; // 고정지출도 그날 쓴 돈으로 쳐요
     const cum = (a, n) => { const r = [0]; for (let d = 1; d <= n; d++) r[d] = r[d - 1] + (a[d] || 0); return r; };
     const now = cum(daily(ym), days), last = cum(daily(prev), pdays);
     const nowYm = iso(today).slice(0, 7), upTo = ym === nowYm ? today.getDate() : ym < nowYm ? days : 0;
@@ -555,7 +556,17 @@
     else if (a > b * 1.1) title = `지난달보다 ${won(a - b)} 더 쓰는 중`;
     else title = '지난달과 비슷하게 쓰는 중';
     if (upTo && ym < nowYm) title = title.replace(' 쓰는 중', ' 썼어요');
-    return `<div class="cal-pace"><button type="button" class="pace-l" data-goanal><b>${title}</b><small>분석·고정 지출 보기 ›</small></button>${assetGraph(ym)}</div>`;
+    const hl = title.replace(/(\d[\d,]*원)/, '<em>$1</em>'); // 토스처럼 금액만 보라색으로
+    return `<div class="cal-pace"><button type="button" class="pace-l" data-goanal><b>${hl}</b><small>분석·고정 지출 보기 ›</small></button>${paceChart(now, last, upTo, days, pdays)}</div>`;
+  }
+  // 토스 가계부처럼: 이번 달 쌓인 지출(보라 선, 오늘까지)과 지난달(회색)을 작은 그래프로
+  function paceChart(now, last, upTo, days, pdays) {
+    const W2 = 120, H = 44, max = Math.max(1, last[pdays] || 0, now[upTo] || 0), X = (d, n) => (d / n * W2).toFixed(1), Y = v => (H - 3 - v / max * (H - 8)).toFixed(1);
+    const pl = last.map((v, d) => `${X(d, pdays)},${Y(v)}`).join(' ');
+    const pn = now.slice(0, upTo + 1).map((v, d) => `${X(d, days)},${Y(v)}`).join(' ');
+    return `<svg class="pace-chart" viewBox="0 0 ${W2} ${H}" width="${W2}" height="${H}" aria-hidden="true">
+      ${last[pdays] ? `<polygon points="0,${H} ${pl} ${W2},${H}" class="pc-area"/><polyline points="${pl}" class="pc-last"/>` : ''}
+      ${upTo ? `<polyline points="${pn}" class="pc-now"/><circle cx="${X(upTo, days)}" cy="${Y(now[upTo])}" r="3.5" class="pc-dot"/>` : ''}</svg>`;
   }
   // 이번 달 예산을 달력 위에서 바로 (뱅크샐러드 가계부처럼)
   function budgetLine(used) {
@@ -608,7 +619,7 @@
   }
   // 토스 가계부처럼: 칸 아래에 그날 수입(보라)·지출(회색) 금액. 일정이 많으면 첫 번째만 보이고 「+n개」로 줄여요
   const calWon = n => n < 1e6 ? n.toLocaleString('ko-KR') : short(n);
-  const calTags = a => a.length > 1 ? a[0] + `<span class="cal-more">+${a.length - 1}개</span>` : a.join('');
+  const calTags = a => a.length > 3 ? a.slice(0, 2).join('') + `<span class="cal-more">+${a.length - 2}개</span>` : a.join(''); // 칸이 길어져서 3개까지 보여요
   // 날짜를 누르면 달력 바로 밑에 그날 한 장 (네이버 캘린더처럼): 왼쪽 이름표 · 색 막대 · 내용 · 오른쪽 금액
   function daySumHTML(list, y, m, last, payKey) {
     if (!selDay || !selDay.startsWith(month)) return '';
@@ -654,12 +665,12 @@
     const nowYm = iso(today).slice(0, 7);
     // 토스처럼 달력 위에 이달 지출·수입 합계
     const tot = list.reduce((o, e) => (o[e.type] += e.amt, o), { in: 0, out: fixedPaid(y, m) }); // 오늘까지 지난 고정지출(애플뮤직 같은 구독)도 지출에 넣어요. 아직 안 온 날은 빼요
-    const sumHTML = `<div class="cal-sum"><div class="cal-tot"><div><span>지출</span><b>${tot.out ? '-' : ''}${won(tot.out)}</b></div><div><span>수입</span><b>${tot.in ? '+' : ''}${won(tot.in)}</b></div></div>${paceHTML(y, m)}${budgetLine(tot.out)}</div>`;
+    const sumHTML = `<div class="cal-sum"><div class="cal-tot"><div><span>지출</span><b>${tot.out ? '-' : ''}${won(tot.out)}</b></div><div><span>수입</span><b>${tot.in ? '+' : ''}${won(tot.in)}</b></div></div>${paceHTML(y, m)}</div>`;
     $('b-cal').dataset.th = deco.th;
     $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-head"><button type="button" data-cm="-1" aria-label="이전 달">‹</button>
         <span class="cal-title"><b>${y}년 ${m}월</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><input type="month" id="b-jump" value="${month}" aria-label="년도와 달 고르기"></span>
         <button type="button" data-cm="1" aria-label="다음 달">›</button>${month !== nowYm ? '<button type="button" class="cal-today" data-ctoday>오늘</button>' : ''}</div>
-      ${sumHTML}<div class="cal-tools"><button type="button" class="heat-btn${heat ? ' on' : ''}" data-heat aria-pressed="${heat}">🔥 지출 히트맵</button>${heat ? '<span class="heat-key">적게<i></i><i></i><i></i><i></i>많이</span>' : ''}</div>${nsDays.length ? `<a class="cal-ns" href="/no-spend/"><i></i>이번 달 무지출 <b>총 ${nsDays.length}일</b><span>›</span></a>` : ''}<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div><button type="button" class="cal-fold" data-fold aria-expanded="${!fold}">${fold ? '﹀ 달력 펼치기' : '︿ 한 주만 보기'}</button></div>`;
+      ${sumHTML}<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div><button type="button" class="cal-fold" data-fold aria-expanded="${!fold}">${fold ? '﹀ 달력 펼치기' : '︿ 한 주만 보기'}</button></div>`;
     // 달력 바로 밑: 일정·꾸미기 → (그날 내역) → 놓치면 손해 → 그날 돈 일정
     $('b-cal-mid').innerHTML = daySumHTML(list, y, m, last, payKey) + planHTML();
     $('b-cal-more').innerHTML = decoHTML() + lossHTML(month) + mcDayHTML(selDay);
