@@ -3101,3 +3101,7 @@ a.mk-seller:hover { text-decoration: none; }
 .dday-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 4px 10px; }
 .dday { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: 99px; background: var(--pc); color: #3a3a3c; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
 .dday b { font-weight: 800; color: #7040A1; }
+/* 달력 위 수입 합계는 돈셈 보라색 */
+.cal-tot > div:nth-child(2) b { color: #7040A1; }
+:root[data-theme="dark"] .cal-tot > div:nth-child(2) b { color: #B69AD8; }
+@media (prefers-color-scheme: dark) { :root[data-theme="auto"] .cal-tot > div:nth-child(2) b { color: #B69AD8; } }
