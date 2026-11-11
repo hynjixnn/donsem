@@ -43,6 +43,10 @@
   // 큰 장소 찾기 (백화점·공원·운동장·궁·역…): 지도 글씨는 그림이라 눌러도 신호가 없어서, 누른 곳 근처의 큰 장소를 검색해요
   const LAND_W = ['백화점', '공원', '운동장', '경기장', '쇼핑몰', '몰', '대학교', '궁', '타워', '시장', '호텔', '병원', '아울렛', '컨벤션', '역', '터미널', '박물관'];
   const LAND_C = /(> 백화점|> 복합쇼핑몰|> 아울렛|공원$|> 운동장|운동장$|경기장$|야구장$|체육관$|> 대학교|고궁|> 타워|전망대|> 시장|종합병원|대학병원|> 호텔|컨벤션|> 전시관$|박물관|미술관|> 광장|테마파크|놀이공원|아쿠아리움|동물원|기차역|터미널|공항|> 빌딩$|지하철,전철)/;
+  const landWeak = p => /> 전시관$|미술관|> 빌딩$|> 호텔|> 광장|지하철,전철|도심공항/.test(p.category_name || '');
+  const nrm = t => String(t || '').replace(/\s+/g, '').toLowerCase();
+  // 누른 곳에서 찾은 가게가 큰 장소 안에 있는 곳이면(예: '오설록 현대백화점 무역점', '경복궁 사정전') 큰 장소를 보여 줘요
+  const inside = (hit, L) => !!(L && !landWeak(L) && hit && hit.id !== L.id && nrm(L.place_name.split(' ')[0]).length >= 2 && nrm(hit.place_name).includes(nrm(L.place_name.split(' ')[0])));
   async function landmarkAt(lat, lng) {
     if (!map || !map.kakao) return null;
     const S = kakao.maps.services, here = new kakao.maps.LatLng(lat, lng), seen = new Set(), near = { location: here, radius: 400, sort: S.SortBy.DISTANCE }, best5 = { location: here, radius: 400, sort: S.SortBy.ACCURACY };
@@ -53,7 +57,7 @@
     if (toks.length) all = all.concat((await Promise.all(toks.map(t => kPlaces('keywordSearch', t, best5, 5).catch(() => [])))).flat());
     const c = all.filter(p => !seen.has(p.id) && seen.add(p.id) && LAND_C.test(p.category_name || '') && !/주차장|출입구|정문|후문|매표소|관리사무소|화장실/.test(p.place_name) && +p.distance <= 350).sort((a, b) => a.distance - b.distance);
     if (!c.length) return null;
-    const weak = p => /> 전시관$|미술관|> 빌딩$|> 호텔|> 광장|지하철,전철|도심공항/.test(p.category_name || ''); // 이런 곳은 큰 장소 안에 있는 경우가 많아서 뒤로
+    const weak = landWeak, _w = p => /> 전시관$|미술관|> 빌딩$|> 호텔|> 광장|지하철,전철|도심공항/.test(p.category_name || ''); // 이런 곳은 큰 장소 안에 있는 경우가 많아서 뒤로
     let best = c.slice().sort((a, b) => (+a.distance + (weak(a) ? 120 : 0)) - (+b.distance + (weak(b) ? 120 : 0)))[0];
     const n = t => String(t).replace(/\s+/g, '').toLowerCase();
     const parent = c.find(p => p !== best && n(best.place_name).includes(n(p.place_name)) && n(p.place_name).length >= 2); // '경복궁 연생전'·'아트스페이스 갤러리아백화점EAST점'보다 '경복궁'·'갤러리아백화점 EAST점'
@@ -69,13 +73,13 @@
     if (bname) { // 건물 이름이 있으면 그 이름의 장소
       const list = await kPlaces('keywordSearch', bname, { location: here, radius: 150, sort: S.SortBy.DISTANCE }, 15).catch(() => []);
       const k = norm(bname), hit = list.find(p => norm(p.place_name) === k) || list.find(p => k.length > 1 && (norm(p.place_name).includes(k) || k.includes(norm(p.place_name))));
-      if (hit) return hit;
+      if (hit) { const L0 = await land; return inside(hit, L0) ? L0 : hit; }
     }
     const L = await land;
     if (L && +L.distance <= 100) return L; // 큰 장소 바로 위를 눌렀으면 그 장소 (안에 있는 가게보다 먼저)
     if (road) { // 아니면 같은 도로명 주소(같은 건물)에 있는 가장 가까운 장소
       const list = await kPlaces('keywordSearch', road, { location: here, radius: 60, sort: S.SortBy.DISTANCE }, 15).catch(() => []);
-      const r = list.find(p => p.road_address_name === road && +p.distance <= 40); if (r) return r;
+      const r = list.find(p => p.road_address_name === road && +p.distance <= 40); if (r) return inside(r, L) ? L : r;
     }
     return L; // 공원 한가운데처럼 주소가 없는 곳: 가까운 큰 장소
   }
