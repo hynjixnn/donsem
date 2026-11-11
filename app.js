@@ -3233,6 +3233,76 @@ const mcUpcoming = () => MONEY_CAL.filter(e => mcDays(e.d) >= 0).sort((a, b) => 
 const esc2h = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 const mcBadge = e => { const n = mcDays(e.d); return e.soft ? '예정' : n === 0 ? 'D-DAY' : `D-${n}`; }; // 날짜가 아직 발표 전이면 '예정' (날짜 칸에 '11월 중'이 따로 보여요)
 // 내 달력에 넣기(.ics): 마감일 하루짜리 일정 + 하루 전 오전 9시 알림
+// ── 내 일정 (캘린더) 반복·알림: 가계부 달력과 알림(종)에서 같이 써요 ──
+const plK = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const plD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+// k 날짜에 걸치는 이번 회차 {s, e}를 찾아요 (안 걸치면 null). rep: none·day·week·month·year
+function planOcc(p, k) {
+  const e0k = p.e || p.s;
+  if (!p.rep || p.rep === 'none') return p.s <= k && k <= e0k ? { s: p.s, e: e0k } : null;
+  if (k < p.s) return null;
+  const s0 = plD(p.s), dur = Math.round((plD(e0k) - s0) / 864e5), kd = plD(k);
+  for (let off = 0; off <= dur; off++) {
+    const c = new Date(kd); c.setDate(c.getDate() - off); if (c < s0) break;
+    const diff = Math.round((c - s0) / 864e5);
+    const ok = p.rep === 'day' || (p.rep === 'week' && diff % 7 === 0) || (p.rep === 'month' && c.getDate() === s0.getDate()) || (p.rep === 'year' && c.getDate() === s0.getDate() && c.getMonth() === s0.getMonth());
+    if (ok) { const e = new Date(c); e.setDate(e.getDate() + dur); return { s: plK(c), e: plK(e) }; }
+  }
+  return null;
+}
+const PL_ALARM = { none: '없음', '0d9': '당일 오전 9시', '1d9': '1일 전 오전 9시', '1d12': '1일 전 정오', '1h': '1시간 전', '10m': '10분 전' };
+// 이번 회차 알림 시각 (밀리초)
+function planAlarmAt(p, occS) {
+  const d = plD(occS), [h, mi] = (p.allDay === false && p.st ? p.st : '09:00').split(':').map(Number);
+  const at = { '0d9': [0, 9, 0], '1d9': [-1, 9, 0], '1d12': [-1, 12, 0] }[p.alarm];
+  if (at) { d.setDate(d.getDate() + at[0]); d.setHours(at[1], at[2], 0, 0); return d.getTime(); }
+  d.setHours(h, mi, 0, 0);
+  return d.getTime() - (p.alarm === '1h' ? 36e5 : p.alarm === '10m' ? 6e5 : 0);
+}
+// 지금 울려야 할 일정 알림들 (오늘부터 3일 안에 시작하는 회차, 알림 시각이 지났고 일정이 아직 안 끝난 것)
+function planAlarmsDue() {
+  let ps = []; try { const d = JSON.parse(localStorage.getItem('donsem:plans')); ps = d && Array.isArray(d.items) ? d.items : []; } catch (e) { ps = []; }
+  const now = Date.now(), out = [];
+  ps.filter(p => p.alarm && p.alarm !== 'none' && !p.done).forEach(p => {
+    for (let i = 0; i <= 3; i++) {
+      const day = new Date(); day.setDate(day.getDate() + i); const k = plK(day), o = planOcc(p, k);
+      if (!o || o.s !== k) continue;
+      const at = planAlarmAt(p, o.s), end = plD(o.e).getTime() + 864e5;
+      if (now >= at && now < end) out.push({ p, occ: o.s, id: `pl-${p.id}-${o.s}`, when: i === 0 ? '오늘' : i === 1 ? '내일' : `${i}일 뒤` });
+    }
+  });
+  return out;
+}
+// 돈셈을 켜 둔 동안 1분마다 확인해서, 처음 울리는 알림은 토스트(허락했으면 휴대폰 알림도)로 알려요
+(() => {
+  const check = () => {
+    let fired = []; try { fired = JSON.parse(localStorage.getItem('donsem:pl-fired')) || []; } catch (e) { fired = []; }
+    const due = planAlarmsDue().filter(a => !fired.includes(a.id));
+    if (!due.length) return;
+    due.forEach(a => {
+      const msg = `📅 ${a.when} ${a.p.t}${a.p.allDay === false && a.p.st ? ` (${a.p.st})` : ''}${a.p.place ? ` · ${a.p.place}` : ''}`;
+      if (typeof toast === 'function') toast(msg);
+      try { if ('Notification' in window && Notification.permission === 'granted') new Notification('돈셈 일정 알림', { body: msg.replace('📅 ', ''), icon: '/icon-192.png', tag: a.id }); } catch (e) { /* 휴대폰 알림이 안 되는 기기 */ }
+    });
+    try { localStorage.setItem('donsem:pl-fired', JSON.stringify(fired.concat(due.map(a => a.id)).slice(-200))); } catch (e) { /* 괜찮아요 */ }
+  };
+  setTimeout(check, 1500); setInterval(check, 60000);
+})();
+// 내 일정 → 휴대폰 달력 파일 (.ics)
+function planIcs(p) {
+  const esc2 = t => String(t || '').replace(/[\;,]/g, m => '\\' + m).replace(/\n/g, '\\n'), ymd = d => d.replace(/-/g, '');
+  const nx = d => { const x = plD(d); x.setDate(x.getDate() + 1); return ymd(plK(x)); };
+  const timed = p.allDay === false && p.st, t2 = (d, t) => `${ymd(d)}T${t.replace(':', '')}00`;
+  const rr = { day: 'DAILY', week: 'WEEKLY', month: 'MONTHLY', year: 'YEARLY' }[p.rep];
+  const ev = ['BEGIN:VEVENT', `UID:${p.id}@doncalculator.com`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`,
+    timed ? `DTSTART:${t2(p.s, p.st)}` : `DTSTART;VALUE=DATE:${ymd(p.s)}`, timed ? `DTEND:${t2(p.e || p.s, p.et || p.st)}` : `DTEND;VALUE=DATE:${nx(p.e || p.s)}`,
+    ...(rr ? [`RRULE:FREQ=${rr}`] : []), `SUMMARY:${esc2(p.t)}`, ...(p.place ? [`LOCATION:${esc2(p.place)}`] : []), ...(p.memo ? [`DESCRIPTION:${esc2(p.memo)}`] : []), 'END:VEVENT'];
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//doncalculator.com//donsem//KO', ...ev, 'END:VCALENDAR'].join('\r\n') + '\r\n';
+  if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) { location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics); return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' })); a.download = `돈셈-${p.t}.ics`;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  if (typeof toast === 'function') toast('달력 파일을 저장했어요. 파일을 열면 휴대폰 달력에 들어가요.');
+}
 function mcIcs(list, name) {
   const esc2 = t => String(t).replace(/[\;,]/g, m => '\\' + m).replace(/\n/g, '\\n'), ymd = d => d.replace(/-/g, '');
   const next = d => { const [y, m, dd] = d.split('-').map(Number), x = new Date(y, m - 1, dd + 1); return `${x.getFullYear()}${String(x.getMonth() + 1).padStart(2, '0')}${String(x.getDate()).padStart(2, '0')}`; };
@@ -3467,6 +3537,8 @@ const GUIDE_FOR = {
     if (typeof MONEY_CAL !== 'undefined' && typeof mcDays === 'function') {
       { const subs = mcSubs(); MONEY_CAL.filter(e => subs.has(mcSubKey(e)) && mcDays(e.d) >= 0 && mcDays(e.d) <= 3).forEach(e => out.push({ id: 'mc-' + e.d + e.t, ico: '🔔', t: '알림 받기로 한 일정', m: `${mcDays(e.d) ? `D-${mcDays(e.d)}` : '오늘'} ${e.t}`, go: '/budget/' })); }
       MONEY_CAL.filter(e => (e.imp || 2) >= 2 && !e.soft && mcDays(e.d) >= 0 && mcDays(e.d) <= 7 && !out.some(o => o.id === 'mc-' + e.d + e.t)).forEach(e => out.push({ id: 'mc-' + e.d + e.t, ico: '⏰', t: '놓치면 손해', m: `${mcDays(e.d) ? `D-${mcDays(e.d)}` : '오늘'} ${e.t}`, go: '/budget/' })); }
+    // ⑦ 내 일정 알림
+    if (typeof planAlarmsDue === 'function') planAlarmsDue().forEach(a => out.push({ id: a.id, ico: '📅', t: '일정 알림', m: `${a.when} ${a.p.t}${a.p.allDay === false && a.p.st ? ` ${a.p.st}` : ''}${a.p.place ? ` · ${a.p.place}` : ''}`, go: '/budget/' }));
     if (!out.length) out.push({ id: 'hello', ico: '👋', t: '돈셈 알림', m: entries.length ? '지금은 새 알림이 없어요. 결제 예정, 월급날, 예산을 넘을 때 여기서 알려 드려요.' : '가계부에 첫 기록을 남겨 보세요. 주간 지출과 결제 예정 알림을 여기서 보여 드려요.', go: '/budget/' });
     return out;
   }

@@ -485,7 +485,9 @@
   }
   let plans = loadPlans(), pColor = 'pink', planOpen = false;
   const savePlans = () => { try { localStorage.setItem('donsem:plans', JSON.stringify({ items: plans })); } catch (e) { toast('이 브라우저에서는 저장할 수 없어요.'); } };
-  const plansOn = k => plans.filter(p => p.s <= k && k <= (p.e || p.s)).sort((a, b) => a.s.localeCompare(b.s) || a.id.localeCompare(b.id));
+  // 반복 일정도 그날 걸치는 회차로 바꿔서 돌려줘요 (s·e는 이번 회차 날짜, id는 원래 일정)
+  const plansOn = k => plans.map(p => { const o = typeof planOcc === 'function' ? planOcc(p, k) : (p.s <= k && k <= (p.e || p.s) ? { s: p.s, e: p.e || p.s } : null); return o && { ...p, s: o.s, e: o.e }; }).filter(Boolean)
+    .sort((a, b) => a.s.localeCompare(b.s) || (a.allDay === false) - (b.allDay === false) || (a.st || '').localeCompare(b.st || '') || a.id.localeCompare(b.id));
   const mdLabel = k => `${Number(k.slice(5, 7))}.${Number(k.slice(8))}`;
   function planHTML() {
     if (!selDay) return '';
@@ -527,7 +529,7 @@
     else if (b.hasAttribute('data-fold')) { fold = !fold; try { localStorage.setItem('donsem:cal-fold', fold ? '1' : '0'); } catch (err) { /* 괜찮아요 */ } render(); }
     else if (b.hasAttribute('data-heat')) { heat = !heat; try { localStorage.setItem('donsem:heat', heat ? '1' : '0'); } catch (err) { /* 괜찮아요 */ } render(); }
     else if (b.hasAttribute('data-goanal') || b.hasAttribute('data-goassets')) { const box = b.hasAttribute('data-goassets') ? $('assets') : $('b-breakdown').closest('section'); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-    else if (b.hasAttribute('data-popen') || b.hasAttribute('data-pcancel')) { planOpen = b.hasAttribute('data-popen'); render(); if (planOpen) $('p-title').focus(); }
+    else if (b.hasAttribute('data-popen')) openPlanEd(null);
     else if (b.dataset.pdel) {
       const p = plans.find(x => x.id === b.dataset.pdel);
       if (p && confirm(`'${p.t}' 일정을 지울까요?`)) { plans = plans.filter(x => x !== p); savePlans(); render(); }
@@ -620,19 +622,155 @@
   // 토스 가계부처럼: 칸 아래에 그날 수입(보라)·지출(회색) 금액. 일정이 많으면 첫 번째만 보이고 「+n개」로 줄여요
   const calWon = n => n < 1e6 ? n.toLocaleString('ko-KR') : short(n);
   const calTags = a => a.length > 3 ? a.slice(0, 2).join('') + `<span class="cal-more">+${a.length - 2}개</span>` : a.join(''); // 칸이 길어져서 3개까지 보여요
+  // ── 일정 고치기 (네이버 캘린더처럼): 종일·시간, 반복, 장소, 설명, 파일, 알림, 색, 완료, D-day ──
+  const PL_REP = { none: '안 함', day: '매일', week: '매주', month: '매달', year: '매년' };
+  const PALARM = typeof PL_ALARM !== 'undefined' ? PL_ALARM : { none: '없음' };
+  const SV = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const PI = {
+    clock: SV('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'), rep: SV('<path d="M4 9a7 7 0 0 1 12-3l2 2M20 15a7 7 0 0 1-12 3l-2-2"/><path d="M18 4v4h-4M6 20v-4h4"/>'),
+    pin: SV('<path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>'), note: SV('<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/>'),
+    clip: SV('<path d="M20 11.5 12 19.5a5 5 0 0 1-7-7L13.5 4a3.4 3.4 0 0 1 4.8 4.8L10 17.1a1.7 1.7 0 0 1-2.4-2.4L15 7.3"/>'), bell: SV('<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>'),
+    pal: SV('<path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.8 1.8-1.7 0-1.3-1.2-1.6-1.2-2.8 0-1 .8-1.7 1.9-1.7h2.2A3.8 3.8 0 0 0 20.5 10 8.5 8.5 0 0 0 12 3.5z"/><circle cx="8" cy="11" r="1"/><circle cx="11" cy="7.5" r="1"/><circle cx="15.5" cy="8" r="1"/>'),
+    done: SV('<rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/>'), dday: SV('<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 8.5v7h1.5a3.5 3.5 0 0 0 0-7z"/>'),
+    cal: SV('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'), trash: SV('<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/>'),
+  };
+  let peEl = null, peCur = null, peMode = 'plan';
+  const peShell = () => {
+    if (peEl) return peEl;
+    peEl = document.createElement('div'); peEl.className = 'pe'; peEl.hidden = true;
+    peEl.innerHTML = '<div class="pe-dim" data-pex></div><div class="pe-panel" role="dialog" aria-modal="true" aria-labelledby="pe-h"></div>';
+    document.body.append(peEl);
+    peEl.addEventListener('click', onPe); peEl.addEventListener('change', onPeChange); peEl.addEventListener('input', onPeInput);
+    peEl.addEventListener('keydown', e => { if (e.key === 'Escape') closePe(); });
+    return peEl;
+  };
+  const showPe = html => {
+    const el = peShell(); el.querySelector('.pe-panel').innerHTML = html; el.hidden = false;
+    document.documentElement.classList.add('qa-open'); requestAnimationFrame(() => el.classList.add('show'));
+  };
+  const closePe = () => { if (!peEl) return; peEl.classList.remove('show'); document.documentElement.classList.remove('qa-open'); setTimeout(() => { peEl.hidden = true; }, 220); peCur = null; };
+  const swHTML = (id, on, label) => `<label class="pe-sw"><input type="checkbox" id="${id}"${on ? ' checked' : ''} aria-label="${label}"><i></i></label>`;
+  function openPlanEd(id) {
+    peMode = 'plan';
+    const src = id && plans.find(p => p.id === id);
+    peCur = src ? JSON.parse(JSON.stringify(src)) : { id: '', s: selDay || iso(today), e: selDay || iso(today), t: '', c: pColor || 'pink', allDay: true, st: '09:00', et: '10:00', rep: 'none', place: '', memo: '', files: [], alarm: 'none', done: false, dday: false };
+    const p = peCur; if (p.allDay === undefined) p.allDay = true; p.files = p.files || [];
+    showPe(`<div class="pe-top"><button type="button" class="pe-ib" data-pex aria-label="닫기">✕</button><b id="pe-h">${src ? '일정' : '새 일정'}</b><button type="button" class="pe-ib ok" data-pesave aria-label="저장">✓</button></div>
+      <div class="pe-body">
+        <div class="pe-name"><i class="pe-dot pc-${p.c}"></i><input id="pe-t" maxlength="30" placeholder="일정 이름 (예: 제주도 여행)" value="${esc(p.t)}" autocomplete="off" enterkeyhint="done"></div>
+        <div class="pe-line"><span class="pe-ico">${PI.clock}</span><b>종일</b>${swHTML('pe-all', p.allDay !== false, '종일')}</div>
+        <div class="pe-when"><label><input type="date" id="pe-s" value="${p.s}"><input type="time" id="pe-st" value="${p.st || '09:00'}"${p.allDay !== false ? ' hidden' : ''}></label><span class="pe-arr">›</span><label><input type="date" id="pe-e" value="${p.e || p.s}"><input type="time" id="pe-et" value="${p.et || '10:00'}"${p.allDay !== false ? ' hidden' : ''}></label></div>
+        <label class="pe-line"><span class="pe-ico">${PI.rep}</span><b>반복</b><select id="pe-rep">${Object.entries(PL_REP).map(([k, v]) => `<option value="${k}"${p.rep === k ? ' selected' : ''}>${v}</option>`).join('')}</select><span class="pe-chev">›</span></label>
+        <label class="pe-line"><span class="pe-ico">${PI.pin}</span><input id="pe-place" maxlength="40" placeholder="장소" value="${esc(p.place || '')}" autocomplete="off"></label>
+        <label class="pe-line top"><span class="pe-ico">${PI.note}</span><textarea id="pe-memo" rows="2" maxlength="500" placeholder="설명">${esc(p.memo || '')}</textarea></label>
+        <div class="pe-line"><span class="pe-ico">${PI.clip}</span><b>파일</b><label class="pe-add">＋ 사진 넣기<input type="file" id="pe-file" accept="image/*" multiple hidden></label></div>
+        <div class="pe-files" id="pe-files">${peFilesHTML()}</div>
+        <label class="pe-line"><span class="pe-ico">${PI.bell}</span><b>알림</b><select id="pe-alarm">${Object.entries(PALARM).map(([k, v]) => `<option value="${k}"${(p.alarm || 'none') === k ? ' selected' : ''}>${v}</option>`).join('')}</select><span class="pe-chev">›</span></label>
+        <p class="pe-hint" id="pe-ahint"${!p.alarm || p.alarm === 'none' ? ' hidden' : ''}>돈셈을 켜 두거나 열면 알려 드려요. 휴대폰 알림을 허락하면 알림으로도 와요.</p>
+        <div class="pe-line"><span class="pe-ico">${PI.pal}</span><b>색</b><div class="pe-colors" role="group" aria-label="일정 색">${PCOLORS.map(c => `<button type="button" class="pc-${c}${c === p.c ? ' on' : ''}" data-pec="${c}" aria-label="${c} 색"></button>`).join('')}</div></div>
+        <div class="pe-line"><span class="pe-ico">${PI.done}</span><b>완료</b>${swHTML('pe-done', p.done, '완료')}</div>
+        <div class="pe-line"><span class="pe-ico">${PI.dday}</span><b>D-day 보기</b><small>달력 위에 남은 날을 보여 줘요</small>${swHTML('pe-dday', p.dday, 'D-day 보기')}</div>
+        <div class="pe-foot">${src ? `<button type="button" class="pe-fb" data-peics>${PI.cal}휴대폰 달력에 넣기</button><button type="button" class="pe-fb del" data-pedel>${PI.trash}지우기</button>` : ''}</div>
+      </div>`);
+    if (!src) setTimeout(() => { const t = $('pe-t'); if (t) t.focus(); }, 250);
+  }
+  const peFilesHTML = () => (peCur && peCur.files || []).map((f, i) => `<span class="pe-fl"><img src="${f}" alt="첨부 사진 ${i + 1}"><button type="button" data-pefx="${i}" aria-label="사진 빼기">×</button></span>`).join('');
+  const shrinkImg = f => new Promise((ok, no) => { const u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const k = Math.min(1, 900 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); ok(c.toDataURL('image/jpeg', .7)); }; im.onerror = no; im.src = u; });
+  function readPlanForm() {
+    const p = peCur;
+    p.t = $('pe-t').value.trim(); p.allDay = $('pe-all').checked; p.s = $('pe-s').value || p.s; p.e = $('pe-e').value || p.s; if (p.e < p.s) p.e = p.s;
+    p.st = $('pe-st').value || '09:00'; p.et = $('pe-et').value || p.st; if (p.s === p.e && p.et < p.st) p.et = p.st;
+    p.rep = $('pe-rep').value; p.place = $('pe-place').value.trim(); p.memo = $('pe-memo').value.trim(); p.alarm = $('pe-alarm').value; p.done = $('pe-done').checked; p.dday = $('pe-dday').checked;
+    return p;
+  }
+  function savePlanEd() {
+    const p = readPlanForm();
+    if (!p.t) { toast('일정 이름을 적어 주세요.'); $('pe-t').focus(); return; }
+    if (!p.id) { p.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5); plans.push(p); } else plans = plans.map(x => x.id === p.id ? p : x);
+    pColor = p.c; savePlans(); closePe(); render(); toast(`「${p.t}」 일정을 저장했어요.`);
+  }
+  // ── 지출·수입 기록 고치기 ──
+  function openRecEd(id) {
+    peMode = 'rec';
+    const src = data.entries.find(x => x.id === id); if (!src) return;
+    peCur = { ...src };
+    const r = peCur;
+    showPe(`<div class="pe-top"><button type="button" class="pe-ib" data-pex aria-label="닫기">✕</button><b id="pe-h">${r.type === 'in' ? '수입' : '지출'} 고치기</b><button type="button" class="pe-ib ok" data-pesave aria-label="저장">✓</button></div>
+      <div class="pe-body">
+        <div class="seg pe-type"><button type="button" data-pet="out" class="${r.type === 'out' ? 'on' : ''}">지출</button><button type="button" data-pet="in" class="${r.type === 'in' ? 'on' : ''}">수입</button></div>
+        <div class="field pe-amt"><input id="pe-amt" inputmode="numeric" value="${r.amt.toLocaleString('ko-KR')}" aria-label="금액" autocomplete="off"><span>원</span></div>
+        <div class="chips pe-cats" id="pe-cats">${peCatsHTML()}</div>
+        <label class="pe-line"><span class="pe-ico">${PI.cal}</span><b>날짜</b><input type="date" id="pe-date" value="${r.date}"></label>
+        <label class="pe-line"><span class="pe-ico">${PI.note}</span><input id="pe-rmemo" maxlength="40" placeholder="메모 (예: 점심 김밥)" value="${esc(r.memo || '')}" autocomplete="off"></label>
+        <div class="pe-foot"><button type="button" class="pe-fb del" data-pedel>${PI.trash}이 기록 지우기</button></div>
+      </div>`);
+  }
+  const peCatsHTML = () => CATS[peCur.type].map(c => `<button type="button" class="${c === peCur.cat ? 'on' : ''}" data-pecat="${esc(c)}">${typeof catIcon === 'function' ? catIcon(c) : ''}${esc(c)}</button>`).join('');
+  function saveRecEd() {
+    const r = peCur, amt = Math.round(Number(String($('pe-amt').value).replace(/[^0-9]/g, '')));
+    if (!amt) { toast('금액을 넣어 주세요.'); $('pe-amt').focus(); return; }
+    if (amt > MAX_REC) { toast('1,000억 원보다 큰 금액은 넣을 수 없어요.'); return; }
+    r.amt = amt; r.date = $('pe-date').value || r.date; r.memo = $('pe-rmemo').value.trim().slice(0, 40);
+    if (!CATS[r.type].includes(r.cat)) r.cat = CATS[r.type][0];
+    data.entries = data.entries.map(x => x.id === r.id ? r : x);
+    if (r.date.slice(0, 7) !== month) { month = r.date.slice(0, 7); } selDay = r.date;
+    if (save()) { closePe(); render(); toast('기록을 고쳤어요.'); }
+  }
+  function onPe(e) {
+    const b = e.target.closest('[data-pex],[data-pesave],[data-pedel],[data-peics],[data-pec],[data-pefx],[data-pet],[data-pecat]'); if (!b) return;
+    if (b.hasAttribute('data-pex')) closePe();
+    else if (b.hasAttribute('data-pesave')) (peMode === 'plan' ? savePlanEd : saveRecEd)();
+    else if (b.hasAttribute('data-pedel')) {
+      if (peMode === 'plan') { if (!confirm(`「${peCur.t}」 일정을 지울까요?${peCur.rep && peCur.rep !== 'none' ? '\n반복되는 일정이 모두 지워져요.' : ''}`)) return; plans = plans.filter(x => x.id !== peCur.id); savePlans(); toast('일정을 지웠어요.'); }
+      else { if (!confirm(`${peCur.cat} ${won(peCur.amt)} 기록을 지울까요?`)) return; data.entries = data.entries.filter(x => x.id !== peCur.id); save(); toast('기록을 지웠어요.'); }
+      closePe(); render();
+    }
+    else if (b.hasAttribute('data-peics')) { if (typeof planIcs === 'function') planIcs(readPlanForm()); }
+    else if (b.dataset.pec) { peCur.c = b.dataset.pec; peEl.querySelectorAll('[data-pec]').forEach(x => x.classList.toggle('on', x === b)); peEl.querySelector('.pe-dot').className = `pe-dot pc-${peCur.c}`; }
+    else if (b.dataset.pefx !== undefined) { peCur.files.splice(Number(b.dataset.pefx), 1); $('pe-files').innerHTML = peFilesHTML(); }
+    else if (b.dataset.pet) { peCur.type = b.dataset.pet; peCur.cat = CATS[peCur.type][0]; peEl.querySelectorAll('[data-pet]').forEach(x => x.classList.toggle('on', x === b)); $('pe-cats').innerHTML = peCatsHTML(); $('pe-h').textContent = `${peCur.type === 'in' ? '수입' : '지출'} 고치기`; }
+    else if (b.dataset.pecat) { peCur.cat = b.dataset.pecat; $('pe-cats').innerHTML = peCatsHTML(); }
+  }
+  async function onPeChange(e) {
+    const t = e.target;
+    if (t.id === 'pe-all') { peEl.querySelectorAll('#pe-st, #pe-et').forEach(x => { x.hidden = t.checked; }); }
+    else if (t.id === 'pe-s') { const en = $('pe-e'); if (en.value < t.value) en.value = t.value; en.min = t.value; }
+    else if (t.id === 'pe-alarm') {
+      $('pe-ahint').hidden = t.value === 'none';
+      if (t.value !== 'none' && 'Notification' in window && Notification.permission === 'default') { try { await Notification.requestPermission(); } catch (err) { /* 허락 창이 안 뜨는 기기 */ } }
+    }
+    else if (t.id === 'pe-file' && t.files.length) {
+      for (const f of [...t.files].slice(0, 3 - peCur.files.length)) { try { peCur.files.push(await shrinkImg(f)); } catch (err) { toast('사진을 넣지 못했어요.'); } }
+      if (t.files.length && peCur.files.length >= 3) toast('사진은 3장까지 넣을 수 있어요.');
+      $('pe-files').innerHTML = peFilesHTML(); t.value = '';
+    }
+  }
+  function onPeInput(e) { if (e.target.id === 'pe-amt') { const d = e.target.value.replace(/[^0-9]/g, ''); e.target.value = d ? Number(d).toLocaleString('ko-KR') : ''; } }
+  // D-day: 「D-day 보기」를 켠 일정은 달력 위에 남은 날을 보여 줘요
+  function ddayHTML() {
+    const t0 = iso(today), list = [];
+    plans.filter(p => p.dday && !p.done).forEach(p => {
+      for (let i = 0; i <= 400; i++) { const d = new Date(today); d.setDate(d.getDate() + i); const k = iso(d), o = typeof planOcc === 'function' ? planOcc(p, k) : null; if (o && (o.s === k || (i === 0 && o.s <= t0))) { list.push({ p, n: o.s <= t0 ? 0 : i }); break; } }
+    });
+    if (!list.length) return '';
+    return `<div class="dday-row">${list.sort((a, b) => a.n - b.n).slice(0, 4).map(x => `<button type="button" class="dday pc-${x.p.c}" data-pedit="${esc(x.p.id)}"><b>${x.n ? `D-${x.n}` : 'D-DAY'}</b>${esc(x.p.t)}</button>`).join('')}</div>`;
+  }
+
   // 날짜를 누르면 달력 바로 밑에 그날 한 장 (네이버 캘린더처럼): 왼쪽 이름표 · 색 막대 · 내용 · 오른쪽 금액
   function daySumHTML(list, y, m, last, payKey) {
     if (!selDay || !selDay.startsWith(month)) return '';
     const dt = new Date(selDay + 'T00:00:00'), es = list.filter(e => e.date === selDay).slice().reverse(), fs = fixedByDay(y, m, last)[dt.getDate()] || [];
     const out = es.filter(e => e.type === 'out').reduce((a, e) => a + e.amt, 0) + fs.reduce((a, x) => a + Number(x.amt), 0), inn = es.filter(e => e.type === 'in').reduce((a, e) => a + e.amt, 0);
     const wd = d => `${d.getMonth() + 1}. ${d.getDate()}.(${W[d.getDay()]})`, dd = k => wd(new Date(k + 'T00:00:00'));
-    const row = (lab, bar, title, sub, right, del) => `<li class="ds-row"><span class="ds-lab">${lab}</span><i class="ds-bar ${bar}"></i><div class="ds-txt"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</div>${right || ''}${del || ''}</li>`;
+    const row = (lab, bar, title, sub, right, act) => `<li class="ds-row${act ? ' tap' : ''}"${act ? ` ${act} role="button" tabindex="0"` : ''}><span class="ds-lab">${lab}</span><i class="ds-bar ${bar}"></i><div class="ds-txt"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</div>${right || ''}${act ? '<span class="ds-go" aria-hidden="true">›</span>' : ''}</li>`;
     const rows = [
-      ...plansOn(selDay).map(p => row('종일', `pc-${p.c}`, esc(p.t), p.e && p.e !== p.s ? `${dd(p.s)} - ${dd(p.e)}` : '', '', `<button type="button" class="ds-del" data-pdel="${esc(p.id)}" aria-label="${esc(p.t)} 일정 지우기">×</button>`)),
+      ...plansOn(selDay).map(p => row(p.allDay === false && p.st ? `${p.st}<small>${p.et || ''}</small>` : '종일', `pc-${p.c}`, `${p.done ? '✓ ' : ''}${esc(p.t)}`,
+        [p.e && p.e !== p.s ? `${dd(p.s)} - ${dd(p.e)}` : '', p.rep && p.rep !== 'none' ? `↻ ${PL_REP[p.rep]}` : '', p.place ? `📍 ${esc(p.place)}` : ''].filter(Boolean).join(' · '),
+        `${p.files && p.files.length ? '<span class="ds-clip" title="첨부 파일">📎</span>' : ''}${p.alarm && p.alarm !== 'none' ? '<span class="ds-clip" title="알림">🔔</span>' : ''}`, `data-pedit="${esc(p.id)}"`).replace('class="ds-row', `class="ds-row${p.done ? ' done' : ''}`)),
       ...(selDay === payKey ? [row('종일', 'ds-pay', '💰 월급날', '', '')] : []),
       ...mcOn(selDay).map(e => row('종일', `ds-mc ${MC_TAG[e.tag] || ''}`, esc(e.t), esc(e.tag), '')),
-      ...fs.map(x => row('고정지출', 'ds-fx', esc(x.name || x.cat || '고정지출'), '매달 나가는 돈', `<em class="ds-amt out">-${won(Number(x.amt))}</em>`)),
-      ...es.map(e => row(e.type === 'in' ? '수입' : '지출', e.type === 'in' ? 'ds-in' : 'ds-out', esc(e.cat), e.memo ? esc(e.memo) : '', `<em class="ds-amt ${e.type}">${e.type === 'in' ? '+' : '-'}${won(e.amt)}</em>`, `<button type="button" class="ds-del" data-eid="${esc(e.id)}" aria-label="${esc(e.cat)} ${won(e.amt)} 기록 지우기">×</button>`)),
+      ...fs.map(x => row('고정지출', 'ds-fx', esc(x.name || x.cat || '고정지출'), '매달 나가는 돈 · 누르면 고정지출에서 바꿔요', `<em class="ds-amt out">-${won(Number(x.amt))}</em>`, 'data-fxgo')),
+      ...es.map(e => row(e.type === 'in' ? '수입' : '지출', e.type === 'in' ? 'ds-in' : 'ds-out', esc(e.cat), e.memo ? esc(e.memo) : '', `<em class="ds-amt ${e.type}">${e.type === 'in' ? '+' : '-'}${won(e.amt)}</em>`, `data-eedit="${esc(e.id)}"`)),
     ];
     return `<div class="day-sheet"><span class="ds-grip" aria-hidden="true"></span>
       <div class="ds-head"><b>${dt.getMonth() + 1}. ${dt.getDate()}. ${W[dt.getDay()]}</b>${selDay === iso(today) ? '<em>오늘</em>' : ''}<span class="ds-sum">${out ? `<span class="out">-${won(out)}</span>` : ''}${inn ? `<span class="in">+${won(inn)}</span>` : ''}</span></div>
@@ -658,7 +796,7 @@
       const chips = ps.map(p => { const st = p.s === key || dow === 0, en = (p.e || p.s) === key || dow === 6;
         // 여러 날 일정은 이름이 이번 주 끝(또는 일정 끝)까지 이어지게 폭을 넓혀요
         const span = st ? Math.min(Math.round((new Date((p.e || p.s) + 'T00:00:00') - dt) / 864e5), 6 - dow) + 1 : 1;
-        return `<span class="cal-plan pc-${p.c}${st ? ' st' : ''}${en ? ' en' : ''}${span > 1 ? ' long' : ''}"${span > 1 ? ` style="--span:${span}"` : ''}>${st ? esc(p.t) : '&nbsp;'}</span>`; });
+        return `<span class="cal-plan pc-${p.c}${p.done ? ' done' : ''}${st ? ' st' : ''}${en ? ' en' : ''}${span > 1 ? ' long' : ''}"${span > 1 ? ` style="--span:${span}"` : ''}>${st ? esc(p.t) : '&nbsp;'}</span>`; });
       cells += `<button type="button"${hv ? ` style="--heat:${hv.toFixed(2)}"` : ''} class="cal-day${hv ? ' hot' : ''}${own && nsDays.includes(key) ? ' ns' : ''}${own ? '' : ' out'}${dow === 0 ? ' sun' : dow === 6 ? ' sat' : ''}${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${dt.getMonth() + 1}월 ${dt.getDate()}일${ps.length ? ' 일정 ' + ps.map(p => p.t).join(', ') : ''}${fs.length ? ' 고정지출 ' + fs.map(x => `${x.name || x.cat} ${won(Number(x.amt))}`).join(', ') : ''}${ms.length ? ' 돈 일정 ' + ms.map(e => e.t).join(', ') : ''}${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
         <span class="cal-n">${dt.getDate()}</span>${calTags([...chips, ...(key === payKey ? ['<span class="cal-pay">💰 월급</span>'] : []), ...ms.map(e => `<span class="cal-mc ${MC_TAG[e.tag] || ''}">${esc(e.t)}</span>`), ...fs.map(x => `<span class="cal-fx">${esc(x.name || x.cat || '고정지출')}</span>`)])}${(() => { const inn = t ? t.in : 0, out = (t ? t.out : 0) + fs.reduce((a, x) => a + Number(x.amt), 0); return inn || out ? `<span class="cal-amt">${inn ? `<span class="cal-in">+${calWon(inn)}</span>` : ''}${out ? `<span class="cal-out">-${calWon(out)}</span>` : ''}</span>` : ''; })()}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
     }
@@ -670,9 +808,9 @@
     $('b-cal').innerHTML = `<div class="cal-paper"><div class="cal-head"><button type="button" data-cm="-1" aria-label="이전 달">‹</button>
         <span class="cal-title"><b>${y}년 ${m}월</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><input type="month" id="b-jump" value="${month}" aria-label="년도와 달 고르기"></span>
         <button type="button" data-cm="1" aria-label="다음 달">›</button>${month !== nowYm ? '<button type="button" class="cal-today" data-ctoday>오늘</button>' : ''}</div>
-      ${sumHTML}<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div><button type="button" class="cal-fold" data-fold aria-expanded="${!fold}">${fold ? '﹀ 달력 펼치기' : '︿ 한 주만 보기'}</button></div>`;
+      ${sumHTML}${ddayHTML()}<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div><button type="button" class="cal-fold" data-fold aria-expanded="${!fold}">${fold ? '﹀ 달력 펼치기' : '︿ 한 주만 보기'}</button></div>`;
     // 달력 바로 밑: 일정·꾸미기 → (그날 내역) → 놓치면 손해 → 그날 돈 일정
-    $('b-cal-mid').innerHTML = daySumHTML(list, y, m, last, payKey) + planHTML();
+    $('b-cal-mid').innerHTML = daySumHTML(list, y, m, last, payKey);
     $('b-cal-more').innerHTML = decoHTML() + lossHTML(month) + mcDayHTML(selDay);
   }
   const calBoxes = ['b-cal', 'b-cal-mid', 'b-cal-more'].map($);
@@ -681,10 +819,13 @@
     box.addEventListener('keydown', e => { if (e.target.id === 'p-title' && e.key === 'Enter') { e.preventDefault(); addPlan(); } });
     box.addEventListener('input', e => { if (e.target.id === 'p-end' && e.target.value && e.target.value < selDay) e.target.value = selDay; });
     box.addEventListener('click', onCalClick);
+    box.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.ds-row.tap')) { e.preventDefault(); e.target.click(); } });
   });
   function onCalClick(e) {
     if (e.target.id === 'b-jump') { try { e.target.showPicker(); } catch (err) { /* 누르면 바로 열리는 브라우저도 있어요 */ } return; }
     if (onPlan(e) || onDeco(e)) return;
+    const ed = e.target.closest('[data-pedit], [data-eedit], [data-fxgo]');
+    if (ed) { if (ed.dataset.pedit) openPlanEd(ed.dataset.pedit); else if (ed.dataset.eedit) openRecEd(ed.dataset.eedit); else location.href = '/fixed/'; return; }
     const d = e.target.closest('[data-eid], [data-dsrec]');
     if (d && d.dataset.eid) {
       const it = data.entries.find(x => x.id === d.dataset.eid);
