@@ -50,7 +50,7 @@
   }
   $('f-cats').addEventListener('click', e => { const c = e.target.dataset && e.target.dataset.cat; if (c) { cat = c; drawCats(); } });
   $('f-cycle').addEventListener('click', e => {
-    const v = e.target.dataset && e.target.dataset.v;
+    const v = e.target.closest && e.target.closest('[data-v]') && e.target.closest('[data-v]').dataset.v;
     if (!v) return;
     cycle = v;
     $('f-month-wrap').hidden = cycle !== 'year';
