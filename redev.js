@@ -57,6 +57,15 @@
     { id: 'md6', type2: '아파트', brandName: '아크로 (DL이앤씨)', ll: [37.5347, 126.8848], g: '여의도·목동', short: '목동6', name: '목동 6단지', brand: '아크로 목동 리젠시', kind: '재건축', c: C.DL, addr: '서울 양천구 목동 911', addrText: '서울특별시 양천구 목동 일대', dong: '목동',
       before: '목동신시가지 6단지', units: '2,173세대', floors: '지하 2층 ~ 지상 49층', dongs: '14개동', builder: 'DL이앤씨', cost: '1조 2,868억 원', at: 2, stage: '2026년 6월 시공사 선정', move: '미정',
       keys: ['신시가지6단지', '목동6단지'], src: [['서울경제', 'https://www.sedaily.com/article/20060867'], ['핀포인트뉴스', 'https://www.pinpointnews.co.kr/news/articleView.html?idxno=463589']] },
+    // 재건축·재개발이 아닌 민간 복합개발 (옛 유엔사 부지): 구역표에는 안 넣고, 지도에서 이 단지를 고르면 정보표가 열려요
+    { id: 'pks', g: '', short: '파크사이드', name: '더 파크사이드 서울', sub: '옛 유엔사 부지 · 용산구 이태원동', kind: '복합개발', c: '#3a3127', type2: '복합단지 (아파트·오피스텔·호텔·쇼핑몰)', brandName: '더 파크사이드 (일레븐건설)',
+      addr: '서울 용산구 이태원동 22-34', addrText: '서울특별시 용산구 이태원동 22-34 일대', dong: '이태원동',
+      before: '옛 유엔사(유엔군사령부) 부지', beforeN: '2017년 LH에서 1조 552억 원에 매입', floors: '지하 7층 ~ 지상 20층', units: '아파트 420세대 · 오피스텔 775실', move: '2027년 2월 준공 예정',
+      parts: [['호텔', '로즈우드 서울 (객실 약 250개)'], ['오피스텔', '더 파크사이드 스위트 (775실, 전용 50~260㎡)'], ['아파트', '더 파크사이드 서울 아파트 (8~20층, 420세대)'], ['상가', '더 파크사이드 서울 몰 (저층 거리형 상가)']],
+      dev: '일레븐건설 · 용산일레븐', design: 'KPF · DA건축 · SKM · 정림건축 · 범건축', builder: '현대건설', at: 2, steps: ['부지 매입', '착공', '분양', '준공'],
+      stage: '공사 중 · 2027년 2월 준공 예정', plan: '오피스텔은 2024년 10월부터 분양, 아파트 일반 분양 일정은 미정',
+      note: '재건축·재개발이 아니라 민간 시행사가 땅을 사서 짓는 복합개발이에요. 세대수·층수는 시행사 발표와 보도, 나무위키를 함께 참고했고, 분양가와 일정은 바뀔 수 있어요. 공개되지 않은 칸은 「아직 공개되지 않았어요」로 보여요.',
+      keys: ['파크사이드', '유엔사'], src: [['나무위키', 'https://namu.wiki/w/%EB%8D%94%20%ED%8C%8C%ED%81%AC%EC%82%AC%EC%9D%B4%EB%93%9C%20%EC%84%9C%EC%9A%B8'], ['네이버 뉴스 검색', 'https://search.naver.com/search.naver?where=news&query=%EB%8D%94%ED%8C%8C%ED%81%AC%EC%82%AC%EC%9D%B4%EB%93%9C%20%EC%84%9C%EC%9A%B8']] },
   ];
   const CODE = { hn2: '2476', ap2: '1003', ap3: '1004', ap4: '1005', ap5: '1006', ss1: '1220', ss2: '1221', ss3: '1222', ss4: '1223', hn3: '2477', hn4: '2478', hn5: '2479', em: '1007', js5: '1342', bp: '1303', ys: '1822', md6: '2608', yh: '1824' }; // 서울시 자료의 구역 번호
   const BY_CODE = Object.fromEntries(Object.entries(CODE).map(([id, c]) => [c, id]));
@@ -91,19 +100,21 @@
     <p class="rd-note">서울시가 ${esc(asof)} 말 기준으로 정리한 자료예요. 그 뒤 진행된 내용은 빠져 있을 수 있고, 시공사는 이 자료에 없어요. 계약이나 투자 전에는 <a href="https://cleanup.seoul.go.kr/" target="_blank" rel="noopener">정비사업 정보몽땅</a>과 조합 공고를 꼭 확인해 주세요.</p>
     <p class="rd-src">출처 <a href="https://data.seoul.go.kr/dataList/OA-22856/F/1/datasetView.do" target="_blank" rel="noopener">서울 열린데이터광장 도시정비사업 통계</a></p>`;
   const sheet = x => `<div class="rd-box" style="--rd:${x.c}">
-      <header class="rd-head"><span class="rd-kind">${x.kind}</span><div><b>${esc(x.brand || x.name)}</b><small>${esc(x.brand ? x.name : x.addrText.replace('서울특별시 ', ''))}</small></div></header>
+      <header class="rd-head"><span class="rd-kind">${x.kind}</span><div><b>${esc(x.brand || x.name)}</b><small>${esc(x.sub || (x.brand ? x.name : x.addrText.replace('서울특별시 ', '')))}</small></div></header>
       <div class="rd-map" id="rd-map"><a class="rd-mapa" id="rd-mapa" href="https://map.kakao.com/?q=${encodeURIComponent(x.addr)}" target="_blank" rel="noopener">지도 ↗</a></div>
       <table class="rd-tb"><tbody>
         ${row('종류', esc(x.type2 || '아파트'))}
         ${row('브랜드', esc(x.brandName || '아직 정해지지 않았어요'))}
         ${row('주소', esc(x.addrText))}
         ${row('입주', esc(x.move))}
-        ${row('기존 단지', x.before && `${esc(x.before)}${x.beforeN ? ` <small>${esc(x.beforeN)}</small>` : ''}`)}
+        ${row(x.kind === '복합개발' ? '옛 부지' : '기존 단지', x.before && `${esc(x.before)}${x.beforeN ? ` <small>${esc(x.beforeN)}</small>` : ''}`)}
+        ${row('구성', x.parts && x.parts.map(([k, v]) => `<span class="rd-part"><em>${esc(k)}</em>${esc(v)}</span>`).join(''))}
         ${row('동수', esc(x.dongs || NA))}
         ${row('층수', esc(x.floors))}
         ${row('세대수', esc(x.units))}
         ${row('면적', x.area && esc(x.area))}
         ${row('주차대수', esc(x.park || NA))}
+        ${row('시행', x.dev && esc(x.dev))}
         ${row('설계', x.design && esc(x.design))}
         ${row('시공', esc(x.builder))}
         ${row('공사비', x.cost && esc(x.cost))}
@@ -113,7 +124,7 @@
     ${stepsHtml(x)}
     <div class="rd-biz-slot" data-code="${x.pub ? x.id.slice(1) : CODE[x.id] || ''}"></div>
     <div class="rd-acts"><button type="button" class="btn fill" data-rdgo="1">돈셈 지도에서 보기</button><a class="btn" href="https://search.naver.com/search.naver?where=news&amp;sort=1&amp;query=${encodeURIComponent(x.name + ' ' + x.kind)}" target="_blank" rel="noopener">최신 뉴스 ↗</a><button type="button" class="btn" data-rdshare="1">링크 복사</button></div>
-    <p class="rd-note">${x.brand ? '단지 이름은 시공사가 제안한 이름이라 바뀔 수 있어요. ' : ''}세대수·층수는 서울시 고시와 조합·시공사 발표를 전한 보도를 기준으로 했고, 종류·동수·주차대수는 나무위키도 함께 참고했어요. 자료마다 숫자가 조금씩 다를 수 있고, 사업이 진행되면 바뀌어요. 공개되지 않은 칸은 비워 두지 않고 그렇다고 적었어요. 투자나 계약 전에는 조합 공고와 <a href="https://cleanup.seoul.go.kr/" target="_blank" rel="noopener">정비사업 정보몽땅</a>을 꼭 확인해 주세요.</p>
+    <p class="rd-note">${x.note ? esc(x.note) : `${x.brand ? '단지 이름은 시공사가 제안한 이름이라 바뀔 수 있어요. ' : ''}세대수·층수는 서울시 고시와 조합·시공사 발표를 전한 보도를 기준으로 했고, 종류·동수·주차대수는 나무위키도 함께 참고했어요. 자료마다 숫자가 조금씩 다를 수 있고, 사업이 진행되면 바뀌어요. 공개되지 않은 칸은 비워 두지 않고 그렇다고 적었어요. 투자나 계약 전에는 조합 공고와 <a href="https://cleanup.seoul.go.kr/" target="_blank" rel="noopener">정비사업 정보몽땅</a>을 꼭 확인해 주세요.`}</p>
     <p class="rd-src">${UPDATED} 기준 · 출처 ${x.src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)}</a>`).join(' · ')}</p>`;
 
   let modal = null, cur = null, pos = null, tok = 0;

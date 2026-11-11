@@ -3131,3 +3131,6 @@ a.mk-seller:hover { text-decoration: none; }
 :root[data-theme="dark"] .noti-it.hot em { color: #ff7a73; }
 @media (prefers-color-scheme: dark) { :root[data-theme="auto"] .noti-it.hot em { color: #ff7a73; } }
 :root[data-theme="dark"] .noti-ico { filter: saturate(.9); background-blend-mode: multiply; }
+/* 정보표 '구성' 줄 (복합개발): 호텔·오피스텔·아파트·상가를 한 줄씩 */
+.rd-part { display: block; padding: 2px 0; }
+.rd-part em { display: inline-block; min-width: 52px; margin-right: 6px; font-style: normal; font-weight: 700; color: var(--muted); }

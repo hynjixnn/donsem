@@ -768,7 +768,7 @@
         [p.e && p.e !== p.s ? `${dd(p.s)} - ${dd(p.e)}` : '', p.rep && p.rep !== 'none' ? `↻ ${PL_REP[p.rep]}` : '', p.place ? `📍 ${esc(p.place)}` : ''].filter(Boolean).join(' · '),
         `${p.files && p.files.length ? '<span class="ds-clip" title="첨부 파일">📎</span>' : ''}${p.alarm && p.alarm !== 'none' ? '<span class="ds-clip" title="알림">🔔</span>' : ''}`, `data-pedit="${esc(p.id)}"`).replace('class="ds-row', `class="ds-row${p.done ? ' done' : ''}`)),
       ...(selDay === payKey ? [row('종일', 'ds-pay', '💰 월급날', '', '')] : []),
-      ...mcOn(selDay).map(e => row('종일', `ds-mc ${MC_TAG[e.tag] || ''}`, esc(e.t), esc(e.tag), '')),
+      ...mcOn(selDay).map(e => row('종일', `ds-mc ${MC_TAG[e.tag] || ''}`, esc(e.t), `${esc(e.tag)} · ${esc(e.go ? e.go[1] : '돈 달력')}에서 보기`, '', `data-mcgo="${esc(e.go ? e.go[0] : '/money-calendar/')}"`)), // 누르면 관련 계산기로
       ...fs.map(x => row('고정지출', 'ds-fx', esc(x.name || x.cat || '고정지출'), '매달 나가는 돈 · 누르면 고정지출에서 바꿔요', `<em class="ds-amt out">-${won(Number(x.amt))}</em>`, 'data-fxgo')),
       ...es.map(e => row(e.type === 'in' ? '수입' : '지출', e.type === 'in' ? 'ds-in' : 'ds-out', esc(e.cat), e.memo ? esc(e.memo) : '', `<em class="ds-amt ${e.type}">${e.type === 'in' ? '+' : '-'}${won(e.amt)}</em>`, `data-eedit="${esc(e.id)}"`)),
     ];
@@ -824,8 +824,8 @@
   function onCalClick(e) {
     if (e.target.id === 'b-jump') { try { e.target.showPicker(); } catch (err) { /* 누르면 바로 열리는 브라우저도 있어요 */ } return; }
     if (onPlan(e) || onDeco(e)) return;
-    const ed = e.target.closest('[data-pedit], [data-eedit], [data-fxgo]');
-    if (ed) { if (ed.dataset.pedit) openPlanEd(ed.dataset.pedit); else if (ed.dataset.eedit) openRecEd(ed.dataset.eedit); else location.href = '/fixed/'; return; }
+    const ed = e.target.closest('[data-pedit], [data-eedit], [data-fxgo], [data-mcgo]');
+    if (ed) { if (ed.dataset.mcgo) location.href = ed.dataset.mcgo; else if (ed.dataset.pedit) openPlanEd(ed.dataset.pedit); else if (ed.dataset.eedit) openRecEd(ed.dataset.eedit); else location.href = '/fixed/'; return; }
     const d = e.target.closest('[data-eid], [data-dsrec]');
     if (d && d.dataset.eid) {
       const it = data.entries.find(x => x.id === d.dataset.eid);
