@@ -3112,3 +3112,7 @@ a.mk-seller:hover { text-decoration: none; }
   .wrap { padding-left: 8px; padding-right: 8px; }
   .wrap > footer, .wrap > h1, .wrap > p, .group > h2, .cat-tabs > h2, .group > .g-head, .wrap > .crumbs { padding-left: 8px; padding-right: 8px; } /* 카드 밖 제목·글은 살짝 안쪽으로 */
 }
+/* 가계부 수입·남은 돈은 돈셈 보라색 (남은 돈이 마이너스면 원래 빨간색 그대로) */
+#b-in, #b-left:not(.minus) { color: #7040A1; }
+:root[data-theme="dark"] #b-in, :root[data-theme="dark"] #b-left:not(.minus) { color: #B69AD8; }
+@media (prefers-color-scheme: dark) { :root[data-theme="auto"] #b-in, :root[data-theme="auto"] #b-left:not(.minus) { color: #B69AD8; } }

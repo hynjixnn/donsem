@@ -2336,7 +2336,7 @@ const MENU = [
   if (!document.body.classList.contains('home')) return;
   document.querySelectorAll('.group:not(.popular):not(.bundles):not(.fav-group):not(.recent) > .tiles').forEach(tiles => {
     const extra = [...tiles.children].slice(4);
-    if (!extra.length) return;
+    if (extra.length <= 2) return; // 1~2개만 더 있으면 버튼 없이 다 보여 줘요 (굳이 누를 필요 없게)
     extra.forEach(t => t.classList.add('tile-more'));
     tiles.classList.add('folded');
     const b = document.createElement('button');
