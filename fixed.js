@@ -2,7 +2,7 @@
 (() => {
   const KEY = 'donsem:fixed', BUDGET_KEY = 'donsem:budget';
   const CATS = ['구독', '통신', '보험', '주거·관리비', '대출 상환', '교육', '기타'];
-  const TO_BUDGET_CAT = { '구독': '문화·여가', '통신': '주거·통신', '주거·관리비': '주거·통신' }; // 가계부 카테고리로 옮길 때
+  const TO_BUDGET_CAT = { '구독': '구독', '통신': '주거·통신', '주거·관리비': '주거·통신' }; // 가계부 카테고리로 옮길 때
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
