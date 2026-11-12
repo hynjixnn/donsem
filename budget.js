@@ -2,7 +2,7 @@
 (() => {
   const KEY = 'donsem:budget';
   const CATS = {
-    out: ['식비', '카페·간식', '교통', '쇼핑', '생활', '주거·통신', '의료', '문화·여가', '경조사', '기타'],
+    out: ['식비', '카페·간식', '교통', '쇼핑', '생활', '주거·통신', '구독', '의료', '문화·여가', '경조사', '기타'],
     in: ['월급', '용돈', '부수입', '이자·배당', '기타'],
   };
   const $ = id => document.getElementById(id);
@@ -145,7 +145,7 @@
 
 
   // ── 월말 돈 결산 카드 (스포티파이 연말 결산처럼) ──
-  const NICK = { '식비': '맛집 탐험가 🍚', '카페·간식': '카페 단골손님 ☕', '교통': '프로 이동러 🚌', '쇼핑': '쇼핑 요정 🛍️', '생활': '살림 고수 🧺', '주거·통신': '집이 최고 🏠',
+  const NICK = { '식비': '맛집 탐험가 🍚', '카페·간식': '카페 단골손님 ☕', '교통': '프로 이동러 🚌', '쇼핑': '쇼핑 요정 🛍️', '생활': '살림 고수 🧺', '주거·통신': '집이 최고 🏠', '구독': '구독 부자 📺',
     '의료': '건강 지킴이 💊', '문화·여가': '문화생활 러버 🍿', '경조사': '의리파 💌', '기타': '자유로운 영혼 📦' };
   let wrapCache = null, wrapBtn = null;
   function wrapData(list, y, m, sumOut) {
@@ -195,7 +195,7 @@
   function makeWrap() {
     const [y, m] = month.split('-').map(Number), list = data.entries.filter(e => e.date.startsWith(month));
     const sumOut = list.filter(e => e.type === 'out').reduce((a, e) => a + e.amt, 0), w = wrapData(list, y, m, sumOut);
-    const icon = typeof CAT_ICONS !== 'undefined' && CAT_ICONS[w.topCat] ? `/icons/cat/${CAT_ICONS[w.topCat]}.webp` : '/icons/wrap.webp';
+    const icon = typeof CAT_ICONS !== 'undefined' && CAT_ICONS[w.topCat] ? catSrc(w.topCat) : '/icons/wrap.webp';
     return storyCard({ kicker: `돈셈 · ${m}월 돈 결산`, title: '이번 달 나는', img: icon, color: '#7d7aff',
       big: w.nick, sub: `총 지출 ${korean(sumOut) || won(sumOut)}${w.prev ? ` · ${w.isNow ? '지난달 같은 기간' : '지난달'}보다 ${sumOut > w.prev ? '▲' : '▼'} ${Math.abs(Math.round((sumOut - w.prev) / w.prev * 100))}%` : ''}`,
       draw: (c, top, { text, round, W }) => { // 많이 쓴 곳 TOP 3 막대 (고정지출 빼고)

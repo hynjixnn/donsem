@@ -1642,25 +1642,224 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   document.body.append(bar);
   document.body.classList.add('has-tabbar');
 
-  // ── ＋기록: 어느 페이지에서든 가계부에 바로 적기 ──
-  const CATS = { out: ['식비', '카페·간식', '교통', '쇼핑', '생활', '주거·통신', '의료', '문화·여가', '경조사', '기타'], in: ['월급', '용돈', '부수입', '이자·배당', '기타'] };
-  let type = 'out', cat = CATS.out[0], sheet = null;
-  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-  function drawCats() {
-    sheet.querySelector('.qa-cats').innerHTML = CATS[type].map(c => `<button type="button" class="${c === cat ? 'on' : ''}" data-cat="${c}">${catIcon(c)}${c}</button>`).join('');
+  // ── ＋기록 (머니차곡처럼): 「애플뮤직 8900」처럼 대충 써도 브랜드·분류·날짜를 알아서 채워요 ──
+  const CATS = { out: ['식비', '카페·간식', '교통', '쇼핑', '생활', '주거·통신', '구독', '의료', '문화·여가', '경조사', '기타'], in: ['월급', '용돈', '부수입', '이자·배당', '기타'] };
+  const H = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const ymdOf = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const today = () => ymdOf(new Date());
+  const dayOff = n => { const d = new Date(); d.setDate(d.getDate() - n); return ymdOf(d); };
+  const W7 = '일월화수목금토';
+  const dateLabel = s => s === today() ? '오늘' : s === dayOff(1) ? '어제' : s === dayOff(2) ? '그저께' : `${Number(s.slice(5, 7))}월 ${Number(s.slice(8))}일`;
+  // 브랜드: [보일 이름, 찾을 말들, 분류, 바탕색, 글자, 글자색] — 진짜 로고 그림은 상표라서, 브랜드 색 + 첫 글자 배지로 보여 줘요
+  const BRANDS = [
+    ['넷플릭스', 'netflix 넷플릭스 넷플', '구독', '#E50914', 'N'], ['유튜브', 'youtube 유튜브 유튭', '구독', '#FF0000', '▶'], ['Apple', 'apple 애플 아이클라우드 icloud 앱스토어 appstore 애플뮤직 애플tv 애플원 애뮤', '구독', '#1d1d1f', 'A'],
+    ['멜론', 'melon 멜론', '구독', '#00CD3C', '멜'], ['스포티파이', 'spotify 스포티파이 스포티', '구독', '#1DB954', 'S'], ['지니뮤직', '지니뮤직 genie', '구독', '#2a7de1', 'G'],
+    ['디즈니+', 'disney 디즈니', '구독', '#113CCF', 'D+'], ['티빙', 'tving 티빙', '구독', '#FF153C', 'T'], ['웨이브', 'wavve 웨이브', '구독', '#1F4FFF', 'W'], ['왓챠', 'watcha 왓챠', '구독', '#FF0558', 'W'],
+    ['쿠팡플레이', '쿠팡플레이 쿠플', '구독', '#E52528', '▶'], ['쿠팡 와우', '쿠팡와우 로켓와우 와우멤버십', '구독', '#E52528', 'W'], ['네이버플러스', '네이버플러스 네플멤 네이버멤버십', '구독', '#03C75A', 'N+'],
+    ['밀리의서재', '밀리의서재 밀리', '구독', '#FFD84D', '밀', '#222'], ['리디', 'ridi 리디', '구독', '#1E9EFF', 'R'], ['ChatGPT', 'chatgpt 챗gpt 챗지피티 지피티 gpt openai', '구독', '#10A37F', 'G'],
+    ['Claude', 'claude 클로드', '구독', '#D97757', 'C'], ['노션', 'notion 노션', '구독', '#191919', 'N'], ['어도비', 'adobe 어도비 포토샵', '구독', '#FA0F00', 'A'], ['마이크로소프트', 'microsoft ms365 오피스365 마이크로소프트 엑셀', '구독', '#0078D4', 'M'],
+    ['구글', 'google 구글 구글원', '구독', '#4285F4', 'G'], ['배민클럽', '배민클럽', '구독', '#2AC1BC', '배'],
+    ['배달의민족', '배달의민족 배민 baemin', '식비', '#2AC1BC', '배'], ['쿠팡이츠', '쿠팡이츠 쿠팡잇츠', '식비', '#00A5E5', '이'], ['요기요', 'yogiyo 요기요', '식비', '#FA0050', '요'],
+    ['맥도날드', 'mcdonald 맥도날드 맥날 맥도', '식비', '#FFC72C', 'M', '#DA291C'], ['버거킹', 'burgerking 버거킹 버킹', '식비', '#D62300', 'B'], ['롯데리아', '롯데리아', '식비', '#E60012', 'L'], ['KFC', 'kfc 케이에프씨', '식비', '#E4002B', 'K'],
+    ['맘스터치', '맘스터치 맘터', '식비', '#E2231A', 'M'], ['서브웨이', 'subway 서브웨이', '식비', '#008938', 'S'], ['교촌치킨', '교촌', '식비', '#A57A3A', '교'], ['BBQ', 'bbq 비비큐', '식비', '#C8102E', 'B'], ['bhc', 'bhc', '식비', '#E60012', 'b'],
+    ['도미노피자', '도미노', '식비', '#006491', 'D'], ['피자헛', '피자헛', '식비', '#EE3124', 'P'], ['GS25', 'gs25 지에스25', '식비', '#00A0E2', 'GS'], ['CU', 'cu 씨유', '식비', '#652F8D', 'CU'], ['세븐일레븐', '세븐일레븐 7eleven 세븐', '식비', '#008061', '7'], ['이마트24', '이마트24', '식비', '#FFB81C', '24', '#333'],
+    ['스타벅스', 'starbucks 스타벅스 스벅', '카페·간식', '#00704A', '★'], ['메가커피', '메가커피 메가mgc 메가컴피', '카페·간식', '#FFD400', 'M', '#3c2a00'], ['컴포즈커피', '컴포즈', '카페·간식', '#FFC400', 'C', '#222'], ['이디야', '이디야 ediya', '카페·간식', '#1D2A5E', 'E'],
+    ['빽다방', '빽다방', '카페·간식', '#FFD800', '빽', '#1d3b8f'], ['투썸플레이스', '투썸 twosome', '카페·간식', '#D6001C', 'T'], ['할리스', '할리스 hollys', '카페·간식', '#C8102E', 'H'], ['폴바셋', '폴바셋', '카페·간식', '#1d1d1f', 'P'], ['블루보틀', '블루보틀', '카페·간식', '#0082C9', 'B'],
+    ['파리바게뜨', '파리바게뜨 파바', '카페·간식', '#1F4FA3', 'P'], ['뚜레쥬르', '뚜레쥬르', '카페·간식', '#006B3F', 'T'], ['배스킨라빈스', '배스킨 베라 배라', '카페·간식', '#E1137C', 'B'], ['던킨', '던킨', '카페·간식', '#FF671F', 'D'],
+    ['카카오T', '카카오t 카카오택시 카택', '교통', '#FFCD00', 'T', '#1d1d1f'], ['우버', 'uber 우버', '교통', '#1d1d1f', 'U'], ['코레일', 'ktx 코레일 korail', '교통', '#004EA2', 'K'], ['SRT', 'srt', '교통', '#5A2D82', 'S'], ['쏘카', 'socar 쏘카', '교통', '#00B8FF', 'S'],
+    ['GS칼텍스', 'gs칼텍스', '교통', '#00A651', 'GS'], ['SK에너지', 'sk에너지', '교통', '#EA002C', 'SK'], ['S-OIL', 's-oil 에쓰오일 에스오일', '교통', '#FFD200', 'S', '#222'], ['대한항공', '대한항공', '교통', '#00256C', 'K'], ['제주항공', '제주항공', '교통', '#FF5000', 'J'],
+    ['쿠팡', 'coupang 쿠팡', '쇼핑', '#E52528', 'C'], ['네이버', 'naver 네이버 스마트스토어', '쇼핑', '#03C75A', 'N'], ['11번가', '11번가', '쇼핑', '#FF0038', '11'], ['G마켓', 'g마켓 지마켓 gmarket', '쇼핑', '#00A04A', 'G'],
+    ['무신사', 'musinsa 무신사', '쇼핑', '#1d1d1f', 'M'], ['올리브영', '올리브영 올영', '쇼핑', '#86BC25', 'O'], ['지그재그', '지그재그', '쇼핑', '#FF4185', 'Z'], ['에이블리', '에이블리', '쇼핑', '#FF4C6A', 'a'], ['29CM', '29cm', '쇼핑', '#1d1d1f', '29'],
+    ['알리익스프레스', 'aliexpress 알리', '쇼핑', '#FF4747', 'A'], ['테무', 'temu 테무', '쇼핑', '#FB7701', 'T'], ['당근', '당근', '쇼핑', '#FF6F0F', '당'],
+    ['다이소', 'daiso 다이소', '생활', '#E60012', 'D'], ['이마트', 'emart 이마트', '생활', '#FFB81C', 'E', '#333'], ['홈플러스', '홈플러스', '생활', '#E2001A', 'H'], ['롯데마트', '롯데마트', '생활', '#ED1C24', 'L'],
+    ['코스트코', 'costco 코스트코', '생활', '#E31837', 'C'], ['컬리', '컬리 마켓컬리 kurly', '생활', '#5F0080', 'K'], ['오늘의집', '오늘의집 오집', '생활', '#35C5F0', 'O'],
+    ['CGV', 'cgv', '문화·여가', '#E71A0F', 'C'], ['메가박스', '메가박스', '문화·여가', '#352263', 'M'], ['롯데시네마', '롯데시네마', '문화·여가', '#ED1C24', 'L'], ['인터파크', '인터파크', '문화·여가', '#EF3E43', 'I'],
+    ['야놀자', '야놀자', '문화·여가', '#FF3478', 'Y'], ['여기어때', '여기어때', '문화·여가', '#F7323F', 'Y'], ['에어비앤비', 'airbnb 에어비앤비', '문화·여가', '#FF5A5F', 'A'], ['교보문고', '교보문고 교보', '문화·여가', '#3B7D23', '교'], ['예스24', 'yes24 예스24', '문화·여가', '#1D4F91', 'Y'],
+    ['닌텐도', 'nintendo 닌텐도', '문화·여가', '#E60012', 'N'], ['스팀', 'steam 스팀', '문화·여가', '#171A21', 'S'],
+    ['SKT', 'skt sk텔레콤', '주거·통신', '#EA002C', 'SK'], ['KT', 'kt 케이티', '주거·통신', '#1d1d1f', 'kt'], ['LG U+', 'lgu+ 유플러스 lg유플러스 엘지유플러스', '주거·통신', '#E6007E', 'U+'],
+  ].map(([name, keys, cat, bg, ch, fg]) => ({ name, keys: keys.split(' '), cat, bg, ch, fg: fg || '#fff' }));
+  const BKEYS = BRANDS.flatMap(b => b.keys.map(k => [k, b])).sort((a, b) => b[0].length - a[0].length); // 긴 말부터 (쿠팡이츠가 쿠팡보다 먼저)
+  // 브랜드가 아니어도 흔한 말로 분류를 맞춰요
+  const WORDS = {
+    '식비': '점심 저녁 아침 밥 식당 외식 배달 치킨 피자 햄버거 버거 떡볶이 분식 김밥 라면 편의점 회식 술 맥주 소주 고기 삼겹살 초밥 국밥 짜장 짬뽕 야식 식비 도시락 샐러드 냉면 칼국수 돈가스 파스타 쌀국수 마라탕',
+    '카페·간식': '커피 카페 아메리카노 라떼 음료 디저트 케이크 빵 베이커리 아이스크림 간식 과자 쿠키 마카롱 버블티 빙수 도넛 젤리 초콜릿',
+    '교통': '택시 버스 지하철 교통 기차 주유 기름 톨게이트 통행료 주차 따릉이 킥보드 비행기 항공 고속버스',
+    '쇼핑': '쇼핑 옷 의류 신발 가방 화장품 액세서리 악세 향수 노트북 휴대폰 이어폰 운동화 바지 티셔츠 원피스 스타킹 양말',
+    '생활': '생활 생필품 세제 휴지 마트 장보기 미용실 헤어 네일 세탁 빨래방 청소 샴푸 치약',
+    '주거·통신': '월세 관리비 전기 가스 수도 전기세 가스비 수도세 인터넷 통신비 폰요금 핸드폰요금 휴대폰요금 요금제',
+    '구독': '구독 멤버십 정기결제 프리미엄',
+    '의료': '병원 약국 약 치과 한의원 진료 안과 피부과 정형외과 내과 검진 영양제',
+    '문화·여가': '영화 공연 콘서트 전시 뮤지컬 책 도서 게임 노래방 pc방 피시방 여행 숙소 호텔 펜션 운동 헬스 필라테스 요가 수영 볼링 골프 티켓',
+    '경조사': '축의금 조의금 부조 경조사 결혼식 장례식 돌잔치 선물',
+  };
+  const IN_WORDS = { '월급': '월급 급여 봉급 상여 보너스 성과급 인센티브', '용돈': '용돈', '이자·배당': '이자 배당', '부수입': '환급 부업 알바 알바비 중고판매 판매 부수입 캐시백 리워드 앱테크', '기타': '수입 입금' };
+  const CAT_ALIAS = { '식비': '식비 밥', '카페·간식': '카페 간식 카페·간식', '교통': '교통', '쇼핑': '쇼핑 의류', '생활': '생활', '주거·통신': '주거 통신 주거·통신', '구독': '구독', '의료': '의료 병원', '문화·여가': '문화 여가 문화·여가', '경조사': '경조사', '기타': '기타' };
+  const norm = s => String(s).toLowerCase().replace(/[\s·.\-_']/g, '');
+  const LEARN = 'donsem:qa-learn'; // '카테고리 바꾸기'로 고른 분류를 기억해요 (다음부터 같은 이름은 그 분류로)
+  const learned = () => { try { return JSON.parse(localStorage.getItem(LEARN)) || {}; } catch (e) { return {}; } };
+  const brandOf = name => { const n = norm(name); if (!n) return null; const hit = BKEYS.find(([k]) => n.includes(norm(k))); return hit ? hit[1] : null; };
+  const wordCat = (name, map) => { const n = norm(name); for (const [c, ws] of Object.entries(map)) if (ws.split(' ').some(w => n.includes(norm(w)))) return c; return ''; };
+  // 금액 글자 정리: 3만5천 → 35000, 1.5만 → 15000, 12,000 → 12000
+  const fixNums = s => s.replace(/(\d),(?=\d{3})/g, '$1')
+    .replace(/(\d+(?:\.\d+)?)\s*만\s*(\d+)\s*천/g, (m, a, b) => String(Math.round(a * 1e4 + b * 1e3)))
+    .replace(/(\d+(?:\.\d+)?)\s*만\s*(\d{1,4})(?![\d천])/g, (m, a, b) => String(Math.round(a * 1e4 + Number(b))))
+    .replace(/(\d+(?:\.\d+)?)\s*(억|만|천)/g, (m, a, u) => String(Math.round(a * { 억: 1e8, 만: 1e4, 천: 1e3 }[u])));
+  function pickDate(line, setD) {
+    const y = new Date().getFullYear(), ok = (m, d) => m >= 1 && m <= 12 && d >= 1 && d <= 31;
+    const md = (m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    line = line.replace(/(^|\s)(오늘|어제|그저께|그제)(?=\s|$)/, (m, p, w) => { setD(dayOff({ 오늘: 0, 어제: 1, 그제: 2, 그저께: 2 }[w])); return p + ' '; });
+    line = line.replace(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/, (m, a, b) => ok(+a, +b) ? (setD(md(+a, +b)), ' ') : m);
+    line = line.replace(/(^|\s)(\d{1,2})\/(\d{1,2})(?=\s|$)/, (m, p, a, b) => ok(+a, +b) ? (setD(md(+a, +b)), p + ' ') : m);
+    line = line.replace(/^\s*(\d{2})(\d{2})(?=\s+\S*\D)/, (m, a, b) => ok(+a, +b) && /\d/.test(line.slice(m.length)) ? (setD(md(+a, +b)), ' ') : m); // 0701 택시 9800
+    return line;
   }
-  // 자주 쓰는 기록: 최근 90일 동안 같은 분류·금액·메모로 두 번 넘게 적은 지출을 위에 띄워서, 누르면 칸이 바로 채워져요
+  function parse(text, baseDate) {
+    const items = [], learn = learned();
+    String(text).split(/\n|;/).forEach((raw, li) => {
+      let date = '', inst = 0, dutch = 0, line = ' ' + raw.trim() + ' ';
+      if (!raw.trim()) return;
+      line = pickDate(line, d => { date = d; });
+      line = line.replace(/(\d{1,2})\s*개월\s*할부|할부\s*(\d{1,2})\s*개월?/, (m, a, b) => { inst = Number(a || b); return ' '; });
+      line = line.replace(/(?:더치(?:페이)?|[nN엔]빵)\s*(\d{1,2})\s*명?|(\d{1,2})\s*명\s*(?:이서\s*)?(?:더치(?:페이)?|[nN엔]빵)/, (m, a, b) => { dutch = Number(a || b); return ' '; });
+      line = fixNums(line);
+      const re = /(^|[^\p{L}\d.])(\d+(?:\.\d+)?)\s*(?:원|₩)?(?![\p{L}\d])/gu;
+      const segs = []; let last = 0, m;
+      while ((m = re.exec(line))) { const st = m.index + m[1].length; segs.push({ name: line.slice(last, st), amt: Math.round(Number(m[2])) }); last = re.lastIndex; }
+      const tail = line.slice(last);
+      if (!segs.length) segs.push({ name: tail, amt: 0 });
+      else if (tail.trim()) { const lastS = segs[segs.length - 1]; if (!lastS.name.trim()) lastS.name = tail; else lastS.name += ' ' + tail; }
+      segs.forEach((s, si) => {
+        let name = s.name.replace(/[:：\-–,]+/g, ' ').replace(/(^|\s)원(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim(), type = 'out', cat = '';
+        if (/^\+/.test(name)) { type = 'in'; name = name.replace(/^\+\s*/, ''); }
+        const first = name.split(' ')[0], rest = name.slice(first.length).trim();
+        const alias = Object.entries(CAT_ALIAS).find(([, ws]) => ws.split(' ').includes(first));
+        if (alias && rest) { cat = alias[0]; name = rest; }
+        const brand = brandOf(name), l = learn[norm(name)] || (brand && learn['b:' + brand.name]);
+        if (!cat && type === 'out' && wordCat(name, IN_WORDS) && !brand) { type = 'in'; cat = wordCat(name, IN_WORDS); }
+        if (!cat && l) { type = l[0]; cat = l[1]; }
+        if (!cat && type === 'in') cat = wordCat(name, IN_WORDS) || '기타';
+        if (!cat) cat = (brand && brand.cat) || wordCat(name, WORDS) || '기타';
+        if (!CATS[type].includes(cat)) cat = CATS[type][0];
+        items.push({ key: `${li}-${si}`, name, amt: s.amt, total: s.amt, type, cat, date: date || baseDate, brand, dutch: dutch > 1 ? dutch : 0, inst: inst > 1 ? inst : 0 });
+      });
+    });
+    items.forEach(it => { if (it.dutch) it.amt = Math.round(it.total / it.dutch); });
+    return items;
+  }
+  const badge = (it, size = 40) => it.brand
+    ? `<span class="qa-logo" style="width:${size}px;height:${size}px;background:${it.brand.bg};color:${it.brand.fg};font-size:${Math.round(size * (it.brand.ch.length > 1 ? .36 : .46))}px">${H(it.brand.ch)}</span>`
+    : `<span class="qa-logo plain" style="width:${size}px;height:${size}px">${catIcon(it.cat, Math.round(size * .66))}</span>`;
+  const CAL_ICO = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+  const DOWN = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+
+  let mode = 'quick', type = 'out', cat = CATS.out[0], dDate = '', sheet = null, ov = {}, items = [], sub = '', subFor = null, calY = 0, calM = 0;
+  // 자주 쓰는 기록: 최근 90일 동안 같은 분류·금액·메모로 두 번 넘게 적은 지출 → 누르면 빠른 입력에 한 줄 더해져요
   function favList() {
     let b; try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
     const es = b && Array.isArray(b.entries) ? b.entries : [], since = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10), cnt = {};
-    es.forEach(e => { if (e.type !== 'out' || String(e.id).startsWith('fx-') || e.date < since) return; const k = `${e.cat}|${e.amt}|${e.memo || ''}`; cnt[k] = cnt[k] || { n: 0, last: '', cat: e.cat, amt: e.amt, memo: e.memo || '' }; cnt[k].n++; if (e.date > cnt[k].last) cnt[k].last = e.date; });
-    return Object.values(cnt).filter(x => x.n >= 2).sort((a, b) => b.n - a.n || b.last.localeCompare(a.last)).slice(0, 4);
+    es.forEach(e => { if (String(e.id).startsWith('fx-') || e.date < since) return; const k = `${e.type}|${e.cat}|${e.amt}|${e.memo || ''}`; cnt[k] = cnt[k] || { n: 0, last: '', type: e.type, cat: e.cat, amt: e.amt, memo: e.memo || '' }; cnt[k].n++; if (e.date > cnt[k].last) cnt[k].last = e.date; });
+    const mine = Object.values(cnt).filter(x => x.n >= 2).sort((a, b) => b.n - a.n || b.last.localeCompare(a.last)).slice(0, 6);
+    return mine.length ? mine : [{ type: 'out', memo: '커피', amt: 4500 }, { type: 'out', memo: '점심', amt: 12000 }, { type: 'in', memo: '월급', amt: 3000000 }];
   }
   function drawFav() {
-    const box = sheet.querySelector('.qa-fav'), list = favList();
-    box.hidden = !list.length;
-    const e = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-    box.querySelector('.qa-fav-list').innerHTML = list.map(x => `<button type="button" data-fav="${e(JSON.stringify([x.cat, x.amt, x.memo]))}">${catIcon(x.cat)}<span>${e(x.memo || x.cat)}</span><b>${x.amt.toLocaleString('ko-KR')}원</b></button>`).join('');
+    const list = favList(), row = t => list.filter(x => x.type === t).map(x => `<button type="button" data-fav="${H((x.memo || x.cat) + ' ' + x.amt)}">${H(x.memo || x.cat)} ${x.amt.toLocaleString('ko-KR')}</button>`).join('');
+    const o = row('out'), i = row('in');
+    sheet.querySelector('.qa-short').innerHTML = (o ? `<div><b class="out">지출</b>${o}</div>` : '') + (i ? `<div><b class="in">수입</b>${i}</div>` : '');
+  }
+  const baseDate = () => dDate || today();
+  function drawItems() {
+    const ta = sheet.querySelector('.qa-text');
+    items = parse(ta.value, baseDate()).map(it => Object.assign(it, ov[it.key] || {}));
+    const box = sheet.querySelector('.qa-items');
+    box.innerHTML = items.map((it, i) => `<div class="qa-item">
+        <div class="qa-it-top">${badge(it)}<div class="qa-it-t"><b>${H(it.name || it.cat)}</b><span>${it.type === 'in' ? '수입' : '지출'} · ${H(it.cat)}</span></div>
+          <b class="qa-it-amt${it.type === 'in' ? ' in' : ''}">${it.amt ? `${it.type === 'in' ? '+' : ''}${it.amt.toLocaleString('ko-KR')}원` : '<em>금액?</em>'}</b></div>
+        ${it.dutch ? `<p class="qa-it-note">${it.total.toLocaleString('ko-KR')}원을 ${it.dutch}명이 나눠서 내 몫만 적어요</p>` : ''}
+        ${it.inst && it.amt ? `<p class="qa-it-note">${it.inst}개월 할부 · 매달 ${Math.floor(it.amt / it.inst).toLocaleString('ko-KR')}원씩 ${it.inst}번 적어요</p>` : ''}
+        <div class="qa-it-chips"><button type="button" data-sub="date" data-i="${i}">${CAL_ICO}${dateLabel(it.date)}${DOWN}</button><button type="button" data-sub="cat" data-i="${i}">카테고리 바꾸기</button><button type="button" data-flip="${i}">${it.type === 'in' ? '지출로' : '수입으로'}</button></div>
+      </div>`).join('');
+    box.hidden = !items.length;
+    const n = items.filter(x => x.amt).length;
+    sheet.querySelector('.qa-save').textContent = mode === 'quick' ? (n > 1 ? `${n}건 저장` : '저장') : (type === 'out' ? '지출 기록하기' : '수입 기록하기');
+    ta.style.height = 'auto'; ta.style.height = Math.min(160, ta.scrollHeight) + 'px';
+  }
+  const catGrid = (t, on) => `<div class="qa-grid">${CATS[t].map(c => `<button type="button" class="${c === on ? 'on' : ''}" data-cat="${H(c)}">${catIcon(c, 34)}<span>${H(c)}</span></button>`).join('')}</div>`;
+  function drawDirect() {
+    sheet.querySelector('.qa-dcats').innerHTML = catGrid(type, cat);
+    sheet.querySelector('.qa-ddate').innerHTML = `${CAL_ICO}${dateLabel(baseDate())}${DOWN}`;
+    sheet.querySelectorAll('.qa-type button').forEach(x => x.classList.toggle('on', x.dataset.v === type));
+    sheet.querySelector('.qa-type').dataset.on = type;
+    sheet.querySelector('.qa-save').textContent = type === 'out' ? '지출 기록하기' : '수입 기록하기';
+  }
+  function setMode(m) {
+    mode = m;
+    sheet.querySelectorAll('.qa-tabs:not(.qa-type) button').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+    sheet.querySelector('.qa-tabs:not(.qa-type)').dataset.on = m;
+    sheet.querySelector('.qa-quick').hidden = m !== 'quick';
+    sheet.querySelector('.qa-direct').hidden = m === 'quick';
+    if (m === 'quick') drawItems(); else drawDirect();
+    sheet.querySelector('.qa-err').textContent = '';
+  }
+  // ── 아래에서 한 장 더 올라오는 작은 창: 날짜 · 카테고리 · 쓰는 법 ──
+  function calHTML(sel) {
+    const first = new Date(calY, calM, 1), days = new Date(calY, calM + 1, 0).getDate(), t = today();
+    let cells = '';
+    for (let i = 0; i < first.getDay(); i++) cells += '<span></span>';
+    for (let d = 1; d <= days; d++) { const s = ymdOf(new Date(calY, calM, d)); cells += `<button type="button" data-day="${s}" class="${s === sel ? 'on' : ''}${s === t ? ' today' : ''}">${d}</button>`; }
+    return `<div class="qa-cal-h"><b>${calY}년 ${calM + 1}월</b><span><button type="button" data-cm="-1" aria-label="지난달">‹</button><button type="button" data-cm="1" aria-label="다음 달">›</button></span></div>
+      <div class="qa-cal-w">${[...W7].map(w => `<span>${w}</span>`).join('')}</div><div class="qa-cal-g">${cells}</div>`;
+  }
+  const curSubDate = () => subFor === 'direct' ? baseDate() : (items[subFor] || {}).date || baseDate();
+  function drawSub() {
+    const s = sheet.querySelector('.qa-sub-in');
+    if (sub === 'date') {
+      const sel = curSubDate();
+      s.innerHTML = `<div class="qa-sub-head"><b>날짜</b><button type="button" class="qa-x" data-subx="1" aria-label="닫기">×</button></div>
+        <div class="qa-quickd">${[[0, '오늘'], [1, '어제'], [2, '그저께']].map(([n, l]) => `<button type="button" data-day="${dayOff(n)}" class="${dayOff(n) === sel ? 'on' : ''}">${l}</button>`).join('')}</div>
+        <div class="qa-cal">${calHTML(sel)}</div>`;
+    } else if (sub === 'cat') {
+      const it = subFor === 'direct' ? { type, cat, name: '' } : items[subFor] || {};
+      const who = it.brand ? it.brand.name : it.name;
+      s.innerHTML = `<div class="qa-sub-head"><b>카테고리</b><button type="button" class="qa-x" data-subx="1" aria-label="닫기">×</button></div>
+        ${who ? `<p class="qa-sub-cap">고르면 다음부터 '${H(who)}'도 이 카테고리로 기록해요.</p>` : ''}${catGrid(it.type || 'out', it.cat)}`;
+    } else if (sub === 'help') {
+      const ex = (t, c = '') => `<button type="button" class="qa-ex${c}" data-ex="${H(t)}">${H(t).replace(/\n/g, '<br>')}</button>`;
+      const R = [['금액', '숫자만 쓰면 돼요. 12000, 1만2천, 3.5만, 12,000원 다 알아들어요'], ['여러 건', '줄을 바꾸거나 금액 뒤에 이어 쓰면 한 건씩 따로 저장돼요'], ['날짜', '7월1일, 7/1, 0701, 오늘, 어제, 그저께'], ['수입', '월급, 용돈, 환급, 이자, 배당 → 알아서 수입으로 / 앞에 + 를 붙여도 돼요'], ['할부', '노트북 1000000원 12개월 할부 → 매달 나눠서 적어요'], ['더치', '회식 100000원 더치 4 (4명 N빵도 돼요) → 내 몫만 적어요'], ['분류', '카페, 식비, 교통, 구독 같은 브랜드·말을 보고 골라요. 카테고리 이름을 앞에 쓰면 그 카테고리로 기록해요. 예: 의류 스타킹'], ['기억', "'카테고리 바꾸기'로 고르면 다음부터 같은 이름은 그 카테고리로 적어요"]];
+      s.innerHTML = `<div class="qa-sub-head"><div><b>빠른 입력 도움말</b><p class="qa-sub-cap">예시를 누르면 입력칸에 바로 채워져요</p></div><button type="button" class="qa-x" data-subx="1" aria-label="닫기">×</button></div>
+        <p class="qa-help-lab">여러 건을 한 번에</p>${ex('7월1일 점심 12000\n7/1 커피 4500\n0701 택시 9800', ' multi')}
+        <p class="qa-help-lab">입력 예시</p><div class="qa-exs">${ex('애플뮤직 8900')}${ex('커피 4,500')}${ex('점심 1만2천')}${ex('월급 3,000,000')}${ex('회식 100000원 더치 4')}</div>
+        <div class="qa-rules"><p>이렇게 알아들어요</p>${R.map(([a, b]) => `<div><b>${a}</b><span>${b}</span></div>`).join('')}</div>
+        <div class="qa-help-foot"><span>✨ 브랜드 이름을 쓰면 로고 색 배지가 자동으로 붙어요</span><button type="button" data-sub="brands">목록 보기</button></div>`;
+    } else if (sub === 'brands') {
+      s.innerHTML = `<div class="qa-sub-head"><div><b>알아듣는 브랜드</b><p class="qa-sub-cap">${BRANDS.length}곳 · 누르면 입력칸에 넣어 드려요</p></div><button type="button" class="qa-x" data-subx="1" aria-label="닫기">×</button></div>
+        <div class="qa-brands">${BRANDS.map(b => `<button type="button" data-ex="${H(b.name)} ">${badge({ brand: b }, 30)}<span>${H(b.name)}</span><small>${H(b.cat)}</small></button>`).join('')}</div>`;
+    }
+  }
+  function openSub(kind, forWhat) {
+    if (document.activeElement && sheet.contains(document.activeElement)) document.activeElement.blur(); // 자판이 작은 창을 가리지 않게
+    sub = kind; if (forWhat !== undefined) subFor = forWhat;
+    if (kind === 'date') { const d = curSubDate(); calY = Number(d.slice(0, 4)); calM = Number(d.slice(5, 7)) - 1; }
+    drawSub();
+    const el = sheet.querySelector('.qa-sub');
+    el.hidden = false; el.offsetHeight; el.classList.add('show');
+    el.querySelector('.qa-sub-in').scrollTop = 0;
+  }
+  function closeSub() { const el = sheet && sheet.querySelector('.qa-sub'); if (!el) return; el.classList.remove('show'); sub = ''; setTimeout(() => { if (!sub) el.hidden = true; }, 300); }
+  function setDay(s) {
+    if (subFor === 'direct') { dDate = s; drawDirect(); }
+    else if (items[subFor]) { const k = items[subFor].key; ov[k] = Object.assign(ov[k] || {}, { date: s }); drawItems(); }
+    closeSub();
+  }
+  function setCat(c) {
+    if (sub !== 'cat') { cat = c; drawDirect(); return; } // 직접 입력 화면의 큰 카테고리
+    if (subFor === 'direct') { cat = c; drawDirect(); }
+    else if (items[subFor]) {
+      const it = items[subFor], L = learned();
+      ov[it.key] = Object.assign(ov[it.key] || {}, { cat: c });
+      if (it.name) { L[norm(it.name)] = [it.type, c]; if (it.brand) L['b:' + it.brand.name] = [it.type, c]; try { localStorage.setItem(LEARN, JSON.stringify(L)); } catch (e) { /* 괜찮아요 */ } }
+      drawItems();
+    }
+    closeSub();
   }
   let qaDate = ''; // 달력에서 '이날 쓴 돈 적기'를 누르면 그 날짜로 적어요 (없으면 오늘)
   function open(day) {
@@ -1672,46 +1871,60 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
         <div class="qa-panel" role="dialog" aria-modal="true" aria-labelledby="qa-title">
           <div class="qa-grip"></div>
           <div class="qa-head"><b id="qa-title">바로 기록하기</b><button type="button" class="qa-x" data-close="1" aria-label="닫기">×</button></div>
-          <div class="qa-fav" hidden><span class="qa-fav-cap">자주 쓰는 기록 · 누르면 채워져요</span><div class="qa-fav-list"></div></div>
-          <div class="seg qa-type"><button type="button" data-v="out" class="on">지출</button><button type="button" data-v="in">수입</button></div>
-          <div class="field qa-amt"><input inputmode="numeric" placeholder="0" aria-label="금액" autocomplete="off"><span>원</span></div>
-          <p class="qa-kr"></p>
-          <div class="chips qa-cats"></div>
-          <div class="field memo"><input class="qa-memo" type="text" maxlength="40" placeholder="메모 (선택)" aria-label="메모" autocomplete="off"></div>
+          <div class="qa-tabs" data-on="quick"><i></i><button type="button" data-mode="quick" class="on">빠른 입력</button><button type="button" data-mode="direct">직접 입력</button></div>
+          <div class="qa-quick">
+            <div class="qa-tbox"><textarea class="qa-text" rows="1" maxlength="400" placeholder="애플뮤직 8900" aria-label="빠른 입력: 이름과 금액" autocomplete="off" enterkeyhint="enter"></textarea></div>
+            <div class="qa-tmeta"><span>대충 써도 알아서 정리해요</span><button type="button" data-sub="help"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6M12 17h.01"/></svg>쓰는 법</button></div>
+            <div class="qa-items" hidden></div>
+            <div class="qa-short-wrap"><p class="qa-short-cap">내 단축어 · 누르면 한 줄 더해져요</p><div class="qa-short"></div></div>
+          </div>
+          <div class="qa-direct" hidden>
+            <div class="qa-tabs qa-type" data-on="out"><i></i><button type="button" data-v="out" class="on">지출</button><button type="button" data-v="in">수입</button></div>
+            <div class="field qa-amt"><input inputmode="numeric" placeholder="0" aria-label="금액" autocomplete="off"><span>원</span></div>
+            <p class="qa-kr"></p>
+            <button type="button" class="qa-ddate" data-sub="date" data-direct="1"></button>
+            <div class="qa-dcats"></div>
+            <div class="field memo"><input class="qa-memo" type="text" maxlength="40" placeholder="메모 (선택)" aria-label="메모" autocomplete="off"></div>
+          </div>
           <p class="err qa-err" role="alert"></p>
-          <button type="button" class="btn fill wide qa-save">지출 기록하기</button>
+          <button type="button" class="btn fill wide qa-save">저장</button>
           <a class="qa-link" href="/budget/">가계부에서 전체 보기 ›</a>
-        </div>`;
+        </div>
+        <div class="qa-sub" hidden><div class="qa-sub-dim" data-subx="1"></div><div class="qa-sub-in" role="dialog" aria-modal="true"></div></div>`;
       document.body.append(sheet);
-      const amt = sheet.querySelector('.qa-amt input');
+      const amt = sheet.querySelector('.qa-amt input'), ta = sheet.querySelector('.qa-text');
       amt.addEventListener('input', () => {
         const d = amt.value.replace(/[^0-9]/g, '');
         amt.value = d ? Number(d).toLocaleString('ko-KR') : '';
         sheet.querySelector('.qa-kr').textContent = korean(num(amt.value));
         sheet.querySelector('.qa-err').textContent = '';
       });
+      ta.addEventListener('input', () => { if (!ta.value.trim()) ov = {}; sheet.querySelector('.qa-err').textContent = ''; drawItems(); });
+      const addLine = t => { ta.value = ta.value.trim() ? ta.value.replace(/\s+$/, '') + '\n' + t : t; drawItems(); };
       sheet.addEventListener('click', e => {
-        const t = e.target;
-        const fv = t.closest && t.closest('[data-fav]');
-        if (fv) {
-          const [c, m, memo] = JSON.parse(fv.dataset.fav), amtEl = sheet.querySelector('.qa-amt input');
-          type = 'out'; cat = c; drawCats();
-          sheet.querySelectorAll('.qa-type button').forEach(x => x.classList.toggle('on', x.dataset.v === 'out'));
-          sheet.querySelector('.qa-save').textContent = '지출 기록하기';
-          amtEl.value = Number(m).toLocaleString('ko-KR'); amtEl.dispatchEvent(new Event('input', { bubbles: true }));
-          sheet.querySelector('.qa-memo').value = memo;
-          sheet.querySelectorAll('.qa-fav button').forEach(x => x.classList.toggle('on', x === fv));
-          return;
-        }
-        if (t.dataset.close) close();
-        else if (t.dataset.v) { type = t.dataset.v; cat = CATS[type][0]; drawCats(); sheet.querySelectorAll('.qa-type button').forEach(x => x.classList.toggle('on', x === t)); /* 보라색이 수입 쪽으로 스르륵 미끄러져요 (캘린더 달력/목록처럼) */ sheet.querySelector('.qa-save').textContent = type === 'out' ? '지출 기록하기' : '수입 기록하기'; }
-        else if (t.dataset.cat) { cat = t.dataset.cat; drawCats(); }
+        const t = e.target.closest('button, [data-close], [data-subx]');
+        if (!t) return;
+        if (t.dataset.close) return close();
+        if (t.dataset.subx) return closeSub();
+        if (t.dataset.mode) return setMode(t.dataset.mode);
+        if (t.dataset.fav) return addLine(t.dataset.fav);
+        if (t.dataset.ex) { if (mode !== 'quick') setMode('quick'); ta.value = t.dataset.ex; ov = {}; drawItems(); closeSub(); setTimeout(() => ta.focus(), 320); return; }
+        if (t.dataset.sub) return openSub(t.dataset.sub, t.dataset.direct ? 'direct' : t.dataset.i !== undefined ? Number(t.dataset.i) : subFor);
+        if (t.dataset.flip !== undefined) { const it = items[t.dataset.flip]; if (!it) return; const nt = it.type === 'in' ? 'out' : 'in'; ov[it.key] = Object.assign(ov[it.key] || {}, { type: nt, cat: CATS[nt].includes(it.cat) ? it.cat : (nt === 'in' ? (wordCat(it.name, IN_WORDS) || '기타') : ((it.brand && it.brand.cat) || wordCat(it.name, WORDS) || '기타')) }); return drawItems(); }
+        if (t.dataset.day) return setDay(t.dataset.day);
+        if (t.dataset.cm) { calM += Number(t.dataset.cm); if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; } sheet.querySelector('.qa-cal').innerHTML = calHTML(curSubDate()); return; }
+        if (t.dataset.cat) return setCat(t.dataset.cat);
+        if (t.dataset.v) { type = t.dataset.v; cat = CATS[type][0]; drawDirect(); }
       });
       sheet.querySelector('.qa-save').addEventListener('click', save);
-      sheet.addEventListener('keydown', e => { if (e.key === 'Escape') close(); if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); save(); } });
+      sheet.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { if (sub) closeSub(); else close(); }
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); save(); }
+        if (e.key === 'Enter' && e.target === ta && (e.metaKey || e.ctrlKey)) { e.preventDefault(); save(); } // 컴퓨터: ⌘/Ctrl+Enter로 저장 (그냥 Enter는 줄 바꿈 = 여러 건)
+      });
       // 자판이 열린 채로 지출/수입·분류를 누르면 자판이 닫히며 버튼이 미끄러져 엉뚱한 걸 누르게 돼요 → 누르는 순간 입력칸을 붙잡아 둬요
-      sheet.addEventListener('pointerdown', e => { if (sheet.contains(document.activeElement) && document.activeElement.tagName === 'INPUT' && e.target.closest('.qa-type button, .qa-cats button')) e.preventDefault(); });
-      // 아이폰 자판이 올라오면 '기록하기' 버튼이 자판 뒤에 숨었어요 → 창을 자판 위 보이는 부분에 맞추고, 버튼은 창 아래에 붙여 둬요
+      sheet.addEventListener('pointerdown', e => { if (sheet.contains(document.activeElement) && /INPUT|TEXTAREA/.test(document.activeElement.tagName) && e.target.closest('.qa-type button, .qa-grid button, .qa-short button, .qa-tabs button, [data-flip]')) e.preventDefault(); });
+      // 아이폰 자판이 올라오면 '저장' 버튼이 자판 뒤에 숨었어요 → 창을 자판 위 보이는 부분에 맞추고, 버튼은 창 아래에 붙여 둬요
       const vv = window.visualViewport;
       const fit = () => {
         if (!vv || !sheet.classList.contains('show')) return;
@@ -1721,38 +1934,58 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
       };
       if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
       sheet.addEventListener('focusin', fit); sheet.addEventListener('focusout', () => setTimeout(fit, 50));
-      drawCats();
-      sheet.offsetHeight; // 처음 만든 창도 '아래에 숨은 모습'을 한 번 그린 뒤에 올려야 주르륵 올라와요 (안 그러면 처음엔 띡 하고 나타나요)
+      sheet.offsetHeight; // 처음 만든 창도 '아래에 숨은 모습'을 한 번 그린 뒤에 올려야 주르륵 올라와요
     }
-    drawFav();
+    dDate = qaDate; ov = {};
+    sheet.querySelector('.qa-text').value = '';
+    drawFav(); setMode('quick');
     sheet.querySelector('#qa-title').textContent = qaDate && qaDate !== today() ? `${Number(qaDate.slice(5, 7))}월 ${Number(qaDate.slice(8))}일에 기록하기` : '바로 기록하기';
     sheet.classList.add('show');
     document.documentElement.classList.add('qa-open');
-    setTimeout(() => sheet.querySelector('.qa-amt input').focus(), 60);
+    setTimeout(() => sheet.querySelector('.qa-text').focus(), 60);
   }
   function close() {
     if (!sheet) return;
+    closeSub();
     sheet.classList.remove('show', 'kb');
     sheet.style.top = sheet.style.height = sheet.style.bottom = '';
     document.documentElement.classList.remove('qa-open');
   }
+  // 할부: 같은 날짜로 다음 달들에 한 번씩 (31일이 없는 달은 그달 마지막 날)
+  const addMonth = (s, k) => { const y = Number(s.slice(0, 4)), m = Number(s.slice(5, 7)) - 1 + k, d = Number(s.slice(8)); const last = new Date(y, m + 1, 0).getDate(); return ymdOf(new Date(y, m, Math.min(d, last))); };
   function save() {
-    const amtEl = sheet.querySelector('.qa-amt input'), amt = num(amtEl.value);
-    if (!amt) { sheet.querySelector('.qa-err').textContent = '금액을 넣어 주세요.'; amtEl.focus(); return; }
-    if (amt > MAX_REC) { sheet.querySelector('.qa-err').textContent = '1,000억 원보다 큰 금액은 넣을 수 없어요. 숫자를 다시 확인해 주세요.'; amtEl.focus(); return; }
+    const err = sheet.querySelector('.qa-err'), rows = [];
+    if (mode === 'quick') {
+      if (!items.length) { err.textContent = '「애플뮤직 8900」처럼 이름과 금액을 써 주세요.'; sheet.querySelector('.qa-text').focus(); return; }
+      const bad = items.find(x => !x.amt);
+      if (bad) { err.textContent = `${bad.name || '한 줄'}에 금액이 없어요. 숫자를 같이 써 주세요.`; return; }
+      if (items.some(x => x.amt > MAX_REC)) { err.textContent = '1,000억 원보다 큰 금액은 넣을 수 없어요. 숫자를 다시 확인해 주세요.'; return; }
+      items.forEach(it => {
+        const memo = (it.name + (it.dutch ? ` (${it.dutch}명 더치)` : '')).slice(0, 40);
+        if (it.inst) { const per = Math.floor(it.amt / it.inst); for (let k = 0; k < it.inst; k++) rows.push({ type: it.type, cat: it.cat, amt: k === it.inst - 1 ? it.amt - per * (it.inst - 1) : per, date: addMonth(it.date, k), memo: `${it.name} 할부 ${k + 1}/${it.inst}`.slice(0, 40) }); }
+        else rows.push({ type: it.type, cat: it.cat, amt: it.amt, date: it.date, memo });
+      });
+    } else {
+      const amtEl = sheet.querySelector('.qa-amt input'), amt = num(amtEl.value);
+      if (!amt) { err.textContent = '금액을 넣어 주세요.'; amtEl.focus(); return; }
+      if (amt > MAX_REC) { err.textContent = '1,000억 원보다 큰 금액은 넣을 수 없어요. 숫자를 다시 확인해 주세요.'; amtEl.focus(); return; }
+      rows.push({ type, cat, amt, date: baseDate(), memo: sheet.querySelector('.qa-memo').value.trim().slice(0, 40) });
+    }
     let b;
     try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
     if (!b || !Array.isArray(b.entries)) b = { entries: [], budget: (b && b.budget) || 0 };
     const before = budgetStreak(b.entries);
-    b.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, amt, cat, date: qaDate || today(), memo: sheet.querySelector('.qa-memo').value.trim().slice(0, 40) });
+    rows.forEach((r, i) => b.entries.push(Object.assign({ id: Date.now().toString(36) + i + Math.random().toString(36).slice(2, 6) }, r)));
     try { localStorage.setItem('donsem:budget', JSON.stringify(b)); }
-    catch (e) { sheet.querySelector('.qa-err').textContent = '이 브라우저에서는 저장할 수 없어요.'; return; }
-    amtEl.value = ''; sheet.querySelector('.qa-memo').value = ''; sheet.querySelector('.qa-kr').textContent = '';
+    catch (e) { err.textContent = '이 브라우저에서는 저장할 수 없어요.'; return; }
+    const one = rows[0], firstDay = rows.map(r => r.date).sort()[0];
+    sheet.querySelector('.qa-amt input').value = ''; sheet.querySelector('.qa-memo').value = ''; sheet.querySelector('.qa-kr').textContent = ''; sheet.querySelector('.qa-text').value = '';
     close();
-    toast(streakCheer(before, b.entries) || `${cat} ${won(amt)}을 가계부에 기록했어요.`);
+    const cnt = mode === 'quick' ? items.length : 1;
+    toast(streakCheer(before, b.entries) || (cnt > 1 ? `${cnt}건을 가계부에 기록했어요.` : `${one.memo && mode === 'quick' ? one.memo.replace(/ 할부 1\/\d+$/, '') : one.cat} ${won(mode === 'quick' && items[0].inst ? items[0].amt : one.amt)}을 가계부에 기록했어요.`));
     markDailyFull();
     if (typeof window.drawToday === 'function') window.drawToday();
-    if (path === '/budget/') { try { if (qaDate) sessionStorage.setItem('donsem:selday', qaDate); } catch (e) { /* 괜찮아요 */ } setTimeout(() => location.reload(), 1200); } // 가계부를 보고 있었다면 바로 반영
+    if (path === '/budget/') { try { if (firstDay !== today()) sessionStorage.setItem('donsem:selday', firstDay); } catch (e) { /* 괜찮아요 */ } setTimeout(() => location.reload(), 1200); } // 가계부를 보고 있었다면 바로 반영
   }
   window.openQuickAdd = open; // 아래 탭에서는 빠졌지만, 첫 화면 '오늘 쓴 돈 정리 → 기록'에서 이 창을 열어요
   // 떠 있는 '+ 기록' 버튼 (홈·캘린더, 휴대폰): 아래 탭 바로 위 오른쪽이라 엄지로 바로 눌러요
@@ -2060,8 +2293,9 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 const ICONS = ['year-end', 'savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'shop', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'loan-limit', 'asset-rank', 'time-value', 'lump-sum'];
 const iconOf = path => { const slug = String(path).split('#')[1] || String(path).replace(/\//g, ''); /* '/budget/#fixed' → 고정지출 아이콘 */ return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
-const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
-const catIcon = (cat, size = 20) => CAT_ICONS[cat] ? `<img class="cat-ico" src="/icons/cat/${CAT_ICONS[cat]}.webp" alt="" width="${size}" height="${size}">` : '';
+const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '구독': 'tv.png', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
+const catSrc = cat => `/icons/cat/${CAT_ICONS[cat].includes('.') ? CAT_ICONS[cat] : CAT_ICONS[cat] + '.webp'}`; // 구독(tv.png)만 png
+const catIcon = (cat, size = 20) => CAT_ICONS[cat] ? `<img class="cat-ico" src="${catSrc(cat)}" alt="" width="${size}" height="${size}">` : '';
 function addTileIcon(t) {
   const img = iconOf(t.getAttribute('href'));
   if (!img || t.querySelector('.ico')) return;
@@ -3888,4 +4122,55 @@ const GUIDE_FOR = {
   addEventListener('popstate', () => close(true));
   addEventListener('keydown', e => { if (!box || box.hidden) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowRight' && at < S.length - 1) go(1); if (e.key === 'ArrowLeft') go(-1); });
   if (new URLSearchParams(location.search).has('how')) open(false);
+})();
+
+// ── 업데이트 소식 (머니차곡처럼): 새로 바뀐 점을 처음 한 번, 한 장씩 넘겨 보여 줘요. 주소 끝에 ?news 를 붙이면 다시 볼 수 있어요 ──
+(() => {
+  const V = '2026-11-13', KEY = 'donsem:news', LABEL = '11월 업데이트';
+  const badge = (bg, ch, fg = '#fff') => `<span class="nw-logo" style="background:${bg};color:${fg}">${ch}</span>`;
+  const S = [
+    { h: '대충 써도 알아서 정리해요', p: '「애플뮤직 8900」처럼만 쓰면<br>브랜드 배지와 「지출 · 구독」이 저절로 붙어요.', cap: '애플뮤직 8900', rows: [[`${badge('#1d1d1f', 'A')}애플뮤직`, '8,900원'], ['분류', '지출 · 구독'], ['알아듣는 브랜드', '<em>96곳</em>']], go: () => window.openQuickAdd && window.openQuickAdd() },
+    { h: '날짜도 카테고리도 바로 골라요', p: '오늘 · 어제 · 그저께를 한 번에 누르고,<br>큰 아이콘으로 카테고리를 골라요. 고른 건 기억해요.', cap: '기록 창', rows: [['날짜', '오늘 · 어제 · 그저께'], ['카테고리', '큰 아이콘 11개'], ['한 번 고르면', '<em>다음부터 기억</em>']], go: () => window.openQuickAdd && window.openQuickAdd() },
+    { h: '여러 건도, 더치페이도 한 줄로', p: '줄을 바꿔 쓰면 한 번에 여러 건,<br>「더치 4」 「12개월 할부」도 알아서 나눠요.', cap: '7/1 점심 12000 · 커피 4500', rows: [['점심 (7월 1일)', '12,000원'], ['회식 100000 더치 4', '25,000원'], ['노트북 12개월 할부', '<em>매달 나눠 기록</em>']], go: () => window.openQuickAdd && window.openQuickAdd() },
+    { h: '지도에서 백화점·공원을 눌러 보세요', p: '부동산 지도에서 큰 장소를 누르면 카드가 떠요.<br>전화 · 길찾기 · 공유, 사진과 후기는 카카오맵으로.', cap: '부동산 지도', rows: [['서울숲', '공원'], ['갤러리아백화점', '백화점'], ['사진 · 후기 · 영업시간', '<em>카카오맵 보기</em>']], go: () => { location.href = '/real-estate/'; } },
+  ];
+  let box = null, at = 0;
+  const seen = () => { try { return localStorage.getItem(KEY) === V; } catch (e) { return true; } };
+  const mark = () => { try { localStorage.setItem(KEY, V); } catch (e) { /* 괜찮아요 */ } };
+  function draw() {
+    const s = S[at], last = at === S.length - 1;
+    box.querySelector('.nw-top b').textContent = `${LABEL} · ${at + 1}/${S.length}`;
+    box.querySelector('.nw-body').innerHTML = `<div class="nw-demo"><p>${s.cap}</p>${s.rows.map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('')}</div><h3>${s.h}</h3><p class="nw-p">${s.p}</p>`;
+    box.querySelector('.nw-dots').innerHTML = S.map((x, i) => `<i class="${i === at ? 'on' : ''}"></i>`).join('');
+    box.querySelector('.nw-next').textContent = last ? '확인' : '다음';
+  }
+  function close() { if (!box) return; mark(); box.classList.remove('show'); document.documentElement.classList.remove('nw-open'); setTimeout(() => { box.hidden = true; }, 300); }
+  function open() {
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'nw'; box.hidden = true;
+      box.innerHTML = `<div class="nw-dim" data-x="1"></div><div class="nw-panel" role="dialog" aria-modal="true" aria-label="업데이트 소식"><div class="nw-grip"></div>
+        <div class="nw-top"><b></b><button type="button" data-x="1">건너뛰기</button></div><div class="nw-body"></div><div class="nw-dots"></div>
+        <div class="nw-btns"><button type="button" class="nw-try">써보기</button><button type="button" class="nw-next">다음</button></div></div>`;
+      document.body.append(box);
+      box.addEventListener('click', e => {
+        const t = e.target.closest('[data-x], .nw-try, .nw-next'); if (!t) return;
+        if (t.dataset.x) return close();
+        if (t.classList.contains('nw-try')) { const go = S[at].go; close(); setTimeout(go, 320); return; }
+        if (at < S.length - 1) { at++; draw(); } else close();
+      });
+      let sx = 0; // 옆으로 밀어서 넘기기
+      box.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+      box.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) < 50) return; if (dx < 0 && at < S.length - 1) at++; else if (dx > 0 && at > 0) at--; else return; draw(); });
+      addEventListener('keydown', e => { if (!box || box.hidden) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowRight' && at < S.length - 1) { at++; draw(); } if (e.key === 'ArrowLeft' && at > 0) { at--; draw(); } });
+    }
+    at = 0; draw(); box.hidden = false; box.offsetHeight; box.classList.add('show'); document.documentElement.classList.add('nw-open');
+  }
+  window.openNews = open;
+  if (new URLSearchParams(location.search).has('news')) { setTimeout(open, 300); return; }
+  if (seen() || /^\/(shop\/pay|how|terms|refund|privacy)\//.test(location.pathname) || new URLSearchParams(location.search).has('how')) return;
+  // 처음 온 사람에게는 '업데이트'가 어색해서 보여 주지 않고, 본 걸로 적어 둬요
+  let old = false; try { old = Object.keys(localStorage).some(k => k.startsWith('donsem:') && k !== KEY && k !== 'donsem:theme'); } catch (e) { /* 괜찮아요 */ }
+  if (!old) { mark(); return; }
+  setTimeout(() => { const r = document.documentElement.classList; if (r.contains('qa-open') || r.contains('gnav-open') || r.contains('ai-open') || document.querySelector('.how-modal:not([hidden]), dialog[open]')) return; open(); }, 1200);
 })();
