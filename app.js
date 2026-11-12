@@ -1650,34 +1650,31 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   const dayOff = n => { const d = new Date(); d.setDate(d.getDate() - n); return ymdOf(d); };
   const W7 = '일월화수목금토';
   const dateLabel = s => s === today() ? '오늘' : s === dayOff(1) ? '어제' : s === dayOff(2) ? '그저께' : `${Number(s.slice(5, 7))}월 ${Number(s.slice(8))}일`;
-  // 브랜드: [보일 이름, 찾을 말들, 분류, 바탕색, 글자, 글자색] — 진짜 로고 그림은 상표라서, 브랜드 색 + 첫 글자 배지로 보여 줘요
-  const BRANDS = [
-    ['넷플릭스', 'netflix 넷플릭스 넷플', '구독', '#E50914', 'N'], ['유튜브', 'youtube 유튜브 유튭', '구독', '#FF0000', '▶'], ['Apple', 'apple 애플 아이클라우드 icloud 앱스토어 appstore 애플뮤직 애플tv 애플원 애뮤', '구독', '#1d1d1f', 'A'],
-    ['멜론', 'melon 멜론', '구독', '#00CD3C', '멜'], ['스포티파이', 'spotify 스포티파이 스포티', '구독', '#1DB954', 'S'], ['지니뮤직', '지니뮤직 genie', '구독', '#2a7de1', 'G'],
-    ['디즈니+', 'disney 디즈니', '구독', '#113CCF', 'D+'], ['티빙', 'tving 티빙', '구독', '#FF153C', 'T'], ['웨이브', 'wavve 웨이브', '구독', '#1F4FFF', 'W'], ['왓챠', 'watcha 왓챠', '구독', '#FF0558', 'W'],
-    ['쿠팡플레이', '쿠팡플레이 쿠플', '구독', '#E52528', '▶'], ['쿠팡 와우', '쿠팡와우 로켓와우 와우멤버십', '구독', '#E52528', 'W'], ['네이버플러스', '네이버플러스 네플멤 네이버멤버십', '구독', '#03C75A', 'N+'],
-    ['밀리의서재', '밀리의서재 밀리', '구독', '#FFD84D', '밀', '#222'], ['리디', 'ridi 리디', '구독', '#1E9EFF', 'R'], ['ChatGPT', 'chatgpt 챗gpt 챗지피티 지피티 gpt openai', '구독', '#10A37F', 'G'],
-    ['Claude', 'claude 클로드', '구독', '#D97757', 'C'], ['노션', 'notion 노션', '구독', '#191919', 'N'], ['어도비', 'adobe 어도비 포토샵', '구독', '#FA0F00', 'A'], ['마이크로소프트', 'microsoft ms365 오피스365 마이크로소프트 엑셀', '구독', '#0078D4', 'M'],
-    ['구글', 'google 구글 구글원', '구독', '#4285F4', 'G'], ['배민클럽', '배민클럽', '구독', '#2AC1BC', '배'],
-    ['배달의민족', '배달의민족 배민 baemin', '식비', '#2AC1BC', '배'], ['쿠팡이츠', '쿠팡이츠 쿠팡잇츠', '식비', '#00A5E5', '이'], ['요기요', 'yogiyo 요기요', '식비', '#FA0050', '요'],
-    ['맥도날드', 'mcdonald 맥도날드 맥날 맥도', '식비', '#FFC72C', 'M', '#DA291C'], ['버거킹', 'burgerking 버거킹 버킹', '식비', '#D62300', 'B'], ['롯데리아', '롯데리아', '식비', '#E60012', 'L'], ['KFC', 'kfc 케이에프씨', '식비', '#E4002B', 'K'],
-    ['맘스터치', '맘스터치 맘터', '식비', '#E2231A', 'M'], ['서브웨이', 'subway 서브웨이', '식비', '#008938', 'S'], ['교촌치킨', '교촌', '식비', '#A57A3A', '교'], ['BBQ', 'bbq 비비큐', '식비', '#C8102E', 'B'], ['bhc', 'bhc', '식비', '#E60012', 'b'],
-    ['도미노피자', '도미노', '식비', '#006491', 'D'], ['피자헛', '피자헛', '식비', '#EE3124', 'P'], ['GS25', 'gs25 지에스25', '식비', '#00A0E2', 'GS'], ['CU', 'cu 씨유', '식비', '#652F8D', 'CU'], ['세븐일레븐', '세븐일레븐 7eleven 세븐', '식비', '#008061', '7'], ['이마트24', '이마트24', '식비', '#FFB81C', '24', '#333'],
-    ['스타벅스', 'starbucks 스타벅스 스벅', '카페·간식', '#00704A', '★'], ['메가커피', '메가커피 메가mgc 메가컴피', '카페·간식', '#FFD400', 'M', '#3c2a00'], ['컴포즈커피', '컴포즈', '카페·간식', '#FFC400', 'C', '#222'], ['이디야', '이디야 ediya', '카페·간식', '#1D2A5E', 'E'],
-    ['빽다방', '빽다방', '카페·간식', '#FFD800', '빽', '#1d3b8f'], ['투썸플레이스', '투썸 twosome', '카페·간식', '#D6001C', 'T'], ['할리스', '할리스 hollys', '카페·간식', '#C8102E', 'H'], ['폴바셋', '폴바셋', '카페·간식', '#1d1d1f', 'P'], ['블루보틀', '블루보틀', '카페·간식', '#0082C9', 'B'],
-    ['파리바게뜨', '파리바게뜨 파바', '카페·간식', '#1F4FA3', 'P'], ['뚜레쥬르', '뚜레쥬르', '카페·간식', '#006B3F', 'T'], ['배스킨라빈스', '배스킨 베라 배라', '카페·간식', '#E1137C', 'B'], ['던킨', '던킨', '카페·간식', '#FF671F', 'D'],
-    ['카카오T', '카카오t 카카오택시 카택', '교통', '#FFCD00', 'T', '#1d1d1f'], ['우버', 'uber 우버', '교통', '#1d1d1f', 'U'], ['코레일', 'ktx 코레일 korail', '교통', '#004EA2', 'K'], ['SRT', 'srt', '교통', '#5A2D82', 'S'], ['쏘카', 'socar 쏘카', '교통', '#00B8FF', 'S'],
-    ['GS칼텍스', 'gs칼텍스', '교통', '#00A651', 'GS'], ['SK에너지', 'sk에너지', '교통', '#EA002C', 'SK'], ['S-OIL', 's-oil 에쓰오일 에스오일', '교통', '#FFD200', 'S', '#222'], ['대한항공', '대한항공', '교통', '#00256C', 'K'], ['제주항공', '제주항공', '교통', '#FF5000', 'J'],
-    ['쿠팡', 'coupang 쿠팡', '쇼핑', '#E52528', 'C'], ['네이버', 'naver 네이버 스마트스토어', '쇼핑', '#03C75A', 'N'], ['11번가', '11번가', '쇼핑', '#FF0038', '11'], ['G마켓', 'g마켓 지마켓 gmarket', '쇼핑', '#00A04A', 'G'],
-    ['무신사', 'musinsa 무신사', '쇼핑', '#1d1d1f', 'M'], ['올리브영', '올리브영 올영', '쇼핑', '#86BC25', 'O'], ['지그재그', '지그재그', '쇼핑', '#FF4185', 'Z'], ['에이블리', '에이블리', '쇼핑', '#FF4C6A', 'a'], ['29CM', '29cm', '쇼핑', '#1d1d1f', '29'],
-    ['알리익스프레스', 'aliexpress 알리', '쇼핑', '#FF4747', 'A'], ['테무', 'temu 테무', '쇼핑', '#FB7701', 'T'], ['당근', '당근', '쇼핑', '#FF6F0F', '당'],
-    ['다이소', 'daiso 다이소', '생활', '#E60012', 'D'], ['이마트', 'emart 이마트', '생활', '#FFB81C', 'E', '#333'], ['홈플러스', '홈플러스', '생활', '#E2001A', 'H'], ['롯데마트', '롯데마트', '생활', '#ED1C24', 'L'],
-    ['코스트코', 'costco 코스트코', '생활', '#E31837', 'C'], ['컬리', '컬리 마켓컬리 kurly', '생활', '#5F0080', 'K'], ['오늘의집', '오늘의집 오집', '생활', '#35C5F0', 'O'],
-    ['CGV', 'cgv', '문화·여가', '#E71A0F', 'C'], ['메가박스', '메가박스', '문화·여가', '#352263', 'M'], ['롯데시네마', '롯데시네마', '문화·여가', '#ED1C24', 'L'], ['인터파크', '인터파크', '문화·여가', '#EF3E43', 'I'],
-    ['야놀자', '야놀자', '문화·여가', '#FF3478', 'Y'], ['여기어때', '여기어때', '문화·여가', '#F7323F', 'Y'], ['에어비앤비', 'airbnb 에어비앤비', '문화·여가', '#FF5A5F', 'A'], ['교보문고', '교보문고 교보', '문화·여가', '#3B7D23', '교'], ['예스24', 'yes24 예스24', '문화·여가', '#1D4F91', 'Y'],
-    ['닌텐도', 'nintendo 닌텐도', '문화·여가', '#E60012', 'N'], ['스팀', 'steam 스팀', '문화·여가', '#171A21', 'S'],
-    ['SKT', 'skt sk텔레콤', '주거·통신', '#EA002C', 'SK'], ['KT', 'kt 케이티', '주거·통신', '#1d1d1f', 'kt'], ['LG U+', 'lgu+ 유플러스 lg유플러스 엘지유플러스', '주거·통신', '#E6007E', 'U+'],
-  ].map(([name, keys, cat, bg, ch, fg]) => ({ name, keys: keys.split(' '), cat, bg, ch, fg: fg || '#fff' }));
+  // 브랜드 (머니차곡처럼 묶음별): [그림 이름, 보일 이름, 찾을 말들, 분류, 바탕색, 글자] — 그림은 /icons/brand/그림이름.jpg (각 회사 공식 앱 아이콘)
+  const BGROUPS = [
+    ['카페', '카페·간식', [['gongcha', '공차', '공차 gongcha', '#B2002D', '공'], ['theventi', '더벤티', '더벤티 벤티', '#4E2A84', 'V'], ['dunkin', '던킨', '던킨 dunkin', '#FF671F', 'D'], ['megacoffee', '메가커피', '메가커피 메가mgc 메가컴피', '#FFD400', 'M'], ['bluebottle', '블루보틀', '블루보틀 bluebottle', '#0082C9', 'B'], ['paikdabang', '빽다방', '빽다방', '#FFD800', '빽'], ['starbucks', '스타벅스', '스타벅스 스벅 starbucks', '#00704A', '★'], ['woojicoffee', '우지커피', '우지커피', '#1d1d1f', 'W'], ['ediya', '이디야커피', '이디야 ediya', '#1D2A5E', 'E'], ['coffeebean', '커피빈', '커피빈 coffeebean', '#5B2C83', 'C'], ['compose', '컴포즈커피', '컴포즈', '#FFC400', 'C'], ['tomntoms', '탐앤탐스', '탐앤탐스 탐탐', '#3B1F14', 'T'], ['tenpercent', '텐퍼센트', '텐퍼센트 텐퍼', '#E4572E', '10'], ['twosome', '투썸플레이스', '투썸 twosome', '#D6001C', 'T'], ['paulbassett', '폴바셋', '폴바셋', '#1d1d1f', 'P'], ['hollys', '할리스', '할리스 hollys', '#C8102E', 'H']]],
+    ['패스트푸드', '식비', [['lotteria', '롯데리아', '롯데리아 롯리', '#E60012', 'L'], ['momstouch', '맘스터치', '맘스터치 맘터', '#E2231A', 'M'], ['mcdonalds', '맥도날드', '맥도날드 맥날 맥도 mcdonald', '#DA291C', 'M'], ['burgerking', '버거킹', '버거킹 버킹 burgerking', '#D62300', 'B'], ['subway', '서브웨이', '서브웨이 써브웨이 subway', '#008938', 'S'], ['shakeshack', '쉐이크쉑', '쉐이크쉑 쉑쉑 shakeshack', '#1d1d1f', 'S'], ['yupdduk', '엽기떡볶이', '엽기떡볶이 엽떡', '#E60012', '엽'], ['kfc', 'KFC', 'kfc 케이에프씨', '#E4002B', 'K']]],
+    ['치킨', '식비', [['kyochon', '교촌치킨', '교촌', '#A57A3A', '교'], ['goobne', '굽네치킨', '굽네', '#C8102E', '굽'], ['nene', '네네치킨', '네네치킨 네네', '#FFD200', 'N'], ['bbq', 'BBQ', 'bbq 비비큐', '#C8102E', 'B'], ['bhc', 'BHC', 'bhc', '#E60012', 'b']]],
+    ['피자', '식비', [['dominos', '도미노피자', '도미노', '#006491', 'D'], ['papajohns', '파파존스', '파파존스', '#00703C', 'P'], ['pizzahut', '피자헛', '피자헛', '#EE3124', 'P']]],
+    ['베이커리/디저트', '카페·간식', [['tlj', '뚜레쥬르', '뚜레쥬르', '#006B3F', 'T'], ['baskin', '배스킨라빈스', '배스킨 베라 배라', '#E1137C', 'B'], ['sulbing', '설빙', '설빙', '#7A5230', '설'], ['sungsimdang', '성심당', '성심당', '#B8001F', '성'], ['yoajung', '요아정', '요아정 요거트아이스크림', '#F49AC1', '요'], ['parisbaguette', '파리바게뜨', '파리바게뜨 파바', '#1F4FA3', 'P']]],
+    ['배달앱', '식비', [['baemin', '배달의민족', '배달의민족 배민 baemin', '#2AC1BC', '배'], ['yogiyo', '요기요', '요기요 yogiyo', '#FA0050', '요'], ['coupangeats', '쿠팡이츠', '쿠팡이츠 쿠팡잇츠', '#00A5E5', '이']]],
+    ['편의점', '식비', [['ministop', '미니스톱', '미니스톱', '#0055A5', 'M'], ['seveneleven', '세븐일레븐', '세븐일레븐 7eleven 세븐', '#008061', '7'], ['emart24', '이마트24', '이마트24', '#FFB81C', '24'], ['cu', 'CU', 'cu 씨유', '#652F8D', 'CU'], ['gs25', 'GS25', 'gs25 지에스25', '#00A0E2', 'GS']]],
+    ['마트', '생활', [['nobrand', '노브랜드', '노브랜드', '#FFD200', 'N'], ['lottemart', '롯데마트', '롯데마트', '#ED1C24', 'L'], ['emart', '이마트', '이마트 emart', '#FFB81C', 'E'], ['costco', '코스트코', '코스트코 costco', '#E31837', 'C'], ['traders', '트레이더스', '트레이더스', '#1d1d1f', 'T'], ['hanaro', '하나로마트', '하나로마트 하나로', '#00A651', '하'], ['homeplus', '홈플러스', '홈플러스', '#E2001A', 'H']]],
+    ['쇼핑', '쇼핑', [['kyobo', '교보문고', '교보문고 교보', '#3B7D23', '교', '문화·여가'], ['naverpay', '네이버쇼핑', '네이버쇼핑 네이버페이 스마트스토어 네이버플러스스토어', '#03C75A', 'N'], ['daiso', '다이소', '다이소 daiso', '#E60012', 'D', '생활'], ['daangn', '당근마켓', '당근마켓 당근', '#FF6F0F', '당'], ['musinsa', '무신사', '무신사 musinsa', '#1d1d1f', 'M'], ['muji', '무인양품', '무인양품 muji', '#7F0019', 'M'], ['samsung', '삼성전자', '삼성전자 삼성 samsung', '#1428A0', 'S'], ['artbox', '아트박스', '아트박스', '#1d1d1f', 'A'], ['oliveyoung', '올리브영', '올리브영 올영', '#86BC25', 'O'], ['uniqlo', '유니클로', '유니클로 uniqlo', '#E60012', 'U'], ['kakaopay', '카카오페이', '카카오페이', '#FFEB00', 'P', '기타'], ['coupang', '쿠팡', '쿠팡 coupang', '#E52528', 'C'], ['toss', '토스', '토스 toss', '#0064FF', 'T', '기타'], ['aliexpress', '알리익스프레스', '알리익스프레스 aliexpress 알리', '#FF4747', 'A']]],
+    ['교통', '교통', [['greencar', '그린카', '그린카', '#00B050', 'G'], ['socar', '쏘카', '쏘카 socar', '#00B8FF', 'S'], ['kakaot', '카카오택시', '카카오택시 카카오t 카택', '#FFCD00', 'T'], ['korail', '코레일', '코레일 ktx korail', '#004EA2', 'K'], ['tada', '타다', '타다 tada', '#1d1d1f', 'T'], ['tmoney', '티머니', '티머니 tmoney', '#F4A100', 'T'], ['uber', '우버', '우버 uber', '#1d1d1f', 'U'], ['srt', 'SRT', 'srt', '#5A2D82', 'S'], ['gscaltex', 'GS칼텍스', 'gs칼텍스', '#00A651', 'GS'], ['skenergy', 'SK에너지', 'sk에너지', '#EA002C', 'SK'], ['soil', 'S-OIL', 's-oil 에쓰오일 에스오일', '#FFD200', 'S'], ['koreanair', '대한항공', '대한항공', '#00256C', 'K'], ['jejuair', '제주항공', '제주항공', '#FF5000', 'J']]],
+    ['통신', '주거·통신', [['kt', 'KT', 'kt 케이티', '#1d1d1f', 'kt'], ['lguplus', 'LG U+', 'lgu+ 유플러스 lg유플러스 엘지유플러스', '#E6007E', 'U+'], ['skt', 'SKT', 'skt sk텔레콤', '#EA002C', 'SK']]],
+    ['구독/콘텐츠', '구독', [['naverplus', '네이버플러스', '네이버플러스 네플멤 네이버멤버십', '#03C75A', 'N+'], ['netflix', '넷플릭스', '넷플릭스 넷플 netflix', '#E50914', 'N'], ['disney', '디즈니+', '디즈니 disney', '#113CCF', 'D+'], ['laftel', '라프텔', '라프텔 laftel', '#816BFF', 'L'], ['ridi', '리디', '리디 ridi', '#1E9EFF', 'R'], ['melon', '멜론', '멜론 melon', '#00CD3C', '멜'], ['spotify', '스포티파이', '스포티파이 스포티 spotify', '#1DB954', 'S'], ['watcha', '왓챠', '왓챠 watcha', '#FF0558', 'W'], ['wavve', '웨이브', '웨이브 wavve', '#1F4FFF', 'W'], ['youtube', '유튜브 프리미엄', '유튜브 유튭 youtube 유튜브프리미엄', '#FF0000', '▶'], ['coupangplay', '쿠팡플레이', '쿠팡플레이 쿠플', '#E52528', '▶'], ['tving', '티빙', '티빙 tving', '#FF153C', 'T'], ['applemusic', 'Apple', '애플뮤직 apple 아이클라우드 icloud 앱스토어 appstore 애플tv 애플원 애뮤', '#1d1d1f', 'A', '', 'apple'], ['chatgpt', 'ChatGPT', 'chatgpt 챗gpt 챗지피티 지피티 gpt openai', '#10A37F', 'G'], ['googleplay', 'Google Play', '구글플레이 googleplay 플레이스토어', '#01875F', 'G'],
+      ['claude', 'Claude', 'claude 클로드', '#D97757', 'C'], ['notion', '노션', '노션 notion', '#191919', 'N'], ['adobe', '어도비', '어도비 adobe 포토샵', '#FA0F00', 'A'], ['microsoft', '마이크로소프트', '마이크로소프트 microsoft ms365 오피스365', '#0078D4', 'M'], ['google', '구글', '구글원 구글 google', '#4285F4', 'G'], ['millie', '밀리의서재', '밀리의서재 밀리', '#FFD84D', '밀'], ['coupangwow', '쿠팡 와우', '쿠팡와우 로켓와우 와우멤버십', '#E52528', 'W', '', 'coupang'], ['baeminclub', '배민클럽', '배민클럽', '#2AC1BC', '배', '', 'baemin']]],
+    ['온라인쇼핑', '쇼핑', [['st11', '11번가', '11번가', '#FF0038', '11'], ['ably', '에이블리', '에이블리 ably', '#FF4C6A', 'a'], ['auction', '옥션', '옥션 auction', '#E3001B', 'A'], ['zigzag', '지그재그', '지그재그 zigzag', '#FF4185', 'Z'], ['gmarket', '지마켓', '지마켓 g마켓 gmarket', '#00A04A', 'G'], ['kurly', '컬리', '컬리 마켓컬리 kurly', '#5F0080', 'K', '생활'], ['temu', '테무', '테무 temu', '#FB7701', 'T'], ['tmon', '티몬', '티몬 tmon', '#FF5A2E', 'T'], ['ssg', 'SSG닷컴', 'ssg 쓱닷컴 에스에스지', '#FF5452', 'S']]],
+    ['음악', '구독', [['bugs', '벅스', '벅스 bugs', '#FF3C5F', 'B'], ['genie', '지니뮤직', '지니뮤직 지니 genie', '#2a7de1', 'G'], ['flo', 'FLO', '플로 flo', '#3F3FFF', 'F']]],
+    ['문화/여가', '문화·여가', [['life4cut', '인생네컷', '인생네컷', '#F48FB1', '4'], ['photoism', '포토이즘', '포토이즘', '#1d1d1f', 'P'], ['cgv', 'CGV', 'cgv', '#E71A0F', 'C'], ['megabox', '메가박스', '메가박스', '#352263', 'M'], ['lottecinema', '롯데시네마', '롯데시네마', '#ED1C24', 'L'], ['interpark', '인터파크', '인터파크', '#EF3E43', 'I'], ['yanolja', '야놀자', '야놀자', '#FF3478', 'Y'], ['yeogi', '여기어때', '여기어때', '#F7323F', 'Y'], ['airbnb', '에어비앤비', '에어비앤비 airbnb', '#FF5A5F', 'A'], ['yes24', '예스24', '예스24 yes24', '#1D4F91', 'Y'], ['nintendo', '닌텐도', '닌텐도 nintendo', '#E60012', 'N'], ['steam', '스팀', '스팀 steam', '#171A21', 'S']]],
+    ['기타', '기타', [['naver', '네이버', '네이버 naver', '#03C75A', 'N', '쇼핑'], ['apple', '애플', '애플스토어 애플', '#1d1d1f', 'A', '구독', 'apple'], ['epost', '우체국', '우체국 우편 택배비', '#E60012', '우', '생활'], ['kakao', '카카오', '카카오 kakao 카카오톡', '#FFEB00', 'K']]],
+  ];
+  const BRANDS = BGROUPS.flatMap(([group, gcat, list]) => list.map(([id, name, keys, bg, ch, cat, img]) => ({ id, img: img || id, name, group, keys: keys.split(' '), cat: cat || gcat, bg, ch, fg: /^#(FF[CDE]|FFD|F[4-9A-F][9A-F])/i.test(bg) ? '#222' : '#fff' })));
+  const BIMG = new Set('ably adobe airbnb aliexpress apple auction baemin baskin bbq bhc bugs burgerking cgv chatgpt claude coffeebean compose costco coupang coupangeats coupangplay cu daangn daiso disney dominos ediya emart emart24 epost flo genie gmarket gongcha goobne google googleplay greencar gs25 gscaltex hanaro hollys homeplus interpark jejuair kakao kakaopay kakaot kfc korail koreanair kt kurly kyobo kyochon laftel lguplus life4cut lottecinema lottemart lotteria mcdonalds megabox megacoffee melon microsoft millie momstouch muji musinsa naver naverpay naverplus nene netflix nintendo notion oliveyoung paikdabang papajohns parisbaguette paulbassett photoism pizzahut ridi samsung seveneleven skt socar soil spotify srt ssg st11 starbucks steam subway sulbing sungsimdang tada temu tenpercent theventi tlj tmoney tomntoms toss tving twosome uber uniqlo watcha wavve woojicoffee yanolja yeogi yes24 yoajung yogiyo youtube yupdduk zigzag'.split(' ')), BSVG = new Set(['apple', 'googleplay', 'microsoft']); // 그림이 있는 브랜드 (없으면 브랜드 색 + 글자)
+  const MYB = 'donsem:qa-brands'; // 직접 추가한 브랜드 [{ name, cat }]
+  const myBrands = () => { try { const a = JSON.parse(localStorage.getItem(MYB)); return Array.isArray(a) ? a.filter(x => x && x.name) : []; } catch (e) { return []; } };
+  const myBrandObj = x => ({ id: 'my-' + x.name, img: '', name: x.name, group: '직접 추가', keys: [x.name], cat: x.cat || '기타', bg: '#7040A1', ch: [...x.name][0], fg: '#fff', mine: true });
   const BKEYS = BRANDS.flatMap(b => b.keys.map(k => [k, b])).sort((a, b) => b[0].length - a[0].length); // 긴 말부터 (쿠팡이츠가 쿠팡보다 먼저)
   // 브랜드가 아니어도 흔한 말로 분류를 맞춰요
   const WORDS = {
@@ -1697,7 +1694,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   const norm = s => String(s).toLowerCase().replace(/[\s·.\-_']/g, '');
   const LEARN = 'donsem:qa-learn'; // '카테고리 바꾸기'로 고른 분류를 기억해요 (다음부터 같은 이름은 그 분류로)
   const learned = () => { try { return JSON.parse(localStorage.getItem(LEARN)) || {}; } catch (e) { return {}; } };
-  const brandOf = name => { const n = norm(name); if (!n) return null; const hit = BKEYS.find(([k]) => n.includes(norm(k))); return hit ? hit[1] : null; };
+  const brandOf = name => { const n = norm(name); if (!n) return null; const mine = myBrands().map(myBrandObj).filter(b => n.includes(norm(b.name))).sort((a, b) => b.name.length - a.name.length)[0]; if (mine) return mine; const hit = BKEYS.find(([k]) => n.includes(norm(k))); return hit ? hit[1] : null; };
   const wordCat = (name, map) => { const n = norm(name); for (const [c, ws] of Object.entries(map)) if (ws.split(' ').some(w => n.includes(norm(w)))) return c; return ''; };
   // 금액 글자 정리: 3만5천 → 35000, 1.5만 → 15000, 12,000 → 12000
   const fixNums = s => s.replace(/(\d),(?=\d{3})/g, '$1')
@@ -1747,12 +1744,43 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     return items;
   }
   const badge = (it, size = 40) => it.brand
-    ? `<span class="qa-logo" style="width:${size}px;height:${size}px;background:${it.brand.bg};color:${it.brand.fg};font-size:${Math.round(size * (it.brand.ch.length > 1 ? .36 : .46))}px">${H(it.brand.ch)}</span>`
+    ? (BIMG.has(it.brand.img) ? `<img class="qa-logo pic" src="/icons/brand/${it.brand.img}.${BSVG.has(it.brand.img) ? 'svg' : 'jpg'}" alt="" width="${size}" height="${size}" loading="lazy" style="width:${size}px;height:${size}px">`
+      : `<span class="qa-logo" style="width:${size}px;height:${size}px;background:${it.brand.bg};color:${it.brand.fg};font-size:${Math.round(size * (it.brand.ch.length > 1 ? .36 : .46))}px">${H(it.brand.ch)}</span>`)
     : `<span class="qa-logo plain" style="width:${size}px;height:${size}px">${catIcon(it.cat, Math.round(size * .66))}</span>`;
   const CAL_ICO = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
   const DOWN = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 
-  let mode = 'quick', type = 'out', cat = CATS.out[0], dDate = '', sheet = null, ov = {}, items = [], sub = '', subFor = null, calY = 0, calM = 0;
+
+  // 구독으로 적으면 고정지출(매달 그날)에도 넣어서 다음 달부터 캘린더에 미리 보여요.
+  // 이번 달 기록은 id를 fx-고정지출id-YYYY-MM 으로 붙여서, 같은 달에 두 번 세지 않아요
+  const FKEY = 'donsem:fixed';
+  const loadFixed = () => { try { const f = JSON.parse(localStorage.getItem(FKEY)); return f && Array.isArray(f.items) ? f : { items: [] }; } catch (e) { return { items: [] }; } };
+  const sameSub = (x, name) => { const b1 = brandOf(x.name), b2 = brandOf(name); return norm(x.name) === norm(name) || (b1 && b2 && b1.name === b2.name && b1.cat === '구독'); };
+  function linkSub(row, entries, fx) { // → { id, made, item }
+    const name = (row.memo || '').replace(/\s*\(.*\)$/, '').trim();
+    if (row.type !== 'out' || row.cat !== '구독' || !name) return null;
+    const ym = row.date.slice(0, 7);
+    const mon = fx.items.filter(x => x && x.cycle !== 'year'), byBrand = mon.filter(x => sameSub(x, name));
+    let item = mon.find(x => norm(x.name) === norm(name)) || (byBrand.length === 1 ? byBrand[0] : null), made = false; // 이름이 같은 것 먼저 (iCloud+와 애플뮤직은 둘 다 Apple이라)
+    if (!item) { item = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: name.slice(0, 30), cat: '구독', amt: row.amt, cycle: 'month', day: Number(row.date.slice(8)) }; fx.items.push(item); made = true; }
+    const day = Number(row.date.slice(8)), moved = !made && Number(item.day) !== day;
+    if (moved) item.day = day; // 실제로 낸 날로 결제일을 맞춰요 (다음 달부터 그날에 보여요)
+    const id = `fx-${item.id}-${ym}`;
+    return entries.some(e => e.id === id) ? { id: null, made, moved, item } : { id, made, moved, item };
+  }
+  // 예전에 적은 구독 기록도 한 번 정리해요 (고정지출과 연결하거나, 없으면 새로 넣어요)
+  try {
+    if (!localStorage.getItem('donsem:mig-sub')) {
+      const b = JSON.parse(localStorage.getItem('donsem:budget'));
+      if (b && Array.isArray(b.entries)) {
+        const fx = loadFixed(); let changed = false;
+        b.entries.forEach(e => { if (e.cat === '구독' && e.type === 'out' && !String(e.id).startsWith('fx-') && e.memo) { const r = linkSub(e, b.entries, fx); if (r && r.id) { e.id = r.id; changed = true; } else if (r && (r.made || r.moved)) changed = true; } });
+        if (changed) { localStorage.setItem('donsem:budget', JSON.stringify(b)); localStorage.setItem(FKEY, JSON.stringify(fx)); }
+      }
+      localStorage.setItem('donsem:mig-sub', '1');
+    }
+  } catch (e) { /* 괜찮아요 */ }
+  let mode = 'quick', type = 'out', cat = CATS.out[0], dDate = '', sheet = null, ov = {}, items = [], sub = '', subFor = null, calY = 0, calM = 0, subCat = '식비';
   // 자주 쓰는 기록: 최근 90일 동안 같은 분류·금액·메모로 두 번 넘게 적은 지출 → 누르면 빠른 입력에 한 줄 더해져요
   function favList() {
     let b; try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
@@ -1829,10 +1857,16 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
         <p class="qa-help-lab">여러 건을 한 번에</p>${ex('7월1일 점심 12000\n7/1 커피 4500\n0701 택시 9800', ' multi')}
         <p class="qa-help-lab">입력 예시</p><div class="qa-exs">${ex('애플뮤직 8900')}${ex('커피 4,500')}${ex('점심 1만2천')}${ex('월급 3,000,000')}${ex('회식 100000원 더치 4')}</div>
         <div class="qa-rules"><p>이렇게 알아들어요</p>${R.map(([a, b]) => `<div><b>${a}</b><span>${b}</span></div>`).join('')}</div>
-        <div class="qa-help-foot"><span>✨ 브랜드 이름을 쓰면 로고 색 배지가 자동으로 붙어요</span><button type="button" data-sub="brands">목록 보기</button></div>`;
+        <div class="qa-help-foot"><span>✨ 브랜드 이름을 쓰면 앱 아이콘이 자동으로 붙어요</span><button type="button" data-sub="brands">목록 보기</button></div>`;
     } else if (sub === 'brands') {
-      s.innerHTML = `<div class="qa-sub-head"><div><b>알아듣는 브랜드</b><p class="qa-sub-cap">${BRANDS.length}곳 · 누르면 입력칸에 넣어 드려요</p></div><button type="button" class="qa-x" data-subx="1" aria-label="닫기">×</button></div>
-        <div class="qa-brands">${BRANDS.map(b => `<button type="button" data-ex="${H(b.name)} ">${badge({ brand: b }, 30)}<span>${H(b.name)}</span><small>${H(b.cat)}</small></button>`).join('')}</div>`;
+      const mine = myBrands().map(myBrandObj), groups = [...(mine.length ? [['직접 추가', mine]] : []), ...BGROUPS.map(([g]) => [g, BRANDS.filter(b => b.group === g)])];
+      s.innerHTML = `<div class="qa-sub-head"><b>브랜드 로고</b><span class="qa-bh-r"><span class="qa-bcount">직접 추가 ${mine.length}개 · 무제한</span><button type="button" class="qa-badd" data-sub="addbrand" aria-label="브랜드 직접 추가">＋</button><button type="button" class="qa-x" data-subx="1" aria-label="닫기">×</button></span></div>
+        ${groups.map(([g, list]) => `<p class="qa-bgroup">${H(g)}</p><div class="qa-brands">${list.map(b => `<button type="button" data-ex="${H(b.name)} ">${badge({ brand: b }, 54)}<span>${H(b.name)}</span></button>`).join('')}</div>`).join('')}`;
+    } else if (sub === 'addbrand') {
+      s.innerHTML = `<div class="qa-sub-head"><div><b>브랜드 직접 추가</b><p class="qa-sub-cap">자주 가는 가게 이름을 넣으면, 다음부터 그 이름을 쓸 때 이 카테고리로 적어요</p></div><button type="button" class="qa-x" data-subx="1" aria-label="닫기">×</button></div>
+        <div class="field"><input class="qa-bname" type="text" maxlength="20" placeholder="예: 동네빵집" aria-label="브랜드 이름" autocomplete="off"></div>
+        <p class="qa-help-lab" style="margin-top:14px">카테고리</p>${catGrid('out', subCat)}
+        <p class="err qa-berr" role="alert"></p><button type="button" class="btn fill wide qa-bsave">추가하기</button>`;
     }
   }
   function openSub(kind, forWhat) {
@@ -1851,6 +1885,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     closeSub();
   }
   function setCat(c) {
+    if (sub === 'addbrand') { const v = sheet.querySelector('.qa-bname').value; subCat = c; drawSub(); sheet.querySelector('.qa-bname').value = v; return; }
     if (sub !== 'cat') { cat = c; drawDirect(); return; } // 직접 입력 화면의 큰 카테고리
     if (subFor === 'direct') { cat = c; drawDirect(); }
     else if (items[subFor]) {
@@ -1914,6 +1949,13 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
         if (t.dataset.day) return setDay(t.dataset.day);
         if (t.dataset.cm) { calM += Number(t.dataset.cm); if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; } sheet.querySelector('.qa-cal').innerHTML = calHTML(curSubDate()); return; }
         if (t.dataset.cat) return setCat(t.dataset.cat);
+        if (t.classList.contains('qa-bsave')) {
+          const nm = sheet.querySelector('.qa-bname').value.trim().slice(0, 20);
+          if (!nm) { sheet.querySelector('.qa-berr').textContent = '이름을 넣어 주세요.'; return; }
+          const list = myBrands().filter(x => norm(x.name) !== norm(nm)); list.push({ name: nm, cat: subCat });
+          try { localStorage.setItem(MYB, JSON.stringify(list)); } catch (e) { /* 괜찮아요 */ }
+          toast(`「${nm}」을(를) ${subCat}(으)로 기억할게요.`); drawItems(); openSub('brands'); return;
+        }
         if (t.dataset.v) { type = t.dataset.v; cat = CATS[type][0]; drawDirect(); }
       });
       sheet.querySelector('.qa-save').addEventListener('click', save);
@@ -1975,14 +2017,16 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
     if (!b || !Array.isArray(b.entries)) b = { entries: [], budget: (b && b.budget) || 0 };
     const before = budgetStreak(b.entries);
-    rows.forEach((r, i) => b.entries.push(Object.assign({ id: Date.now().toString(36) + i + Math.random().toString(36).slice(2, 6) }, r)));
-    try { localStorage.setItem('donsem:budget', JSON.stringify(b)); }
+    const fx = loadFixed(), subs = [];
+    rows.forEach((r, i) => { const l = linkSub(r, b.entries, fx); if (l) subs.push(l); b.entries.push(Object.assign({ id: (l && l.id) || Date.now().toString(36) + i + Math.random().toString(36).slice(2, 6) }, r)); });
+    try { localStorage.setItem('donsem:budget', JSON.stringify(b)); if (subs.length) localStorage.setItem(FKEY, JSON.stringify(fx)); }
     catch (e) { err.textContent = '이 브라우저에서는 저장할 수 없어요.'; return; }
     const one = rows[0], firstDay = rows.map(r => r.date).sort()[0];
     sheet.querySelector('.qa-amt input').value = ''; sheet.querySelector('.qa-memo').value = ''; sheet.querySelector('.qa-kr').textContent = ''; sheet.querySelector('.qa-text').value = '';
     close();
     const cnt = mode === 'quick' ? items.length : 1;
-    toast(streakCheer(before, b.entries) || (cnt > 1 ? `${cnt}건을 가계부에 기록했어요.` : `${one.memo && mode === 'quick' ? one.memo.replace(/ 할부 1\/\d+$/, '') : one.cat} ${won(mode === 'quick' && items[0].inst ? items[0].amt : one.amt)}을 가계부에 기록했어요.`));
+    const subMsg = subs.length ? (subs[0].made ? `구독이라 고정지출에도 넣었어요. 다음 달부터 매달 ${subs[0].item.day}일에 미리 보여요 📅` : subs[0].moved ? `「${subs[0].item.name}」 결제일을 매달 ${subs[0].item.day}일로 맞췄어요 📅` : `고정지출 「${subs[0].item.name}」(매달 ${subs[0].item.day}일)의 이번 달 결제로 적었어요.`) : '';
+    toast(subMsg || streakCheer(before, b.entries) || (cnt > 1 ? `${cnt}건을 가계부에 기록했어요.` : `${one.memo && mode === 'quick' ? one.memo.replace(/ 할부 1\/\d+$/, '') : one.cat} ${won(mode === 'quick' && items[0].inst ? items[0].amt : one.amt)}을 가계부에 기록했어요.`));
     markDailyFull();
     if (typeof window.drawToday === 'function') window.drawToday();
     if (path === '/budget/') { try { if (firstDay !== today()) sessionStorage.setItem('donsem:selday', firstDay); } catch (e) { /* 괜찮아요 */ } setTimeout(() => location.reload(), 1200); } // 가계부를 보고 있었다면 바로 반영
@@ -4129,7 +4173,7 @@ const GUIDE_FOR = {
   const V = '2026-11-13', KEY = 'donsem:news', LABEL = '11월 업데이트';
   const badge = (bg, ch, fg = '#fff') => `<span class="nw-logo" style="background:${bg};color:${fg}">${ch}</span>`;
   const S = [
-    { h: '대충 써도 알아서 정리해요', p: '「애플뮤직 8900」처럼만 쓰면<br>브랜드 배지와 「지출 · 구독」이 저절로 붙어요.', cap: '애플뮤직 8900', rows: [[`${badge('#1d1d1f', 'A')}애플뮤직`, '8,900원'], ['분류', '지출 · 구독'], ['알아듣는 브랜드', '<em>96곳</em>']], go: () => window.openQuickAdd && window.openQuickAdd() },
+    { h: '대충 써도 알아서 정리해요', p: '「애플뮤직 8900」처럼만 쓰면<br>앱 아이콘과 「지출 · 구독」이 저절로 붙어요.', cap: '애플뮤직 8900', rows: [[`<img class="nw-logo pic" src="/icons/brand/apple.svg" alt="">애플뮤직`, '8,900원'], ['분류', '지출 · 구독'], ['알아듣는 브랜드', '<em>134곳</em>']], go: () => window.openQuickAdd && window.openQuickAdd() },
     { h: '날짜도 카테고리도 바로 골라요', p: '오늘 · 어제 · 그저께를 한 번에 누르고,<br>큰 아이콘으로 카테고리를 골라요. 고른 건 기억해요.', cap: '기록 창', rows: [['날짜', '오늘 · 어제 · 그저께'], ['카테고리', '큰 아이콘 11개'], ['한 번 고르면', '<em>다음부터 기억</em>']], go: () => window.openQuickAdd && window.openQuickAdd() },
     { h: '여러 건도, 더치페이도 한 줄로', p: '줄을 바꿔 쓰면 한 번에 여러 건,<br>「더치 4」 「12개월 할부」도 알아서 나눠요.', cap: '7/1 점심 12000 · 커피 4500', rows: [['점심 (7월 1일)', '12,000원'], ['회식 100000 더치 4', '25,000원'], ['노트북 12개월 할부', '<em>매달 나눠 기록</em>']], go: () => window.openQuickAdd && window.openQuickAdd() },
     { h: '지도에서 백화점·공원을 눌러 보세요', p: '부동산 지도에서 큰 장소를 누르면 카드가 떠요.<br>전화 · 길찾기 · 공유, 사진과 후기는 카카오맵으로.', cap: '부동산 지도', rows: [['서울숲', '공원'], ['갤러리아백화점', '백화점'], ['사진 · 후기 · 영업시간', '<em>카카오맵 보기</em>']], go: () => { location.href = '/real-estate/'; } },
