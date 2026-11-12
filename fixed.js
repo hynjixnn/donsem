@@ -20,6 +20,7 @@
     return { items: [] };
   }
   let data = load();
+  window.addEventListener('donsem:fixed-sync', () => { data = load(); render(); }); // 구독 기록이 고정지출에 들어오면 바로 보여요
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(data)); window.dispatchEvent(new Event('donsem:data')); return true; }
     catch (e) { toast('이 브라우저에서는 저장할 수 없어요. 개인정보 보호 모드인지 확인해 주세요.'); return false; }
@@ -231,6 +232,7 @@
       const it = data.items.find(x => x.id === d.id);
       if (!it || !confirm(`${it.name} (${won(it.amt)})을 고정지출에서 지울까요?`)) return;
       data.items = data.items.filter(x => x.id !== d.id);
+      if (it.cat === '구독' && window.donsemFixedGone) window.donsemFixedGone(it.name); // 지운 구독은 가계부 기록이 있어도 다시 넣지 않아요
       save(); render();
     }
   });

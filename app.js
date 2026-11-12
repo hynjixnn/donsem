@@ -1760,25 +1760,42 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     const name = (row.memo || '').replace(/\s*\(.*\)$/, '').trim();
     if (row.type !== 'out' || row.cat !== '구독' || !name) return null;
     const ym = row.date.slice(0, 7);
-    const mon = fx.items.filter(x => x && x.cycle !== 'year'), byBrand = mon.filter(x => sameSub(x, name));
-    let item = mon.find(x => norm(x.name) === norm(name)) || (byBrand.length === 1 ? byBrand[0] : null), made = false; // 이름이 같은 것 먼저 (iCloud+와 애플뮤직은 둘 다 Apple이라)
+    const mon = fx.items.filter(x => x && x.cycle !== 'year');
+    let item = mon.find(x => norm(x.name) === norm(name)), made = false; // 이름이 똑같을 때만 같은 구독 (iCloud와 애플뮤직은 둘 다 Apple이지만 다른 구독)
     if (!item) { item = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: name.slice(0, 30), cat: '구독', amt: row.amt, cycle: 'month', day: Number(row.date.slice(8)) }; fx.items.push(item); made = true; }
     const day = Number(row.date.slice(8)), moved = !made && Number(item.day) !== day;
     if (moved) item.day = day; // 실제로 낸 날로 결제일을 맞춰요 (다음 달부터 그날에 보여요)
     const id = `fx-${item.id}-${ym}`;
     return entries.some(e => e.id === id) ? { id: null, made, moved, item } : { id, made, moved, item };
   }
-  // 예전에 적은 구독 기록도 한 번 정리해요 (고정지출과 연결하거나, 없으면 새로 넣어요)
+  // 구독 기록 ↔ 고정지출 맞추기: 페이지를 열 때마다, 그리고 가계부에서 기록을 고칠 때마다 확인해요.
+  // 이번 달·지난달 '구독' 기록인데 고정지출에 없으면 넣어요. 고정지출에서 지운 이름(donsem:fixed-gone)은 다시 넣지 않아요
+  const GONE = 'donsem:fixed-gone';
+  const goneList = () => { try { const a = JSON.parse(localStorage.getItem(GONE)); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+  function subSync(entries) {
+    if (!Array.isArray(entries)) return false;
+    const fx = loadFixed(), gone = goneList(), d = new Date(), since = ymdOf(new Date(d.getFullYear(), d.getMonth() - 1, 1));
+    let changedE = false, changedF = false;
+    entries.forEach(e => {
+      if (!e || e.type !== 'out' || e.cat !== '구독' || !e.memo || e.date < since) return;
+      const name = String(e.memo).replace(/\s*\(.*\)$/, '').trim();
+      if (!name || gone.includes(norm(name))) return;
+      const m = /^fx-(.+)-(\d{4}-\d{2})$/.exec(String(e.id));
+      if (m && fx.items.some(x => x && x.id === m[1])) return; // 이미 연결돼 있어요
+      if (m) { fx.items.push({ id: m[1], name: name.slice(0, 30), cat: '구독', amt: e.amt, cycle: 'month', day: Number(e.date.slice(8)) }); changedF = true; return; } // 고정지출이 사라졌으면 다시 만들어요
+      const r = linkSub(Object.assign({}, e, { memo: name }), entries, fx);
+      if (!r) return;
+      if (r.made || r.moved) changedF = true;
+      if (r.id) { e.id = r.id; changedE = true; }
+    });
+    if (changedF) { try { localStorage.setItem(FKEY, JSON.stringify(fx)); window.dispatchEvent(new Event('donsem:fixed-sync')); } catch (err) { /* 괜찮아요 */ } }
+    return changedE;
+  }
+  window.donsemSubSync = subSync;
+  window.donsemFixedGone = name => { const g = goneList(), n = norm(name); if (n && !g.includes(n)) { g.push(n); try { localStorage.setItem(GONE, JSON.stringify(g.slice(-50))); } catch (e) { /* 괜찮아요 */ } } };
   try {
-    if (!localStorage.getItem('donsem:mig-sub')) {
-      const b = JSON.parse(localStorage.getItem('donsem:budget'));
-      if (b && Array.isArray(b.entries)) {
-        const fx = loadFixed(); let changed = false;
-        b.entries.forEach(e => { if (e.cat === '구독' && e.type === 'out' && !String(e.id).startsWith('fx-') && e.memo) { const r = linkSub(e, b.entries, fx); if (r && r.id) { e.id = r.id; changed = true; } else if (r && (r.made || r.moved)) changed = true; } });
-        if (changed) { localStorage.setItem('donsem:budget', JSON.stringify(b)); localStorage.setItem(FKEY, JSON.stringify(fx)); }
-      }
-      localStorage.setItem('donsem:mig-sub', '1');
-    }
+    const b = JSON.parse(localStorage.getItem('donsem:budget'));
+    if (b && Array.isArray(b.entries) && subSync(b.entries)) localStorage.setItem('donsem:budget', JSON.stringify(b));
   } catch (e) { /* 괜찮아요 */ }
   let mode = 'quick', type = 'out', cat = CATS.out[0], dDate = '', sheet = null, ov = {}, items = [], sub = '', subFor = null, calY = 0, calM = 0, subCat = '식비';
   // 자주 쓰는 기록: 최근 90일 동안 같은 분류·금액·메모로 두 번 넘게 적은 지출 → 누르면 빠른 입력에 한 줄 더해져요
@@ -2017,7 +2034,8 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
     if (!b || !Array.isArray(b.entries)) b = { entries: [], budget: (b && b.budget) || 0 };
     const before = budgetStreak(b.entries);
-    const fx = loadFixed(), subs = [];
+    const fx = loadFixed(), subs = [], g0 = goneList(), g1 = g0.filter(n => !rows.some(r => r.cat === '구독' && norm(r.memo) === n));
+    if (g1.length !== g0.length) { try { localStorage.setItem(GONE, JSON.stringify(g1)); } catch (e) { /* 괜찮아요 */ } } // 지웠던 구독을 다시 적으면 다시 고정지출로
     rows.forEach((r, i) => { const l = linkSub(r, b.entries, fx); if (l) subs.push(l); b.entries.push(Object.assign({ id: (l && l.id) || Date.now().toString(36) + i + Math.random().toString(36).slice(2, 6) }, r)); });
     try { localStorage.setItem('donsem:budget', JSON.stringify(b)); if (subs.length) localStorage.setItem(FKEY, JSON.stringify(fx)); }
     catch (e) { err.textContent = '이 브라우저에서는 저장할 수 없어요.'; return; }

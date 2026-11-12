@@ -21,6 +21,7 @@
     return { entries: [], budget: 0, cats: {} };
   }
   function save() {
+    try { if (window.donsemSubSync) window.donsemSubSync(data.entries); } catch (e) { /* 괜찮아요 */ } // 구독 기록은 고정지출과 맞춰요
     try { localStorage.setItem(KEY, JSON.stringify(data)); window.dispatchEvent(new Event('donsem:budget')); return true; }
     catch (e) { toast('이 브라우저에서는 저장할 수 없어요. 개인정보 보호 모드인지 확인해 주세요.'); return false; }
   }
@@ -807,7 +808,7 @@
         const span = st ? Math.min(Math.round((new Date((p.e || p.s) + 'T00:00:00') - dt) / 864e5), 6 - dow) + 1 : 1;
         return `<span class="cal-plan pc-${p.c}${p.done ? ' done' : ''}${st ? ' st' : ''}${en ? ' en' : ''}${span > 1 ? ' long' : ''}"${span > 1 ? ` style="--span:${span}"` : ''}>${st ? esc(p.t) : '&nbsp;'}</span>`; });
       cells += `<button type="button"${hv ? ` style="--heat:${hv.toFixed(2)}"` : ''} class="cal-day${hv ? ' hot' : ''}${own && nsDays.includes(key) ? ' ns' : ''}${own ? '' : ' out'}${dow === 0 ? ' sun' : dow === 6 ? ' sat' : ''}${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${dt.getMonth() + 1}월 ${dt.getDate()}일${ps.length ? ' 일정 ' + ps.map(p => p.t).join(', ') : ''}${fs.length ? ' 고정지출 ' + fs.map(x => `${x.name || x.cat} ${won(Number(x.amt))}`).join(', ') : ''}${ms.length ? ' 돈 일정 ' + ms.map(e => e.t).join(', ') : ''}${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
-        <span class="cal-n">${dt.getDate()}</span>${calTags([...chips, ...(key === payKey ? ['<span class="cal-pay">💰 월급</span>'] : []), ...ms.map(e => `<span class="cal-mc ${MC_TAG[e.tag] || ''}">${esc(e.t)}</span>`), ...fs.map(x => `<span class="cal-fx">${esc(x.name || x.cat || '고정지출')}</span>`)])}${(() => { const inn = t ? t.in : 0, out = (t ? t.out : 0) + fs.reduce((a, x) => a + Number(x.amt), 0); return inn || out ? `<span class="cal-amt">${inn ? `<span class="cal-in">+${calWon(inn)}</span>` : ''}${out ? `<span class="cal-out">-${calWon(out)}</span>` : ''}</span>` : ''; })()}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
+        <span class="cal-n">${dt.getDate()}</span>${calTags([...chips, ...(key === payKey ? ['<span class="cal-pay">💰 월급</span>'] : []), ...ms.map(e => `<span class="cal-mc ${MC_TAG[e.tag] || ''}">${esc(e.t)}</span>`), ...fs.map(x => `<span class="cal-fx">${esc(x.name || x.cat || '고정지출')}</span>`), ...(own ? list.filter(e => e.date === key && e.type === 'out' && (e.cat === '구독' || String(e.id).startsWith('fx-'))).map(e => `<span class="cal-fx paid">${esc(String(e.memo || e.cat).replace(/\s*\(고정지출\)$/, ''))}</span>`) : [])])}${(() => { const inn = t ? t.in : 0, out = (t ? t.out : 0) + fs.reduce((a, x) => a + Number(x.amt), 0); return inn || out ? `<span class="cal-amt">${inn ? `<span class="cal-in">+${calWon(inn)}</span>` : ''}${out ? `<span class="cal-out">-${calWon(out)}</span>` : ''}</span>` : ''; })()}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
     }
     const nowYm = iso(today).slice(0, 7);
     // 토스처럼 달력 위에 이달 지출·수입 합계

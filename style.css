@@ -3305,3 +3305,4 @@ html.nw-open { overflow: hidden; }
   .nw-top { margin-top: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .nw-panel, .nw-dim, .nw-body { transition: none; animation: none; } }
+.cal-fx.paid { border-style: solid; color: var(--text); } /* 이번 달 이미 낸 구독 (가계부에 기록됨) */
