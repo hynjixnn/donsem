@@ -3321,3 +3321,7 @@ html.nw-open { overflow: hidden; }
 .cal-fx .bico.bico.bico { display: inline-block; vertical-align: -2px; margin-right: 3px; border-radius: 3px; box-shadow: none; font-size: 8px !important; }
 .cal-fx span.bico { display: inline-flex; }
 @media (max-width: 600px) { .cal-fx .bico.bico.bico { display: none; } } /* 폰은 칸이 좁아 이름이 잘려서 아이콘은 아래 한 장에서 보여요 */
+.sr-top b.sr-nm { display: flex; align-items: center; gap: 10px; }
+.sr-top b.sr-nm > span { font-size: 15px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-top b.sr-nm .bico { border-radius: 8px; }
+.sr-list li.cut .sr-top b.sr-nm > span { text-decoration: line-through; }
