@@ -3306,3 +3306,11 @@ html.nw-open { overflow: hidden; }
 }
 @media (prefers-reduced-motion: reduce) { .nw-panel, .nw-dim, .nw-body { transition: none; animation: none; } }
 .cal-fx.paid { border-style: solid; color: var(--text); } /* 이번 달 이미 낸 구독 (가계부에 기록됨) */
+
+/* ＋기록 빠른 입력 위 셈이 인사 (머니차곡 햄짱이처럼) */
+.qa-hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 6px 0 16px; }
+.qa-hero .semi { width: 92px; height: 92px; margin-bottom: 10px; filter: drop-shadow(0 6px 10px rgba(112,64,161,.18)); }
+.qa-hero b { font-size: 18px; font-weight: 800; letter-spacing: -.3px; color: var(--text); }
+.qa-hero span { margin-top: 4px; font-size: 13px; color: var(--muted); }
+.qa-quick:has(.qa-items:not([hidden])) .qa-hero { display: none; }
+@media (max-height: 640px) { .qa-hero .semi { width: 64px; height: 64px; } }

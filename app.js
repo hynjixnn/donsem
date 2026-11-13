@@ -1925,8 +1925,9 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
           <div class="qa-head"><b id="qa-title">바로 기록하기</b><button type="button" class="qa-x" data-close="1" aria-label="닫기">×</button></div>
           <div class="qa-tabs" data-on="quick"><i></i><button type="button" data-mode="quick" class="on">빠른 입력</button><button type="button" data-mode="direct">직접 입력</button></div>
           <div class="qa-quick">
-            <div class="qa-tbox"><textarea class="qa-text" rows="1" maxlength="400" placeholder="애플뮤직 8900" aria-label="빠른 입력: 이름과 금액" autocomplete="off" enterkeyhint="enter"></textarea></div>
-            <div class="qa-tmeta"><span>대충 써도 알아서 정리해요</span><button type="button" data-sub="help"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6M12 17h.01"/></svg>쓰는 법</button></div>
+            <div class="qa-hero"><img class="semi semi-bob" src="/icons/semi-happy.svg" width="92" height="92" alt="" aria-hidden="true"><b>말하듯이 적으면 셈이가 정리해요</b><span>내용과 금액만 적으면 자동으로 분류돼요</span></div>
+            <div class="qa-tbox"><textarea class="qa-text" rows="1" maxlength="400" placeholder="예: 애플뮤직 8,900 커피 4,500" aria-label="빠른 입력: 이름과 금액" autocomplete="off" enterkeyhint="enter"></textarea></div>
+            <div class="qa-tmeta"><span></span><button type="button" data-sub="help"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6M12 17h.01"/></svg>쓰는 법</button></div>
             <div class="qa-items" hidden></div>
             <div class="qa-short-wrap"><p class="qa-short-cap">내 단축어 · 누르면 한 줄 더해져요</p><div class="qa-short"></div></div>
           </div>
