@@ -3395,3 +3395,8 @@ html.nw-open { overflow: hidden; }
 .pt-tabs a { flex: none; white-space: nowrap; }
 .pt-tabs a:first-child { margin-left: auto; } .pt-tabs a:last-child { margin-right: auto; }
 .up-row .bico { border-radius: 9px; margin-right: 2px; }
+/* 내리면 주제 메뉴도 위 메뉴바와 함께 위로 사라지고, 올리면 같이 돌아와요 (휴대폰) */
+@media (max-width: 640px) {
+  .pt-tabs { transition: transform .4s cubic-bezier(.22, 1, .36, 1); will-change: transform; }
+  .bars-min .pt-tabs { transform: translateY(calc(-100% - var(--topbar-h, 52px) - 2px)); }
+}
