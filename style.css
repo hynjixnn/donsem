@@ -3374,3 +3374,16 @@ html.nw-open { overflow: hidden; }
 .ai-form .ai-send { width: 44px; height: 44px; display: grid; place-items: center; background: var(--blue); color: #fff; }
 .ai-note { margin-top: 6px; font-size: 11px; }
 .ai-a ul.ai-ex-list { margin: 6px 0 0; padding: 0; } .ai-a .ai-ex-list li { margin: 4px 0 0; }
+
+/* 휴대폰: 날짜를 누르면 그날 한 장이 아래에서 올라와요 (뒤는 살짝 어둡게) */
+.ds-grip-btn { position: absolute; top: 0; left: 50%; width: 120px; height: 26px; margin-left: -60px; padding: 0; border: 0; background: none; cursor: pointer; }
+.ds-grip-btn .ds-grip { top: 10px; }
+@media (max-width: 640px) {
+  html.ds-open { overflow: hidden; }
+  .ds-dim { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .38); }
+  .ds-dim.in { animation: ds-fade .3s ease-out; }
+  .day-sheet.pop { position: fixed; left: 0; right: 0; bottom: 0; z-index: 51; margin: 0; max-height: 80vh; overflow-y: auto; overscroll-behavior: contain; padding: 28px 20px calc(18px + env(safe-area-inset-bottom)); border-radius: 26px 26px 0 0; box-shadow: 0 -10px 40px -8px rgba(0, 0, 0, .3); transition: transform .2s; }
+  .day-sheet.pop.in { animation: ds-up .38s cubic-bezier(.22, 1, .36, 1); }
+}
+@keyframes ds-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes ds-fade { from { opacity: 0; } to { opacity: 1; } }

@@ -30,6 +30,8 @@
   const today = new Date();
   let month = iso(today).slice(0, 7); // 보고 있는 달 (YYYY-MM)
   let type = 'out', cat = CATS.out[0], editingBudget = false, editingCats = false, editingPay = false;
+  let dsPop = false, dsIn = false; // 휴대폰: 날짜를 누르면 그날 한 장이 아래에서 올라와요
+  const phone = matchMedia('(max-width: 640px)');
   let view = 'cal', selDay = iso(today); // 내역을 달력으로 볼지 목록으로 볼지, 달력에서 고른 날
   try { const k = sessionStorage.getItem('donsem:selday'); if (k && /^\d{4}-\d{2}-\d{2}$/.test(k)) { selDay = k; month = k.slice(0, 7); } sessionStorage.removeItem('donsem:selday'); } catch (e) { /* 기본은 오늘 */ } // 달력에서 다른 날에 기록하고 돌아오면 그 날을 다시 보여 줘요
   // 달력/목록 고르기는 없앴어요: 늘 달력으로 보여요 (2026-11-11)
@@ -79,7 +81,7 @@
     goMonth(iso(new Date(y, m - 1 + Number(b.dataset.m), 1)).slice(0, 7));
   }));
   function goMonth(ym, day) {
-    month = ym; selDay = day || (month === iso(today).slice(0, 7) ? iso(today) : null); editingBudget = false; render();
+    dsPop = false; month = ym; selDay = day || (month === iso(today).slice(0, 7) ? iso(today) : null); editingBudget = false; render();
   }
 
   // ── 그리기 ──
@@ -784,7 +786,8 @@
       ...fs.map(x => row('고정지출', 'ds-fx', esc(x.name || x.cat || '고정지출'), bIco(x.name, 36) ? `${esc(x.cat || '구독')} · 매달 나가는 돈` : '매달 나가는 돈 · 누르면 고정지출에서 바꿔요', `<em class="ds-amt out">-${won(Number(x.amt))}</em>`, 'data-fxgo', bIco(x.name, 36))),
       ...es.map(e => { const ic = bIco(e.memo, 36); return row(e.type === 'in' ? '수입' : '지출', e.type === 'in' ? 'ds-in' : 'ds-out', ic ? esc(clean(e.memo)) : esc(e.cat), ic ? esc(e.cat) : e.memo ? esc(e.memo) : '', `<em class="ds-amt ${e.type}">${e.type === 'in' ? '+' : '-'}${won(e.amt)}</em>`, `data-eedit="${esc(e.id)}"`, ic); }),
     ];
-    return `<div class="day-sheet"><span class="ds-grip" aria-hidden="true"></span>
+    const pop = dsPop && phone.matches, anim = pop && dsIn; dsIn = false;
+    return `${pop ? `<div class="ds-dim${anim ? ' in' : ''}" data-dsx aria-hidden="true"></div>` : ''}<div class="day-sheet${pop ? ' pop' : ''}${anim ? ' in' : ''}"${pop ? ' role="dialog" aria-modal="true"' : ''}>${pop ? '<button type="button" class="ds-grip-btn" data-dsx aria-label="닫기"><span class="ds-grip"></span></button>' : '<span class="ds-grip" aria-hidden="true"></span>'}
       <div class="ds-head"><b>${dt.getMonth() + 1}. ${dt.getDate()}. ${W[dt.getDay()]}</b>${selDay === iso(today) ? '<em>오늘</em>' : ''}<span class="ds-sum">${out ? `<span class="out">-${won(out)}</span>` : ''}${inn ? `<span class="in">+${won(inn)}</span>` : ''}</span></div>
       ${rows.length ? `<ul class="ds-list">${rows.join('')}</ul>` : '<p class="ds-none">이날은 아무것도 없어요.</p>'}
       <div class="ds-btns"><button type="button" class="ds-add" data-dsrec>＋ 이날 쓴 돈 적기</button><button type="button" class="ds-add line" data-popen>＋ 일정</button></div></div>`;
@@ -823,6 +826,7 @@
       ${sumHTML}${ddayHTML()}<div class="cal-week">${[...W].map(w => `<span>${w}</span>`).join('')}</div><div class="cal-grid">${cells}</div><button type="button" class="cal-fold" data-fold aria-expanded="${!fold}">${fold ? '﹀ 달력 펼치기' : '︿ 한 주만 보기'}</button></div>`;
     // 달력 바로 밑: 일정·꾸미기 → (그날 내역) → 놓치면 손해 → 그날 돈 일정
     $('b-cal-mid').innerHTML = daySumHTML(list, y, m, last, payKey);
+    document.documentElement.classList.toggle('ds-open', dsPop && phone.matches);
     $('b-cal-more').innerHTML = decoHTML() + lossHTML(month) + mcDayHTML(selDay);
   }
   const calBoxes = ['b-cal', 'b-cal-mid', 'b-cal-more'].map($);
@@ -835,6 +839,7 @@
   });
   function onCalClick(e) {
     if (e.target.id === 'b-jump') { try { e.target.showPicker(); } catch (err) { /* 누르면 바로 열리는 브라우저도 있어요 */ } return; }
+    if (e.target.closest('[data-dsx]')) { dsPop = false; render(); return; }
     if (onPlan(e) || onDeco(e)) return;
     const ed = e.target.closest('[data-pedit], [data-eedit], [data-fxgo], [data-mcgo]');
     if (ed) { if (ed.dataset.mcgo) location.href = ed.dataset.mcgo; else if (ed.dataset.pedit) openPlanEd(ed.dataset.pedit); else if (ed.dataset.eedit) openRecEd(ed.dataset.eedit); else location.href = '/fixed/'; return; }
@@ -850,8 +855,15 @@
     const b = e.target.closest('[data-day]');
     if (!b) return;
     if (!b.dataset.day.startsWith(month)) return goMonth(b.dataset.day.slice(0, 7), b.dataset.day);
-    selDay = b.dataset.day; planOpen = false; render();
+    selDay = b.dataset.day; planOpen = false; if (phone.matches) { dsPop = true; dsIn = true; } render();
   }
+  // 아래로 쓸어내리거나 Esc를 누르면 한 장을 닫아요
+  { let y0 = null; const mid = $('b-cal-mid');
+    mid.addEventListener('touchstart', e => { const sh = e.target.closest('.day-sheet.pop'); y0 = sh && sh.scrollTop <= 0 ? e.touches[0].clientY : null; }, { passive: true });
+    mid.addEventListener('touchmove', e => { if (y0 === null) return; const sh = mid.querySelector('.day-sheet.pop'), dy = e.touches[0].clientY - y0; if (sh) sh.style.transform = dy > 0 ? `translateY(${dy}px)` : ''; }, { passive: true });
+    mid.addEventListener('touchend', e => { if (y0 === null) return; const sh = mid.querySelector('.day-sheet.pop'), dy = e.changedTouches[0].clientY - y0; y0 = null; if (!sh) return; if (dy > 90) { dsPop = false; render(); } else sh.style.transform = ''; });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && dsPop && !document.querySelector('.pe, .qa.show')) { dsPop = false; render(); } });
+    phone.addEventListener('change', () => { if (dsPop) render(); }); }
   $('b-view').addEventListener('click', e => {
     const v = e.target.closest && e.target.closest('[data-v]') && e.target.closest('[data-v]').dataset.v;
     if (!v) return;
