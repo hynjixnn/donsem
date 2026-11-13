@@ -3428,14 +3428,22 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       ['🔮', '오늘의 돈 퀴즈와 금전운을 봐 드릴게요.', '하루 한 문제 풀면 돈나무가 자라요.', '/quiz/']]],
   ];
   const exploreHtml = i => `<div class="ai-ex-tabs" role="tablist">${EXPLORE.map(([ico, n], k) => `<button type="button" role="tab" data-ex="${k}" class="${k === i ? 'on' : ''}" aria-selected="${k === i}"><span aria-hidden="true">${ico}</span>${n}</button>`).join('')}</div>
-    <ul class="ai-ex-list">${EXPLORE[i][2].map(([ico, t, d, u]) => `<li><span class="ai-ex-ico" aria-hidden="true">${ico}</span><div><b>${t}</b><p>${d}</p></div><a class="ai-ex-go" href="${u}">해 보기</a></li>`).join('')}</ul>`;
+    <ul class="ai-ex-list">${EXPLORE[i][2].map(([ico, t, d, u]) => `<li><a href="${u}"><span class="ai-ex-ico" aria-hidden="true">${ico}</span><div><b>${t}</b><p>${d}</p></div><em class="ai-ex-go">해 보기</em></a></li>`).join('')}</ul>`;
+  const stamp = () => { const d = new Date(), h = d.getHours(); return `${d.getMonth() + 1}월 ${d.getDate()}일 ${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  // 피클처럼: 위에 셈이 프로필, 아래로 말풍선이 쌓이는 친구 DM 화면
+  const helloHtml = () => `<p class="ai-time">${stamp()}</p>
+      <div class="ai-a">안녕하세요! 저는 계산만 해 주는 도우미가 아니라, 돈 관리를 같이 챙겨 주는 셈이예요.</div>
+      <div class="ai-a">저에 대해 몇 가지 알려 드릴게요:<ul><li>세금·금융 상식, 계산 방법, 돈셈 쓰는 법을 바로 찾아 드려요.</li><li>"이번 달 얼마 썼어?"처럼 물어보면 내 가계부 기록을 보고 알려 드려요.</li><li>놓치면 손해인 환급·지원금 일정도 챙겨 드려요.</li></ul></div>
+      <div class="ai-a">바로 해 볼 수 있는 걸 아래에 골라 뒀어요! 아니면 궁금한 점을 채팅으로 말씀해 주셔도 돼요.</div>
+      <div class="ai-a ai-ex"><div class="ai-ex-h"><b><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/></svg>셈이 둘러보기</b><a href="/calculators/">더보기 ›</a></div><div class="ai-ex-in">${exploreHtml(0)}</div></div>`;
   function build() {
     box = document.createElement('div');
-    box.className = 'ai'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '돈셈 도우미');
-    box.innerHTML = `<div class="ai-head"><button type="button" class="ai-x" aria-label="닫기">×</button><div class="ai-title"><b>셈이</b><span>돈셈 도우미 · Beta</span></div><span class="ai-sp"></span></div>
-      <div class="ai-body"><div class="ai-hello">${semi(96, 'semi-bob', 'happy')}<b>안녕하세요, 셈이예요!</b><p>계산 방법, 세금·금융 상식, 돈셈 쓰는 법을 찾아 드려요.<br>"이번 달 얼마 썼어?"처럼 내 기록도 물어볼 수 있어요.</p></div><div class="ai-ex"><b class="ai-ex-h">셈이 둘러보기</b><div class="ai-ex-in">${exploreHtml(0)}</div></div><div class="ai-log" aria-live="polite"></div></div>
+    box.className = 'ai'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '셈이와 대화');
+    box.innerHTML = `<div class="ai-head"><button type="button" class="ai-x" aria-label="닫기"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <div class="ai-prof"><span class="ai-ava">${semi(58, 'semi-bob', 'happy')}</span><b>셈이</b></div><button type="button" class="ai-new">새 대화</button></div>
+      <div class="ai-body"><div class="ai-log" aria-live="polite">${helloHtml()}</div></div>
       <div class="ai-foot"><div class="ai-chips">${SUGGEST.map(t => `<button type="button">${t}</button>`).join('')}</div>
-        <form class="ai-form"><input type="text" placeholder="궁금한 점을 물어보세요" aria-label="질문" enterkeyhint="send" autocomplete="off"><button type="submit" aria-label="보내기">↑</button></form>
+        <form class="ai-form"><button type="button" class="ai-plus" aria-label="바로 기록하기"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><input type="text" placeholder="메시지 보내기" aria-label="셈이에게 메시지" enterkeyhint="send" autocomplete="off"><button type="submit" class="ai-send" aria-label="보내기"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></form>
         <p class="ai-note">돈셈에 정리된 내용으로 답해요. 세금·투자 결정 전에는 국세청 등 공식 안내도 확인하세요.</p></div>`;
     document.body.append(box);
     const log = box.querySelector('.ai-log'), input = box.querySelector('input'), body = box.querySelector('.ai-body');
@@ -3444,7 +3452,7 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       box.classList.add('chatting');
       log.insertAdjacentHTML('beforeend', `<div class="ai-q">${esc(q)}</div>`);
       // 셈이가 생각하는 표정으로 잠깐 찾아보는 척해요 (바로 답이 튀어나오면 기계 같아서)
-      log.insertAdjacentHTML('beforeend', `<div class="ai-who ai-thinking">${semi(32, '', 'think')}<span>셈이가 찾아보고 있어요<i>.</i><i>.</i><i>.</i></span></div>`);
+      log.insertAdjacentHTML('beforeend', `<div class="ai-a ai-thinking" aria-label="셈이가 찾아보고 있어요"><i></i><i></i><i></i></div>`);
       const thinking = log.lastElementChild; requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
       await Promise.all([!kb || !kb.length ? loadKb() : 0, new Promise(r => setTimeout(r, 650))]);
       thinking.remove();
@@ -3463,7 +3471,7 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
         html = `<div class="ai-a"><p>음… 그건 아직 잘 모르겠어요. 다른 말로 물어봐 주세요.${calc ? '' : ' 계산이 필요하면 모든 계산기에서 찾아볼 수 있어요.'}</p>${calc ? `<a class="ai-go" href="${calc[0]}">${esc(calc[1])} 계산기 열기 ›</a>` : '<a class="ai-go" href="/calculators/">모든 계산기 보기 ›</a>'}</div>`;
       }
       const face = talk ? 'wink' : my ? 'default' : hits.length ? 'happy' : 'worry'; // 답을 찾으면 웃고, 못 찾으면 고민해요
-      log.insertAdjacentHTML('beforeend', `<div class="ai-who">${semi(32, '', face)}<span>셈이</span></div>` + html);
+      log.insertAdjacentHTML('beforeend', html); { const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = `/icons/semi-${face}.svg`; } // 프로필 얼굴이 답에 맞춰 바뀌어요
       requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
     };
     box.__ask = ask;
@@ -3472,6 +3480,8 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       const b = e.target.closest('.ai-chips button, .ai-more button'); if (b) ask(b.dataset.q || b.textContent);
       const ex = e.target.closest('[data-ex]'); if (ex) box.querySelector('.ai-ex-in').innerHTML = exploreHtml(+ex.dataset.ex);
       if (e.target.closest('.ai-x')) close();
+      if (e.target.closest('.ai-new')) { log.innerHTML = helloHtml(); box.classList.remove('chatting'); body.scrollTo({ top: 0 }); const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = '/icons/semi-happy.svg'; }
+      if (e.target.closest('.ai-plus')) { close(); if (window.openQuickAdd) setTimeout(() => window.openQuickAdd(), 250); }
     });
     box.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
     // 휴대폰 자판이 열려 있을 때: 자판 위 ∧∨✓ 막대에 가리지 않게 입력칸을 살짝 올리고, 아래 안내 문구는 잠깐 숨겨요
