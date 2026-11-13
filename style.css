@@ -3387,3 +3387,10 @@ html.nw-open { overflow: hidden; }
 }
 @keyframes ds-up { from { transform: translateY(100%); } to { transform: none; } }
 @keyframes ds-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* 페이지 위 주제별 메뉴 (캘린더·부동산) — 쇼핑 메뉴와 같은 모양, 넘치면 옆으로 밀어요 */
+.pt-off { display: none !important; }
+.pt-tabs { position: sticky; top: var(--topbar-h, 52px); z-index: 9; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; gap: 22px; }
+.pt-tabs::-webkit-scrollbar { display: none; }
+.pt-tabs a { flex: none; white-space: nowrap; }
+.pt-tabs a:first-child { margin-left: auto; } .pt-tabs a:last-child { margin-right: auto; }

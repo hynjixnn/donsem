@@ -207,6 +207,7 @@
     setTimeout(() => map && map.resize(), 60);
   }
   // 폰에서는 아래 실거래 시트만큼 지도를 줄여요 (카카오 로고가 시트에 가리지 않게)
+  document.addEventListener('donsem:tab', e => { if (e.detail === 'map') setTimeout(() => map && map.resize(), 60); }); // 위 메뉴로 「지도」에 돌아오면 지도 크기를 다시 맞춰요
   if (window.ResizeObserver) new ResizeObserver(() => { const h = full && innerWidth < 900 ? $('re-fs-sheet').offsetHeight : 0; if (wrap.style.getPropertyValue('--sh') !== h + 'px') { wrap.style.setProperty('--sh', h + 'px'); if (map) map.resize(); } }).observe($('re-fs-sheet'));
   // 아래 창 끌어내리기 (휴대폰): 손잡이를 아래로 끌면 접혀서 지도가 넓어지고, 위로 끌거나 누르면 다시 펴져요
   const sheetEl = $('re-fs-sheet'), grip = $('fs-grip');

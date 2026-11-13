@@ -4249,3 +4249,34 @@ const GUIDE_FOR = {
   if (!old) { mark(); return; }
   setTimeout(() => { const r = document.documentElement.classList; if (r.contains('qa-open') || r.contains('gnav-open') || r.contains('ai-open') || document.querySelector('.how-modal:not([hidden]), dialog[open]')) return; open(); }, 1200);
 })();
+
+// ── 페이지 위 주제별 메뉴 (쇼핑 「돈셈 상품 · 중고거래 · 쿠팡 추천」처럼): 누른 주제의 칸만 보여 줘서 한참 내리지 않아도 돼요 ──
+(() => {
+  const bar = document.querySelector('[data-ptabs]');
+  if (!bar) return;
+  const secs = [...document.querySelectorAll('[data-tab]')], links = [...bar.querySelectorAll('[data-t]')];
+  let cur = '';
+  const tb = document.querySelector('.topbar'), fitTop = () => { if (tb) document.documentElement.style.setProperty('--topbar-h', tb.offsetHeight + 'px'); };
+  fitTop(); window.addEventListener('resize', fitTop);
+  const show = (t, scroll) => {
+    if (!links.some(a => a.dataset.t === t)) t = links[0].dataset.t;
+    const changed = t !== cur; cur = t;
+    secs.forEach(s => s.classList.toggle('pt-off', s.dataset.tab !== t));
+    links.forEach(a => { const on = a.dataset.t === t; a.classList.toggle('on', on); a.setAttribute('aria-selected', String(on)); if (on) a.scrollIntoView({ block: 'nearest', inline: 'center' }); });
+    if (changed) { window.dispatchEvent(new Event('resize')); document.dispatchEvent(new CustomEvent('donsem:tab', { detail: t })); }
+    if (scroll) { const top = bar.getBoundingClientRect().top + window.scrollY - (document.querySelector('.topbar') || { offsetHeight: 0 }).offsetHeight; if (window.scrollY > top) window.scrollTo({ top: Math.max(0, top) }); }
+  };
+  const tabOf = el => { const s = el && el.closest && el.closest('[data-tab]'); return s ? s.dataset.tab : ''; };
+  // 다른 칸으로 데려가는 버튼(예: 「분석 보기」)을 누르면 그 주제로 먼저 바꿔요
+  const siv = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = function (...a) { const s = this.closest && this.closest('.pt-off[data-tab]'); if (s) show(s.dataset.tab); return siv.apply(this, a); };
+  window.donsemShowFor = el => { const t = tabOf(el); if (t) show(t); };
+  bar.addEventListener('click', e => {
+    const a = e.target.closest('[data-t]'); if (!a) return;
+    e.preventDefault(); show(a.dataset.t, true);
+    history.replaceState(null, '', a.getAttribute('href'));
+  });
+  const fromHash = () => { const id = decodeURIComponent(location.hash.slice(1)); const el = id && document.getElementById(id); const t = tabOf(el); if (t) { show(t); if (links[0].dataset.t !== t || id !== links[0].getAttribute('href').slice(1)) setTimeout(() => el.scrollIntoView({ block: 'start' }), 60); return true; } return false; };
+  window.addEventListener('hashchange', fromHash);
+  if (!fromHash()) show(links[0].dataset.t); // 아래 탭에서 들어오면 늘 첫 주제부터
+})();
