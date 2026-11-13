@@ -1747,6 +1747,8 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
     ? (BIMG.has(it.brand.img) ? `<img class="qa-logo pic" src="/icons/brand/${it.brand.img}.${BSVG.has(it.brand.img) ? 'svg' : 'jpg'}" alt="" width="${size}" height="${size}" loading="lazy" style="width:${size}px;height:${size}px">`
       : `<span class="qa-logo" style="width:${size}px;height:${size}px;background:${it.brand.bg};color:${it.brand.fg};font-size:${Math.round(size * (it.brand.ch.length > 1 ? .36 : .46))}px">${H(it.brand.ch)}</span>`)
     : `<span class="qa-logo plain" style="width:${size}px;height:${size}px">${catIcon(it.cat, Math.round(size * .66))}</span>`;
+  // 가계부·달력에서도 이름 옆에 앱 아이콘을 보여 줘요 (머니차곡처럼). 모르는 이름이면 ''
+  window.donsemBrandIco = (name, size = 40) => { const b = brandOf(String(name || '').replace(/\s*\(고정지출\)$/, '')); return b ? badge({ brand: b }, size).replace('class="qa-logo', 'class="qa-logo bico') : ''; };
   const CAL_ICO = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
   const DOWN = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 

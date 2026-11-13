@@ -3314,3 +3314,10 @@ html.nw-open { overflow: hidden; }
 .qa-hero span { margin-top: 4px; font-size: 13px; color: var(--muted); }
 .qa-quick:has(.qa-items:not([hidden])) .qa-hero { display: none; }
 @media (max-height: 640px) { .qa-hero .semi { width: 64px; height: 64px; } }
+
+/* 가계부·달력 이름 옆 앱 아이콘 (머니차곡처럼) */
+.ds-row .bico { border-radius: 10px; }
+.items .item .bico { border-radius: 9px; margin-right: 2px; }
+.cal-fx .bico.bico.bico { display: inline-block; vertical-align: -2px; margin-right: 3px; border-radius: 3px; box-shadow: none; font-size: 8px !important; }
+.cal-fx span.bico { display: inline-flex; }
+@media (max-width: 600px) { .cal-fx .bico.bico.bico { display: none; } } /* 폰은 칸이 좁아 이름이 잘려서 아이콘은 아래 한 장에서 보여요 */

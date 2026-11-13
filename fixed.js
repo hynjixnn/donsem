@@ -148,7 +148,7 @@
     const left = data.items.map(x => ({ x, d: dateThisMonth(x) })).filter(o => o.d && o.d >= today).reduce((s, o) => s + o.x.amt, 0);
     ul.innerHTML = `<li class="day"><span>이번 달 남은 고정지출</span><span>${won(left)}</span></li>` + list.map(({ x, d }) => {
       const n = Math.round((d - today) / 86400000);
-      return `<li class="item"><span class="dday${n <= 3 ? ' soon' : ''}">${n === 0 ? '오늘' : 'D-' + n}</span><div><b>${esc(x.name)}</b><span>${d.getMonth() + 1}월 ${d.getDate()}일 (${W[d.getDay()]})</span></div><b class="amt">${won(x.amt)}</b></li>`;
+      return `<li class="item"><span class="dday${n <= 3 ? ' soon' : ''}">${n === 0 ? '오늘' : 'D-' + n}</span>${window.donsemBrandIco ? window.donsemBrandIco(x.name, 28) : ''}<div><b>${esc(x.name)}</b><span>${d.getMonth() + 1}월 ${d.getDate()}일 (${W[d.getDay()]})</span></div><b class="amt">${won(x.amt)}</b></li>`;
     }).join('');
   }
 
@@ -168,7 +168,7 @@
           ? `<li class="item editing"><div><b>${esc(x.name)}</b><span>${when}</span></div>
               <div class="field mini"><input id="f-edit" inputmode="numeric" value="${x.amt.toLocaleString('ko-KR')}" aria-label="${esc(x.name)} 금액"><span>원</span></div>
               <button type="button" class="link" data-ok="${esc(x.id)}">저장</button></li>`
-          : `<li class="item"><div><b>${esc(x.name)}</b><span>${when}</span></div>
+          : `<li class="item">${window.donsemBrandIco ? window.donsemBrandIco(x.name, 32) : ''}<div><b>${esc(x.name)}</b><span>${when}</span></div>
               <button type="button" class="amt-btn" data-edit="${esc(x.id)}" aria-label="${esc(x.name)} 금액 고치기">${won(x.amt)}</button>
               <button type="button" class="del" data-id="${esc(x.id)}" aria-label="${esc(x.name)} 지우기">×</button></li>`;
       }).join('')).join('');

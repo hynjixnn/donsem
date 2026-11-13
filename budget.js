@@ -766,21 +766,23 @@
     return `<div class="dday-row">${list.sort((a, b) => a.n - b.n).slice(0, 4).map(x => `<button type="button" class="dday pc-${x.p.c}" data-pedit="${esc(x.p.id)}"><b>${x.n ? `D-${x.n}` : 'D-DAY'}</b>${esc(x.p.t)}</button>`).join('')}</div>`;
   }
 
+  const bIco = (n, sz) => (window.donsemBrandIco && n ? window.donsemBrandIco(n, sz) : '');
+  const clean = n => String(n || '').replace(/\s*\(고정지출\)$/, '');
   // 날짜를 누르면 달력 바로 밑에 그날 한 장 (네이버 캘린더처럼): 왼쪽 이름표 · 색 막대 · 내용 · 오른쪽 금액
   function daySumHTML(list, y, m, last, payKey) {
     if (!selDay || !selDay.startsWith(month)) return '';
     const dt = new Date(selDay + 'T00:00:00'), es = list.filter(e => e.date === selDay).slice().reverse(), fs = fixedByDay(y, m, last)[dt.getDate()] || [];
     const out = es.filter(e => e.type === 'out').reduce((a, e) => a + e.amt, 0) + fs.reduce((a, x) => a + Number(x.amt), 0), inn = es.filter(e => e.type === 'in').reduce((a, e) => a + e.amt, 0);
     const wd = d => `${d.getMonth() + 1}. ${d.getDate()}.(${W[d.getDay()]})`, dd = k => wd(new Date(k + 'T00:00:00'));
-    const row = (lab, bar, title, sub, right, act) => `<li class="ds-row${act ? ' tap' : ''}"${act ? ` ${act} role="button" tabindex="0"` : ''}><span class="ds-lab">${lab}</span><i class="ds-bar ${bar}"></i><div class="ds-txt"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</div>${right || ''}${act ? '<span class="ds-go" aria-hidden="true">›</span>' : ''}</li>`;
+    const row = (lab, bar, title, sub, right, act, ico = '') => `<li class="ds-row${act ? ' tap' : ''}"${act ? ` ${act} role="button" tabindex="0"` : ''}><span class="ds-lab">${lab}</span><i class="ds-bar ${bar}"></i>${ico}<div class="ds-txt"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</div>${right || ''}${act ? '<span class="ds-go" aria-hidden="true">›</span>' : ''}</li>`;
     const rows = [
       ...plansOn(selDay).map(p => row(p.allDay === false && p.st ? `${p.st}<small>${p.et || ''}</small>` : '종일', `pc-${p.c}`, `${p.done ? '✓ ' : ''}${esc(p.t)}`,
         [p.e && p.e !== p.s ? `${dd(p.s)} - ${dd(p.e)}` : '', p.rep && p.rep !== 'none' ? `↻ ${PL_REP[p.rep]}` : '', p.place ? `📍 ${esc(p.place)}` : ''].filter(Boolean).join(' · '),
         `${p.files && p.files.length ? '<span class="ds-clip" title="첨부 파일">📎</span>' : ''}${p.alarm && p.alarm !== 'none' ? '<span class="ds-clip" title="알림">🔔</span>' : ''}`, `data-pedit="${esc(p.id)}"`).replace('class="ds-row', `class="ds-row${p.done ? ' done' : ''}`)),
       ...(selDay === payKey ? [row('종일', 'ds-pay', '💰 월급날', '', '')] : []),
       ...mcOn(selDay).map(e => row('종일', `ds-mc ${MC_TAG[e.tag] || ''}`, esc(e.t), `${esc(e.tag)} · ${esc(e.go ? e.go[1] : '돈 달력')}에서 보기`, '', `data-mcgo="${esc(e.go ? e.go[0] : '/money-calendar/')}"`)), // 누르면 관련 계산기로
-      ...fs.map(x => row('고정지출', 'ds-fx', esc(x.name || x.cat || '고정지출'), '매달 나가는 돈 · 누르면 고정지출에서 바꿔요', `<em class="ds-amt out">-${won(Number(x.amt))}</em>`, 'data-fxgo')),
-      ...es.map(e => row(e.type === 'in' ? '수입' : '지출', e.type === 'in' ? 'ds-in' : 'ds-out', esc(e.cat), e.memo ? esc(e.memo) : '', `<em class="ds-amt ${e.type}">${e.type === 'in' ? '+' : '-'}${won(e.amt)}</em>`, `data-eedit="${esc(e.id)}"`)),
+      ...fs.map(x => row('고정지출', 'ds-fx', esc(x.name || x.cat || '고정지출'), bIco(x.name, 36) ? `${esc(x.cat || '구독')} · 매달 나가는 돈` : '매달 나가는 돈 · 누르면 고정지출에서 바꿔요', `<em class="ds-amt out">-${won(Number(x.amt))}</em>`, 'data-fxgo', bIco(x.name, 36))),
+      ...es.map(e => { const ic = bIco(e.memo, 36); return row(e.type === 'in' ? '수입' : '지출', e.type === 'in' ? 'ds-in' : 'ds-out', ic ? esc(clean(e.memo)) : esc(e.cat), ic ? esc(e.cat) : e.memo ? esc(e.memo) : '', `<em class="ds-amt ${e.type}">${e.type === 'in' ? '+' : '-'}${won(e.amt)}</em>`, `data-eedit="${esc(e.id)}"`, ic); }),
     ];
     return `<div class="day-sheet"><span class="ds-grip" aria-hidden="true"></span>
       <div class="ds-head"><b>${dt.getMonth() + 1}. ${dt.getDate()}. ${W[dt.getDay()]}</b>${selDay === iso(today) ? '<em>오늘</em>' : ''}<span class="ds-sum">${out ? `<span class="out">-${won(out)}</span>` : ''}${inn ? `<span class="in">+${won(inn)}</span>` : ''}</span></div>
@@ -808,7 +810,7 @@
         const span = st ? Math.min(Math.round((new Date((p.e || p.s) + 'T00:00:00') - dt) / 864e5), 6 - dow) + 1 : 1;
         return `<span class="cal-plan pc-${p.c}${p.done ? ' done' : ''}${st ? ' st' : ''}${en ? ' en' : ''}${span > 1 ? ' long' : ''}"${span > 1 ? ` style="--span:${span}"` : ''}>${st ? esc(p.t) : '&nbsp;'}</span>`; });
       cells += `<button type="button"${hv ? ` style="--heat:${hv.toFixed(2)}"` : ''} class="cal-day${hv ? ' hot' : ''}${own && nsDays.includes(key) ? ' ns' : ''}${own ? '' : ' out'}${dow === 0 ? ' sun' : dow === 6 ? ' sat' : ''}${key === iso(today) ? ' today' : ''}${key === selDay ? ' sel' : ''}" data-day="${key}" aria-label="${dt.getMonth() + 1}월 ${dt.getDate()}일${ps.length ? ' 일정 ' + ps.map(p => p.t).join(', ') : ''}${fs.length ? ' 고정지출 ' + fs.map(x => `${x.name || x.cat} ${won(Number(x.amt))}`).join(', ') : ''}${ms.length ? ' 돈 일정 ' + ms.map(e => e.t).join(', ') : ''}${t && t.out ? ` 지출 ${won(t.out)}` : ''}${t && t.in ? ` 수입 ${won(t.in)}` : ''}">
-        <span class="cal-n">${dt.getDate()}</span>${calTags([...chips, ...(key === payKey ? ['<span class="cal-pay">💰 월급</span>'] : []), ...ms.map(e => `<span class="cal-mc ${MC_TAG[e.tag] || ''}">${esc(e.t)}</span>`), ...fs.map(x => `<span class="cal-fx">${esc(x.name || x.cat || '고정지출')}</span>`), ...(own ? list.filter(e => e.date === key && e.type === 'out' && (e.cat === '구독' || String(e.id).startsWith('fx-'))).map(e => `<span class="cal-fx paid">${esc(String(e.memo || e.cat).replace(/\s*\(고정지출\)$/, ''))}</span>`) : [])])}${(() => { const inn = t ? t.in : 0, out = (t ? t.out : 0) + fs.reduce((a, x) => a + Number(x.amt), 0); return inn || out ? `<span class="cal-amt">${inn ? `<span class="cal-in">+${calWon(inn)}</span>` : ''}${out ? `<span class="cal-out">-${calWon(out)}</span>` : ''}</span>` : ''; })()}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
+        <span class="cal-n">${dt.getDate()}</span>${calTags([...chips, ...(key === payKey ? ['<span class="cal-pay">💰 월급</span>'] : []), ...ms.map(e => `<span class="cal-mc ${MC_TAG[e.tag] || ''}">${esc(e.t)}</span>`), ...fs.map(x => `<span class="cal-fx">${bIco(x.name, 13)}${esc(x.name || x.cat || '고정지출')}</span>`), ...(own ? list.filter(e => e.date === key && e.type === 'out' && (e.cat === '구독' || String(e.id).startsWith('fx-'))).map(e => `<span class="cal-fx paid">${bIco(e.memo, 13)}${esc(String(e.memo || e.cat).replace(/\s*\(고정지출\)$/, ''))}</span>`) : [])])}${(() => { const inn = t ? t.in : 0, out = (t ? t.out : 0) + fs.reduce((a, x) => a + Number(x.amt), 0); return inn || out ? `<span class="cal-amt">${inn ? `<span class="cal-in">+${calWon(inn)}</span>` : ''}${out ? `<span class="cal-out">-${calWon(out)}</span>` : ''}</span>` : ''; })()}${deco.st[key] ? `<span class="cal-st" aria-hidden="true">${deco.st[key].join('')}</span>` : ''}</button>`;
     }
     const nowYm = iso(today).slice(0, 7);
     // 토스처럼 달력 위에 이달 지출·수입 합계
@@ -899,9 +901,9 @@
       const items = days[d].slice().reverse(), dt = new Date(d + 'T00:00:00');
       const out = items.filter(e => e.type === 'out').reduce((s, e) => s + e.amt, 0);
       return `<li class="day"><span>${withYear && dt.getFullYear() !== today.getFullYear() ? `${dt.getFullYear()}년 ` : ''}${dt.getMonth() + 1}월 ${dt.getDate()}일 (${W[dt.getDay()]})</span><span>${out ? '지출 ' + won(out) : ''}</span></li>` +
-        items.map(e => `<li class="item">${catIcon(e.cat, 32).replace('cat-ico', 'item-ico')}<div><b>${esc(e.cat)}</b>${e.memo ? `<span>${esc(e.memo)}</span>` : ''}</div>
+        items.map(e => { const ic = bIco(e.memo, 32); return `<li class="item">${ic || catIcon(e.cat, 32).replace('cat-ico', 'item-ico')}<div>${ic ? `<b>${esc(clean(e.memo))}</b><span>${esc(e.cat)}</span>` : `<b>${esc(e.cat)}</b>${e.memo ? `<span>${esc(e.memo)}</span>` : ''}`}</div>
           <b class="amt ${e.type}">${e.type === 'in' ? '+' : '-'}${won(e.amt)}</b>
-          <button type="button" class="del" data-id="${esc(e.id)}" aria-label="${esc(e.cat)} ${won(e.amt)} 기록 지우기">×</button></li>`).join('');
+          <button type="button" class="del" data-id="${esc(e.id)}" aria-label="${esc(e.cat)} ${won(e.amt)} 기록 지우기">×</button></li>`; }).join('');
     }).join('');
   }
   $('b-items').addEventListener('click', e => {
