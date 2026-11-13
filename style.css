@@ -3320,7 +3320,7 @@ html.nw-open { overflow: hidden; }
 .items .item .bico { border-radius: 9px; margin-right: 2px; }
 .cal-fx .bico.bico.bico { display: inline-block; vertical-align: -2px; margin-right: 3px; border-radius: 3px; box-shadow: none; font-size: 8px !important; }
 .cal-fx span.bico { display: inline-flex; }
-@media (max-width: 600px) { .cal-fx .bico.bico.bico { display: none; } } /* 폰은 칸이 좁아 이름이 잘려서 아이콘은 아래 한 장에서 보여요 */
+@media (max-width: 600px) { .cal-fx:has(.bico) { padding: 0 2px; letter-spacing: -.04em; } .cal-fx .bico.bico.bico { width: 11px !important; height: 11px !important; margin-right: 2px; vertical-align: -1.5px; border-radius: 3px; } } /* 폰에서도 이름 옆에 작은 아이콘 */
 .sr-top b.sr-nm { display: flex; align-items: center; gap: 10px; }
 .sr-top b.sr-nm > span { font-size: 15px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sr-top b.sr-nm .bico { border-radius: 8px; }
