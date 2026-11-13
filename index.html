@@ -135,11 +135,11 @@
     </a>
   </section>
 
-  <div id="daily"></div>
-
   <section class="duo" aria-label="돈 관리와 절세">
     <a class="duo-tile duo-pink" href="/no-spend/"><img src="/icons/piggy-big.webp" alt="" width="56" height="56"><h3>무지출 챌린지</h3><p>돈 안 쓴 날, 도장 쾅! 🐷</p><span>도전하기 ›</span></a>
   </section>
+
+  <div id="daily"></div>
 
   <section class="group bundles">
     <h2>상황별 모음</h2>
@@ -226,7 +226,7 @@
   </section>
 
   <!-- 예전 주소(#savings 같은)로 들어온 사람은 새 페이지로 보내 줘요 -->
-  <script>if (/^#\w+$/.test(location.hash)) location.replace('/' + location.hash.slice(1) + '/');</script>
+  <script>if (/^#\w+$/.test(location.hash) && !/^#(home|fun|manage)$/.test(location.hash)) location.replace('/' + location.hash.slice(1) + '/');</script><!-- 홈 위 메뉴(#home·#fun·#manage)는 옛 주소 옮기기에서 빼요 -->
 
   <footer>
     계산 결과는 참고용이며 실제 금융상품의 조건(우대금리, 중도상환수수료, 세금 등)에 따라 달라질 수 있어요.

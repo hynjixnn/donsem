@@ -4291,7 +4291,7 @@ const GUIDE_FOR = {
     e.preventDefault(); show(a.dataset.t, true);
     history.replaceState(null, '', a.getAttribute('href'));
   });
-  const fromHash = () => { const id = decodeURIComponent(location.hash.slice(1)); const el = id && document.getElementById(id); const t = tabOf(el); if (t) { show(t); if (links[0].dataset.t !== t || id !== links[0].getAttribute('href').slice(1)) setTimeout(() => el.scrollIntoView({ block: 'start' }), 60); return true; } return false; };
+  const fromHash = () => { const id = decodeURIComponent(location.hash.slice(1)); const own = id && links.find(a => a.getAttribute('href') === '#' + id && !document.getElementById(id)); if (own) { show(own.dataset.t); return true; } const el = id && document.getElementById(id); const t = tabOf(el); if (t) { show(t); if (links[0].dataset.t !== t || id !== links[0].getAttribute('href').slice(1)) setTimeout(() => el.scrollIntoView({ block: 'start' }), 60); return true; } return false; };
   window.addEventListener('hashchange', fromHash);
   if (!fromHash()) show(links[0].dataset.t); // 아래 탭에서 들어오면 늘 첫 주제부터
   // 홈에서 나중에 생기는 칸도 지금 고른 주제에 맞춰 보이거나 숨겨요
