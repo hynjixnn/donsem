@@ -30,6 +30,7 @@
   const today = new Date();
   let month = iso(today).slice(0, 7); // 보고 있는 달 (YYYY-MM)
   let type = 'out', cat = CATS.out[0], editingBudget = false, editingCats = false, editingPay = false;
+  const bIco = (n, sz) => (window.donsemBrandIco && n ? window.donsemBrandIco(n, sz) : '');
   let dsPop = false, dsIn = false; // 휴대폰: 날짜를 누르면 그날 한 장이 아래에서 올라와요
   const phone = matchMedia('(max-width: 640px)');
   let view = 'cal', selDay = iso(today); // 내역을 달력으로 볼지 목록으로 볼지, 달력에서 고른 날
@@ -329,7 +330,7 @@
     card.hidden = !soon.length;
     if (!soon.length) return;
     $('b-up').innerHTML = soon.map(({ x, d, n }) => `<li class="up-row${n <= 2 ? ' soon' : ''}"><span class="up-d"><b>${d.getDate()}</b>${W[d.getDay()]}</span>
-      <span class="up-n">${esc(x.name || x.cat || '고정지출')}<small>${n === 0 ? '오늘' : n === 1 ? '내일' : `${n}일 뒤`}${x.cycle === 'year' ? ' · 1년에 한 번' : ''}</small></span><b class="up-a">${won(Number(x.amt))}</b></li>`).join('');
+      ${bIco(x.name, 34)}<span class="up-n">${esc(x.name || x.cat || '고정지출')}<small>${n === 0 ? '오늘' : n === 1 ? '내일' : `${n}일 뒤`}${x.cycle === 'year' ? ' · 1년에 한 번' : ''}</small></span><b class="up-a">${won(Number(x.amt))}</b></li>`).join('');
   }
 
   // ③ 분류별 예산
@@ -768,7 +769,6 @@
     return `<div class="dday-row">${list.sort((a, b) => a.n - b.n).slice(0, 4).map(x => `<button type="button" class="dday pc-${x.p.c}" data-pedit="${esc(x.p.id)}"><b>${x.n ? `D-${x.n}` : 'D-DAY'}</b>${esc(x.p.t)}</button>`).join('')}</div>`;
   }
 
-  const bIco = (n, sz) => (window.donsemBrandIco && n ? window.donsemBrandIco(n, sz) : '');
   const clean = n => String(n || '').replace(/\s*\(고정지출\)$/, '');
   // 날짜를 누르면 달력 바로 밑에 그날 한 장 (네이버 캘린더처럼): 왼쪽 이름표 · 색 막대 · 내용 · 오른쪽 금액
   function daySumHTML(list, y, m, last, payKey) {

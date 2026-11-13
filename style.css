@@ -3394,3 +3394,4 @@ html.nw-open { overflow: hidden; }
 .pt-tabs::-webkit-scrollbar { display: none; }
 .pt-tabs a { flex: none; white-space: nowrap; }
 .pt-tabs a:first-child { margin-left: auto; } .pt-tabs a:last-child { margin-right: auto; }
+.up-row .bico { border-radius: 9px; margin-right: 2px; }
