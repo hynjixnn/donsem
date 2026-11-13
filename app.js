@@ -4257,14 +4257,14 @@ const GUIDE_FOR = {
   const links = [...bar.querySelectorAll('[data-t]')];
   // 홈은 칸들이 나중에 그려져서, 순서대로 보고 주제를 붙여요 (모르는 칸은 바로 앞 칸과 같은 주제)
   const wrap = document.querySelector('.wrap'), HOME = location.pathname === '/' || location.pathname === '/index.html';
-  const RULE = [['fun', '.showcase, #daily, .quiz-home'], ['manage', '.duo, .mc-home'], ['calc', '.fav-group, .recent, .bundles, .cat-tabs, .group']];
+  const RULE = [['manage', '.my-home, .mc-home'], ['fun', '.showcase, #daily, .quiz-home, .duo'], ['none', '.fav-group, .recent, .bundles, .cat-tabs, .group']]; // none: 아래 탭 「계산기」에 있어서 홈에선 안 보여요
   const tagHome = () => {
     if (!HOME || !wrap) return;
     let t = 'home', seenFun = false;
     [...wrap.children].forEach(c => {
       if (/^(NAV|SCRIPT|FOOTER|STYLE)$/.test(c.tagName)) return;
       const hit = RULE.find(([, q]) => c.matches(q));
-      if (hit) { t = hit[0]; if (t === 'fun') seenFun = true; }
+      if (hit) { if (c.matches('.my-home')) { c.dataset.tab = 'manage'; t = 'home'; return; } t = hit[0]; if (t === 'fun') seenFun = true; }
       else if (!seenFun) t = 'home';
       if (c.dataset.tab !== t) c.dataset.tab = t;
     });
