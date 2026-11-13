@@ -3407,3 +3407,11 @@ html.nw-open { overflow: hidden; }
 .duo:has(> .duo-tile:only-child) { grid-template-columns: 1fr; } /* 홈 「퀴즈·테스트」: 무지출 챌린지 한 칸은 넓게 */
 /* 주제 메뉴도 위 메뉴바(DONSAM 줄)와 똑같이 비치는 유리 */
 .st-tabs.pt-tabs { background: color-mix(in srgb, var(--bg) 62%, transparent); -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%); border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+/* 홈: 위 주제 메뉴 없이, 돈 관리(캘린더에 있어요)·계산기 칸(아래 탭에 있어요)은 숨기고 퀴즈·테스트 카드들을 아래에 둬요 */
+body.home .wrap > .my-home, body.home .wrap > .mc-home, body.home .wrap > .fav-group, body.home .wrap > .recent, body.home .wrap > .bundles, body.home .wrap > .cat-tabs, body.home .wrap > .group.tabbed { display: none !important; }
+/* 무지출 챌린지도 연봉 상위 %와 같은 큰 카드 */
+.sc-pink { background: linear-gradient(135deg, #fff0f5, #fdd9e6); }
+.sc-pig img { width: 150px; height: 150px; filter: drop-shadow(0 14px 22px rgba(232, 90, 140, .25)); }
+:root[data-theme="dark"] .sc-pink { background: #2a1d22; }
+@media (prefers-color-scheme: dark) { :root[data-theme="auto"] .sc-pink { background: #2a1d22; } }
+@media (max-width: 640px) { .sc-pig img { width: 120px; height: 120px; } }
