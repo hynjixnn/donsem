@@ -3478,3 +3478,6 @@ html .st-tabs.pt-tabs { background: #111111; -webkit-backdrop-filter: none; back
 .home-guide .gd-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 14px; }
 /* 휴대폰: 아래 탭바 위에 떠 있는 「+ 기록」 버튼이 페이지 맨 아래 글자·버튼을 가리지 않게 여백을 더 줘요 */
 @media (max-width: 640px) { body.has-tabbar:has(.fab-add) { padding-bottom: calc(160px + env(safe-area-inset-bottom)); } }
+
+/* 마감 카운트다운 카드: '마감까지'와 '11월 30일까지 · 캘린더에서 보기'도 제목처럼 굵게, 같은 글씨체로 */
+.cd-left, .cd-date, .cd-date a { font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; font-weight: 700; }
