@@ -3416,3 +3416,26 @@ body.home .wrap > .my-home, body.home .wrap > .mc-home, body.home .wrap > .fav-g
 @media (prefers-color-scheme: dark) { :root[data-theme="auto"] .sc-pink { background: #2a1d22; } }
 @media (max-width: 640px) { .sc-pig img { width: 120px; height: 120px; } }
 .gd h3 { font-size: 1rem; margin: 1.2em 0 .3em; } /* 가이드 「자주 묻는 질문」 질문은 소제목보다 작게 */
+
+/* ── 위 메뉴바: 무신사처럼 검은 바탕 + 흰 로고·글자 (라이트·다크 모두) ── */
+html .topbar { --text: #ffffff; --muted: rgba(255, 255, 255, .72); --seg-bg: rgba(255, 255, 255, .14); --card: rgba(255, 255, 255, .12); --line: rgba(255, 255, 255, .16); --soft-hover: rgba(255, 255, 255, .12);
+  background: #111111; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 0; color: #fff; }
+html .topbar .brand, html .topbar a, html .topbar button { color: var(--text); }
+html .topbar .gnav a, html .topbar .gnav button { color: rgba(255, 255, 255, .72); }
+html .topbar .gnav a.here, html .topbar .gnav a:hover, html .topbar .gnav button.here, html .topbar .gnav button:hover { color: #fff; }
+/* 주제 메뉴(캘린더·부동산·쇼핑)도 같은 검은 줄로 이어서 */
+html .st-tabs { --text: #ffffff; --muted: rgba(255, 255, 255, .6); background: #111111; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 0; }
+html .st-tabs a.on { color: #fff; border-bottom-color: #fff; }
+/* 검은 메뉴바 아래 넓은 흰 검색창 (무신사처럼) */
+.top-search { max-width: 1024px; margin: 0 auto; padding: 2px 20px 12px; }
+html .topbar .top-search button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; height: 44px; padding: 0 14px 0 16px; border: 0; border-radius: 6px; background: #ffffff; color: #8e8e93; font: inherit; font-size: 15px; text-align: left; cursor: text; }
+.top-search svg { flex: none; width: 22px; height: 22px; color: #111; }
+.ts-ph { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: opacity .25s, transform .25s; }
+.ts-ph.out { opacity: 0; transform: translateY(-6px); }
+html .topbar .search-btn { display: none; }
+@media (min-width: 641px) { .gnav-layer { inset: var(--topbar-h, 52px) 0 0; } } /* 휴대폰은 원래대로 검색이 화면 전체로 열려요 */
+/* 무신사 느낌: 위 메뉴 글자는 굵고 또렷하게 */
+html .topbar .gnav a, html .topbar .gnav button { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+html .st-tabs a { font-weight: 700; }
+@media (max-width: 640px) { .top-search { padding: 0 16px 10px; } html .topbar .top-search button { height: 42px; font-size: 15px; } }
+html .st-tabs.pt-tabs { background: #111111; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 0; } /* 주제 메뉴도 검은 줄 (앞의 유리 설정보다 우선) */

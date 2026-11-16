@@ -1600,7 +1600,7 @@ function setThemeColor(color) {
 function applyTheme(t, announce) {
   document.documentElement.dataset.theme = t;
   const dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
-  setThemeColor(dark ? '#000000' : '#ffffff');
+  setThemeColor('#111111'); // 위 메뉴바가 늘 검은 바탕이라, 시계·배터리 줄도 같은 검은색으로 이어 줘요
   document.querySelectorAll('.theme-btn').forEach(b => {
     b.querySelector('svg').innerHTML = THEME_ICON[t];
     b.setAttribute('aria-label', `화면 모드 바꾸기 (지금: ${THEME_NAME[t]})`);
@@ -2537,6 +2537,15 @@ const MENU = [
   sBtn.type = 'button'; sBtn.className = 'search-btn'; sBtn.dataset.g = 'search'; sBtn.setAttribute('aria-label', '계산기 검색'); sBtn.setAttribute('aria-expanded', 'false');
   sBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
   right.prepend(sBtn);
+  // 무신사처럼: 검은 메뉴바 아래에 넓은 흰 검색창 한 줄 (누르면 계산기 검색이 열려요)
+  const PH = ['연봉 4천이면 실수령액은?', '연말정산 환급 미리 계산', '적금 이자 얼마나 받을까?', '전세를 월세로 바꾸면?', '퇴직금 얼마 받을까?', '대출 이자 계산'];
+  const row = document.createElement('div');
+  row.className = 'top-search';
+  row.innerHTML = `<button type="button" data-g="search" aria-label="계산기 검색" aria-expanded="false"><span class="ts-ph">${PH[0]}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>`;
+  top.append(row);
+  { let i = 0; const ph = row.querySelector('.ts-ph'); setInterval(() => { if (document.hidden) return; ph.classList.add('out'); setTimeout(() => { i = (i + 1) % PH.length; ph.textContent = PH[i]; ph.classList.remove('out'); }, 250); }, 3500); }
+  const setTopH = () => document.documentElement.style.setProperty('--topbar-h', top.offsetHeight + 'px');
+  setTopH(); addEventListener('resize', setTopH);
   document.body.classList.add('has-gnav');
 
   const wrap = document.createElement('div');
