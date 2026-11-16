@@ -3415,3 +3415,4 @@ body.home .wrap > .my-home, body.home .wrap > .mc-home, body.home .wrap > .fav-g
 :root[data-theme="dark"] .sc-pink { background: #2a1d22; }
 @media (prefers-color-scheme: dark) { :root[data-theme="auto"] .sc-pink { background: #2a1d22; } }
 @media (max-width: 640px) { .sc-pig img { width: 120px; height: 120px; } }
+.gd h3 { font-size: 1rem; margin: 1.2em 0 .3em; } /* 가이드 「자주 묻는 질문」 질문은 소제목보다 작게 */
