@@ -3579,3 +3579,55 @@ h1, h2, h3, .card h2, .semi-head b, .cd-t, .ye-home b, .sc-card h2 { letter-spac
 .mz-handle i { display: inline-block; width: 74px; height: 13px; margin-right: 6px; vertical-align: -1px; background: var(--text); -webkit-mask-position: left center; mask-position: left center; }
 @media (max-width: 640px) { .mz-badge i { width: 38px; height: 7.5px; } .mz-ava i { width: 58px; height: 11px; } .mz-handle i { width: 64px; height: 11px; } }
 .mz .mz-pi .mz-handle { display: flex; align-items: center; gap: 8px; } .mz .mz-pi .mz-handle i { display: block; margin: 0; flex: none; }
+/* ── 매거진: 인스타 프로필 화면처럼 (한 줄 3칸) ── */
+.mz-wrap.mz-wrap { max-width: 935px; }
+.mz .mz-prof { gap: 28px; align-items: center; padding: 6px 0 0; }
+.mz .mz-ava { width: 150px; height: 150px; }
+.mz .mz-pi { flex: 1; min-width: 0; }
+.mz .mz-pi h1 { font-size: 20px; font-weight: 700; }
+.mz .mz-stat { display: flex; gap: 40px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 15px; }
+.mz .mz-stat li { display: flex; flex-direction: column; line-height: 1.25; }
+.mz .mz-stat b { font-size: 18px; font-weight: 700; }
+.mz .mz-stat span { color: var(--text); }
+.mz-bio { margin: 16px 0 0; font-size: 14px; line-height: 1.5; }
+.mz-bio p { margin: 0; }
+.mz-bio .mz-handle { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-weight: 700; }
+.mz-bio .mz-handle i { display: block; margin: 0; flex: none; }
+.mz-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; font-weight: 600; color: #7040A1; text-decoration: none; }
+:root[data-theme="dark"] .mz-link { color: #B69AD8; }
+.mz-link svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.mz .mz-btns { grid-template-columns: 1fr 1fr 1fr 40px; gap: 6px; margin: 16px 0 0; }
+.mz .mz-btn { height: 36px; border: 0; border-radius: 9px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.mz .mz-btn-pri { color: #fff; }
+.mz-btn-ico svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.mz .mz-stories { gap: 16px; margin: 20px 0 0; }
+.mz .mz-tabs { display: grid; grid-template-columns: repeat(3, 1fr); margin: 14px 0 0; border-top: 1px solid rgba(120, 120, 128, .2); }
+.mz .mz-tabs > * { display: flex; justify-content: center; padding: 11px 0 10px; width: auto; margin: 0; border: 0; color: var(--muted); }
+.mz .mz-tabs > .on { color: var(--text); box-shadow: inset 0 -1.5px 0 var(--text); }
+.mz .mz-tabs svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.mz .mz-tabs svg .f { fill: currentColor; stroke: none; }
+.mz .mz-grid { grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 0; }
+.mz .mz-hl { font-size: 17px; left: 12px; bottom: 12px; }
+/* 여러 장 게시물 표시 (인스타처럼) */
+.mz-tile:not(:has(.mz-pin))::before { content: ""; position: absolute; z-index: 3; top: 11px; right: 11px; width: 13px; height: 13px; border: 2px solid #fff; border-radius: 4px; box-shadow: 3px -3px 0 -1px #fff; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35)); }
+@media (max-width: 640px) {
+  .mz .mz-prof { gap: 22px; }
+  .mz .mz-ava { width: 86px; height: 86px; }
+  .mz .mz-pi h1 { font-size: 16px; }
+  .mz .mz-stat { justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 13px; padding-right: 8px; }
+  .mz .mz-stat b { font-size: 16px; }
+  .mz-bio { margin-top: 12px; font-size: 13.5px; }
+  .mz .mz-btns { grid-template-columns: 1fr 1fr 1fr 34px; margin-top: 14px; }
+  .mz .mz-btn { height: 34px; font-size: 13.5px; }
+  .mz .mz-ring { width: 64px; height: 64px; } .mz .mz-ring span { font-size: 12.5px; }
+  .mz .mz-stories { gap: 12px; margin-top: 18px; }
+  .mz .mz-tabs { margin-top: 10px; border-top: 0; }
+  .mz .mz-grid.mz-grid { gap: 2px; }
+  .mz .mz-hl { font-size: 12px; left: 7px; right: 5px; bottom: 7px; line-height: 1.25; letter-spacing: -0.05em; }
+  .mz .mz-badge { width: 46px; height: 46px; left: -8px; top: -14px; padding-bottom: 6px; }
+  .mz .mz-badge b { font-size: 11px; }
+  .mz .mz-badge i { width: 28px; height: 5.5px; margin-bottom: 1px; }
+  .mz .mz-obj { width: 60%; top: 15%; }
+  .mz .mz-pin { width: 14px; height: 14px; top: 6px; right: 6px; }
+  .mz-tile:not(:has(.mz-pin))::before { top: 7px; right: 7px; width: 10px; height: 10px; border-width: 1.6px; border-radius: 3px; box-shadow: 2.5px -2.5px 0 -1px #fff; }
+}
