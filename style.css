@@ -3446,3 +3446,27 @@ html .st-tabs.pt-tabs { background: #111111; -webkit-backdrop-filter: none; back
   .top-search-sp { display: block; height: 58px; background: #111111; }
   html.ts-off .topbar .top-search { opacity: 0; transform: translateY(-10px); visibility: hidden; pointer-events: none; }
 }
+/* 가이드: 아파트 브랜드 비교표 — 폰에서는 옆으로 밀어 보고, 건설사 칸은 고정 */
+.gd .tbl { -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--line); }
+.gd .tbl table { margin: 0; }
+.gd-brand table, .gd-money table { min-width: 640px; font-size: 14px; }
+.gd-brand th, .gd-brand td, .gd-money th, .gd-money td { text-align: left; vertical-align: top; padding: 10px 12px; }
+.gd-brand th { background: var(--card); color: var(--text); font-weight: 700; }
+.gd-brand td:first-child { width: 36px; text-align: center; font-weight: 800; color: var(--blue); }
+.gd-brand td:nth-child(2) { position: sticky; left: 0; z-index: 1; background: var(--bg); font-weight: 700; box-shadow: 1px 0 0 var(--line); }
+.gd-brand th:nth-child(2) { position: sticky; left: 0; z-index: 2; box-shadow: 1px 0 0 var(--line); }
+.gd-brand td:nth-child(4) { font-weight: 700; color: var(--blue); }
+.gd-brand td.no { font-weight: 500; color: var(--muted); }
+.gd-brand td:last-child, .gd-money td:nth-child(2) { white-space: normal; min-width: 240px; line-height: 1.5; color: var(--muted); }
+.gd-money th { background: var(--card); color: var(--text); font-weight: 700; }
+.gd-money td:last-child { font-weight: 700; white-space: normal; min-width: 160px; }
+.gd-tip { margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+@media (min-width: 760px) { .gd-tip { display: none; } }
+.gd-steps { padding-left: 22px; } .gd-steps li { margin: 10px 0; line-height: 1.7; }
+.gd-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; padding: 0; list-style: none; }
+.gd-links a { display: block; padding: 12px 14px; border-radius: 12px; background: var(--card); color: var(--text); font-weight: 600; }
+.gd-links a::after { content: ' ›'; color: var(--blue); }
+.gd-links a:hover { text-decoration: none; background: var(--soft-hover); }
+.gd-src { padding-left: 18px; font-size: 13.5px; color: var(--muted); } .gd-src li { margin: 4px 0; }
+@media (min-width: 760px) { .gd-brand table, .gd-money table { min-width: 0; } .gd-brand td:last-child, .gd-money td:nth-child(2) { min-width: 0; } .gd-brand td:nth-child(2), .gd-brand th:nth-child(2) { position: static; box-shadow: none; } } /* PC는 표가 한 화면에 다 들어가게 */
+@media (min-width: 760px) { .gd-brand td:nth-child(2) { background: transparent; } }
