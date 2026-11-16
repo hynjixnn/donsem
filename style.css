@@ -3439,3 +3439,10 @@ html .topbar .gnav a, html .topbar .gnav button { font-size: 15px; font-weight: 
 html .st-tabs a { font-weight: 700; }
 @media (max-width: 640px) { .top-search { padding: 0 16px 10px; } html .topbar .top-search button { height: 42px; font-size: 15px; } }
 html .st-tabs.pt-tabs { background: #111111; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 0; } /* 주제 메뉴도 검은 줄 (앞의 유리 설정보다 우선) */
+/* 검색창 줄: 컴퓨터에서만, 맨 위에서만 보이고 내리면 사라져요 (무신사처럼). 휴대폰은 그대로 */
+.top-search-sp { display: none; }
+@media (min-width: 641px) {
+  html .topbar .top-search { position: absolute; left: 0; right: 0; top: 100%; max-width: none; padding-left: max(20px, calc(50% - 492px)); padding-right: max(20px, calc(50% - 492px)); background: #111111; transition: opacity .2s, transform .2s, visibility .2s; }
+  .top-search-sp { display: block; height: 58px; background: #111111; }
+  html.ts-off .topbar .top-search { opacity: 0; transform: translateY(-10px); visibility: hidden; pointer-events: none; }
+}

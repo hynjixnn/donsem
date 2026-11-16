@@ -2543,6 +2543,11 @@ const MENU = [
   row.className = 'top-search';
   row.innerHTML = `<button type="button" data-g="search" aria-label="계산기 검색" aria-expanded="false"><span class="ts-ph">${PH[0]}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>`;
   top.append(row);
+  // 무신사처럼: 검색창 줄은 맨 위에서만 보이고, 내리면 사라졌다가 맨 위로 오면 다시 나와요.
+  // 검색창은 메뉴바 아래에 '떠' 있고, 같은 높이의 검은 빈칸이 화면과 함께 올라가서 화면이 덜컹거리지 않아요
+  const sp = document.createElement('div'); sp.className = 'top-search-sp'; sp.setAttribute('aria-hidden', 'true'); top.after(sp);
+  { let on = null; const chk = () => { const c = window.scrollY > 24; if (c !== on) { on = c; document.documentElement.classList.toggle('ts-off', c); } };
+    addEventListener('scroll', chk, { passive: true }); chk(); }
   { let i = 0; const ph = row.querySelector('.ts-ph'); setInterval(() => { if (document.hidden) return; ph.classList.add('out'); setTimeout(() => { i = (i + 1) % PH.length; ph.textContent = PH[i]; ph.classList.remove('out'); }, 250); }, 3500); }
   const setTopH = () => document.documentElement.style.setProperty('--topbar-h', top.offsetHeight + 'px');
   setTopH(); addEventListener('resize', setTopH);
