@@ -3470,3 +3470,11 @@ html .st-tabs.pt-tabs { background: #111111; -webkit-backdrop-filter: none; back
 .gd-src { padding-left: 18px; font-size: 13.5px; color: var(--muted); } .gd-src li { margin: 4px 0; }
 @media (min-width: 760px) { .gd-brand table, .gd-money table { min-width: 0; } .gd-brand td:last-child, .gd-money td:nth-child(2) { min-width: 0; } .gd-brand td:nth-child(2), .gd-brand th:nth-child(2) { position: static; box-shadow: none; } } /* PC는 표가 한 화면에 다 들어가게 */
 @media (min-width: 760px) { .gd-brand td:nth-child(2) { background: transparent; } }
+/* 홈: 돈 가이드 모음 */
+.home-guide { margin-top: 18px; }
+.hg-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.hg-head h2 { margin: 0; font-size: 22px; }
+.hg-head a { font-size: 14px; color: var(--muted); }
+.home-guide .gd-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 14px; }
+/* 휴대폰: 아래 탭바 위에 떠 있는 「+ 기록」 버튼이 페이지 맨 아래 글자·버튼을 가리지 않게 여백을 더 줘요 */
+@media (max-width: 640px) { body.has-tabbar:has(.fab-add) { padding-bottom: calc(160px + env(safe-area-inset-bottom)); } }

@@ -1623,12 +1623,12 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   const HOME = ['/', '/quiz/', '/money-type/', '/no-spend/']; // 퀴즈·돈BTI·무지출은 홈에서 들어가는 곳이라 '홈'이 켜져요 (예전엔 '계산기'가 켜졌어요)
   const ESTATE = ['/real-estate/', '/acquisition-tax/', '/brokerage-fee/', '/jeonse-check/', '/subscription-score/'];
   const SHOP = ['/shop/', '/shop/deals/', '/market/', '/shop/budget-template/', '/shop/year-end-kit/', '/shop/starter-kit/', '/shop/pay/', '/terms/', '/refund/'];
-  const active = HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : ESTATE.includes(path) ? 'estate' : SHOP.includes(path) ? 'shop' : 'calc';
+  const active = path.startsWith('/guide/') ? 'guide' : HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : ESTATE.includes(path) ? 'estate' : SHOP.includes(path) ? 'shop' : 'calc';
   const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const tabs = [
     ['home', '/', '홈', ic('<path d="M4 10.4 12 4l8 6.4v8.6a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z"/><path d="M9.5 16.2h5"/>')], // 크림처럼 집 모양 (가운데 짧은 선은 문)
     ['calc', '/calculators/', '계산기', ic('<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/>')],
-    ['shop', '/shop/', '쇼핑', ic('<path d="M5.8 8h12.4l1.2 12.5H4.6z"/><path d="M9 10.8V7a3 3 0 0 1 6 0v3.8"/>')], // 가운데 쇼핑 (토스처럼). 마이는 오른쪽 위 사람 아이콘으로 옮겼어요
+    ['guide', '/guide/', '가이드', ic('<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/><path d="M6.5 8h2.5M6.5 11h2.5M15 8h2.5M15 11h2.5"/>')], // 가운데 돈 가이드 (펼친 책). 쇼핑은 위 메뉴 맨 뒤와 아래쪽 안내로 옮겼어요
     ['estate', '/real-estate/', '부동산', ic('<path d="M3 20.5h18"/><path d="M5 20.5v-9.5l4-1.8"/><path d="M9 20.5V5.2L15 3v17.5"/><path d="M15 9l4 1.6v9.9"/><path d="M11.4 7.6h1.2M11.4 10.8h1.2M11.4 14h1.2M11.4 17.2h1.2M6.6 14.2h.8M6.6 17.2h.8M16.6 13.4h.8M16.6 16.6h.8"/>')], // 아파트실거래가 앱처럼 아파트 건물
     ['money', '/budget/', '캘린더', ic('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>')], // 누르면 가계부 달력이 맨 위에 보여요
   ];
@@ -2531,7 +2531,7 @@ const MENU = [
   const gnav = document.createElement('div');
   gnav.className = 'gnav'; gnav.setAttribute('role', 'navigation'); gnav.setAttribute('aria-label', '주요 메뉴');
   const onTab = (document.querySelector('.tabbar a.on') || {}).pathname; // 위쪽 메뉴는 아래 독바와 같은 4칸: 돈셈의 핵심 기능만 (홈은 로고를 누르면 가요)
-  gnav.innerHTML = [['/calculators/', '계산기'], ['/shop/', '쇼핑'], ['/real-estate/', '부동산'], ['/budget/', '캘린더']].map(([h, t]) => `<a class="gnav-shop${h === onTab ? ' here' : ''}" href="${h}"${h === onTab ? ' aria-current="page"' : ''}>${t}</a>`).join('');
+  gnav.innerHTML = [['/calculators/', '계산기'], ['/guide/', '돈 가이드'], ['/real-estate/', '부동산'], ['/budget/', '캘린더'], ['/shop/', '쇼핑']].map(([h, t]) => `<a class="gnav-shop${h === onTab || (h === '/shop/' && /^\/(shop|market)\//.test(location.pathname)) ? ' here' : ''}" href="${h}"${h === onTab ? ' aria-current="page"' : ''}>${t}</a>`).join('');
   inner.querySelector('.brand').after(gnav);
   const sBtn = document.createElement('button');
   sBtn.type = 'button'; sBtn.className = 'search-btn'; sBtn.dataset.g = 'search'; sBtn.setAttribute('aria-label', '계산기 검색'); sBtn.setAttribute('aria-expanded', 'false');
@@ -4310,4 +4310,22 @@ const GUIDE_FOR = {
   if (!fromHash()) show(links[0].dataset.t); // 아래 탭에서 들어오면 늘 첫 주제부터
   // 홈에서 나중에 생기는 칸도 지금 고른 주제에 맞춰 보이거나 숨겨요
   if (HOME && wrap) new MutationObserver(() => { tagHome(); wrap.querySelectorAll(':scope > [data-tab]').forEach(s => s.classList.toggle('pt-off', s.dataset.tab !== cur)); }).observe(wrap, { childList: true });
+})();
+
+// ── 화면 점검 반영: 아래쪽 링크 정리 + 홈 첫 화면에 '복잡한 돈 계산, 숫자 몇 개면 끝.'을 먼저 ──
+(() => {
+  // 1) 아래쪽(푸터): '개인정보처리방침'이 두 번 나오지 않게 하나만 남기고, '사이트 소개' 옆에 '돈 가이드'를 붙여요
+  const tidy = () => {
+    const ps = [...document.querySelectorAll('a[href="/privacy/"]')].filter(a => a.closest('footer') || a.closest('[class*="foot"]'));
+    if (ps.length > 1) { const a = ps[0], prev = a.previousSibling; if (prev && prev.nodeType === 3) prev.textContent = prev.textContent.replace(/\s*·\s*$/, ''); a.remove(); }
+    const about = document.querySelector('footer a[href="/about/"]');
+    if (about && !document.querySelector('footer a[href="/guide/"]')) about.insertAdjacentHTML('afterend', ' · <a href="/guide/" style="color:inherit">돈 가이드</a>');
+  };
+  tidy(); setTimeout(tidy, 800); addEventListener('load', tidy);
+  // 2) 홈: 큰 소개(히어로)와 계산기 미리보기를 맨 위로. 마감 알림·출석·셈이 카드는 그 아래로 내려가요
+  if (!document.body.classList.contains('home')) return;
+  const wrap = document.querySelector('.wrap'), hero = wrap && wrap.querySelector(':scope > .hero');
+  if (!hero) return;
+  const keep = () => { const first = [...wrap.children].find(c => !/^(NAV|SCRIPT)$/.test(c.tagName)); if (first && first !== hero) wrap.insertBefore(hero, first); };
+  keep(); new MutationObserver(keep).observe(wrap, { childList: true });
 })();
