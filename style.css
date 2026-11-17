@@ -3665,3 +3665,13 @@ h1, h2, h3, .card h2, .semi-head b, .cd-t, .ye-home b, .sc-card h2 { letter-spac
 .tl-hero { height: 150px; }
 @media (min-width: 760px) { .tl-hero { height: 200px; } }
 .tl-n { width: 24px; white-space: nowrap; letter-spacing: -0.04em; }
+/* 매거진 주제 메뉴: 주제를 고르면 그 주제 기사만 (번호 다시 매기고, 한 줄 인용은 숨겨 더 촘촘하게) */
+.mz-wrap .tl[data-tab]:not([data-tab="all"]) { margin-top: 18px; }
+.tl-f .tl-list .tl-row .tl-q { display: none; }
+.tl-f .tl-list .tl-row .tl-body { padding-bottom: 14px; }
+.tl-list .tl-top .tl-th { display: none; }
+.tl-f .tl-top .tl-hero { display: none; }
+.tl-f .tl-list .tl-top .tl-th { display: block; }
+.tl-f .tl-top .tl-tx b { font-size: inherit; }
+@media (min-width: 760px) { .tl-f .tl-top { grid-column: auto; } }
+.mz-wrap .tl[data-tab="all"] { margin-top: 18px; }
