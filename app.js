@@ -2531,7 +2531,8 @@ const MENU = [
   const gnav = document.createElement('div');
   gnav.className = 'gnav'; gnav.setAttribute('role', 'navigation'); gnav.setAttribute('aria-label', '주요 메뉴');
   const onTab = (document.querySelector('.tabbar a.on') || {}).pathname; // 위쪽 메뉴는 아래 독바와 같은 4칸: 돈셈의 핵심 기능만 (홈은 로고를 누르면 가요)
-  gnav.innerHTML = [['/calculators/', '계산기'], ['/guide/', '매거진'], ['/real-estate/', '부동산'], ['/budget/', '캘린더'], ['/shop/', '쇼핑']].map(([h, t]) => `<a class="gnav-shop${h === onTab || (h === '/shop/' && /^\/(shop|market)\//.test(location.pathname)) ? ' here' : ''}" href="${h}"${h === onTab ? ' aria-current="page"' : ''}>${t}</a>`).join('');
+  // 크림·무신사처럼 위 메뉴는 영어 대문자 (읽어 주는 기능에는 한글 이름을 알려 줘요)
+  gnav.innerHTML = [['/calculators/', 'CALCULATOR', '계산기'], ['/guide/', 'MAGAZINE', '매거진'], ['/real-estate/', 'REAL ESTATE', '부동산'], ['/budget/', 'CALENDAR', '캘린더'], ['/shop/', 'SHOP', '쇼핑']].map(([h, t, ko]) => `<a class="gnav-shop gnav-en${h === onTab || (h === '/shop/' && /^\/(shop|market)\//.test(location.pathname)) ? ' here' : ''}" href="${h}" aria-label="${ko}"${h === onTab ? ' aria-current="page"' : ''}><b lang="en">${t}</b><small aria-hidden="true">${ko}</small></a>`).join('');
   inner.querySelector('.brand').after(gnav);
   const sBtn = document.createElement('button');
   sBtn.type = 'button'; sBtn.className = 'search-btn'; sBtn.dataset.g = 'search'; sBtn.setAttribute('aria-label', '계산기 검색'); sBtn.setAttribute('aria-expanded', 'false');
