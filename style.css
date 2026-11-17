@@ -3807,3 +3807,16 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 @media (max-width: 640px) { .mz-cover:has(.mz-photo) { height: 200px; } }
 .tl-th:has(.mz-photo), .tl-hero:has(.mz-photo) { background: #222; }
 .mz-cover.ph-wait .mz-blur, .mz-cover.ph-wait .mz-obj { opacity: 0; }
+/* 기사 아래 「함께 보면 좋은 기사」: 사진 썸네일 + 주제 + 제목 (PC 2열) */
+.gd-rel ul { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; line-height: 1.4; }
+@media (min-width: 760px) { .gd-rel ul { grid-template-columns: 1fr 1fr; } }
+.gd-rel li a { display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: 14px; background: rgba(120, 120, 128, .08); color: inherit; text-decoration: none; }
+.gd-rel li a:hover { background: rgba(120, 120, 128, .14); }
+.gr-th { flex: none; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; background: #ddd; }
+.gr-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gr-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gr-tx em { font-style: normal; font-size: 12px; font-weight: 700; color: #7040A1; }
+.gr-tx b { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.gr-all { display: block; margin-top: 12px; text-align: center; font-weight: 700; color: #7040A1; text-decoration: none; }
+:root[data-theme="dark"] .gr-tx em, :root[data-theme="dark"] .gr-all { color: #B69AD8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gr-tx em, :root:not([data-theme="light"]) .gr-all { color: #B69AD8; } }

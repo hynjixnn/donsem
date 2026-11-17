@@ -4156,6 +4156,23 @@ const GUIDE_FOR = {
   im.src = `/img/mag/${m[1]}.webp`;
 })();
 
+// ── 매거진 기사 아래 「함께 보면 좋은 기사」: 같은 주제 4개 + 새 기사 2개를 사진과 함께 (/guide/list.json, 기사가 늘어도 자동으로 최신) ──
+(() => {
+  const sec = document.querySelector('.gd-more'), m = location.pathname.match(/^\/guide\/([a-z0-9-]+)\/$/);
+  if (!sec || !m) return;
+  fetch('/guide/list.json').then(r => r.ok ? r.json() : null).then(L => {
+    if (!Array.isArray(L) || !L.length) return;
+    const me = L.findIndex(a => a.s === m[1]), cat = me >= 0 ? L[me].c : '';
+    const same = L.map((a, i) => [a, Math.abs(i - me)]).filter(([a]) => a.c === cat && a.s !== m[1]).sort((x, y) => x[1] - y[1]).slice(0, 4).map(([a]) => a);
+    const fresh = L.slice(3).filter(a => a.s !== m[1] && !same.includes(a)).slice(0, 2); // 맨 앞 3개는 고정 기사라서 그다음부터가 최신
+    const NAME = { tax: '연말정산', job: '월급 이야기', save: '모으기', home: '집' };
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const li = (a, tag) => `<li><a href="/guide/${a.s}/"><span class="gr-th"><img src="/img/mag/${a.s}.webp" alt="" loading="lazy" onerror="this.remove()"></span><span class="gr-tx"><em>${tag}</em><b>${esc(a.t)}</b></span></a></li>`;
+    sec.classList.add('gd-rel');
+    sec.innerHTML = `<h2>함께 보면 좋은 기사</h2><ul>${same.map(a => li(a, NAME[a.c] || '매거진')).join('')}${fresh.map(a => li(a, 'NEW · ' + (NAME[a.c] || '매거진'))).join('')}</ul><a class="gr-all" href="/guide/#all">매거진 기사 모두 보기 ›</a>`;
+  }).catch(() => {});
+})();
+
 // ── 사용방법: 홈 위쪽 버튼을 누르면 처음 온 사람에게 돈셈 쓰는 법을 한 장씩 보여 줘요 (?how=1 로도 열려요) ──
 (() => {
   if (!document.body.classList.contains('home')) return;
