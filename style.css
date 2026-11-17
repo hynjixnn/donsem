@@ -3675,3 +3675,37 @@ h1, h2, h3, .card h2, .semi-head b, .cd-t, .ye-home b, .sc-card h2 { letter-spac
 .tl-f .tl-top .tl-tx b { font-size: inherit; }
 @media (min-width: 760px) { .tl-f .tl-top { grid-column: auto; } }
 .mz-wrap .tl[data-tab="all"] { margin-top: 18px; }
+/* 매거진 「용어」·「이번 달」 칸 */
+.mz-x { margin-top: 18px; }
+.wd-search { display: flex; align-items: center; gap: 8px; margin: 14px 0 4px; padding: 0 14px; height: 46px; border-radius: 12px; background: rgba(120, 120, 128, .1); color: var(--muted); }
+.wd-search svg { width: 18px; height: 18px; flex: none; }
+.wd-search input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 15px; color: var(--text); outline: none; }
+.wd-cat { margin: 22px 0 8px; font-size: 15px; font-weight: 800; color: var(--muted); }
+.wd-grid { display: grid; gap: 8px; }
+@media (min-width: 760px) { .wd-grid { grid-template-columns: 1fr 1fr; } }
+.wd-card { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 14px; background: rgba(120, 120, 128, .08); color: inherit; text-decoration: none; }
+.wd-card b { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; color: #7040A1; }
+.wd-card span { font-size: 14px; line-height: 1.55; color: var(--text); }
+.wd-card em { margin-top: 2px; font-style: normal; font-size: 12px; color: var(--muted); }
+.wd-card[hidden], .wd-grid[hidden], .wd-cat[hidden], .ck-row[hidden] { display: none; }
+.wd-none { margin: 18px 0; text-align: center; color: var(--muted); }
+.ck-list { display: grid; gap: 8px; margin-top: 14px; }
+@media (min-width: 760px) { .ck-list { grid-template-columns: 1fr 1fr; } }
+.ck-row { display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: 14px; background: rgba(120, 120, 128, .08); color: inherit; text-decoration: none; }
+.ck-dd { flex: none; min-width: 56px; padding: 6px 8px; border-radius: 10px; background: #111; color: #fff; font-family: 'Saira', sans-serif; font-weight: 800; font-size: 14px; text-align: center; }
+.ck-soon .ck-dd { background: #e5484d; }
+.ck-past { opacity: .5; }
+.ck-tx { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ck-tx b { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+.ck-tx span { font-size: 14px; line-height: 1.55; color: var(--muted); }
+.ck-tx em { font-style: normal; font-size: 12px; font-weight: 700; color: #7040A1; }
+.ck-cal { display: block; margin: 14px 0 0; padding: 14px; border-radius: 12px; text-align: center; background: #7040A1; color: #fff; font-weight: 700; text-decoration: none; }
+html[data-theme="dark"] .wd-card b, html[data-theme="dark"] .ck-tx em { color: #B69AD8; }
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .wd-card b, html:not([data-theme="light"]) .ck-tx em { color: #B69AD8; } }
+/* 매거진 주제 메뉴는 8개라 폰에서 옆으로 밀어서 봐요 */
+.pt-tabs[data-scroll] { overflow-x: auto; overflow-y: hidden; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+@media (max-width: 640px) { .pt-tabs[data-scroll] { gap: 16px; padding-right: 20px; } }
+:root[data-theme="dark"] .ck-dd { background: #2c2c30; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ck-dd { background: #2c2c30; } }
+:root[data-theme="dark"] .ck-soon .ck-dd { background: #e5484d; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ck-soon .ck-dd { background: #e5484d; } }
