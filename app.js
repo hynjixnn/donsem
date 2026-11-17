@@ -4106,7 +4106,7 @@ const GUIDE_FOR = {
   const a = document.createElement('a'); a.className = 'my-btn' + (location.pathname === '/my/' ? ' on' : ''); a.href = '/my/'; a.setAttribute('aria-label', '마이');
   a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>';
   const theme = right.querySelector('.theme-btn'); theme ? theme.before(a) : right.append(a);
-  if (location.pathname.startsWith('/shop/')) document.querySelectorAll('.gnav .here, .gnav-chips .here').forEach(b => b.classList.remove('here')); /* 쇼핑 안에서는 '돈 관리'가 켜지지 않게 */
+  if (location.pathname.startsWith('/shop/')) document.querySelectorAll('.gnav .here:not([href="/shop/"]), .gnav-chips .here').forEach(b => b.classList.remove('here')); /* 쇼핑 안에서는 '돈 관리'가 켜지지 않게 */
   const g = document.querySelector('.gnav');
 })();
 
