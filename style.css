@@ -3784,3 +3784,17 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 .ph-wrap:hover .ph-arrow, .ph-arrow:focus-visible { opacity: 1; }
 @media (max-width: 760px) { .ph-arrow { display: none; } .ph-count { right: 26px; bottom: 18px; } }
 .ph-hero .ph-tx > span { max-width: calc(100% - 84px); }
+/* 페이지 표시: PC는 「1–3 / 20」 범위로, 마지막이면 ↻ 표시 + 아래 얇은 진행 막대로 어디쯤인지 한눈에 */
+.ph-count i { font-style: normal; margin-left: 4px; }
+.ph-count.end svg { transform: rotate(0); }
+.ph-count.end::after { content: '처음으로'; margin-left: 6px; font: 700 12px/1 -apple-system, 'Pretendard', sans-serif; letter-spacing: 0; color: #fff; }
+.ph-count.end svg { display: none; }
+.ph-dots { position: relative; height: 3px; margin: 12px auto 0; max-width: 240px; border-radius: 3px; background: color-mix(in srgb, var(--text) 12%, transparent); overflow: hidden; }
+.ph-dots span { position: absolute; top: 0; bottom: 0; left: 0; width: 15%; border-radius: 3px; background: #7040A1; transition: left .35s cubic-bezier(.22, 1, .36, 1), width .35s; }
+:root[data-theme="dark"] .ph-dots span { background: #B69AD8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ph-dots span { background: #B69AD8; } }
+@media (max-width: 760px) { .ph-dots { max-width: 160px; margin-top: 10px; } }
+.ph-wrap .ph-count { bottom: 31px; }
+@media (max-width: 760px) { .ph-wrap .ph-count { bottom: 31px; } }
+.home .hero.has-ph { grid-template-columns: minmax(0, 1fr); }
+.ph-wrap { min-width: 0; }
