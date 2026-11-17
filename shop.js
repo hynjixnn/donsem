@@ -6,7 +6,8 @@
   const PRODUCTS = { budget: { name: '돈셈 가계부·재테크 엑셀 템플릿', price: 9900, img: '/shop/sheet-summary.png' }, yearend: { name: '돈셈 연말정산 준비 키트', price: 4900, img: '/shop/kit-yearend-card.png' }, starter: { name: '돈셈 사회초년생 돈 관리 키트', price: 6900, img: '/shop/kit-starter-fixed.png' } };
   const LIVE = CLIENT_KEY.startsWith('live_');
   const q = new URLSearchParams(location.search);
-  const open = true; /* 토스 심사 때 결제 화면까지 가는 길을 보여야 해서 열어 둬요 (진짜 키 전에는 테스트 결제라 돈이 오가지 않아요) */
+  /* 2026-11-18: 상품을 새로 만드는 동안 판매를 잠시 쉬어요. 이미 산 분의 「다시 받기」와 결제 중이던 승인(s=ok)은 그대로 돼요. 다시 열 때 true */
+  const open = false;
   const $ = id => document.getElementById(id);
   const SK = 'donsem:orders';
   const load = () => { try { return JSON.parse(localStorage.getItem(SK)) || []; } catch (e) { return []; } };
@@ -21,8 +22,9 @@
   if (buy) {
     const note = $('shop-note');
     if (open && note) note.textContent = LIVE ? '카드·계좌이체·간편결제로 결제하고 바로 내려받아요.' : '지금은 테스트 결제만 돼요. 진짜 돈이 나가지 않아요.';
+    if (!open) { buy.disabled = true; buy.textContent = '새 버전 준비 중'; if (note) note.textContent = '더 쓸모 있게 새로 만들고 있어요. 지금은 판매를 잠시 쉬어요. 이미 산 분은 아래에서 다시 받을 수 있어요.'; }
     buy.addEventListener('click', () => {
-      if (!open) return say('결제를 준비하고 있어요. 곧 바로 구매할 수 있게 열어 드릴게요.');
+      if (!open) return say('더 좋은 버전을 만들고 있어서 지금은 판매를 잠시 쉬어요.');
       location.href = '/shop/pay/?p=' + (buy.dataset.product || 'budget');
     });
   }
