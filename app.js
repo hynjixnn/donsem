@@ -1555,6 +1555,7 @@ const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)'
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const INSTALL_KEY = 'donsem:install-dismissed';
 function installCard(html) {
+  return null; // 2026-11-17: 「돈셈을 앱처럼 쓰세요」 카드는 없앴어요 (사용방법 마지막 장에서 자세히 안내해요)
   if (standalone || store.get(INSTALL_KEY) || document.querySelector('.install')) return null;
   const anchor = document.querySelector('.hero') || document.querySelector('#budget, #assets'); // 첫 화면, 가계부, 내 자산에서만 보여 줘요
   if (!anchor) return null;
