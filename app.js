@@ -192,9 +192,29 @@ function wage() {
     (w < 15 ? `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">주 15시간 미만이라 주휴수당 없이 계산했어요.</p>` : '');
 }
 
-// ── 연봉 실수령액: 2026년 근로자 부담 4대보험료율 + 국세청 근로소득 간이세액표(/salary/table.js) ──
-// 국민연금 기준소득월액 상·하한은 2026.7 ~ 2027.6 기준, 장기요양은 건강보험료 × (0.9448% ÷ 7.19%)
-const INS_2026 = { pension: 0.0475, penMin: 410000, penMax: 6590000, health: 0.03595, care: 0.9448 / 7.19, job: 0.009 };
+// ── 해가 바뀌면 숫자도 저절로 바뀌어요: 2027년 1월 1일(한국 시간)부터 2027년 기준으로 계산해요 ──
+const Y27 = Date.now() >= Date.UTC(2026, 11, 31, 15); // 2027-01-01 00:00 KST
+const RULE_YEAR = Y27 ? 2027 : 2026;
+// 계산기 기본값으로 넣어 둔 2026년 최저시급(10,320원)도 2027년부터는 10,700원으로 바꿔 보여 줘요
+if (Y27) {
+  document.querySelectorAll('input[value="10,320"]').forEach(i => { if (i.value === '10,320') i.value = '10,700'; });
+  // 지난번에 넣어 둔 값이 2026년 최저시급 그대로면 한 번만 2027년 최저시급으로 바꿔 둬요
+  try {
+    if (!localStorage.getItem('donsem:mw27')) {
+      ['donsem:last:/wage/', 'donsem:last:/holiday-pay/'].forEach(k => { const v = localStorage.getItem(k); if (v) localStorage.setItem(k, v.replace(/10,320/g, '10,700').replace(/\b10320\b/g, '10700')); });
+      localStorage.setItem('donsem:mw27', '1');
+    }
+  } catch (e) {}
+}
+// ── 연봉 실수령액: 근로자 부담 4대보험료율 + 국세청 근로소득 간이세액표(/salary/table.js) ──
+// 국민연금 기준소득월액 상·하한은 2026.7 ~ 2027.6 기준 (41만 ~ 659만 원)
+// 2026년: 국민연금 9.5%의 절반 4.75%, 건강 7.19%의 절반 3.595%, 장기요양 = 건강보험료 × (0.9448% ÷ 7.19%), 고용 0.9%
+// 2027년: 국민연금 10%의 절반 5% (연금개혁), 건강 7.19% 동결, 장기요양 소득 대비 0.9994% (2026.10.30 장기요양위원회 의결), 고용 0.9% (1.0% 인상은 정부안이라 아직 미반영)
+const INS_Y26 = { pension: 0.0475, penMin: 410000, penMax: 6590000, health: 0.03595, care: 0.9448 / 7.19, job: 0.009 };
+const INS_Y27 = { pension: 0.05, penMin: 410000, penMax: 6590000, health: 0.03595, care: 0.9994 / 7.19, job: 0.009 };
+const INS_2026 = Y27 ? INS_Y27 : INS_Y26; // 지금 받는 월급에 쓰는 요율
+// 연말정산은 지난해 소득을 정산해요: 2027년 1~2월에 하는 연말정산도 2026년 요율로 계산해야 해요 (2027년 귀속은 2027년 가을에 바꾸기)
+const INS_YEAR_END = INS_Y26;
 const floor10 = n => Math.floor((n + 1e-6) / 10) * 10; // 2,800,000 × 0.009 = 25,199.99… 같은 소수점 오차를 막아요
 let taxRows;
 function tableTax(pay, fam) {
@@ -219,10 +239,10 @@ function tableTax(pay, fam) {
   if (pay <= 87000000) return base + 13394600 + (pay - 45000000) * 0.42;
   return base + 31034600 + (pay - 87000000) * 0.45;
 }
-function takeHome(month, free, fam, kids, rate = 1, relCut = 0) { // rate: 매달 떼는 소득세 비율 (80%·100%·120% 중 직원이 골라요)
+function takeHome(month, free, fam, kids, rate = 1, relCut = 0, I = INS_2026) { // rate: 매달 떼는 소득세 비율 (80%·100%·120% 중 직원이 골라요), I: 쓸 보험료율
   const pay = Math.max(0, month - free); // 세금·보험료는 비과세를 뺀 돈에만 붙어요
-  const pension = pay > 0 ? floor10(Math.min(Math.max(Math.floor(pay / 1000) * 1000, INS_2026.penMin), INS_2026.penMax) * INS_2026.pension) : 0;
-  const health = floor10(pay * INS_2026.health), care = floor10(health * INS_2026.care), job = floor10(pay * INS_2026.job);
+  const pension = pay > 0 ? floor10(Math.min(Math.max(Math.floor(pay / 1000) * 1000, I.penMin), I.penMax) * I.pension) : 0;
+  const health = floor10(pay * I.health), care = floor10(health * I.care), job = floor10(pay * I.job);
   const kidCut = kids <= 0 ? 0 : kids === 1 ? 20830 : 45830 + (kids - 2) * 33330;
   // relCut: 중소기업 취업자 감면율(0.9·0.7) — 원천징수 단계에서 줄여서 떼요. 1년 한도 200만 원이라 한 달에는 약 16.6만 원까지만 줄여요
   const before = Math.max(0, floor10((tableTax(pay, fam) - kidCut) * rate)), relief = relCut ? Math.min(floor10(before * relCut), Math.floor(2e6 / 12 / 10) * 10) : 0;
@@ -257,7 +277,7 @@ function salary() {
   }
   if (s.fam > s.famIn) note.push(`자녀도 부양가족에 들어가서 부양가족을 ${s.fam}명으로 계산했어요.`);
   out.innerHTML = `<div>한 달 실수령액</div><div class="big">${won(r.net)}</div>` +
-    rows([['세전 월급', won(s.month)], ['국민연금 (4.75%)', minus(r.pension)], ['건강보험 (3.595%)', minus(r.health)], ['장기요양보험', minus(r.care)],
+    rows([['세전 월급', won(s.month)], [`국민연금 (${Y27 ? '5' : '4.75'}%)`, minus(r.pension)], ['건강보험 (3.595%)', minus(r.health)], ['장기요양보험', minus(r.care)],
       ['고용보험 (0.9%)', minus(r.job)], [`근로소득세${s.rate !== 1 || s.cut ? ` (${[s.rate !== 1 ? Math.round(s.rate * 100) + '%' : '', s.cut ? `감면 ${Math.round(s.cut * 100)}%` : ''].filter(Boolean).join(' · ')})` : ''}`, was(r.before, r.tax) + minus(r.tax)],
       ['지방소득세', was(floor10(r.before * 0.1), r.local) + minus(r.local)], ...(r.relief ? [['감면으로 줄어든 세금 (한 달)', `<span class="save-amt">${won(r.relief + floor10(r.before * 0.1) - r.local)}</span>`]] : []), ['빠지는 돈 합계', minus(r.cut)], ['1년 실수령액', won(r.net * 12)]]) +
     note.map(t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`).join('');
@@ -275,9 +295,10 @@ function unemployment() {
   const end = new Date(endRaw + 'T00:00:00Z'), from = new Date(end);
   from.setUTCMonth(from.getUTCMonth() - 3);
   const avg = M * 3 / Math.round((end - from) / 86400000), raw = avg * 0.6;
-  const min = Math.round(MIN_WAGE_2026 * 0.8 * h), day = Math.floor(Math.min(Math.max(raw, min), JOB_MAX_2026)), n = jobDays();
+  // 하한액이 상한액보다 커지면(2027년 최저시급 10,700원 × 80% × 8시간 = 68,480원 > 68,100원) 법에 따라 하한액을 줘요
+  const min = Math.round(MIN_WAGE_2026 * 0.8 * h), day = Math.floor(Math.max(Math.min(raw, JOB_MAX_2026), min)), n = jobDays();
   const note = [];
-  if (raw > JOB_MAX_2026) note.push(`평균임금의 60%가 하루 상한액(${won(JOB_MAX_2026)})보다 많아서 상한액으로 계산했어요.`);
+  if (raw > JOB_MAX_2026 && min < JOB_MAX_2026) note.push(`평균임금의 60%가 하루 상한액(${won(JOB_MAX_2026)})보다 많아서 상한액으로 계산했어요.`);
   else if (raw < min) note.push(`평균임금의 60%가 하루 하한액(${won(min)})보다 적어서 하한액으로 계산했어요.`);
   if (seg('j_years') === '0') note.push('그만두기 전 18개월 동안 고용보험에 가입해 일한 날(유급일)이 180일 이상이어야 받을 수 있어요.');
   out.innerHTML = `<div>받을 수 있는 실업급여 (총액)</div><div class="big">${won(day * n)}</div>` +
@@ -290,7 +311,7 @@ const earnedDed = Y => Y <= 5e6 ? Y * 0.7 : Y <= 15e6 ? 3.5e6 + (Y - 5e6) * 0.4 
 const TAX_BRACKETS = [[14e6, 0.06, 0], [5e7, 0.15, 1.26e6], [8.8e7, 0.24, 5.76e6], [1.5e8, 0.35, 15.44e6], [3e8, 0.38, 19.94e6], [5e8, 0.40, 25.94e6], [1e9, 0.42, 35.94e6], [Infinity, 0.45, 65.94e6]];
 const incomeTaxOf = tb => { const [, r, d] = TAX_BRACKETS.find(b => tb <= b[0]); return Math.max(0, tb * r - d); };
 function yearEndTax(o) { // o: pay, fam, kids, credit, debit, pension, rent, med, ins
-  const Y = o.pay, month = Y / 12, ins4 = takeHome(month, 0, o.fam, o.kids);
+  const Y = o.pay, month = Y / 12, ins4 = takeHome(month, 0, o.fam, o.kids, 1, 0, INS_YEAR_END);
   const npsYear = ins4.pension * 12, hiYear = (ins4.health + ins4.care + ins4.job) * 12; // 국민연금, 건강·장기요양·고용보험료
   // 신용카드 등: 총급여의 25%를 넘게 쓴 돈부터, 신용카드를 먼저 채운 걸로 보고 신용 15% · 체크·현금 30%
   const th = Y * 0.25, overCredit = Math.max(0, o.credit - th), overDebit = Math.max(0, o.debit - Math.max(0, th - o.credit));
@@ -877,7 +898,7 @@ function lossRecovery() {
 function finIncomeCalc() {
   const I = val('fi_int'), D = val('fi_div'), F = I + D, mode = seg('fi_mode'), Y = mode === 'pay' ? val('fi_pay') : 0;
   // 직장인 과세표준 어림: 총급여 - 근로소득공제 - 본인 기본공제 - 4대보험료(국민연금 4.75%·건강 약 3.94%·고용 0.9%)
-  const B = Y ? Math.max(0, Y - earnedDed(Y) - 1.5e6 - Y * 0.0959) : 0, TH = 2e7;
+  const B = Y ? Math.max(0, Y - earnedDed(Y) - 1.5e6 - Y * (Y27 ? 0.0984 : 0.0959)) : 0, TH = 2e7; // 2027년은 국민연금 5%
   const withheld = Math.floor(F * 0.14), base = incomeTaxOf(B);
   let total = base + withheld, over = F > TH, gen = 0, cmp = 0;
   if (over) {
@@ -908,7 +929,7 @@ function finIncome() {
 const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, at_out: acquisitionTax, bf_out: brokerageFee, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome, up_out: usedPrice, dv_out: deliveryCost, fb_out: fanBudget, jc_out: jeonseCheck, sc_out: subscriptionScore, ll_out: loanLimit };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
-const MIN_WAGE_2026 = 10320; // 2026년 최저시급
+const MIN_WAGE_2026 = Y27 ? 10700 : 10320; // 그해 최저시급 (2026년 10,320원 → 2027년 10,700원, 최저임금위원회 고시)
 const insights = {
   os_out() {
     const o = overseasTaxCalc();
@@ -1035,8 +1056,9 @@ const insights = {
     const out = document.getElementById('w_out'), b = out.querySelector('.rows b');
     if (!b) return '';
     const hour = num(b.textContent), diff = hour - MIN_WAGE_2026;
-    if (Math.abs(diff) < 1) return '2026년 최저시급(10,320원)과 같아요.';
-    return diff > 0 ? `2026년 최저시급(10,320원)보다 시간당 ${won(diff)} 많아요.` : `2026년 최저시급(10,320원)보다 시간당 ${won(-diff)} 적어요. 근로계약 조건을 꼭 확인해 보세요.`;
+    const mw = `${RULE_YEAR}년 최저시급(${won(MIN_WAGE_2026)})`;
+    if (Math.abs(diff) < 1) return `${mw}과 같아요.`;
+    return diff > 0 ? `${mw}보다 시간당 ${won(diff)} 많아요.` : `${mw}보다 시간당 ${won(-diff)} 적어요. 근로계약 조건을 꼭 확인해 보세요.`;
   },
   m_out() {
     const s = salaryInput();
@@ -1347,7 +1369,7 @@ const GLOSSARY = [
   ['하루 근무시간', '근로계약서에 적힌 하루 일하는 시간(소정근로시간)이에요. 8시간보다 짧으면 하루 하한액도 그만큼 줄어요.'],
   ['총급여', '1년 동안 받은 돈 중 비과세(식대 등)를 뺀 금액이에요. 상여금도 들어가요. 원천징수영수증의 "총급여"와 같아요.'],
   ['이미 낸 소득세', '1년 동안 월급에서 미리 뗀 소득세 합계예요. 급여명세서의 소득세 × 12로 넣거나, 모르면 비워 두세요. 지방소득세는 빼고 넣어 주세요.'],
-  ['8세 이상 자녀 수', '기본공제를 받는 8세 이상(보통 20세 이하) 자녀예요. 첫째 25만 원, 둘째 30만 원, 셋째부터 40만 원씩 세금을 깎아 줘요.'],
+  ['9세 이상 자녀 수', '기본공제를 받는 9세 이상(보통 20세 이하) 자녀예요. 2026년 귀속부터 8세 → 9세로 올랐어요. 첫째 25만 원, 둘째 30만 원, 셋째부터 40만 원씩 세금을 깎아 줘요.'],
   ['체크카드', '체크카드와 현금영수증은 신용카드보다 공제율이 두 배(30%)예요. 대중교통, 전통시장은 여기에 넣어도 돼요.'],
   ['연금저축', '연금저축과 IRP에 넣은 돈은 1년에 900만 원까지 세금을 돌려받아요 (총급여 5,500만 원 이하 15%, 넘으면 12%).'],
   ['월세 낸 돈', '무주택 세대주가 총급여 8,000만 원 이하일 때 받아요. 주민등록 주소가 그 집이어야 해요.'],
@@ -2379,12 +2401,12 @@ function addTileIcon(t) {
 // ── 핵심 숫자: 계산기 카드에 그 계산기의 대표 숫자를 한 줄로 보여 줘요 (숫자는 각 계산기 안내와 같아요) ──
 (() => {
   const KEY_FACTS = {
-    '/salary/': '연봉 4천이면 월 <b>약 294만 원</b>',
+    '/salary/': Y27 ? '연봉 4천이면 월 <b>약 293만 원</b>' : '연봉 4천이면 월 <b>약 294만 원</b>',
     '/salary-rank/': '연봉 5천이면 <b>상위 30%</b>',
     '/year-end-tax/': '연금저축 넣으면 <b>최대 16.5%</b> 환급',
-    '/unemployment/': '하루 최대 <b>68,100원</b>',
+    '/unemployment/': Y27 ? '8시간 근무면 하루 <b>68,480원</b>' : '하루 최대 <b>68,100원</b>',
     '/loan/': '1억 · 연 4% · 30년이면 월 <b>약 47.7만 원</b>',
-    '/wage/': '2026 최저시급 <b>10,320원</b>',
+    '/wage/': Y27 ? '2027 최저시급 <b>10,700원</b>' : '2026 최저시급 <b>10,320원</b>',
     '/holiday-pay/': '주 <b>15시간</b> 이상이면 받아요',
     '/severance/': '1년 일하면 <b>약 한 달 치</b> 월급',
     '/savings/': '월 50만 · 연 3.5% · 1년이면 세후 <b>약 9.6만 원</b>',
