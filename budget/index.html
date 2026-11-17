@@ -227,6 +227,33 @@
     <div id="b-wrap"></div>
   </section>
 
+  <section data-tab="book" class="card sub-card" id="events">
+    <h2>경조사 장부</h2>
+    <p class="sub small">결혼식·장례식·돌잔치에 낸 돈과 받은 돈을 적어 두면, 「그때 얼마 했더라?」를 이름으로 바로 찾아요.</p>
+    <div id="ev-sum"></div>
+    <div class="field ev-q"><input id="ev-q" type="search" placeholder="이름으로 찾기" aria-label="경조사 이름으로 찾기"></div>
+    <div id="ev-list"></div>
+    <details class="pro-add" id="ev-form"><summary>＋ 경조사 적기</summary>
+      <div class="pro-tabs2 ev-dir"><button type="button" data-v="out" class="on">냈어요</button><button type="button" data-v="in">받았어요</button></div>
+      <div class="pro-in2"><label>이름<input id="ev-name" maxlength="20" placeholder="예: 김민수"></label><label>금액<input id="ev-amt" inputmode="numeric" placeholder="예: 100,000"></label>
+      <label>관계<select id="ev-rel"><option>친구</option><option>회사</option><option>가족·친척</option><option>지인</option></select></label><label>종류<select id="ev-kind"><option>결혼</option><option>장례</option><option>돌·생일</option><option>기타</option></select></label>
+      <label>날짜<input id="ev-date" type="date"></label><label>메모<input id="ev-memo" maxlength="30" placeholder="예: 대학 동기"></label></div>
+      <label class="ev-book" id="ev-book-wrap"><input type="checkbox" id="ev-book" checked> 가계부에도 「경조사」 지출로 적기</label>
+      <button type="button" class="btn fill" id="ev-add">적기</button>
+    </details>
+  </section>
+
+  <section data-tab="book" class="card sub-card" id="quick-url">
+    <h2>1초 기록 · 아이폰 단축어</h2>
+    <p class="sub small">아이폰 뒷면을 두 번 톡 치거나, 카드 결제 문자가 오면 돈셈 기록 창이 바로 열려요. 저장만 누르면 끝이에요.</p>
+    <ol class="qu-steps">
+      <li><b>뒷면 두 번 톡 → 기록 창</b><span>단축어 앱 › 「+」 › 동작 「URL 열기」에 아래 주소를 넣어요. 그다음 설정 › 손쉬운 사용 › 터치 › 뒷면 탭 › 「이중 탭」에서 만든 단축어를 골라요.</span><button type="button" class="btn line" data-copy="https://doncalculator.com/budget/?add=">기록 창 주소 복사</button></li>
+      <li><b>카드 문자 오면 → 자동으로 채워진 기록 창</b><span>단축어 앱 › 자동화 › 「메시지」 › 보낸 사람(카드사)·「승인」 포함 › 동작 「URL 열기」에 주소를 넣고, 주소 끝에 「단축어 입력(메시지 내용)」을 붙여요. 금액과 가게 이름을 알아서 읽어요. 취소 문자는 기록하지 않아요.</span><button type="button" class="btn line" data-copy="https://doncalculator.com/budget/?add=">문자용 주소 복사</button></li>
+      <li><b>안드로이드</b><span>크롬 › 이 페이지 › 「홈 화면에 추가」로 바로가기를 만들어요.</span></li>
+    </ol>
+    <p class="sub small">문자 내용은 이 기기 안에서만 읽어요. 돈셈 서버로 보내지 않아요.</p>
+  </section>
+
   <section data-tab="pro" class="card sub-card pro-sec" id="pro">
     <div class="pro-hero"><span class="pro-badge">PRO · 지금은 무료 체험</span><h2>기록이 쌓일수록<br>더 많이 알려 드려요</h2><p>가계부에 적은 기록으로 앞으로의 잔액, 숨은 반복 결제, 카드 실적, 한 달 결산을 정리해 드려요. 모든 계산은 이 기기 안에서만 해요.</p></div>
     <div class="pro-seg" id="pro-seg" role="tablist" aria-label="Pro 기능"></div>

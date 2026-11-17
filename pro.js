@@ -28,6 +28,7 @@
     ['fc', '앞으로의 돈', '<path d="M4 19V5M4 19h16M7 14l4-4 3 3 5-6"/>'],
     ['rp', '반복 결제', '<path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"/>'],
     ['cd', '카드 실적', '<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/>'],
+    ['ye', '연말정산', '<path d="M4 7l8-4 8 4-8 4zM4 12l8 4 8-4M4 17l8 4 8-4"/>'],
     ['rc', '한 장 결산', '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/>'],
   ];
   let tab = 'fc';
@@ -89,10 +90,24 @@
     if (!P.bal) { box.innerHTML = head + `<p class="pro-empty">지금 통장 잔액을 넣으면, 월급·고정지출·평소 쓰는 돈으로 <b>앞으로 90일 잔액</b>을 미리 그려 드려요.</p>` + example('fc'); bindFc(); return; }
     const pay = f.beforePay, warn = f.short ? (() => { const d = new Date(f.short), a = new Date(d); a.setDate(a.getDate() - 3); return `<div class="pro-alert">⚠ <b>${md(d)}</b>쯤 잔액이 모자라요. ${md(a)}까지 ${W(-f.low.v)} 정도를 마련해 두세요.</div>`; })() : `<div class="pro-ok">✓ 앞으로 90일 동안 잔액이 모자라는 날은 없어요.</div>`;
     const up = f.events.filter(e => !e.pay).slice(0, 6);
-    box.innerHTML = head + `<div class="pro-panel"><div class="pro-kpis"><div><span>${pay ? `월급 들어오기 직전 (${md(new Date(pay.d))})` : '30일 뒤'}</span><b>${W(pay ? pay.v : f.pts[29])}</b></div><div><span>가장 적을 때 (${md(new Date(f.low.d))})</span><b class="${f.low.v < 0 ? 'neg' : ''}">${W(f.low.v)}</b></div></div>${chart(f.pts, f.start)}<p class="pro-cap">오늘 → 90일 뒤 · 평소 지출 하루 약 ${W(f.daily)} · 월급 ${f.salary ? W(f.salary) : '미입력'}</p></div>` + warn +
+    box.innerHTML = head + budgetWarn(f) + `<div class="pro-panel"><div class="pro-kpis"><div><span>${pay ? `월급 들어오기 직전 (${md(new Date(pay.d))})` : '30일 뒤'}</span><b>${W(pay ? pay.v : f.pts[29])}</b></div><div><span>가장 적을 때 (${md(new Date(f.low.d))})</span><b class="${f.low.v < 0 ? 'neg' : ''}">${W(f.low.v)}</b></div></div>${chart(f.pts, f.start)}<p class="pro-cap">오늘 → 90일 뒤 · 평소 지출 하루 약 ${W(f.daily)} · 월급 ${f.salary ? W(f.salary) : '미입력'}</p></div>` + warn +
       (needPay ? `<p class="pro-note">💡 캘린더에서 월급날을 정하면 월급 들어오는 날도 반영돼요.</p>` : '') +
       `<h3 class="pro-h">다가오는 고정 지출</h3>` + (up.length ? `<ul class="pro-list">${up.map(e => `<li><span><b>${E(e.name)}</b><small>${md(new Date(e.d))}</small></span><em>−${W(e.amt)}</em></li>`).join('')}</ul>` : `<p class="pro-empty">고정지출 탭에 월세·통신비·구독을 적으면 날짜에 맞춰 빠져요.</p>`);
     bindFc();
+  }
+  // 예산 초과 예상: 이번 달 지금까지 쓴 돈 + 남은 날 평소 지출 + 아직 안 나간 고정지출
+  function budgetWarn(f) {
+    const b = f.b, B = +b.budget || 0; if (!B) return '';
+    const t0 = f.t0, ym = ymd(t0).slice(0, 7), last = new Date(t0.getFullYear(), t0.getMonth() + 1, 0).getDate(), left = last - t0.getDate();
+    const es = typeof withFixed === 'function' ? withFixed(b.entries) : b.entries;
+    const spent = es.filter(e => e && e.type === 'out' && e.date.startsWith(ym)).reduce((s, e) => s + (+e.amt || 0), 0);
+    const fxLeft = fixed().filter(x => (x.cycle !== 'year' || +x.month === t0.getMonth() + 1) && Math.min(+x.day, last) > t0.getDate()).reduce((s, x) => s + (+x.amt || 0), 0);
+    const proj = spent + f.daily * left + fxLeft, over = proj - B;
+    const room = B - spent - fxLeft;
+    if (over > 0 && room <= 0) return `<div class="pro-alert">⚠ 이번 달 예산 ${W(B)}을 이미 다 썼어요 (남은 고정지출 포함 ${W(-room)} 초과). 남은 ${left}일은 꼭 필요한 데만 써요.</div>`;
+    return over > 0
+      ? `<div class="pro-alert">⚠ 이대로면 이번 달 예산을 <b>${W(over)}</b> 넘을 것 같아요. 남은 ${left}일 동안 하루 <b>${W(room / Math.max(1, left))}</b> 안에서 쓰면 지킬 수 있어요.</div>`
+      : `<div class="pro-ok">✓ 이번 달 예산 ${W(B)} 중 월말에 약 <b>${W(-over)}</b>이 남을 것 같아요.</div>`;
   }
   function bindFc() {
     [['pro-bal', 'bal'], ['pro-sal', 'salary']].forEach(([id, k]) => { const el = $(id); if (!el) return; el.addEventListener('change', () => { const P = pro(); P[k] = num(el.value); wr(PK, P); drawFc(); }); el.addEventListener('input', () => { const n = num(el.value); el.value = n ? n.toLocaleString('ko-KR') : ''; }); });
@@ -158,6 +173,55 @@
     box.querySelectorAll('.pro-x').forEach(b => b.addEventListener('click', () => { const P2 = pro(); P2.cards.splice(+b.dataset.i, 1); wr(PK, P2); drawCd(); }));
   }
 
+  // ── 연말정산 준비: 올해 가계부 기록으로 카드 사용·의료비·월세를 모으고, 총급여만 넣으면 환급을 어림해요 ──
+  let taxReady = typeof window.TAX_TABLE === 'object';
+  function needTable(cb) { if (taxReady) return cb(); const s = document.createElement('script'); s.src = '/salary/table.js'; s.onload = () => { taxReady = true; cb(); }; s.onerror = cb; document.head.append(s); }
+  function yearData() {
+    const t0 = today(), y = t0.getFullYear(), es = real(budget().entries).filter(e => e.type === 'out' && e.date.startsWith(String(y)));
+    const fx = typeof withFixed === 'function' ? withFixed([]).filter(e => e.date.startsWith(String(y))) : [];
+    const all = es.concat(fx), sum = f => all.filter(f).reduce((s, e) => s + (+e.amt || 0), 0);
+    const isRent = e => /월세/.test(e.memo || ''), isMed = e => e.cat === '의료', notCard = e => isRent(e) || e.cat === '경조사' || /보험|세금|관리비|이체|저축/.test(e.memo || '');
+    const day = Math.max(1, Math.round((t0 - new Date(y, 0, 1)) / 864e5) + 1), k = 365 / day;
+    const card = sum(e => !notCard(e)), med = sum(isMed), rent = sum(isRent);
+    return { y, card, med, rent, k, pCard: Math.round(card * k), pMed: Math.round(med * k), pRent: Math.round(rent * k), dday: Math.round((new Date(y, 11, 31) - t0) / 864e5) };
+  }
+  function yeCalc(o) {
+    if (typeof yearEndTax !== 'function' || typeof tableTax !== 'function' || !taxReady) return null;
+    const r = yearEndTax(o), f10 = n => Math.floor((n + 1e-6) / 10) * 10, kidCut = o.kids <= 0 ? 0 : o.kids === 1 ? 20830 : 45830 + (o.kids - 2) * 33330;
+    const paid = Math.max(0, f10(tableTax(o.pay / 12, Math.min(o.fam, 11)) - kidCut)) * 12;
+    return { r, diff: (paid + f10(paid * 0.1)) - (r.tax + f10(r.tax * 0.1)) };
+  }
+  function drawYe() {
+    const P = pro(), Y = P.ye || {}, d = yearData();
+    const steps = [['12.31', '지출·납입 마감'], ['1.15', '간소화 열림'], ['1월 말', '회사 제출'], ['2월', '급여로 정산']];
+    const head = `<div class="pro-ye-top"><span class="pro-pill">${d.y}년 사용분</span><span class="pro-pill on">D-${d.dday}</span></div><div class="pro-steps">${steps.map((s, i) => `<div class="${i === 0 ? 'on' : ''}"><i></i><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`;
+    const inputs = `<div class="pro-in2"><label>총급여 (1년, 비과세 뺀 연봉)<input id="ye-pay" inputmode="numeric" value="${Y.pay ? (+Y.pay).toLocaleString('ko-KR') : ''}" placeholder="예: 40,000,000"></label><label>연금저축·IRP 올해 넣은 돈<input id="ye-pen" inputmode="numeric" value="${Y.pen ? (+Y.pen).toLocaleString('ko-KR') : ''}" placeholder="0"></label><label>기본공제 가족 수 (나 포함)<input id="ye-fam" inputmode="numeric" value="${Y.fam || 1}"></label><label>9세 이상 자녀 수<input id="ye-kids" inputmode="numeric" value="${Y.kids || 0}"></label></div><label class="pro-range">카드 사용 중 체크카드·현금 비율 <b id="ye-dbv">${Y.dr == null ? 30 : Y.dr}%</b><input id="ye-dr" type="range" min="0" max="100" step="10" value="${Y.dr == null ? 30 : Y.dr}"></label>`;
+    const ledger = `<h3 class="pro-h">가계부에서 찾은 올해 공제 재료</h3><ul class="pro-list"><li><span><b>카드로 쓴 돈 (추정)</b><small>지금까지 ${W(d.card)} → 연말까지 약 ${W(d.pCard)}</small></span></li><li><span><b>의료비</b><small>분류 「의료」 · 연말까지 약 ${W(d.pMed)}</small></span></li><li><span><b>월세</b><small>메모에 「월세」 · 연말까지 약 ${W(d.pRent)}</small></span></li></ul>`;
+    if (!Y.pay) { box.innerHTML = head + `<div class="pro-panel"><p class="pro-empty" style="margin:0"><b>총급여만 알려 주시면 시작해요.</b><br>지금까지 가계부 기록을 바탕으로 올해 챙길 공제와 예상 환급을 찾아 드려요.</p></div>` + inputs + ledger + marriage(); bindYe(); return; }
+    needTable(() => {
+      const fam = Math.max(1, +Y.fam || 1, (+Y.kids || 0) + 1), kids = +Y.kids || 0, dr = (Y.dr == null ? 30 : +Y.dr) / 100;
+      const base = { pay: +Y.pay, fam, kids, credit: Math.round(d.pCard * (1 - dr)), debit: Math.round(d.pCard * dr), pension: +Y.pen || 0, rent: d.pRent, med: d.pMed, ins: 0 };
+      const now = yeCalc(base);
+      if (!now) { box.innerHTML = head + inputs + `<p class="pro-empty">계산 준비 중이에요. 잠시 뒤 다시 열어 주세요.</p>`; bindYe(); return; }
+      const th = base.pay * 0.25, left = Math.max(0, th - d.pCard);
+      const pen = yeCalc(Object.assign({}, base, { pension: 9e6 })), penGain = pen ? pen.diff - now.diff : 0, penNeed = Math.max(0, 9e6 - base.pension);
+      const tips = [];
+      if (left > 0) tips.push(`<li><span><b>카드 공제 기준까지 ${W(left)} 남았어요</b><small>총급여의 25%(${W(th)})를 넘게 써야 카드 공제가 시작돼요. 그전엔 혜택 좋은 신용카드로</small></span></li>`);
+      else tips.push(`<li><span><b>카드 공제 기준을 넘었어요</b><small>12월 31일까지는 체크카드·현금영수증(30%)이 신용카드(15%)보다 2배 유리해요</small></span></li>`);
+      if (penNeed > 0 && penGain > 0) tips.push(`<li><span><b>연금저축·IRP ${W(penNeed)} 더 넣으면</b><small>12월 31일까지 넣으면 내년 2월에 이만큼 더 돌려받아요</small></span><em class="plus">+${W(penGain)}</em></li>`);
+      if (!d.rent) tips.push(`<li><span><b>월세를 산다면 꼭 챙기세요</b><small>무주택 세대주·총급여 8천만 원 이하면 낸 월세의 15~17%를 돌려받아요. 가계부 메모에 「월세」라고 적어 두세요</small></span></li>`);
+      box.innerHTML = head + `<div class="pro-panel"><div class="pro-kpis"><div><span>${now.diff >= 0 ? '예상 환급' : '예상 추가 납부'}</span><b class="${now.diff < 0 ? 'neg' : ''}">${W(Math.abs(now.diff))}</b></div><div><span>카드 공제 (어림)</span><b>${W(now.r.card)}</b></div></div><p class="pro-cap">가계부 기록을 연말까지 늘려 잡은 어림값이에요 (지방소득세 포함). 정확한 계산은 <a href="/year-end-tax/">연말정산 계산기</a>에서.</p></div>` +
+        `<h3 class="pro-h">올해 안에 챙길 것</h3><ul class="pro-list">${tips.join('')}</ul>` + marriage() + inputs + ledger;
+      bindYe();
+    });
+  }
+  function marriage() { return `<div class="pro-panel pro-tip"><b>12월 31일까지 혼인신고하면</b><span>2024~2026년에 혼인신고한 부부는 각각 결혼세액공제 50만 원(지방소득세 포함 55만 원)을 한 번 받아요.</span></div>`; }
+  function bindYe() {
+    const save = () => { const P = pro(); P.ye = { pay: num(($('ye-pay') || {}).value), pen: num(($('ye-pen') || {}).value), fam: Math.max(1, num(($('ye-fam') || {}).value) || 1), kids: num(($('ye-kids') || {}).value), dr: +(($('ye-dr') || {}).value || 30) }; wr(PK, P); drawYe(); };
+    ['ye-pay', 'ye-pen', 'ye-fam', 'ye-kids'].forEach(id => { const el = $(id); if (!el) return; el.addEventListener('change', save); if (id === 'ye-pay' || id === 'ye-pen') el.addEventListener('input', () => { const n = num(el.value); el.value = n ? n.toLocaleString('ko-KR') : ''; }); });
+    const r = $('ye-dr'); if (r) { r.addEventListener('input', () => { $('ye-dbv').textContent = r.value + '%'; }); r.addEventListener('change', save); }
+  }
+
   // ── 4. 한 장 결산: 이번 달을 영수증 한 장으로 + 소비 줄이면 1년에 얼마 남는지 ──
   let rcOff = 0;
   function monthStats(off) {
@@ -216,7 +280,7 @@
 
   function draw() {
     seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === tab)));
-    ({ fc: drawFc, rp: drawRp, cd: drawCd, rc: drawRc })[tab]();
+    ({ fc: drawFc, rp: drawRp, cd: drawCd, ye: drawYe, rc: drawRc })[tab]();
     ping(tab);
   }
   // Pro 탭을 처음 열 때 그려요
@@ -227,6 +291,64 @@
   window.addEventListener('hashchange', () => setTimeout(maybe, 50));
   window.addEventListener('storage', e => { if (drawn && /^donsem:(budget|fixed|pro)$/.test(e.key || '')) draw(); });
   setTimeout(maybe, 300);
+  // ── (무료) 경조사 장부: 주고받은 경조사비를 적어 두고 이름으로 찾아봐요 ──
+  const EK = 'donsem:events';
+  const evs = () => { const a = rd(EK); return Array.isArray(a) ? a : []; };
+  function drawEv() {
+    const L = $('ev-list'); if (!L) return;
+    const q = norm(($('ev-q') || {}).value || ''), all = evs().slice().sort((a, b) => b.date.localeCompare(a.date));
+    const list = q ? all.filter(e => norm(e.name).includes(q) || norm(e.memo).includes(q)) : all;
+    const give = all.filter(e => e.dir === 'out').reduce((s, e) => s + e.amt, 0), got = all.filter(e => e.dir === 'in').reduce((s, e) => s + e.amt, 0);
+    $('ev-sum').innerHTML = all.length ? `<div class="pro-kpis ev-kpis"><div><span>낸 돈 (${all.filter(e => e.dir === 'out').length}건)</span><b>${W(give)}</b></div><div><span>받은 돈 (${all.filter(e => e.dir === 'in').length}건)</span><b>${W(got)}</b></div></div>` : '';
+    L.innerHTML = list.length ? `<ul class="pro-list">${list.slice(0, 50).map(e => `<li><span><b>${E(e.name)} <small class="ev-tag">${E(e.rel)} · ${E(e.kind)}</small></b><small>${e.date.replace(/-/g, '.')}${e.memo ? ' · ' + E(e.memo) : ''}</small></span><em class="${e.dir === 'in' ? 'plus' : ''}">${e.dir === 'in' ? '+' : '−'}${W(e.amt)}</em><button type="button" class="pro-x ev-x" data-id="${E(e.id)}" aria-label="지우기">×</button></li>`).join('')}</ul>` : `<p class="pro-empty">${q ? '찾는 이름이 없어요.' : '아직 적은 경조사가 없어요. 결혼식·장례식·돌잔치에 낸 돈과 받은 돈을 적어 두면, 나중에 「그때 얼마 했더라?」를 바로 찾을 수 있어요.'}</p>`;
+    L.querySelectorAll('.ev-x').forEach(b => b.addEventListener('click', () => { wr(EK, evs().filter(e => e.id !== b.dataset.id)); drawEv(); }));
+  }
+  (() => {
+    const form = $('ev-form'); if (!form) return;
+    const dt = $('ev-date'); if (dt && !dt.value) dt.value = ymd(today());
+    let dir = 'out';
+    form.querySelectorAll('.ev-dir button').forEach(b => b.addEventListener('click', () => { dir = b.dataset.v; form.querySelectorAll('.ev-dir button').forEach(x => x.classList.toggle('on', x === b)); $('ev-book-wrap').hidden = dir !== 'out'; }));
+    const amt = $('ev-amt'); amt.addEventListener('input', () => { const n = num(amt.value); amt.value = n ? n.toLocaleString('ko-KR') : ''; });
+    $('ev-add').addEventListener('click', () => {
+      const name = $('ev-name').value.trim(), a = num(amt.value), date = $('ev-date').value || ymd(today());
+      if (!name || !a) return say('이름과 금액을 넣어 주세요.');
+      const e = { id: Date.now().toString(36), date, name: name.slice(0, 20), rel: $('ev-rel').value, kind: $('ev-kind').value, dir, amt: a, memo: $('ev-memo').value.trim().slice(0, 30) };
+      const all = evs(); all.push(e); wr(EK, all);
+      if (dir === 'out' && $('ev-book').checked) { const b = rd('donsem:budget') || { entries: [] }; if (!Array.isArray(b.entries)) b.entries = []; b.entries.push({ id: 'ev' + e.id, type: 'out', cat: '경조사', amt: a, date, memo: `${name} ${e.kind}`.slice(0, 40) }); wr('donsem:budget', b); }
+      $('ev-name').value = ''; amt.value = ''; $('ev-memo').value = '';
+      say(dir === 'out' && $('ev-book').checked ? '경조사 장부와 가계부에 같이 적었어요.' : '경조사 장부에 적었어요.'); drawEv();
+    });
+    const q = $('ev-q'); if (q) q.addEventListener('input', drawEv);
+    drawEv();
+  })();
+
+  // ── (무료) 1초 기록: /budget/?add=점심 12000 으로 열면 바로 기록 창이 떠요 (아이폰 단축어·뒷면 탭·카드 문자 자동화용) ──
+  function cleanSms(t) {
+    t = String(t || '').trim();
+    if (!/원/.test(t) || !/(승인|결제|사용|출금|체크)/.test(t)) return t;
+    if (/취소/.test(t)) return '';
+    const amt = (t.match(/([\d,]{3,})\s*원/) || [])[1]; if (!amt) return t;
+    const cand = t.split(/[\n\r]+|\s{2,}/).map(s => s.trim()).filter(s => s && !/(카드|승인|원|Web발신|웹발신|누적|잔액|일시불|할부|\d{1,2}\/\d{1,2}|\d{1,2}:\d{2}|\*)/.test(s));
+    const shop = (cand[cand.length - 1] || '').slice(0, 20);
+    return shop ? `${shop} ${amt.replace(/,/g, '')}` : `카드 ${amt.replace(/,/g, '')}`;
+  }
+  (() => {
+    const p = new URLSearchParams(location.search); if (!p.has('add')) return;
+    const text = cleanSms(p.get('add'));
+    history.replaceState(null, '', location.pathname + location.hash);
+    if (text === '') return say('취소 문자라서 기록하지 않았어요.');
+    let n = 0; const go = () => {
+      if (typeof window.openQuickAdd !== 'function') { if (n++ < 20) setTimeout(go, 150); return; }
+      window.openQuickAdd();
+      const ta = document.querySelector('.qa .qa-text'); if (!ta || !text) return;
+      ta.value = text; ta.dispatchEvent(new Event('input', { bubbles: true })); ping('url');
+    };
+    setTimeout(go, 200);
+  })();
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.copy; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => say('주소를 복사했어요. 단축어 「URL 열기」에 붙여 넣으세요.'), () => prompt('이 주소를 복사하세요', v));
+  }));
+
   const like = $('pro-like');
   if (like) like.addEventListener('click', () => { ping('like'); like.disabled = true; like.textContent = '고마워요! 의견이 잘 전해졌어요 💜'; });
 })();
