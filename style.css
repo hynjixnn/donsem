@@ -3899,7 +3899,6 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
   .hm-tabs a { position: relative; flex: none; display: flex; align-items: center; height: 46px; color: rgba(255, 255, 255, .55); font-size: 16px; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; text-decoration: none; }
   .hm-tabs a.on { color: #fff; font-weight: 800; }
   .hm-tabs a.on::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: #fff; }
-  .hm-tabs a.hl { color: #B69AD8; }
   /* 사진 배너: 4:5 → 1:1 로 낮춰서 아래 바로가기가 첫 화면에 보이게 (크림처럼) */
   .home .hero.has-ph { margin-top: 0; padding-top: 0; }
   .home .hero.has-ph .ph-hero { margin-top: 12px; }
@@ -3976,3 +3975,8 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 .q-ans span { color: color-mix(in srgb, var(--text) 82%, transparent); }
 :root[data-theme="dark"] .q-ans { border-left-color: #B69AD8; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .q-ans { border-left-color: #B69AD8; } }
+/* 휴대폰 홈 첫 화면에서는 「+」 버튼이 바로가기 아이콘을 가리지 않게 숨겼다가, 조금 내리면 부드럽게 나타나요 */
+@media (max-width: 640px) {
+  .fab-add { transition: transform .55s cubic-bezier(.32, .72, 0, 1), opacity .3s ease; }
+  html.near-top body.home .fab-add { opacity: 0; transform: scale(.6); pointer-events: none; }
+}

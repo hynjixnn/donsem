@@ -3321,13 +3321,15 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
     raf = 0;
     const y = Math.max(0, window.scrollY), dy = y - lastY;
     if (!phone.matches || root.classList.contains('qa-open') || root.classList.contains('gnav-open') || root.classList.contains('ai-open')) { set(false); lastY = y; return; }
+    root.classList.toggle('near-top', y < 360);   // 홈 첫 화면: 「+」 버튼이 바로가기 아이콘을 가리지 않게 조금 내려야 나타나요
     if (y < 80) set(false);                       // 맨 위 근처에서는 항상 보여요
     else if (dy > 6) set(true);                   // 내리는 중 → 숨기기
     else if (dy < -6) set(false);                 // 올리는 중 → 다시 보이기
     if (Math.abs(dy) > 6 || y < 80) lastY = y;    // 손가락이 살짝 떨리는 정도로는 바뀌지 않게
   };
   window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(check); }, { passive: true });
-  window.addEventListener('pageshow', () => { set(false); lastY = window.scrollY; });
+  window.addEventListener('pageshow', () => { set(false); lastY = window.scrollY; root.classList.toggle('near-top', lastY < 360); });
+  root.classList.toggle('near-top', window.scrollY < 360);
 })();
 
 // ── 돈셈 도우미: 오른쪽 위 알록달록한 버튼 → 궁금한 걸 물으면, 돈셈에 이미 정리된 설명(kb.json)에서 찾아 답해요 ──
