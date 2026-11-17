@@ -4145,6 +4145,17 @@ const GUIDE_FOR = {
   }
 })();
 
+// ── 매거진 기사 맨 위: 아이콘 대신 그 기사의 실제 사진 (/img/mag/<기사 주소>.webp, 없으면 아이콘 그대로) ──
+(() => {
+  const c = document.querySelector('.mz-cover'), m = location.pathname.match(/^\/guide\/([a-z0-9-]+)\/$/);
+  if (!c || !m || c.querySelector('.mz-photo')) return;
+  c.classList.add('ph-wait');
+  const im = new Image(); im.className = 'mz-photo'; im.alt = ''; im.setAttribute('aria-hidden', 'true');
+  im.onload = () => { c.querySelectorAll('.mz-blur, .mz-obj').forEach(e => e.remove()); c.prepend(im); c.classList.remove('ph-wait'); };
+  im.onerror = () => c.classList.remove('ph-wait');
+  im.src = `/img/mag/${m[1]}.webp`;
+})();
+
 // ── 사용방법: 홈 위쪽 버튼을 누르면 처음 온 사람에게 돈셈 쓰는 법을 한 장씩 보여 줘요 (?how=1 로도 열려요) ──
 (() => {
   if (!document.body.classList.contains('home')) return;
@@ -4155,6 +4166,7 @@ const GUIDE_FOR = {
     ['숫자만 넣으면 바로 계산돼요', '가입도 설치도 필요 없어요. 금액을 바꾸면 결과도 함께 바뀌어요.', '/how/2.jpg'],
     ['캘린더에 쓴 돈을 적어 보세요', '가계부 기록은 이 기기에만 저장되고, 서버로 보내지 않아요.', '/how/3.jpg'],
     ['부동산 정보도 한곳에서 보세요', '부동산 메뉴에서 아파트 실거래가와 서울 재건축·재개발 구역을 볼 수 있어요.', '/how/4.jpg'],
+    ['매거진에서 돈 이야기를 읽어 보세요', '매거진 메뉴에서 연말정산·월급·집·저축 기사를 사진으로 골라 읽어요. 위 메뉴로 「이번 달」 마감과 「용어」 사전도 볼 수 있어요.', '/how/mag.jpg'],
     ['DONSAM 로고를 누르면 홈으로 가요', '어느 화면에 있어도 왼쪽 위 로고만 누르면 홈으로 돌아와요.', '/how/5.jpg', 1],
     ['궁금하면 셈이에게 물어보세요', '오른쪽 위 보라색 셈이를 누르면 세금·금융 상식과 이번 달 쓴 돈까지 찾아 알려 드려요.', '/how/6.jpg'],
   ];

@@ -3798,3 +3798,12 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 @media (max-width: 760px) { .ph-wrap .ph-count { bottom: 31px; } }
 .home .hero.has-ph { grid-template-columns: minmax(0, 1fr); }
 .ph-wrap { min-width: 0; }
+/* ── 매거진: 아이콘 대신 실제 사진 (Unsplash 무료) — 첫 화면 사진과 같은 느낌으로 ── */
+.mz-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; transition: transform .5s cubic-bezier(.22, 1, .36, 1); }
+@media (hover: hover) { .mz-tile:hover .mz-photo, .tl-row:hover .mz-photo { transform: scale(1.05); } }
+.mz-tile:has(.mz-photo)::after { background: linear-gradient(180deg, rgba(0, 0, 0, .12) 0%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, .25) 55%, rgba(0, 0, 0, .72) 100%); }
+.mz-cover:has(.mz-photo) { height: 240px; }
+.mz-cover:has(.mz-photo)::after { background: linear-gradient(180deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, .55) 100%); }
+@media (max-width: 640px) { .mz-cover:has(.mz-photo) { height: 200px; } }
+.tl-th:has(.mz-photo), .tl-hero:has(.mz-photo) { background: #222; }
+.mz-cover.ph-wait .mz-blur, .mz-cover.ph-wait .mz-obj { opacity: 0; }
