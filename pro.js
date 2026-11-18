@@ -500,8 +500,10 @@
     $('dd-add').addEventListener('click', () => { const n = $('dd-name').value.trim(), d = $('dd-date').value; if (!n || !d) return say('이름과 날짜를 넣어 주세요.'); saveP(P2 => { P2.dd = (P2.dd || []).filter(x => x.date >= k0).concat({ name: n.slice(0, 16), date: d }).slice(-10); }); });
     box.querySelectorAll('.dd-del').forEach(b => b.addEventListener('click', () => saveP(P2 => { P2.dd = (P2.dd || []).filter((_, i) => i !== +b.dataset.i); })));
     box.querySelectorAll('#wp-style button').forEach(b => b.addEventListener('click', () => { wpStyle = b.dataset.v; box.querySelectorAll('#wp-style button').forEach(x => x.classList.toggle('on', x === b)); paintWp(H, D, pct); }));
-    paintWp(H, D, pct);
-    $('wp-save').addEventListener('click', () => { ping('wp'); $('wp-cv').toBlob(blob => saveImg(blob, `donsem-wallpaper-${k0}.png`, '돈셈 잠금화면', '배경화면 이미지를 저장했어요 📱'), 'image/png'); });
+    // 배경화면(1179×2556)은 무거워서 화면에 보일 때 처음 그려요
+    { const cv = $('wp-cv'); let painted = false; const once = () => { if (painted || !cv.isConnected) return; painted = true; paintWp(H, D, pct); };
+      if (cv && 'IntersectionObserver' in window) { const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); once(); } }, { rootMargin: '300px' }); io.observe(cv); setTimeout(once, 1500); } else if (cv) once(); }
+    $('wp-save').addEventListener('click', () => { paintWp(H, D, pct); ping('wp'); $('wp-cv').toBlob(blob => saveImg(blob, `donsem-wallpaper-${k0}.png`, '돈셈 잠금화면', '배경화면 이미지를 저장했어요 📱'), 'image/png'); });
   }
   function paintWp(H, D, pct) {
     const c = $('wp-cv'); if (!c) return;
