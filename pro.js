@@ -578,6 +578,69 @@
     const v = b.dataset.copy; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => say('주소를 복사했어요. 단축어 「URL 열기」에 붙여 넣으세요.'), () => prompt('이 주소를 복사하세요', v));
   }));
 
+  // ── Pro 딸깍: 거래내역 캡처·영수증 사진을 올리면 AI가 읽어서 가계부에 한 번에 넣어요 ──
+  (() => {
+    const wrap = $('pro-scan'); if (!wrap) return;
+    const CK = 'donsem:ai-ok', MAXF = 5;
+    let rows = [];
+    const agreed = () => { try { return localStorage.getItem(CK) === '1'; } catch (e) { return false; } };
+    wrap.innerHTML = `<div class="sc-card"><div class="sc-top"><span class="sc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M8 12h8M12 8v8"/></svg></span><span><b>캡처로 한 번에 기록</b><small>토스·카드·은행 거래내역 캡처나 영수증 사진을 올리면 AI가 읽어서 가계부에 넣어 줘요</small></span></div>
+      <div class="sc-agree" id="sc-agree"${agreed() ? ' hidden' : ''}><p>사진은 내용을 읽는 데만 쓰고 돈셈은 저장하지 않아요. 읽기는 미국 Anthropic의 AI(Claude)가 하며, 사진이 그 서버로 보내져요. <a href="/privacy/#ai">자세히</a></p><label><input type="checkbox" id="sc-ok"> 위 내용(개인정보 국외 이전)에 동의해요</label></div>
+      <label class="btn fill wide sc-btn" id="sc-pick"><input type="file" id="sc-file" accept="image/*" multiple class="sr-only">캡처 올리기 <small>(한 번에 ${MAXF}장까지)</small></label>
+      <p class="sc-msg" id="sc-msg" aria-live="polite"></p><div id="sc-review"></div></div>`;
+    const msg = t => { $('sc-msg').textContent = t; };
+    const okBox = $('sc-ok'); if (okBox) okBox.addEventListener('change', () => { try { localStorage.setItem(CK, okBox.checked ? '1' : '0'); } catch (e) { /* 괜찮아요 */ } });
+    $('sc-pick').addEventListener('click', e => { if (!agreed()) { e.preventDefault(); say('먼저 아래 동의에 체크해 주세요.'); $('sc-agree').hidden = false; } });
+    // 긴 쪽을 1568px로 줄여서 보내요 (글자는 그대로 읽히고, 보내는 양·AI 사용료가 줄어요)
+    const shrink = file => new Promise((res, rej) => {
+      const u = URL.createObjectURL(file), im = new Image();
+      im.onload = () => { const k = Math.min(1, 1568 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', 0.85).split(',')[1]); };
+      im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('img')); };
+      im.src = u;
+    });
+    const dupOf = it => { const es = budget().entries; return es.some(e => e && e.type === it.type && e.date === it.date && +e.amt === it.amt); };
+    $('sc-file').addEventListener('change', async e => {
+      const files = [...e.target.files].slice(0, MAXF); e.target.value = '';
+      if (!files.length) return;
+      $('sc-agree').hidden = true;
+      const btn = $('sc-pick'); btn.classList.add('busy');
+      const got = []; let err = '';
+      for (let i = 0; i < files.length; i++) {
+        msg(`AI가 캡처를 읽고 있어요… (${i + 1}/${files.length}) 한 장에 10~20초쯤 걸려요`);
+        try {
+          const img = await shrink(files[i]);
+          const r = await fetch(API + '/ai/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ img, type: 'image/jpeg' }) });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok) { err = j.message || '읽지 못했어요.'; if (r.status === 429 || r.status === 503) break; continue; }
+          (j.items || []).forEach(x => got.push(x));
+        } catch (er) { err = '사진을 열지 못했어요. 다른 캡처로 해 주세요.'; }
+      }
+      btn.classList.remove('busy'); ping('scan');
+      // 같은 캡처를 두 번 올려도 한 번만 보이게
+      const seen = new Set(); rows = got.filter(x => { const k = `${x.date}|${x.type}|${x.amt}|${x.shop}`; if (seen.has(k)) return false; seen.add(k); return true; }).map(x => Object.assign(x, { on: !dupOf(x), dup: dupOf(x) }));
+      msg(rows.length ? `${rows.length}건을 찾았어요. 확인하고 넣어 주세요.${err ? ' (' + err + ')' : ''}` : err || '거래를 찾지 못했어요. 거래내역이 잘 보이게 캡처해 주세요.');
+      drawReview();
+    });
+    function drawReview() {
+      const box2 = $('sc-review'); if (!rows.length) { box2.innerHTML = ''; return; }
+      const n = rows.filter(r => r.on).length, sum = rows.filter(r => r.on && r.type === 'out').reduce((s, r) => s + r.amt, 0);
+      box2.innerHTML = `<ul class="sc-list">${rows.map((r, i) => `<li class="${r.on ? '' : 'off'}"><input type="checkbox" data-i="${i}" ${r.on ? 'checked' : ''} aria-label="${E(r.shop)} 넣기"><span class="sc-t"><b>${E(r.shop || (r.type === 'in' ? '입금' : '지출'))}</b><small>${r.date.slice(5).replace('-', '/')}${r.dup ? ' · 이미 적은 것 같아요' : ''}</small></span><select data-i="${i}" aria-label="분류">${(r.type === 'in' ? ['월급', '용돈', '부수입', '이자·배당', '기타'] : ['식비', '카페·간식', '교통', '쇼핑', '생활', '주거·통신', '구독', '의료', '문화·여가', '경조사', '기타']).map(c => `<option${c === r.cat ? ' selected' : ''}>${c}</option>`).join('')}</select><em class="${r.type === 'in' ? 'plus' : ''}">${r.type === 'in' ? '+' : '−'}${W(r.amt)}</em></li>`).join('')}</ul>` +
+        `<div class="sc-act"><button type="button" class="btn line" id="sc-cancel">취소</button><button type="button" class="btn fill" id="sc-save"${n ? '' : ' disabled'}>${n}건 가계부에 넣기</button></div>${sum ? `<p class="sc-sum">고른 지출 합계 ${W(sum)}</p>` : ''}`;
+      box2.querySelectorAll('input[type=checkbox]').forEach(c => c.addEventListener('change', () => { rows[+c.dataset.i].on = c.checked; drawReview(); }));
+      box2.querySelectorAll('select').forEach(s => s.addEventListener('change', () => { rows[+s.dataset.i].cat = s.value; }));
+      $('sc-cancel').addEventListener('click', () => { rows = []; msg(''); drawReview(); });
+      $('sc-save').addEventListener('click', () => {
+        const b = rd('donsem:budget') || { entries: [] }; if (!Array.isArray(b.entries)) b.entries = [];
+        const add = rows.filter(r => r.on).map((r, i) => ({ id: 'ai' + Date.now().toString(36) + i, type: r.type, cat: r.cat, amt: r.amt, date: r.date, memo: (r.shop || '').slice(0, 40) }));
+        b.entries.push(...add);
+        if (!wr('donsem:budget', b)) return say('저장하지 못했어요. 저장 공간을 확인해 주세요.');
+        rows = []; drawReview(); msg(`✓ ${add.length}건을 가계부에 넣었어요. 캘린더에서 확인해 보세요.`); say(`${add.length}건을 가계부에 넣었어요 ✨`);
+        window.dispatchEvent(new StorageEvent('storage', { key: 'donsem:budget' })); // 다른 화면(캘린더·분석)도 다시 그려요
+        if (drawn) draw();
+      });
+    }
+  })();
+
   const like = $('pro-like');
   if (like) like.addEventListener('click', () => { ping('like'); like.disabled = true; like.textContent = '고마워요! 의견이 잘 전해졌어요 💜'; });
 })();
