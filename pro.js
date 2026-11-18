@@ -24,6 +24,35 @@
   const API = 'https://donsem-counter.hjjung330.workers.dev';
   const ping = v => { try { const k = 'donsem:pro-ping-' + v, d = ymd(new Date()); if (localStorage.getItem(k) === d) return; localStorage.setItem(k, d); fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ k: 'pro:use', v }) }).catch(() => {}); } catch (e) { /* 괜찮아요 */ } };
 
+  // ── 이용권: 결제하면 /shop/pay/가 donsem:pro-pass에 열쇠를 저장해요. 무료 체험은 2027년 1월 31일까지 ──
+  const FREE_UNTIL = '2027-02-01', PASS_K = 'donsem:pro-pass';
+  const passGet = () => rd(PASS_K);
+  const passOk = () => { const x = passGet(); return !!(x && x.token && (!x.exp || x.exp > Date.now())); };
+  const trialLeft = () => Math.ceil((new Date(FREE_UNTIL + 'T00:00:00+09:00') - Date.now()) / 864e5);
+  const unlocked = () => passOk() || trialLeft() > 0;
+  const passCheck = () => { const x = passGet(); if (!x || !x.token || (x.chk && Date.now() - x.chk < 864e5)) return Promise.resolve(); return fetch(API + '/pay/pro?t=' + encodeURIComponent(x.token)).then(r => r.json()).then(j => { if (j && j.exp) { x.exp = j.exp; x.chk = Date.now(); wr(PASS_K, x); } else if (j && j.ok === false) { x.exp = 1; x.chk = Date.now(); wr(PASS_K, x); } }).catch(() => {}); };
+  function drawPass() {
+    const badge = document.querySelector('#pro .pro-badge'), x = passGet(), left = trialLeft();
+    let el = $('pro-pass'); if (!el) { el = document.createElement('div'); el.id = 'pro-pass'; el.className = 'pro-pass'; const hero = document.querySelector('#pro .pro-hero'); if (hero) hero.after(el); else return; }
+    if (passOk()) {
+      const d = x.exp ? new Date(x.exp) : null;
+      if (badge) badge.textContent = 'PRO · 이용 중';
+      el.innerHTML = `<div class="pp-on"><b>Pro 이용 중</b><span>${d ? `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}까지` : '1년 이용권'}${x.live === false ? ' · 테스트 결제' : ''}</span></div>`;
+      return;
+    }
+    if (badge) badge.textContent = left > 0 ? `PRO · 무료 체험 D-${left}` : 'PRO';
+    el.innerHTML = `<div class="pp-buy"><div><b>Pro 1년 19,900원</b><span>${left > 0 ? `무료 체험은 2027년 1월 31일까지 (D-${left}) · 지금 사도 1년은 결제한 날부터` : '무료 체험이 끝났어요. 이용권이 있으면 모든 Pro 기능이 열려요'}</span></div><a class="btn fill" href="/shop/pay/?p=pro1y" id="pp-go">이용권 사기</a></div>` +
+      `<details class="pp-restore"><summary>이미 샀어요 · 이용권 불러오기</summary><div class="pro-in2"><label>주문번호<input id="pp-oid" placeholder="DS로 시작해요" autocomplete="off"></label><label>결제할 때 적은 이메일<input id="pp-mail" type="email" autocomplete="email"></label></div><button type="button" class="btn line wide" id="pp-find">불러오기</button></details>`;
+    $('pp-go').addEventListener('click', () => ping('buy'));
+    $('pp-find').addEventListener('click', () => {
+      const orderId = $('pp-oid').value.trim(), email = $('pp-mail').value.trim();
+      if (!orderId || !email) return say('주문번호와 이메일을 적어 주세요.');
+      fetch(API + '/pay/find', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId, email }) }).then(r => r.json().then(j => (r.ok ? j : Promise.reject(j))))
+        .then(j => { if (j.product !== 'pro1y') return say('Pro 이용권 주문이 아니에요.'); wr(PASS_K, { token: j.token, orderId: j.orderId, live: j.live, t: j.created }); return passCheck().then(() => { say('Pro 이용권을 불러왔어요 ✨'); drawPass(); if (drawn) draw(); }); })
+        .catch(j => say((j && j.message) || '찾지 못했어요. 잠시 뒤 다시 해 주세요.'));
+    });
+  }
+
   const TABS = [
     ['an', '소비 분석', '<path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/>'],
     ['fc', '앞으로의 돈', '<path d="M4 19V5M4 19h16M7 14l4-4 3 3 5-6"/>'],
@@ -569,11 +598,13 @@
 
   function draw() {
     seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === tab)));
+    if (!unlocked()) { box.innerHTML = `<div class="pro-lock"><b>🔒 Pro 이용권이 필요해요</b><span>무료 체험이 끝났어요. 1년 19,900원으로 소비 분석, 앞으로의 돈, 연말정산 PDF, 돈 습관까지 모두 열려요. 기록은 그대로 남아 있어요.</span><a class="btn fill wide" href="/shop/pay/?p=pro1y">이용권 사기</a></div>`; return; }
     ({ an: drawAn, fc: drawFc, rp: drawRp, cd: drawCd, ye: drawYe, rc: drawRc, hb: drawHb })[tab]();
     ping(tab);
   }
   // Pro 탭을 처음 열 때 그려요
   const sec = $('pro');
+  drawPass(); passCheck().then(drawPass);
   let drawn = false;
   const maybe = () => { if (!drawn && sec && !sec.hidden && sec.offsetParent !== null) { drawn = true; draw(); } };
   new MutationObserver(maybe).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['hidden', 'class'] });
@@ -669,9 +700,9 @@
         msg(`AI가 캡처를 읽고 있어요… (${i + 1}/${files.length}) 한 장에 10~20초쯤 걸려요`);
         try {
           const img = await shrink(files[i]);
-          const r = await fetch(API + '/ai/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ img, type: 'image/jpeg' }) });
+          const r = await fetch(API + '/ai/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ img, type: 'image/jpeg', t: (passGet() || {}).token || '' }) });
           const j = await r.json().catch(() => ({}));
-          if (!r.ok) { err = j.message || '읽지 못했어요.'; if (r.status === 429 || r.status === 503) break; continue; }
+          if (!r.ok) { err = j.message || '읽지 못했어요.'; if (j.error === 'free') err += ' → 캘린더 › Pro 위쪽에서 이용권을 살 수 있어요.'; if (r.status === 429 || r.status === 503) break; continue; }
           (j.items || []).forEach(x => got.push(x));
         } catch (er) { err = '사진을 열지 못했어요. 다른 캡처로 해 주세요.'; }
       }
