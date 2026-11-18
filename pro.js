@@ -31,6 +31,7 @@
     ['cd', '카드 실적', '<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/>'],
     ['ye', '연말정산', '<path d="M4 7l8-4 8 4-8 4zM4 12l8 4 8-4M4 17l8 4 8-4"/>'],
     ['rc', '한 장 결산', '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/>'],
+    ['hb', '돈 습관', '<path d="M12 3c1 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 0-8z"/>'],
   ];
   let tab = 'an';
   try { const t = sessionStorage.getItem('donsem:pro-tab'); if (TABS.some(x => x[0] === t)) tab = t; } catch (e) { /* 괜찮아요 */ }
@@ -335,6 +336,119 @@
     const sl = $('an-sim'); if (sl) sl.addEventListener('click', () => { rcOff = 0; tab = 'rc'; try { sessionStorage.setItem('donsem:pro-tab', tab); } catch (er) { /* 괜찮아요 */ } draw(); setTimeout(() => { const s = box.querySelector('.pro-sim'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60); });
   }
 
+  // ── 6. 돈 습관: 가계부 기록으로 저절로 체크되는 습관 + 돈 D-day + 잠금화면 배경 만들기 ──
+  const DEF_H = [
+    { id: 'rec', name: '가계부 적기', ic: '✍️', auto: 'rec' },
+    { id: 'nos', name: '무지출 데이', ic: '🌱', auto: 'nos' },
+    { id: 'cafe', name: '카페·간식 참기', ic: '☕', auto: 'cafe' },
+    { id: 'dlv', name: '배달 안 시키기', ic: '🛵', auto: 'dlv' },
+  ];
+  const H_IC = ['💪', '📚', '🚶', '🍱', '🚭', '💧', '🧾', '🏦'];
+  const habits = () => { const P = pro(); return Array.isArray(P.habits) ? P.habits : DEF_H; };
+  let wpStyle = 'purple';
+  function hbDay() {
+    // 날짜별 기록을 한 번에 묶어 둬요
+    const es = real(budget().entries), by = {};
+    es.forEach(e => { if (e && e.date) (by[e.date] = by[e.date] || []).push(e); });
+    const first = Object.keys(by).sort()[0] || null, chk = pro().hchk || {};
+    const done = (h, k) => {
+      if (!h.auto) return (chk[k] || []).includes(h.id);
+      if (!first || k < first) return null; // 기록을 시작하기 전 날은 세지 않아요
+      const d = by[k] || [], outs = d.filter(e => e.type === 'out');
+      if (h.auto === 'rec') return d.length > 0;
+      if (h.auto === 'nos') return outs.length === 0;
+      if (h.auto === 'cafe') return !outs.some(e => /카페|간식/.test(e.cat || '') || /커피|스타벅스|카페/.test(e.memo || ''));
+      if (h.auto === 'dlv') return !outs.some(e => /배달|배민|쿠팡이츠|요기요/.test((e.memo || '') + (e.cat || '')));
+      return false;
+    };
+    const rate = k => { const hs = habits(); let n = 0, ok = 0; hs.forEach(h => { const v = done(h, k); if (v === null) return; n++; if (v) ok++; }); return n ? ok / n : null; };
+    return { done, rate, first };
+  }
+  function ddays() {
+    const t0 = today(), b = budget(), out = [], end = new Date(t0); end.setDate(end.getDate() + 45);
+    const dd = d => Math.round((d - t0) / 864e5);
+    const yest = new Date(t0); yest.setDate(yest.getDate() - 1);
+    const pay = payDates(b.payday, yest, end)[0]; if (pay) out.push({ name: '월급날', ic: '💰', d: dd(new Date(pay)), fixedOne: true });
+    const last = new Date(t0.getFullYear(), t0.getMonth() + 1, 0).getDate();
+    fixed().filter(x => x.cycle !== 'year').map(x => { const day = Math.min(+x.day, last); let d = new Date(t0.getFullYear(), t0.getMonth(), day); if (d < t0) d = new Date(t0.getFullYear(), t0.getMonth() + 1, Math.min(+x.day, new Date(t0.getFullYear(), t0.getMonth() + 2, 0).getDate())); return { name: x.name || x.cat, ic: '📌', d: dd(d), amt: +x.amt, fixedOne: true }; })
+      .filter(x => x.d <= 7).sort((a, b2) => a.d - b2.d).slice(0, 3).forEach(x => out.push(x));
+    (pro().dd || []).forEach((x, i) => { const d = dd(new Date(x.date)); if (d >= 0) out.push({ name: x.name, ic: '🎯', d, i }); });
+    return out.sort((a, b2) => a.d - b2.d);
+  }
+  const dTxt = d => (d === 0 ? 'D-DAY' : 'D-' + d);
+  function hbGrid(H, y, m, big) {
+    const t0 = today(), first = new Date(y, m, 1).getDay(), last = new Date(y, m + 1, 0).getDate(), cells = [];
+    for (let i = 0; i < first; i++) cells.push('<i class="e"></i>');
+    for (let d = 1; d <= last; d++) {
+      const dt = new Date(y, m, d), k = ymd(dt), r = dt > t0 ? null : H.rate(k);
+      const lv = r === null ? '' : r >= 1 ? 'l4' : r >= .67 ? 'l3' : r >= .34 ? 'l2' : r > 0 ? 'l1' : 'l0';
+      cells.push(`<i class="${lv}${+dt === +t0 ? ' now' : ''}${dt > t0 ? ' f' : ''}">${big ? d : ''}</i>`);
+    }
+    return cells.join('');
+  }
+  function drawHb() {
+    const H = hbDay(), hs = habits(), t0 = today(), k0 = ymd(t0), P = pro();
+    // 이번 달 달성률 · 가계부 연속 기록
+    let sum = 0, cnt = 0; for (let d = 1; d <= t0.getDate(); d++) { const r = H.rate(ymd(new Date(t0.getFullYear(), t0.getMonth(), d))); if (r !== null) { sum += r; cnt++; } }
+    let streak = 0; for (let x = new Date(t0); streak < 400; x.setDate(x.getDate() - 1)) { const v = H.done(DEF_H[0], ymd(x)); if (v) streak++; else if (+x === +t0) continue; else break; }
+    const pct = cnt ? Math.round(sum / cnt * 100) : 0;
+    const list = hs.map((h, i) => { const v = H.done(h, k0); return `<li class="hb-row${v ? ' ok' : ''}"><span class="hb-ic" aria-hidden="true">${h.ic}</span><span class="hb-n"><b>${E(h.name)}</b><small>${h.auto ? (v === null ? '가계부를 적으면 시작돼요' : h.auto === 'rec' ? (v ? '오늘 적었어요' : '오늘 아직 안 적었어요') : (v ? '오늘 지키는 중' : '오늘은 못 지켰어요')) : '직접 체크해요'}</small></span>${h.auto ? `<span class="hb-auto">자동</span>` : ''}<button type="button" class="hb-chk" data-i="${i}" aria-pressed="${!!v}" aria-label="${E(h.name)} ${v ? '완료' : '안 함'}"${h.auto ? ' disabled' : ''}>${v ? '✓' : ''}</button><button type="button" class="pro-x hb-del" data-i="${i}" aria-label="${E(h.name)} 지우기">×</button></li>`; }).join('');
+    const D = ddays();
+    box.innerHTML = `<div class="pro-panel"><div class="hb-top"><b>${t0.getFullYear()}년 ${t0.getMonth() + 1}월</b><span>달성률 <em>${pct}%</em></span></div><div class="hb-grid"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>${hbGrid(H, t0.getFullYear(), t0.getMonth(), true)}</div><p class="pro-cap">🔥 가계부 <b>${streak}일 연속</b> 기록 중 · 진할수록 그날 습관을 많이 지켰어요</p></div>` +
+      `<h3 class="pro-h">오늘의 돈 습관</h3><ul class="hb-list">${list}</ul>` +
+      `<details class="pro-add"><summary>＋ 습관 추가</summary><div class="pro-in2"><label>습관 이름<input id="hb-name" maxlength="16" placeholder="예: 점심 도시락 싸기"></label></div><div class="hb-icpick" id="hb-icpick">${H_IC.map((c, i) => `<button type="button" data-c="${c}" class="${i ? '' : 'on'}">${c}</button>`).join('')}</div><button type="button" class="btn fill" id="hb-add">추가하기</button></details>` +
+      `<h3 class="pro-h">돈 D-day</h3>${D.length ? `<ul class="dd-list">${D.map(x => `<li><span class="dd-ic" aria-hidden="true">${x.ic}</span><span class="dd-n"><b>${E(x.name)}</b>${x.amt ? `<small>${W(x.amt)} 나가요</small>` : ''}</span><em class="${x.d <= 3 ? 'soon' : ''}">${dTxt(x.d)}</em>${x.i != null ? `<button type="button" class="pro-x dd-del" data-i="${x.i}" aria-label="지우기">×</button>` : ''}</li>`).join('')}</ul>` : `<p class="pro-empty">캘린더에서 월급날을 정하거나 아래에 적금 만기·여행 같은 날을 넣어 보세요.</p>`}` +
+      `<details class="pro-add"><summary>＋ D-day 추가</summary><div class="pro-in2"><label>이름<input id="dd-name" maxlength="16" placeholder="예: 적금 만기, 여행"></label><label>날짜<input id="dd-date" type="date" min="${k0}"></label></div><button type="button" class="btn fill" id="dd-add">추가하기</button></details>` +
+      `<h3 class="pro-h">잠금화면 배경 만들기</h3><p class="pro-cap">이번 달 쓸 수 있는 돈, D-day, 습관 달력을 배경화면 한 장으로 만들어요. 휴대폰을 켤 때마다 보게 돼요.</p><div class="pro-tabs2" id="wp-style"><button type="button" data-v="purple" class="${wpStyle === 'purple' ? 'on' : ''}">보라</button><button type="button" data-v="dark" class="${wpStyle === 'dark' ? 'on' : ''}">다크</button><button type="button" data-v="light" class="${wpStyle === 'light' ? 'on' : ''}">라이트</button></div><div class="wp-prev"><canvas id="wp-cv" width="1179" height="2556" aria-label="잠금화면 배경 미리보기"></canvas></div><button type="button" class="btn fill wide" id="wp-save">배경화면 저장하기</button><p class="pro-note">💡 저장한 사진을 사진 앱에서 열고 공유 → 「배경화면으로 지정」을 누르세요. 숫자가 바뀌면 다시 만들어 주세요.</p>`;
+    const saveP = f => { const P2 = pro(); f(P2); wr(PK, P2); drawHb(); };
+    box.querySelectorAll('.hb-chk').forEach(b => b.addEventListener('click', () => saveP(P2 => { const h = habits()[+b.dataset.i]; P2.hchk = P2.hchk || {}; const a = P2.hchk[k0] || []; P2.hchk[k0] = a.includes(h.id) ? a.filter(x => x !== h.id) : a.concat(h.id); /* 오래된 체크는 1년치만 둬요 */ const cut = ymd(new Date(t0.getFullYear() - 1, t0.getMonth(), 1)); Object.keys(P2.hchk).forEach(k => { if (k < cut) delete P2.hchk[k]; }); })));
+    box.querySelectorAll('.hb-del').forEach(b => b.addEventListener('click', () => saveP(P2 => { P2.habits = habits().filter((_, i) => i !== +b.dataset.i); })));
+    let ic = H_IC[0]; box.querySelectorAll('#hb-icpick button').forEach(b => b.addEventListener('click', () => { ic = b.dataset.c; box.querySelectorAll('#hb-icpick button').forEach(x => x.classList.toggle('on', x === b)); }));
+    $('hb-add').addEventListener('click', () => { const n = $('hb-name').value.trim(); if (!n) return say('습관 이름을 적어 주세요.'); if (habits().length >= 8) return say('습관은 8개까지 둘 수 있어요.'); saveP(P2 => { P2.habits = habits().concat({ id: 'h' + Date.now().toString(36), name: n.slice(0, 16), ic }); }); });
+    $('dd-add').addEventListener('click', () => { const n = $('dd-name').value.trim(), d = $('dd-date').value; if (!n || !d) return say('이름과 날짜를 넣어 주세요.'); saveP(P2 => { P2.dd = (P2.dd || []).filter(x => x.date >= k0).concat({ name: n.slice(0, 16), date: d }).slice(-10); }); });
+    box.querySelectorAll('.dd-del').forEach(b => b.addEventListener('click', () => saveP(P2 => { P2.dd = (P2.dd || []).filter((_, i) => i !== +b.dataset.i); })));
+    box.querySelectorAll('#wp-style button').forEach(b => b.addEventListener('click', () => { wpStyle = b.dataset.v; box.querySelectorAll('#wp-style button').forEach(x => x.classList.toggle('on', x === b)); paintWp(H, D, pct); }));
+    paintWp(H, D, pct);
+    $('wp-save').addEventListener('click', () => { ping('wp'); $('wp-cv').toBlob(blob => saveImg(blob, `donsem-wallpaper-${k0}.png`, '돈셈 잠금화면', '배경화면 이미지를 저장했어요 📱'), 'image/png'); });
+  }
+  function paintWp(H, D, pct) {
+    const c = $('wp-cv'); if (!c) return;
+    const x = c.getContext('2d'), w = c.width, h = c.height, t0 = today(), FF = '"Pretendard Variable", Pretendard, -apple-system, sans-serif';
+    const S = { purple: { bg: ['#2A1145', '#7040A1'], card: 'rgba(255,255,255,.12)', tx: '#FFFFFF', mu: 'rgba(255,255,255,.7)', ac: '#E4D3FF', lv: ['rgba(255,255,255,.12)', 'rgba(228,211,255,.35)', 'rgba(228,211,255,.6)', 'rgba(228,211,255,.85)', '#FFFFFF'] },
+      dark: { bg: ['#0E0E10', '#1C1A22'], card: 'rgba(255,255,255,.07)', tx: '#F5F5F7', mu: 'rgba(245,245,247,.6)', ac: '#B69AD8', lv: ['rgba(255,255,255,.08)', 'rgba(182,154,216,.3)', 'rgba(182,154,216,.55)', 'rgba(182,154,216,.8)', '#B69AD8'] },
+      light: { bg: ['#F7F3FC', '#E9DEF6'], card: 'rgba(255,255,255,.75)', tx: '#1D1D1F', mu: 'rgba(29,29,31,.55)', ac: '#7040A1', lv: ['rgba(112,64,161,.08)', 'rgba(112,64,161,.25)', 'rgba(112,64,161,.45)', 'rgba(112,64,161,.7)', '#7040A1'] } }[wpStyle];
+    const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, S.bg[0]); g.addColorStop(1, S.bg[1]); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    const T = (s, X, Y, size, wt = 700, col = S.tx, al = 'left') => { x.font = `${wt} ${size}px ${FF}`; x.fillStyle = col; x.textAlign = al; x.fillText(s, X, Y); };
+    const card = (Y, H2) => { x.fillStyle = S.card; x.beginPath(); x.roundRect(90, Y, w - 180, H2, 56); x.fill(); };
+    // 위쪽 38%는 시계 자리로 비워 둬요
+    const b = budget(), B = +b.budget || 0, ym = ymd(t0).slice(0, 7), last = new Date(t0.getFullYear(), t0.getMonth() + 1, 0).getDate();
+    const es = typeof withFixed === 'function' ? withFixed(b.entries) : b.entries;
+    const spent = es.filter(e => e && e.type === 'out' && e.date && e.date.startsWith(ym)).reduce((s, e) => s + (+e.amt || 0), 0);
+    const fxLeft = fixed().filter(f => (f.cycle !== 'year' || +f.month === t0.getMonth() + 1) && Math.min(+f.day, last) > t0.getDate()).reduce((s, f) => s + (+f.amt || 0), 0);
+    let Y = 960; card(Y, 420);
+    if (B) { const room = B - spent - fxLeft, per = room / (last - t0.getDate() + 1);
+      T(`${t0.getMonth() + 1}월에 더 쓸 수 있는 돈`, 160, Y + 110, 46, 600, S.mu); T(W(Math.max(0, room)), 160, Y + 235, 112, 800, room < 0 ? '#FF8A80' : S.tx);
+      T(room > 0 ? `오늘부터 하루 ${W(per)}씩 쓰면 돼요` : `예산을 ${W(-room)} 넘었어요`, 160, Y + 330, 44, 600, S.ac);
+    } else { T(`${t0.getMonth() + 1}월에 쓴 돈`, 160, Y + 110, 46, 600, S.mu); T(W(spent), 160, Y + 235, 112, 800); T('가계부에서 예산을 정하면 남은 돈을 보여 줘요', 160, Y + 330, 40, 600, S.ac); }
+    Y += 470;
+    const top = D.slice(0, 3); if (top.length) { const cw = (w - 180 - 40 * (top.length - 1)) / top.length; top.forEach((d, i) => { const X = 90 + i * (cw + 40); x.fillStyle = S.card; x.beginPath(); x.roundRect(X, Y, cw, 220, 48); x.fill(); T(dTxt(d.d), X + cw / 2, Y + 105, 64, 800, d.d <= 3 ? S.ac : S.tx, 'center'); T(String(d.name).slice(0, 7), X + cw / 2, Y + 172, 38, 600, S.mu, 'center'); }); Y += 270; }
+    card(Y, 720); T(`돈 습관 ${t0.getMonth() + 1}월`, 160, Y + 100, 46, 700); T(`${pct}%`, w - 160, Y + 100, 46, 800, S.ac, 'right');
+    const fd = new Date(t0.getFullYear(), t0.getMonth(), 1).getDay(), cs = 128, gx = (w - cs * 7) / 2;
+    for (let d = 1; d <= last; d++) { const p = fd + d - 1, cx = gx + (p % 7) * cs, cy = Y + 150 + Math.floor(p / 7) * 92, dt = new Date(t0.getFullYear(), t0.getMonth(), d), r = dt > t0 ? null : H.rate(ymd(dt));
+      const lv = r === null ? 0 : r >= 1 ? 4 : r >= .67 ? 3 : r >= .34 ? 2 : r > 0 ? 1 : 0;
+      x.fillStyle = S.lv[lv]; x.globalAlpha = dt > t0 ? .45 : 1; x.beginPath(); x.roundRect(cx + 9, cy, cs - 18, 76, 20); x.fill(); x.globalAlpha = 1;
+      if (+dt === +t0) { x.strokeStyle = S.tx; x.lineWidth = 5; x.beginPath(); x.roundRect(cx + 9, cy, cs - 18, 76, 20); x.stroke(); }
+      T(String(d), cx + cs / 2, cy + 50, 32, 600, lv >= 3 && wpStyle !== 'light' ? S.bg[0] : lv >= 3 ? '#fff' : S.mu, 'center'); }
+    T('DONSAM', w / 2, h - 50, 34, 800, S.mu, 'center');
+  }
+  function saveImg(blob, name, title, msg) {
+    const file = new File([blob], name, { type: 'image/png' });
+    (async () => {
+      try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); say(msg);
+    })();
+  }
+
   // ── 4. 한 장 결산: 이번 달을 영수증 한 장으로 + 소비 줄이면 1년에 얼마 남는지 ──
   let rcOff = 0;
   function monthStats(off) {
@@ -395,7 +509,7 @@
 
   function draw() {
     seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === tab)));
-    ({ an: drawAn, fc: drawFc, rp: drawRp, cd: drawCd, ye: drawYe, rc: drawRc })[tab]();
+    ({ an: drawAn, fc: drawFc, rp: drawRp, cd: drawCd, ye: drawYe, rc: drawRc, hb: drawHb })[tab]();
     ping(tab);
   }
   // Pro 탭을 처음 열 때 그려요

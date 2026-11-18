@@ -247,3 +247,18 @@
   box.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) { on = b.dataset.k; draw(); } });
   draw();
 })();
+
+// ── 마이: 설정 목록 (주제별 아이콘 줄) — 펼치기 · 프로필 꾸미기 · 공유 ──
+(() => {
+  const $ = id => document.getElementById(id);
+  const fold = (btn, panel) => { const b = $(btn), p = $(panel); if (!b || !p) return; b.addEventListener('click', () => { const open = p.hidden; p.hidden = !open; b.setAttribute('aria-expanded', String(open)); b.classList.toggle('open', open); }); };
+  fold('set-theme', 'set-theme-p'); fold('set-ins', 'set-ins-p');
+  const label = () => { const v = $('set-theme-v'); if (!v) return; let s = ''; try { s = localStorage.getItem('donsem:theme') || ''; } catch (e) { /* 괜찮아요 */ } s = s.replace(/"/g, ''); v.textContent = { light: '라이트', dark: '다크', auto: '기기 설정' }[s] || (document.documentElement.dataset.theme === 'dark' ? '다크' : '라이트'); };
+  label(); document.addEventListener('click', e => { if (e.target.closest('#my-theme, .theme-btn')) setTimeout(label, 0); });
+  const pf = $('set-pf'); if (pf) pf.addEventListener('click', () => { const ed = $('pf-edit'), panel = $('pf-panel'); if (ed && panel && panel.hidden) ed.click(); (panel || ed).scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+  const sh = $('set-share'); if (sh) sh.addEventListener('click', async () => {
+    const data = { title: '돈셈', text: '연봉 실수령액·대출·적금·연말정산까지, 돈 계산은 돈셈에서', url: 'https://doncalculator.com/' };
+    try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(data.url); (typeof toast === 'function' ? toast : alert)('주소를 복사했어요. 친구에게 붙여 넣어 보내 주세요.'); } catch (e) { prompt('이 주소를 복사하세요', data.url); }
+  });
+})();
