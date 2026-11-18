@@ -33,7 +33,7 @@
 <script src="/vt.js"></script>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6392739664333036" crossorigin="anonymous"></script>
 <script type="application/ld+json" data-qa>{"@context": "https://schema.org", "@type": "WebApplication", "name": "연말정산 환급 계산기", "url": "https://doncalculator.com/year-end-tax/", "applicationCategory": "FinanceApplication", "operatingSystem": "All", "inLanguage": "ko", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "KRW"}, "publisher": {"@type": "Organization", "name": "돈셈", "url": "https://doncalculator.com/"}}</script>
-<script type="application/ld+json" data-qa>{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "총급여 4,000만 원이면 연말정산 환급은 얼마인가요?", "acceptedAnswer": {"@type": "Answer", "text": "1인 가구가 신용카드 1,500만 원, 체크카드 500만 원을 쓰면 지방소득세 포함 약 43,460원을 돌려받아요(2026년 귀속)."}}]}</script>
+<script type="application/ld+json" data-qa>{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "총급여 4,000만 원이면 연말정산 환급은 얼마인가요?", "acceptedAnswer": {"@type": "Answer", "text": "1인 가구가 신용카드 1,500만 원, 체크카드 500만 원을 쓰면 지방소득세 포함 약 43,460원을 돌려받아요(2026년 귀속)."}}, {"@type": "Question", "name": "연말정산 간소화 PDF로 환급액을 바로 계산할 수 있나요?", "acceptedAnswer": {"@type": "Answer", "text": "네. 돈셈 연말정산 계산기에 홈택스 간소화 PDF를 올리면 카드·연금저축·의료비·보험료·월세 금액이 저절로 채워지고 예상 환급액이 바로 나와요. PDF는 이용자 기기 안에서만 읽고 서버로 보내지 않아요."}}]}</script>
 </head>
 <body>
 <header class="topbar">
@@ -88,6 +88,7 @@
     <p class="sub">1년 동안 미리 낸 세금과 실제 낼 세금을 비교해서, 연말정산에서 돌려받을 돈을 미리 계산해요.</p>
     <p class="trust">2026년 기준 · 2026.10.21 업데이트 · <a href="#basis">계산 근거 ↓</a></p>
     <p class="q-ans"><b>총급여 4,000만 원이면 연말정산 환급은 얼마인가요?</b><span>1인 가구가 신용카드 1,500만 원, 체크카드 500만 원을 쓰면 지방소득세 포함 약 43,460원을 돌려받아요(2026년 귀속).</span></p>
+    <div class="ys-pdf" id="ys-pdf"><div class="ys-pdf-t"><span class="sc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span><b>간소화 PDF로 자동 채우기</b><small>홈택스에서 받은 연말정산 간소화 PDF를 올리면 아래 칸이 저절로 채워져요. PDF는 이 기기 안에서만 읽고 어디에도 보내지 않아요.</small></span></div><label class="btn line wide ys-pdf-btn"><input type="file" id="ys-pdf-file" accept="application/pdf,.pdf" class="sr-only">PDF 올리기</label><div class="pdf-pw" id="ys-pdf-pw" hidden><input type="password" id="ys-pdf-pwin" placeholder="PDF 비밀번호" autocomplete="off"><button type="button" class="btn fill" id="ys-pdf-go">열기</button></div><p class="sc-msg" id="ys-pdf-msg" aria-live="polite"></p><p class="ys-pdf-how">2026년 사용분 자료는 2027년 1월 15일부터 받을 수 있어요. <a href="/guide/year-end-pdf/">간소화 PDF 받는 법 ›</a></p></div>
     <label>총급여 (1년, 비과세 제외)</label>
     <div class="field"><input data-k="ys_pay" inputmode="numeric" value="40,000,000"><span>원</span></div>
     <label>이미 낸 소득세 (모르면 비워 두세요)</label>
@@ -146,6 +147,7 @@
 </div>
 <script src="/salary/table.js"></script>
 <script src="/app.js"></script>
+<script src="/pdfread.js"></script>
 <!-- Cloudflare Web Analytics: 쿠키 없이 방문 수만 세요 --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "4ddea5349bb94a689667508931ca47d8"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
