@@ -35,6 +35,7 @@
   ];
   let tab = 'an';
   try { const t = sessionStorage.getItem('donsem:pro-tab'); if (TABS.some(x => x[0] === t)) tab = t; } catch (e) { /* 괜찮아요 */ }
+  { const qp = new URLSearchParams(location.search).get('pro'); if (TABS.some(x => x[0] === qp)) tab = qp; }
   const seg = $('pro-seg');
   seg.innerHTML = TABS.map(([k, l, p]) => `<button type="button" role="tab" data-k="${k}" aria-selected="${k === tab}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg><span>${l}</span></button>`).join('');
   seg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; tab = b.dataset.k; try { sessionStorage.setItem('donsem:pro-tab', tab); } catch (er) { /* 괜찮아요 */ } draw(); });
@@ -222,38 +223,10 @@
   }
   // ── Pro 딸깍 2: 홈택스 「연말정산 간소화 PDF」를 올리면 이 기기 안에서만 읽어서 환급액·빠진 공제·제출 서류를 알려 줘요 ──
   // PDF는 서버로 보내지 않아요. 읽은 금액(숫자)만 이 기기에 저장해요.
-  const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
   const PDF_ITEMS = [['credit', '신용카드'], ['debit', '체크카드·직불카드'], ['cash', '현금영수증'], ['pension', '연금저축·퇴직연금(IRP)'], ['ins', '보장성 보험료'], ['med', '의료비'], ['claim', '실손보험금 받은 돈 (의료비에서 빼요)'], ['edu', '교육비'], ['don', '기부금'], ['rent', '월세']];
   let pdfBusy = false;
-  const loadPdfJs = () => (window.pdfjsLib ? Promise.resolve() : new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = PDFJS + 'pdf.min.js'; sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; res(); }; sc.onerror = rej; document.head.append(sc); }));
-  async function pdfText(buf, password) {
-    const doc = await window.pdfjsLib.getDocument({ data: buf, password }).promise;
-    let out = '';
-    for (let i = 1; i <= doc.numPages; i++) {
-      const tc = await (await doc.getPage(i)).getTextContent(), lines = {};
-      tc.items.forEach(it => { const y = Math.round(it.transform[5] / 3); (lines[y] = lines[y] || []).push({ x: it.transform[4], s: it.str }); });
-      out += Object.keys(lines).sort((a, b) => b - a).map(y => lines[y].sort((a, b) => a.x - b.x).map(t => t.s).join(' ')).join('\n') + '\n';
-    }
-    return out;
-  }
-  // 간소화 PDF는 「…증명서류 : 기본내역[의료비]」처럼 칸 이름이 [ ] 안에 있고, 사람마다 「인별합계금액」이 있어요
-  function parseSimple(text) {
-    const t = text.replace(/ /g, ' '), found = {}, hit = {};
-    const keyOf = n => { n = n.replace(/\s/g, '');
-      if (/실손/.test(n)) return 'claim'; if (/의료비/.test(n)) return 'med'; if (/교육비/.test(n)) return 'edu'; if (/기부금/.test(n)) return 'don'; if (/월세/.test(n)) return 'rent';
-      if (/직불|체크/.test(n)) return 'debit'; if (/현금영수증/.test(n)) return 'cash'; if (/신용카드/.test(n)) return 'credit';
-      if (/연금저축|퇴직연금/.test(n)) return 'pension'; if (/보험료/.test(n) && !/건강|국민|고용|장기요양/.test(n)) return 'ins'; return null; };
-    const marks = [...t.matchAll(/\[\s*([^\]\n]{2,24}?)\s*\]/g)];
-    marks.forEach((m, i) => {
-      const k = keyOf(m[1]); if (!k) return;
-      const body = t.slice(m.index + m[0].length, i + 1 < marks.length ? marks[i + 1].index : t.length);
-      const per = [...body.matchAll(/인별\s*합계\s*금액[^\d\n]{0,12}([\d,]{1,15})/g)].map(x => num(x[1]));
-      let v = per.reduce((a, b) => a + b, 0);
-      if (!per.length) { const tot = [...body.matchAll(/합\s*계[^\d\n]{0,12}([\d,]{3,15})/g)].map(x => num(x[1])); v = tot.length ? tot[tot.length - 1] : 0; }
-      if (per.length || v) { found[k] = (found[k] || 0) + v; hit[k] = true; }
-    });
-    return { found, n: Object.keys(hit).length, year: (t.match(/(20\d{2})\s*년\s*귀속/) || [])[1] || '' };
-  }
+  // PDF 읽기는 /pdfread.js (연말정산 계산기와 같이 써요)
+  const needPdf = () => (window.donsemPdf ? Promise.resolve() : new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = '/pdfread.js'; sc.onload = res; sc.onerror = rej; document.head.append(sc); }));
   function drawPdf() {
     const el = $('ye-pdf'); if (!el) return;
     const P = pro(), Q = P.yePdf, Y = P.ye || {};
@@ -283,11 +256,11 @@
     const run = async pw => {
       if (pdfBusy || !buf) return; pdfBusy = true; msg('PDF를 읽고 있어요… (이 기기 안에서만)');
       try {
-        await loadPdfJs();
-        const text = await pdfText(buf.slice(0), pw);
-        const r = parseSimple(text);
+        await needPdf();
+        const text = await window.donsemPdf.text(buf.slice(0), pw);
+        const r = window.donsemPdf.parse(text);
         if (!r.n) { msg(text.replace(/\s/g, '').length < 50 ? '이 PDF는 글자를 읽을 수 없어요 (사진으로 된 PDF예요). 아래 계산기에 금액을 직접 넣어 주세요.' : '간소화 자료에서 공제 항목을 찾지 못했어요. 홈택스 「연말정산 간소화」에서 받은 PDF가 맞는지 확인해 주세요.'); pdfBusy = false; return; }
-        const P2 = pro(); P2.yePdf = { v: r.found, n: r.n, year: r.year, t: Date.now() }; wr(PK, P2); ping('pdf');
+        const P2 = pro(); P2.yePdf = { v: r.found, n: r.n, t: Date.now() }; wr(PK, P2); ping('pdf');
         pdfBusy = false; say(`간소화 PDF에서 ${r.n}가지 금액을 찾았어요 📄`);
         needTable(() => drawPdf());
       } catch (e) {
