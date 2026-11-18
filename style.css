@@ -4254,3 +4254,18 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 .pro-lock { display: flex; flex-direction: column; gap: 8px; padding: 22px 18px; border-radius: 16px; background: var(--bg, #fff); text-align: center; }
 .pro-lock b { font-size: 17px; } .pro-lock span { font-size: 13.5px; color: var(--muted); line-height: 1.55; } .pro-lock .btn { margin-top: 6px; }
 :root[data-theme="dark"] .pp-on b { color: #B69AD8; } @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pp-on b { color: #B69AD8; } }
+/* 홈 쇼케이스: 캡처로 가계부 (Pro) */
+.sc-lav { background: linear-gradient(135deg, #f1eafb, #dccbf2); }
+:root[data-theme="dark"] .sc-lav { background: #221a2e; }
+@media (prefers-color-scheme: dark) { :root[data-theme="auto"] .sc-lav { background: #221a2e; } }
+.sc-scan { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.ss-list { width: 78%; max-width: 230px; display: grid; gap: 5px; padding: 10px; border-radius: 14px; background: var(--bg, #fff); box-shadow: 0 6px 18px rgba(112, 64, 161, .15); }
+.ss-list i { display: flex; justify-content: space-between; gap: 8px; font-style: normal; font-size: 12px; padding: 4px 2px; border-bottom: 1px dashed var(--line, #e5e5ea); }
+.ss-list i:last-child { border-bottom: 0; } .ss-list b { font-weight: 600; } .ss-list em { font-style: normal; font-weight: 700; }
+.ss-list i.in em { color: #7040A1; }
+.ss-badge { padding: 5px 11px; border-radius: 999px; background: #7040A1; color: #fff; font-size: 12px; font-weight: 700; }
+:root[data-theme="dark"] .ss-list i.in em { color: #B69AD8; } @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ss-list i.in em { color: #B69AD8; } }
+.sc-scan { justify-content: flex-end; }
+.ss-list { position: relative; padding: 16px 10px 6px; }
+.ss-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; padding: 4px 10px; }
+@media (min-width: 761px) { .showcase .sc-lav { grid-column: 1 / -1; } }
