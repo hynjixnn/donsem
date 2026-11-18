@@ -5,7 +5,10 @@
   if (!box) return;
   const $ = id => document.getElementById(id);
   const rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
-  const wr = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
+  // 가계부·고정지출에 쓰면 캘린더(budget.js)·고정지출(fixed.js)에 바로 알려요. 안 알리면 그 화면이 들고 있던 옛 목록으로 덮어써서 기록이 사라질 수 있어요
+  const wr = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return false; }
+    try { if (k === 'donsem:budget') { window.dispatchEvent(new Event('donsem:data')); window.dispatchEvent(new Event('donsem:budget')); } else if (k === 'donsem:fixed') { window.dispatchEvent(new Event('donsem:fixed-sync')); window.dispatchEvent(new Event('donsem:data')); } } catch (e) { /* 괜찮아요 */ }
+    return true; };
   const W = n => Math.round(n).toLocaleString('ko-KR') + '원';
   const E = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = s => Number(String(s || '').replace(/[^\d]/g, '')) || 0;
@@ -725,8 +728,7 @@
         const add = rows.filter(r => r.on).map((r, i) => ({ id: 'ai' + Date.now().toString(36) + i, type: r.type, cat: r.cat, amt: r.amt, date: r.date, memo: (r.shop || '').slice(0, 40) }));
         b.entries.push(...add);
         if (!wr('donsem:budget', b)) return say('저장하지 못했어요. 저장 공간을 확인해 주세요.');
-        rows = []; drawReview(); msg(`✓ ${add.length}건을 가계부에 넣었어요. 캘린더에서 확인해 보세요.`); say(`${add.length}건을 가계부에 넣었어요 ✨`);
-        window.dispatchEvent(new StorageEvent('storage', { key: 'donsem:budget' })); // 다른 화면(캘린더·분석)도 다시 그려요
+        rows = []; drawReview(); const nowYm = ymd(today()).slice(0, 7), other = [...new Set(add.map(e => e.date.slice(0, 7)).filter(m => m !== nowYm))].map(m => +m.slice(5) + '월'); msg(`✓ ${add.length}건을 가계부에 넣었어요.${other.length ? ` ${other.join('·')} 기록은 캘린더에서 ‹ 를 눌러 그 달로 가면 보여요.` : ' 캘린더에서 확인해 보세요.'}`); say(`${add.length}건을 가계부에 넣었어요 ✨`);
         if (drawn) draw();
       });
     }
