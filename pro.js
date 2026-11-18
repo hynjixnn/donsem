@@ -199,7 +199,7 @@
   function drawYe() {
     const P = pro(), Y = P.ye || {}, d = yearData();
     const steps = [['12.31', '지출·납입 마감'], ['1.15', '간소화 열림'], ['1월 말', '회사 제출'], ['2월', '급여로 정산']];
-    const head = `<div class="pro-ye-top"><span class="pro-pill">${d.y}년 사용분</span><span class="pro-pill on">D-${d.dday}</span></div><div class="pro-steps">${steps.map((s, i) => `<div class="${i === 0 ? 'on' : ''}"><i></i><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`;
+    const head = `<div id="ye-pdf"></div><div class="pro-ye-top"><span class="pro-pill">${d.y}년 사용분</span><span class="pro-pill on">D-${d.dday}</span></div><div class="pro-steps">${steps.map((s, i) => `<div class="${i === 0 ? 'on' : ''}"><i></i><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}</div>`;
     const inputs = `<div class="pro-in2"><label>총급여 (1년, 비과세 뺀 연봉)<input id="ye-pay" inputmode="numeric" value="${Y.pay ? (+Y.pay).toLocaleString('ko-KR') : ''}" placeholder="예: 40,000,000"></label><label>연금저축·IRP 올해 넣은 돈<input id="ye-pen" inputmode="numeric" value="${Y.pen ? (+Y.pen).toLocaleString('ko-KR') : ''}" placeholder="0"></label><label>기본공제 가족 수 (나 포함)<input id="ye-fam" inputmode="numeric" value="${Y.fam || 1}"></label><label>9세 이상 자녀 수<input id="ye-kids" inputmode="numeric" value="${Y.kids || 0}"></label></div><label class="pro-range">카드 사용 중 체크카드·현금 비율 <b id="ye-dbv">${Y.dr == null ? 30 : Y.dr}%</b><input id="ye-dr" type="range" min="0" max="100" step="10" value="${Y.dr == null ? 30 : Y.dr}"></label>`;
     const ledger = `<h3 class="pro-h">가계부에서 찾은 올해 공제 재료</h3><ul class="pro-list"><li><span><b>카드로 쓴 돈 (추정)</b><small>지금까지 ${W(d.card)} → 연말까지 약 ${W(d.pCard)}</small></span></li><li><span><b>의료비</b><small>분류 「의료」 · 연말까지 약 ${W(d.pMed)}</small></span></li><li><span><b>월세</b><small>메모에 「월세」 · 연말까지 약 ${W(d.pRent)}</small></span></li></ul>`;
     if (!Y.pay) { box.innerHTML = head + `<div class="pro-panel"><p class="pro-empty" style="margin:0"><b>총급여만 알려 주시면 시작해요.</b><br>지금까지 가계부 기록을 바탕으로 올해 챙길 공제와 예상 환급을 찾아 드려요.</p></div>` + inputs + ledger + marriage(); bindYe(); return; }
@@ -220,8 +220,95 @@
       bindYe();
     });
   }
+  // ── Pro 딸깍 2: 홈택스 「연말정산 간소화 PDF」를 올리면 이 기기 안에서만 읽어서 환급액·빠진 공제·제출 서류를 알려 줘요 ──
+  // PDF는 서버로 보내지 않아요. 읽은 금액(숫자)만 이 기기에 저장해요.
+  const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+  const PDF_ITEMS = [['credit', '신용카드'], ['debit', '체크카드·직불카드'], ['cash', '현금영수증'], ['pension', '연금저축·퇴직연금(IRP)'], ['ins', '보장성 보험료'], ['med', '의료비'], ['claim', '실손보험금 받은 돈 (의료비에서 빼요)'], ['edu', '교육비'], ['don', '기부금'], ['rent', '월세']];
+  let pdfBusy = false;
+  const loadPdfJs = () => (window.pdfjsLib ? Promise.resolve() : new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = PDFJS + 'pdf.min.js'; sc.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; res(); }; sc.onerror = rej; document.head.append(sc); }));
+  async function pdfText(buf, password) {
+    const doc = await window.pdfjsLib.getDocument({ data: buf, password }).promise;
+    let out = '';
+    for (let i = 1; i <= doc.numPages; i++) {
+      const tc = await (await doc.getPage(i)).getTextContent(), lines = {};
+      tc.items.forEach(it => { const y = Math.round(it.transform[5] / 3); (lines[y] = lines[y] || []).push({ x: it.transform[4], s: it.str }); });
+      out += Object.keys(lines).sort((a, b) => b - a).map(y => lines[y].sort((a, b) => a.x - b.x).map(t => t.s).join(' ')).join('\n') + '\n';
+    }
+    return out;
+  }
+  // 간소화 PDF는 「…증명서류 : 기본내역[의료비]」처럼 칸 이름이 [ ] 안에 있고, 사람마다 「인별합계금액」이 있어요
+  function parseSimple(text) {
+    const t = text.replace(/ /g, ' '), found = {}, hit = {};
+    const keyOf = n => { n = n.replace(/\s/g, '');
+      if (/실손/.test(n)) return 'claim'; if (/의료비/.test(n)) return 'med'; if (/교육비/.test(n)) return 'edu'; if (/기부금/.test(n)) return 'don'; if (/월세/.test(n)) return 'rent';
+      if (/직불|체크/.test(n)) return 'debit'; if (/현금영수증/.test(n)) return 'cash'; if (/신용카드/.test(n)) return 'credit';
+      if (/연금저축|퇴직연금/.test(n)) return 'pension'; if (/보험료/.test(n) && !/건강|국민|고용|장기요양/.test(n)) return 'ins'; return null; };
+    const marks = [...t.matchAll(/\[\s*([^\]\n]{2,24}?)\s*\]/g)];
+    marks.forEach((m, i) => {
+      const k = keyOf(m[1]); if (!k) return;
+      const body = t.slice(m.index + m[0].length, i + 1 < marks.length ? marks[i + 1].index : t.length);
+      const per = [...body.matchAll(/인별\s*합계\s*금액[^\d\n]{0,12}([\d,]{1,15})/g)].map(x => num(x[1]));
+      let v = per.reduce((a, b) => a + b, 0);
+      if (!per.length) { const tot = [...body.matchAll(/합\s*계[^\d\n]{0,12}([\d,]{3,15})/g)].map(x => num(x[1])); v = tot.length ? tot[tot.length - 1] : 0; }
+      if (per.length || v) { found[k] = (found[k] || 0) + v; hit[k] = true; }
+    });
+    return { found, n: Object.keys(hit).length, year: (t.match(/(20\d{2})\s*년\s*귀속/) || [])[1] || '' };
+  }
+  function drawPdf() {
+    const el = $('ye-pdf'); if (!el) return;
+    const P = pro(), Q = P.yePdf, Y = P.ye || {};
+    let body = '';
+    if (Q && Q.v) {
+      const v = Q.v, kids = +Y.kids || 0, fam = Math.max(1, +Y.fam || 1, kids + 1);
+      const extra = (v.edu || 0) * 0.15 + Math.min(v.don || 0, 1e7) * 0.15;
+      const o = { pay: +Y.pay || 0, fam, kids, credit: v.credit || 0, debit: (v.debit || 0) + (v.cash || 0), pension: v.pension || 0, rent: v.rent || 0, med: Math.max(0, (v.med || 0) - (v.claim || 0)), ins: v.ins || 0, extra };
+      const res = o.pay && taxReady ? yeCalc(o) : null;
+      body = `<div class="pdf-res">${res ? `<div class="pro-kpis"><div><span>${res.diff >= 0 ? '예상 환급' : '예상 추가 납부'} (지방소득세 포함)</span><b class="${res.diff < 0 ? 'neg' : ''}">${W(Math.abs(res.diff))}</b></div><div><span>카드 소득공제</span><b>${W(res.r.card)}</b></div></div><p class="pro-cap">간소화 PDF 금액으로 계산했어요. 이미 낸 세금은 간이세액표대로 뗐다고 보고 추정했어요.</p>` : `<p class="pro-cap"><b>아래 「총급여」를 넣으면</b> 예상 환급액을 바로 계산해요.</p>`}
+        <details class="pdf-vals"${Q.n < 3 ? ' open' : ''}><summary>PDF에서 찾은 금액 ${Q.n}가지 · 다르면 고쳐 주세요</summary><div class="pdf-grid">${PDF_ITEMS.map(([k, l]) => `<label><span>${l}</span><input inputmode="numeric" data-k="${k}" value="${v[k] ? (+v[k]).toLocaleString('ko-KR') : ''}" placeholder="0"></label>`).join('')}</div><p class="pro-cap">전통시장·대중교통 추가 공제는 빼고 보수적으로 계산해요.</p></details></div>` +
+        `<h3 class="pro-h">간소화에 잘 안 나오는 공제</h3><ul class="pdf-chk">${[
+          [!v.rent, '월세', '집주인이 신고하지 않으면 안 나와요. 임대차계약서·주민등록등본·이체 내역을 회사에 내면 15~17% 돌려받아요'],
+          [true, '안경·콘택트렌즈', '1명당 50만 원까지 의료비예요. 안경점 영수증(시력교정용 확인)을 받아 두세요'],
+          [kids > 0, '교복·체육복', '중고생 1명당 50만 원까지 교육비예요. 구입처 영수증이 필요해요'],
+          [true, '종교단체 기부금', '간소화에 빠지는 경우가 많아요. 기부금 영수증을 따로 받아 내요'],
+          [true, '부양가족 확인', '부모님·형제를 다른 가족과 중복으로 올리면 나중에 가산세를 내요. 누가 올릴지 먼저 정하세요'],
+        ].filter(x => x[0]).map(x => `<li><label><input type="checkbox"><span><b>${x[1]}</b><small>${x[2]}</small></span></label></li>`).join('')}</ul>` +
+        `<h3 class="pro-h">회사에 낼 것</h3><ol class="pdf-sub"><li>지금 올린 <b>간소화 PDF</b> (홈택스 → 연말정산 간소화 → 한 번에 내려받기)</li><li>회사 양식 <b>소득·세액공제 신고서</b> (부양가족·공제 항목 체크)</li>${!v.rent ? '' : '<li>월세: <b>임대차계약서 사본, 주민등록등본, 월세 이체 내역</b></li>'}<li>간소화에 없는 영수증 (안경·교복·기부금 등)</li><li>부양가족을 처음 올리면 <b>가족관계증명서</b></li></ol>` +
+        `<button type="button" class="btn line wide" id="pdf-clear">PDF 금액 지우기</button>`;
+    }
+    el.innerHTML = `<div class="sc-card pdf-card"><div class="sc-top"><span class="sc-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span><b>간소화 PDF 올리면 끝</b><small>홈택스에서 받은 연말정산 간소화 PDF를 올리면 환급액, 빠진 공제, 회사에 낼 서류까지 정리해 줘요. PDF는 이 기기 안에서만 읽고 어디에도 보내지 않아요.</small></span></div>` +
+      (Q ? '' : `<p class="pdf-when">📅 ${new Date().getFullYear()}년 사용분 간소화 자료는 ${new Date().getFullYear() + 1}년 1월 15일부터 홈택스에서 받을 수 있어요. 작년 PDF로 미리 해 봐도 돼요.</p>`) +
+      `<label class="btn fill wide sc-btn" id="pdf-pick"><input type="file" id="pdf-file" accept="application/pdf,.pdf" class="sr-only">${Q ? '다른 PDF 올리기' : '간소화 PDF 올리기'}</label><div class="pdf-pw" id="pdf-pw" hidden><input type="password" id="pdf-pwin" placeholder="PDF 비밀번호" autocomplete="off"><button type="button" class="btn fill" id="pdf-pwgo">열기</button></div><p class="sc-msg" id="pdf-msg" aria-live="polite"></p>${body}</div>`;
+    let buf = null;
+    const msg = t2 => { $('pdf-msg').textContent = t2; };
+    const run = async pw => {
+      if (pdfBusy || !buf) return; pdfBusy = true; msg('PDF를 읽고 있어요… (이 기기 안에서만)');
+      try {
+        await loadPdfJs();
+        const text = await pdfText(buf.slice(0), pw);
+        const r = parseSimple(text);
+        if (!r.n) { msg(text.replace(/\s/g, '').length < 50 ? '이 PDF는 글자를 읽을 수 없어요 (사진으로 된 PDF예요). 아래 계산기에 금액을 직접 넣어 주세요.' : '간소화 자료에서 공제 항목을 찾지 못했어요. 홈택스 「연말정산 간소화」에서 받은 PDF가 맞는지 확인해 주세요.'); pdfBusy = false; return; }
+        const P2 = pro(); P2.yePdf = { v: r.found, n: r.n, year: r.year, t: Date.now() }; wr(PK, P2); ping('pdf');
+        pdfBusy = false; say(`간소화 PDF에서 ${r.n}가지 금액을 찾았어요 📄`);
+        needTable(() => drawPdf());
+      } catch (e) {
+        pdfBusy = false;
+        if (e && e.name === 'PasswordException') { $('pdf-pw').hidden = false; msg(e.code === 2 ? '비밀번호가 맞지 않아요. 다시 넣어 주세요.' : '비밀번호가 걸린 PDF예요. 내려받을 때 정한 비밀번호를 넣어 주세요.'); $('pdf-pwin').focus(); return; }
+        msg('PDF를 열지 못했어요. 인터넷 연결을 확인하거나 다른 PDF로 해 주세요.');
+      }
+    };
+    $('pdf-file').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (f.size > 20e6) return msg('PDF가 너무 커요 (20MB까지).'); buf = new Uint8Array(await f.arrayBuffer()); $('pdf-pw').hidden = true; run(); });
+    $('pdf-pwgo').addEventListener('click', () => run($('pdf-pwin').value));
+    $('pdf-pwin').addEventListener('keydown', e => { if (e.key === 'Enter') run($('pdf-pwin').value); });
+    el.querySelectorAll('.pdf-grid input').forEach(inp => {
+      inp.addEventListener('input', () => { const n = num(inp.value); inp.value = n ? n.toLocaleString('ko-KR') : ''; });
+      inp.addEventListener('change', () => { const P2 = pro(); P2.yePdf.v[inp.dataset.k] = num(inp.value); wr(PK, P2); drawPdf(); });
+    });
+    const cl = $('pdf-clear'); if (cl) cl.addEventListener('click', () => { const P2 = pro(); delete P2.yePdf; wr(PK, P2); drawPdf(); });
+    if (Q && (P.ye || {}).pay && !taxReady) needTable(() => drawPdf());
+  }
   function marriage() { return `<div class="pro-panel pro-tip"><b>12월 31일까지 혼인신고하면</b><span>2024~2026년에 혼인신고한 부부는 각각 결혼세액공제 50만 원(지방소득세 포함 55만 원)을 한 번 받아요.</span></div>`; }
   function bindYe() {
+    drawPdf();
     const save = () => { const P = pro(); P.ye = { pay: num(($('ye-pay') || {}).value), pen: num(($('ye-pen') || {}).value), fam: Math.max(1, num(($('ye-fam') || {}).value) || 1), kids: num(($('ye-kids') || {}).value), dr: +(($('ye-dr') || {}).value || 30) }; wr(PK, P); drawYe(); };
     ['ye-pay', 'ye-pen', 'ye-fam', 'ye-kids'].forEach(id => { const el = $(id); if (!el) return; el.addEventListener('change', save); if (id === 'ye-pay' || id === 'ye-pen') el.addEventListener('input', () => { const n = num(el.value); el.value = n ? n.toLocaleString('ko-KR') : ''; }); });
     const r = $('ye-dr'); if (r) { r.addEventListener('input', () => { $('ye-dbv').textContent = r.value + '%'; }); r.addEventListener('change', save); }

@@ -320,7 +320,8 @@ function yearEndTax(o) { // o: pay, fam, kids, credit, debit, pension, rent, med
   const base = Y - earnedDed(Y) - 1.5e6 * o.fam - npsYear - card;
   const kidCredit = o.kids <= 0 ? 0 : o.kids === 1 ? 25e4 : 55e4 + (o.kids - 2) * 40e4;
   const pensionCredit = Math.min(o.pension, 9e6) * (Y <= 5.5e7 ? 0.15 : 0.12);
-  const special = Math.min(o.ins, 1e6) * 0.12 + Math.max(0, o.med - Y * 0.03) * 0.15 + (Y <= 8e7 ? Math.min(o.rent, 1e7) * (Y <= 5.5e7 ? 0.17 : 0.15) : 0);
+  // extra: 교육비·기부금처럼 표준세액공제 대신 받는 다른 특별세액공제 (Pro 간소화 PDF에서 넘겨줘요, 없으면 0)
+  const special = Math.min(o.ins, 1e6) * 0.12 + Math.max(0, o.med - Y * 0.03) * 0.15 + (Y <= 8e7 ? Math.min(o.rent, 1e7) * (Y <= 5.5e7 ? 0.17 : 0.15) : 0) + (+o.extra || 0);
   const workLimit = Y <= 3.3e7 ? 74e4 : Y <= 7e7 ? Math.max(66e4, 74e4 - (Y - 3.3e7) * 0.008) : Y <= 1.2e8 ? Math.max(5e5, 66e4 - (Y - 7e7) * 0.5) : Math.max(2e5, 5e5 - (Y - 1.2e8) * 0.5);
   const settle = (tb, extra) => {
     const calc = incomeTaxOf(Math.max(0, tb));
