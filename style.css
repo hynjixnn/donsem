@@ -4320,3 +4320,19 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 .vd-tbl th, .vd-tbl td { padding: 10px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; } .vd-tbl tr:last-child th, .vd-tbl tr:last-child td { border-bottom: 0; }
 .vd-tbl tbody th { text-align: left; font-weight: 500; color: var(--muted); white-space: normal; } .vd-tbl thead th { font-size: 12.5px; color: var(--muted); font-weight: 700; } .vd-tbl td:last-child { font-weight: 700; color: var(--text); }
 @media (max-width: 760px) { .vd-tbl th, .vd-tbl td { padding: 9px 8px; font-size: 12.5px; } .vd-tbl thead th { font-size: 11.5px; } }
+
+/* ── 메뉴 빨간 점 + 말풍선 (크림처럼) ── */
+.gnav a.nav-dot, .tabbar a.nav-dot { position: relative; overflow: visible; }
+.gnav a.nav-dot > b::after { content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 3px; border-radius: 50%; background: #ff3b30; vertical-align: top; transform: translateY(-1px); }
+.tabbar a.nav-dot > svg { overflow: visible; }
+.tabbar a.nav-dot::before { content: ''; position: absolute; top: 5px; left: calc(50% + 8px); width: 7px; height: 7px; border-radius: 50%; background: #ff3b30; box-shadow: 0 0 0 2px var(--card, #fff); z-index: 2; }
+.nav-tip { position: absolute; left: 50%; top: calc(100% + 8px); transform: translateX(-50%); z-index: 60; white-space: nowrap; padding: 6px 10px; border-radius: 8px; background: #1d1d1f; color: #fff; font-size: 12px; font-weight: 700; line-height: 1.2; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); animation: navTip 2.4s ease-in-out infinite; }
+.nav-tip::before { content: ''; position: absolute; left: 50%; top: -5px; margin-left: -5px; border: 5px solid transparent; border-top: 0; border-bottom-color: #1d1d1f; }
+.tabbar .nav-tip { top: auto; bottom: calc(100% + 10px); font-size: 11.5px; }
+.tabbar .nav-tip::before { top: auto; bottom: -5px; border-bottom: 0; border-top: 5px solid #1d1d1f; }
+:root[data-theme="dark"] .nav-tip { background: #f5f5f7; color: #1d1d1f; } :root[data-theme="dark"] .nav-tip::before { border-bottom-color: #f5f5f7; } :root[data-theme="dark"] .tabbar .nav-tip::before { border-top-color: #f5f5f7; border-bottom-color: transparent; }
+@keyframes navTip { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .nav-tip { animation: none; } }
+.nav-tip.nav-tip-top { top: 0; z-index: 70; }
+.tabbar a:last-child .nav-tip { left: auto; right: -2px; animation-name: navTipR; } .tabbar a:last-child .nav-tip::before { left: auto; right: 18px; }
+@keyframes navTipR { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }

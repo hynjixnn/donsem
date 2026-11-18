@@ -4469,3 +4469,43 @@ const GUIDE_FOR = {
   const keep = () => { const first = [...wrap.children].find(c => !/^(NAV|SCRIPT)$/.test(c.tagName)); if (first && first !== hero) wrap.insertBefore(hero, first); };
   keep(); new MutationObserver(keep).observe(wrap, { childList: true });
 })();
+
+// ── 크림처럼 메뉴에 빨간 점 + 말풍선: 새 소식이 있는 메뉴에 점, 마감이 다가오는 일정은 말풍선으로 ──
+// 새 소식을 바꿀 때는 NAV_DOTS의 id(새 값)와 until(끝나는 날)만 바꾸면 돼요. 그 메뉴에 한 번 들어가면 점이 꺼져요
+(() => {
+  const NAV_DOTS = [
+    { href: '/calculators/', id: 'should-i-1119', until: '2026-12-03', seen: ['/calculators/', '/should-i/'] }, // 새 계산기: 해야 할까, 말까?
+    { href: '/guide/', id: 'mag-1118', until: '2026-11-30', seen: ['/guide/'] }, // 새 기사
+  ];
+  const KEY = 'donsem:navseen', TKEY = 'donsem:navtip';
+  let seen = {}; try { seen = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(seen)); } catch (e) {} };
+  const kst = new Date(Date.now() + 9 * 3600e3), today = kst.toISOString().slice(0, 10), path = location.pathname;
+  const links = href => document.querySelectorAll(`.gnav a.gnav-shop[href="${href}"], .tabbar a[href="${href}"]`);
+  NAV_DOTS.forEach(d => {
+    if (today > d.until) return;
+    if (d.seen.some(p => path === p || path.startsWith(p))) { seen[d.href] = d.id; save(); }
+    if (seen[d.href] === d.id) return;
+    links(d.href).forEach(a => a.classList.add('nav-dot'));
+  });
+  // 말풍선: 연말정산(간소화 자료가 열리는 1월 15일)까지 60일 안이면 캘린더 메뉴에 D-day
+  const ye = Date.UTC(kst.getUTCMonth() === 0 && kst.getUTCDate() > 15 ? kst.getUTCFullYear() + 1 : kst.getUTCMonth() === 0 ? kst.getUTCFullYear() : kst.getUTCFullYear() + 1, 0, 15);
+  const left = Math.round((ye - Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate())) / 864e5);
+  let hideUntil = ''; try { hideUntil = localStorage.getItem(TKEY) || ''; } catch (e) {}
+  if (/^\/year-end/.test(path)) { const t = new Date(Date.now() + 9 * 3600e3 + 3 * 864e5).toISOString().slice(0, 10); try { localStorage.setItem(TKEY, t); } catch (e) {} hideUntil = t; }
+  if (left < 0 || left > 60 || today < hideUntil) return;
+  links('/budget/').forEach(a => {
+    a.classList.add('nav-dot');
+    const tip = document.createElement('span');
+    tip.className = 'nav-tip'; tip.setAttribute('role', 'link'); tip.tabIndex = 0;
+    tip.textContent = left ? `연말정산 D-${left} 📅` : '오늘 연말정산 시작 📅';
+    const go = e => { e.preventDefault(); e.stopPropagation(); location.href = '/year-end/'; };
+    tip.addEventListener('click', go); tip.addEventListener('keydown', e => { if (e.key === 'Enter') go(e); });
+    const bar = a.closest('.topbar');
+    if (!bar) { a.append(tip); return; } // 아래 탭: 메뉴 안에
+    // 위 메뉴는 글자가 흐리게(투명하게) 보이는 칸이라 안에 넣으면 말풍선도 흐려지고 검색창 뒤로 가려져요 → 맨 위 막대에 따로 띄워요
+    tip.classList.add('nav-tip-top'); bar.append(tip);
+    const place = () => { const r = a.getBoundingClientRect(), b = bar.getBoundingClientRect(); tip.hidden = !r.width; tip.style.left = (r.left - b.left + r.width / 2) + 'px'; tip.style.top = (r.bottom - b.top + 6) + 'px'; };
+    place(); addEventListener('resize', place); if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+  });
+})();
