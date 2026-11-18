@@ -48,7 +48,7 @@
       const orderId = $('pp-oid').value.trim(), email = $('pp-mail').value.trim();
       if (!orderId || !email) return say('주문번호와 이메일을 적어 주세요.');
       fetch(API + '/pay/find', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId, email }) }).then(r => r.json().then(j => (r.ok ? j : Promise.reject(j))))
-        .then(j => { if (j.product !== 'pro1y') return say('Pro 이용권 주문이 아니에요.'); wr(PASS_K, { token: j.token, orderId: j.orderId, live: j.live, t: j.created }); return passCheck().then(() => { say('Pro 이용권을 불러왔어요 ✨'); drawPass(); if (drawn) draw(); }); })
+        .then(j => { if (j.product !== 'pro1y') return say('Pro 이용권 주문이 아니에요.'); wr(PASS_K, { token: j.token, orderId: j.orderId, live: j.live, t: j.created }); return passCheck().then(() => { say(passOk() ? 'Pro 이용권을 불러왔어요 ✨' : '환불했거나 기간이 끝난 이용권이에요.'); drawPass(); if (drawn) draw(); }); })
         .catch(j => say((j && j.message) || '찾지 못했어요. 잠시 뒤 다시 해 주세요.'));
     });
   }
