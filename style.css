@@ -4302,3 +4302,21 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
   .slip-row, .slip-sum { padding: 5px 0; font-size: 12.5px; } .slip-h b { font-size: 16px; margin-bottom: 10px; } .slip-col h4 { font-size: 13px; margin-bottom: 2px; }
   .slip-net { grid-template-columns: 1fr; padding: 12px 14px; } .slip-net b { grid-row: auto; font-size: 20px; order: 2; } .slip-net em { order: 3; }
 }
+
+/* ── 해야 할까, 말까? (결정 도우미) ── */
+.si-pick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.si-pick button i { font-style: normal; margin-right: 4px; }
+.si-q { margin: 22px 0 4px; padding: 12px 14px; border-radius: 12px; background: var(--accent-soft, #efe7f8); font-size: 14px; line-height: 1.5; }
+.vd { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border-radius: 14px; margin-bottom: 18px; background: var(--card); border: 1.5px solid var(--vc); }
+.vd i { font-style: normal; font-size: 30px; line-height: 1; } .vd b { display: block; font-size: 18px; color: var(--vc); margin-bottom: 4px; } .vd span { font-size: 13.5px; color: var(--text); line-height: 1.5; }
+.vd-ok { --vc: #7040A1; } .vd-no { --vc: #e5484d; } .vd-mid { --vc: #d97706; }
+:root[data-theme="dark"] .vd-ok { --vc: #B69AD8; }
+.vd-vs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; } .vd-vs > div { background: var(--card); border-radius: 12px; padding: 12px 14px; } .vd-vs h4 { margin: 0 0 4px; font-size: 14px; } .vd-vs .rows { margin-top: 0; }
+.vd-check { margin-top: 14px; display: grid; gap: 4px; font-size: 13px; padding: 12px 14px; border-radius: 12px; background: var(--card); } .vd-check b { font-size: 14px; margin-bottom: 2px; }
+.vd-go { display: inline-block; margin-top: 12px; font-size: 14px; font-weight: 700; color: var(--accent, #7040A1); text-decoration: none; }
+@media (max-width: 760px) { .vd-vs { grid-template-columns: 1fr; } .vd b { font-size: 16px; } .vd i { font-size: 26px; } .si-pick button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 2px; font-size: 12.5px; line-height: 1.2; white-space: nowrap; } .si-pick button i { margin: 0; font-size: 18px; } }
+.vd-cut { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--card); font-size: 14px; } .vd-cut b { color: #e5484d; } .vd-cut small { font-weight: 600; }
+.vd-tbl { width: 100%; margin-top: 10px; border-collapse: separate; border-spacing: 0; background: var(--card); border-radius: 12px; overflow: hidden; font-size: 13.5px; }
+.vd-tbl th, .vd-tbl td { padding: 10px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; } .vd-tbl tr:last-child th, .vd-tbl tr:last-child td { border-bottom: 0; }
+.vd-tbl tbody th { text-align: left; font-weight: 500; color: var(--muted); white-space: normal; } .vd-tbl thead th { font-size: 12.5px; color: var(--muted); font-weight: 700; } .vd-tbl td:last-child { font-weight: 700; color: var(--text); }
+@media (max-width: 760px) { .vd-tbl th, .vd-tbl td { padding: 9px 8px; font-size: 12.5px; } .vd-tbl thead th { font-size: 11.5px; } }

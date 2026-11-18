@@ -497,6 +497,68 @@ function refinance() {
       ['수수료 되찾는 기간', back === null ? '되찾을 수 없어요' : back <= n ? `${back}개월` : '남은 기간 안에 못 되찾아요']]);
 }
 
+// ── 해야 할까, 말까? (결정 도우미): 적금 깨기 · 대출 갈아타기 · 물타기 vs 손절 ──
+function shouldI() {
+  const mode = seg('si_mode'), out = document.getElementById('si_out');
+  document.querySelectorAll('#should-i > [data-mode]').forEach(d => d.hidden = d.dataset.mode !== mode);
+  const verdict = (kind, emoji, title, why) => `<div class="vd vd-${kind}"><i aria-hidden="true">${emoji}</i><div><b>${title}</b><span>${why}</span></div></div>`;
+  const small = t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`;
+  const go = (href, t) => `<a class="vd-go" href="${href}">${t} ›</a>`;
+  if (mode === 'save') {
+    const P = val('si_sp'), N = Math.round(val('si_sn')), m = Math.min(Math.round(val('si_sm')), N), r = val('si_sr') / 100, rc = val('si_sc') / 100, lr = val('si_lr') / 100;
+    if (!P || !N || !m) { out.innerHTML = '매달 넣는 돈, 기간, 넣은 횟수를 넣어 주세요.'; return; }
+    const paid = P * m, need = Math.min(val('si_need') || paid, paid), left = N - m, keep = 1 - 0.154;
+    let keepInt = 0, breakInt = 0;
+    for (let k = 1; k <= m; k++) { keepInt += P * r * (N - k + 1) / 12; breakInt += P * rc * (m - k + 1) / 12; }
+    const lossBreak = Math.max(0, (keepInt - breakInt) * keep), loanCost = need * lr * left / 12, gap = Math.abs(lossBreak - loanCost);
+    const v = left <= 0 ? verdict('ok', '🎉', '벌써 만기예요', '깨지 말고 만기 금액을 받으세요.')
+      : gap < 10000 ? verdict('mid', '🤔', '어느 쪽이든 비슷해요', `차이가 ${won(gap)}뿐이라 편한 쪽으로 하세요.`)
+      : loanCost < lossBreak ? verdict('ok', '🐷', '적금은 지키고, 담보대출이 나아요', `깨면 이자를 ${won(lossBreak)} 잃지만, 대출 이자는 ${won(loanCost)}이에요.`)
+      : verdict('no', '🔨', '이번엔 깨는 게 나아요', `대출 이자(${won(loanCost)})가 깨서 잃는 이자(${won(lossBreak)})보다 커요.`);
+    out.innerHTML = v + `<div>${loanCost < lossBreak ? '담보대출로 아끼는 돈' : '깨서 아끼는 돈'}</div><div class="big">${won(gap)}</div>` +
+      rows([['지금까지 넣은 돈', won(paid)], ['만기까지 두면 받는 이자 (세후)', won(keepInt * keep)], ['지금 깨면 받는 이자 (세후)', won(breakInt * keep)],
+        ['깨서 잃는 이자', minus(lossBreak)], [`담보대출 ${won(need)} · ${left}개월 이자`, minus(loanCost)]]) +
+      (val('si_need') > paid ? small('필요한 돈이 넣은 돈보다 많아서, 넣은 돈만큼만 빌린다고 계산했어요.') : '') +
+      small('적금담보대출은 보통 넣은 돈의 90~95%까지 빌릴 수 있고, 은행 앱에서 바로 신청할 수 있어요.') + go('/savings/', '적금 이자 계산기로 만기 금액 보기');
+    return;
+  }
+  if (mode === 'loan') {
+    const L = val('si_la'), n = Math.round(val('si_ln')), h = Math.min(Math.round(val('si_lk')) || n, n);
+    if (L <= 0 || n <= 0) { out.innerHTML = '남은 원금과 기간을 넣어 주세요.'; return; }
+    // 원리금균등으로 h개월 동안 낸 돈 + 그때 남은 원금
+    const cost = rate => { const i = rate / 100 / 12, M = i === 0 ? L / n : L * i / (1 - Math.pow(1 + i, -n)); const bal = i === 0 ? L - M * h : L * Math.pow(1 + i, h) - M * (Math.pow(1 + i, h) - 1) / i; return { M, total: M * h + Math.max(0, bal) }; };
+    const o = cost(val('si_lo')), w = cost(val('si_lw')), extra = L * val('si_lf') / 100 + val('si_lc');
+    const save = o.total - w.total - extra, monthly = o.M - w.M, back = monthly > 0 ? Math.ceil(extra / monthly) : null;
+    const v = monthly <= 0 ? verdict('no', '✋', '갈아타지 마세요', '새 대출 금리가 더 높거나 같아서 매달 내는 돈이 줄지 않아요.')
+      : save > 0 ? verdict('ok', '🏦', '갈아타는 게 이득이에요', `수수료 ${won(extra)}은 ${back}개월이면 되찾고, ${h}개월 동안 ${won(save)} 아껴요.`)
+      : verdict('no', '✋', '지금은 그대로 두세요', `수수료를 되찾는 데 ${back}개월이 걸리는데, 대출을 ${h}개월만 쓸 계획이에요.`);
+    out.innerHTML = v + `<div>${save >= 0 ? `${h}개월 동안 아끼는 돈` : `${h}개월 동안 손해 보는 돈`}</div><div class="big">${won(Math.abs(save))}</div>` +
+      rows([['지금 대출 월 상환액', won(o.M)], ['새 대출 월 상환액', won(w.M)], [monthly >= 0 ? '매달 줄어드는 돈' : '매달 늘어나는 돈', won(Math.abs(monthly))],
+        ['중도상환수수료 + 비용', minus(extra)], ['수수료 되찾는 기간', back === null ? '되찾을 수 없어요' : `${back}개월`]]) +
+      small('새 대출의 금리가 고정인지 변동인지, 우대금리 조건과 새 대출의 중도상환수수료도 꼭 확인하세요.') + go('/refinance/', '대출 갈아타기 계산기로 자세히 보기');
+    return;
+  }
+  const ab = val('si_ab'), aq = val('si_aq'), an = val('si_an'), aa = val('si_aa');
+  if (!ab || !aq || !an) { out.innerHTML = '평균 단가, 수량, 지금 주가를 넣어 주세요.'; return; }
+  const cost0 = ab * aq, now0 = an * aq, q = Math.floor(aa / an), Q = aq + q, cost1 = cost0 + q * an, avg1 = cost1 / Q;
+  const pct = n => (n > 0 ? '+' : '') + (n * 100).toFixed(1).replace(/\.0$/, '') + '%';
+  const need0 = ab / an - 1, need1 = avg1 / an - 1;
+  const fall0 = an * 0.9 * aq - cost0, fall1 = an * 0.9 * Q - cost1, rise1 = an * 1.1 * Q - cost1, rise0 = an * 1.1 * aq - cost0;
+  if (an >= ab) { out.innerHTML = verdict('ok', '😊', '지금은 손실이 아니에요', `평균 단가보다 주가가 ${pct(an / ab - 1)} 높아요. 물타기·손절 고민은 필요 없어요.`); return; }
+  const heavy = q * an > now0;
+  const v = !q ? verdict('mid', '🤔', '더 넣을 돈으로 1주도 못 사요', '물타기 금액을 늘려 넣어 보세요.')
+    : heavy ? verdict('no', '⚠️', '물타기 금액이 너무 커요', `지금 가진 주식(${won(now0)})보다 더 많이 넣어요. 한 종목에 돈이 몰려서 더 떨어지면 손실이 크게 늘어요.`)
+    : verdict('mid', '🤔', '다시 오를 거라고 믿을 때만', `물타기하면 본전까지 필요한 상승률이 ${pct(need0)}에서 ${pct(need1)}로 줄어요. 대신 잃을 수 있는 돈도 늘어요.`);
+  out.innerHTML = v + `<div>물타기 후 평균 단가</div><div class="big">${q ? won(avg1) : won(ab)}</div>` +
+    `<div class="vd-cut"><span>📉 지금 손절하면</span><b>${minus(cost0 - now0)} <small>(${pct(an / ab - 1)})</small></b></div>` +
+    `<table class="vd-tbl"><thead><tr><th></th><th>그대로 두면</th><th>💧 ${q.toLocaleString('ko-KR')}주 더 사면</th></tr></thead><tbody>` +
+    [['평균 단가', won(ab), won(avg1)], ['본전까지 필요한 상승', pct(need0), pct(need1)], ['주가 10% 오르면', won(rise0), won(rise1)], ['주가 10% 떨어지면', won(fall0), won(fall1)]]
+      .map(([a, b, c]) => `<tr><th>${a}</th><td>${b}</td><td>${c}</td></tr>`).join('') + '</tbody></table>' +
+    `<div class="vd-check"><b>물타기 전에 스스로 물어보세요</b><span>① 주가가 떨어진 이유가 회사 문제는 아닌가요?</span><span>② 이 돈이 1~2년 묶여도 괜찮나요?</span><span>③ 주가가 반토막 나도 버틸 수 있나요?</span></div>` +
+    small('해외주식은 손절한 손실을 같은 해 다른 해외주식 수익과 합쳐서 양도세를 줄일 수 있어요. 이 계산은 투자 권유가 아니에요.') +
+    go('/loss-recovery/', '손실 회복 수익률 계산기로 더 보기');
+}
+
 function unitPrice() {
   const unit = seg('u_unit'), per = unit === '개' ? 1 : 100, label = unit === '개' ? '1개당' : `100${unit}당`;
   document.querySelectorAll('#unit-price .u-unit').forEach(s => s.textContent = unit);
@@ -948,7 +1010,7 @@ function finIncome() {
     (o.Y ? smallNote('직장인은 월급 말고 다른 소득이 2,000만 원을 넘으면 건강보험료(소득월액보험료)가 따로 붙어요.') : smallNote('피부양자는 금융소득이 많으면 건강보험 피부양자에서 빠질 수 있어요.'));
 }
 
-const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, at_out: acquisitionTax, bf_out: brokerageFee, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome, up_out: usedPrice, dv_out: deliveryCost, fb_out: fanBudget, jc_out: jeonseCheck, sc_out: subscriptionScore, ll_out: loanLimit };
+const calc = { s_out: savings, d_out: deposit, l_out: loan, c_out: compound, v_out: severance, r_out: rent, x_out: vat, h_out: holidayPay, p_out: prepayment, i_out: inflation, o_out: discount, w_out: wage, g_out: goal, y_out: pyeong, q_out: percent, a_out: avgPrice, b_out: dividend, t_out: retirement, k_out: carLoan, f_out: refinance, u_out: unitPrice, e_out: fuel, n_out: dutchPay, z_out: dateCalc, m_out: salary, j_out: unemployment, ys_out: yearEnd, sr_out: salaryRank, ar_out: assetRank, tv_out: timeValue, ls_out: lumpSum, at_out: acquisitionTax, bf_out: brokerageFee, is_out: isa, pn_out: pension, ct_out: corporateTax, it_out: incomeTax, os_out: overseasTax, ef_out: etfFee, lr_out: lossRecovery, fi_out: finIncome, up_out: usedPrice, dv_out: deliveryCost, fb_out: fanBudget, jc_out: jeonseCheck, sc_out: subscriptionScore, ll_out: loanLimit, si_out: shouldI };
 // ── 한 줄 정리: 결과 숫자가 "나한테 무슨 뜻인지" 알려 주는 문장 ──
 const pct = (n, d = 1) => n.toLocaleString('ko-KR', { maximumFractionDigits: d }) + '%';
 const MIN_WAGE_2026 = Y27 ? 10700 : 10320; // 그해 최저시급 (2026년 10,320원 → 2027년 10,700원, 최저임금위원회 고시)
@@ -2400,8 +2462,9 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['year-end', 'savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'shop', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'loan-limit', 'asset-rank', 'time-value', 'lump-sum'];
-const iconOf = path => { const slug = String(path).split('#')[1] || String(path).replace(/\//g, ''); /* '/budget/#fixed' → 고정지출 아이콘 */ return ICONS.includes(slug) ? `<img class="ico" src="/icons/${slug}.webp" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
+const ICONS = ['year-end', 'savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'shop', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'loan-limit', 'asset-rank', 'time-value', 'lump-sum', 'should-i'];
+const ICON_FILE = { 'should-i': 'semi-think.svg' }; // 결정 도우미는 고민하는 셈이 얼굴
+const iconOf = path => { const slug = String(path).split('#')[1] || String(path).replace(/\//g, ''); /* '/budget/#fixed' → 고정지출 아이콘 */ return ICONS.includes(slug) ? `<img class="ico" src="/icons/${ICON_FILE[slug] || slug + '.webp'}" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '구독': 'tv.png', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
 const catSrc = cat => `/icons/cat/${CAT_ICONS[cat].includes('.') ? CAT_ICONS[cat] : CAT_ICONS[cat] + '.webp'}`; // 구독(tv.png)만 png
@@ -2554,7 +2617,7 @@ const MENU = [
   ['돈 관리', [['/budget/', '캘린더 · 가계부', '지출 수입 예산 달력 일정'], ['/shop/', '돈셈 스토어', '엑셀 가계부 템플릿 재테크 구글 시트 구매'], ['/hidden-money/', '숨은 돈 찾기', '환급 공제 지원금 월세 의료비 근로장려금 놓친 돈'], ['/budget/#fixed', '고정지출', '구독 월세 보험'], ['/budget/#assets', '내 자산', '순자산 부채'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금'], ['/guide/', '돈 가이드', '글 정리 연말정산 실업급여 실수령액 IRP 카드 공제 월세']]],
   ['챌린지 · 테스트', [['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제 금전운 돈나무'], ['/no-spend/', '무지출 챌린지', '절약 무지출 달력 도장'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti'],
     ['/collection/', '내 컬렉션', '돈나무 배지 기록 모음']]],
-  ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
+  ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/should-i/', '해야 할까, 말까?', '결정 도우미 적금 해지 깰까 담보대출 대출 갈아타기 물타기 손절 고민'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
     ['/dividend/', '배당금', '주식 배당 세금'], ['/avg-price/', '물타기', '평균 단가 주식'], ['/retirement/', '노후자금', '은퇴 연금'], ['/inflation/', '물가상승률', '화폐 가치'],
     ['/overseas-stock-tax/', '해외주식 양도세', '미국 주식 양도소득세 250만 원 공제 22% 손익통산'], ['/etf-fee/', 'ETF 보수 비교', '총보수 수수료 운용보수 장기 투자'], ['/loss-recovery/', '손실 회복 수익률', '본전 주식 하락 마이너스 손절'], ['/financial-income-tax/', '금융소득종합과세', '이자 배당 2천만 원 종합과세 건강보험료']]],
   ['대출 · 집', [['/real-estate/', '부동산 지도', '서울 아파트 지도 관심 단지 실거래가 시세 부동산 뉴스 재건축 재개발 압구정 성수 한남 은마'], ['/acquisition-tax/', '취득세', '주택 아파트 취득세 다주택 중과 생애최초'], ['/brokerage-fee/', '중개수수료', '복비 부동산 중개보수 전세 월세 매매'], ['/jeonse-check/', '전세 안심 진단', '깡통전세 전세사기 보증금 근저당 전세가율 보증보험'], ['/subscription-score/', '청약 가점', '청약 가점 점수 무주택 부양가족 청약통장 84점 분양'], ['/loan-limit/', '대출 한도', 'DSR 대출 한도 주담대 신용대출 스트레스 얼마까지 빌릴 수'], ['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
