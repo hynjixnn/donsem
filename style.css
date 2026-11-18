@@ -4269,3 +4269,36 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 .ss-list { position: relative; padding: 16px 10px 6px; }
 .ss-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 11.5px; padding: 4px 10px; }
 @media (min-width: 761px) { .showcase .sc-lav { grid-column: 1 / -1; } }
+
+/* ── 빠른 시작 버튼 + 급여명세서 모양 결과 (연봉 계산기) ── */
+.qs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 18px 0 4px; }
+.qs-l { font-size: 13px; font-weight: 700; color: var(--muted); margin-right: 2px; }
+.qs button { border: 0; border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; color: #fff; background: var(--qc, #7040A1); transition: transform .12s, box-shadow .12s, opacity .12s; opacity: .88; }
+.qs button:nth-of-type(1) { --qc: #B69AD8; } .qs button:nth-of-type(2) { --qc: #9D7BCB; } .qs button:nth-of-type(3) { --qc: #8B5CC9; } .qs button:nth-of-type(4) { --qc: #7040A1; } .qs button:nth-of-type(5) { --qc: #4E2A75; }
+.qs button:hover { opacity: 1; transform: translateY(-1px); }
+.qs button.on { opacity: 1; box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--qc); }
+.slip { margin-top: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px 18px 16px; position: relative; overflow: hidden; }
+.slip::before { content: ''; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, #B69AD8, #7040A1); }
+.slip-h span { display: block; font-size: 11px; letter-spacing: .14em; font-weight: 700; color: var(--muted); }
+.slip-h b { display: block; font-size: 18px; margin: 4px 0 14px; color: var(--text); }
+.slip-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.slip-col h4 { display: flex; align-items: center; gap: 7px; margin: 0 0 6px; font-size: 14px; color: var(--text); }
+.slip-col h4 i { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 14px; line-height: 1; }
+.slip-in h4 i { background: var(--accent-soft, #efe7f8); color: #7040A1; } .slip-out h4 i { background: #fdecec; color: #e5484d; }
+.slip-row, .slip-sum { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 8px 0; font-size: 13.5px; border-bottom: 1px dashed var(--line); }
+.slip-row span { color: var(--muted); } .slip-row b { font-weight: 600; color: var(--text); text-align: right; white-space: nowrap; }
+.slip-sum { border-bottom: 0; border-top: 1px solid var(--text); margin-top: 6px; font-weight: 700; }
+.slip-in .slip-sum b { color: #7040A1; } .slip-out .slip-sum b { color: #e5484d; }
+.slip-net { margin-top: 14px; background: #1d1d1f; color: #fff; border-radius: 12px; padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 2px; }
+.slip-net span { font-size: 13px; opacity: .8; } .slip-net small { font-size: 11px; }
+.slip-net b { font-size: 22px; grid-row: span 2; } .slip-net em { font-style: normal; font-size: 12px; opacity: .65; }
+:root[data-theme="dark"] .slip-in .slip-sum b { color: #B69AD8; } :root[data-theme="dark"] .slip-in h4 i { color: #B69AD8; background: rgba(182, 154, 216, .16); }
+:root[data-theme="dark"] .slip-out h4 i { background: rgba(229, 72, 77, .18); } :root[data-theme="dark"] .slip-net { background: #2c2c2e; }
+@media (max-width: 760px) {
+  .qs { gap: 6px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -4px; } .qs::-webkit-scrollbar { display: none; }
+  .qs button { padding: 7px 12px; font-size: 12.5px; white-space: nowrap; flex: none; }
+  .slip { padding: 16px 14px 14px; } .slip-cols { grid-template-columns: 1fr; gap: 14px; }
+  .qs-l { white-space: nowrap; flex: none; font-size: 12px; }
+  .slip-row, .slip-sum { padding: 5px 0; font-size: 12.5px; } .slip-h b { font-size: 16px; margin-bottom: 10px; } .slip-col h4 { font-size: 13px; margin-bottom: 2px; }
+  .slip-net { grid-template-columns: 1fr; padding: 12px 14px; } .slip-net b { grid-row: auto; font-size: 20px; order: 2; } .slip-net em { order: 3; }
+}

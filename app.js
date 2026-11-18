@@ -276,12 +276,33 @@ function salary() {
     note.push(r.relief ? `중소기업 취업자 감면(${Math.round(s.cut * 100)}%)으로 매달 소득세가 ${won(r.relief)}, 지방소득세까지 약 ${won(Math.round(r.relief * 1.1 / 10) * 10)} 줄어요.${capped ? ' 1년 감면 한도 200만 원에 맞춰 한 달 감면을 줄여서 계산했어요.' : ''}` : '이 월급은 원래 떼는 소득세가 없어서 감면으로 달라지는 게 없어요.');
   }
   if (s.fam > s.famIn) note.push(`자녀도 부양가족에 들어가서 부양가족을 ${s.fam}명으로 계산했어요.`);
+  // 급여명세서 모양: 왼쪽 받는 돈, 오른쪽 빠지는 돈, 아래 실수령액
+  const A = val('m_amt'), byYear = seg('m_mode') === 'year';
+  const manWon = n => (n % 10000 === 0 ? (n / 10000).toLocaleString('ko-KR') + '만 원' : won(n));
+  const line = (a, b) => `<div class="slip-row"><span>${a}</span><b>${b}</b></div>`;
+  const taxTag = s.rate !== 1 || s.cut ? ` (${[s.rate !== 1 ? Math.round(s.rate * 100) + '%' : '', s.cut ? `감면 ${Math.round(s.cut * 100)}%` : ''].filter(Boolean).join(' · ')})` : '';
   out.innerHTML = `<div>한 달 실수령액</div><div class="big">${won(r.net)}</div>` +
-    rows([['세전 월급', won(s.month)], [`국민연금 (${Y27 ? '5' : '4.75'}%)`, minus(r.pension)], ['건강보험 (3.595%)', minus(r.health)], ['장기요양보험', minus(r.care)],
-      ['고용보험 (0.9%)', minus(r.job)], [`근로소득세${s.rate !== 1 || s.cut ? ` (${[s.rate !== 1 ? Math.round(s.rate * 100) + '%' : '', s.cut ? `감면 ${Math.round(s.cut * 100)}%` : ''].filter(Boolean).join(' · ')})` : ''}`, was(r.before, r.tax) + minus(r.tax)],
-      ['지방소득세', was(floor10(r.before * 0.1), r.local) + minus(r.local)], ...(r.relief ? [['감면으로 줄어든 세금 (한 달)', `<span class="save-amt">${won(r.relief + floor10(r.before * 0.1) - r.local)}</span>`]] : []), ['빠지는 돈 합계', minus(r.cut)], ['1년 실수령액', won(r.net * 12)]]) +
+    `<div class="slip"><div class="slip-h"><span>PAYSLIP</span><b>${byYear ? '연봉' : '월급'} ${manWon(A)} 급여명세서</b></div><div class="slip-cols">` +
+    `<div class="slip-col slip-in"><h4><i>+</i>받는 돈</h4>${line('기본급', won(s.month - s.free))}${s.free ? line('비과세 (식대 등)', won(s.free)) : ''}<div class="slip-sum"><span>지급 총액</span><b>${won(s.month)}</b></div></div>` +
+    `<div class="slip-col slip-out"><h4><i>−</i>빠지는 돈</h4>${line(`국민연금 (${Y27 ? '5' : '4.75'}%)`, minus(r.pension))}${line('건강보험 (3.595%)', minus(r.health))}${line('장기요양보험', minus(r.care))}${line('고용보험 (0.9%)', minus(r.job))}` +
+    `${line('근로소득세' + taxTag, was(r.before, r.tax) + minus(r.tax))}${line('지방소득세', was(floor10(r.before * 0.1), r.local) + minus(r.local))}` +
+    `${r.relief ? line('감면으로 줄어든 세금', `<span class="save-amt">${won(r.relief + floor10(r.before * 0.1) - r.local)}</span>`) : ''}<div class="slip-sum"><span>공제 총액</span><b>${minus(r.cut)}</b></div></div></div>` +
+    `<div class="slip-net"><span>실수령액 <small>(차인지급액)</small></span><b>${won(r.net)}</b><em>1년이면 ${won(r.net * 12)}</em></div></div>` +
     note.map(t => `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">${t}</p>`).join('');
+  // 빠른 시작 버튼: 지금 금액과 같은 버튼에 불을 켜요
+  document.querySelectorAll('.qs[data-k="m_amt"] button').forEach(b => b.classList.toggle('on', byYear && Number(b.dataset.qs) === A));
 }
+// 빠른 시작 버튼을 누르면 연봉으로 바꾸고 금액을 넣어요
+document.addEventListener('click', e => {
+  const b = e.target.closest('.qs button[data-qs]');
+  if (!b) return;
+  const box = b.closest('.qs'), [mk, mv] = (box.dataset.mode || '').split('=');
+  const mb = mk && document.querySelector(`.seg[data-k="${mk}"] button[data-v="${mv}"]`);
+  if (mb && !mb.classList.contains('on')) mb.click();
+  const inp = document.querySelector(`input[data-k="${box.dataset.k}"]`);
+  inp.value = Number(b.dataset.qs).toLocaleString('ko-KR');
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
+});
 
 // ── 실업급여(구직급여): 2026년 1일 상한 68,100원, 하한 = 최저시급 × 80% × 하루 근무시간 ──
 const JOB_MAX_2026 = 68100;
