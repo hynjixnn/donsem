@@ -25,13 +25,14 @@
   const ping = v => { try { const k = 'donsem:pro-ping-' + v, d = ymd(new Date()); if (localStorage.getItem(k) === d) return; localStorage.setItem(k, d); fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ k: 'pro:use', v }) }).catch(() => {}); } catch (e) { /* 괜찮아요 */ } };
 
   const TABS = [
+    ['an', '소비 분석', '<path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/>'],
     ['fc', '앞으로의 돈', '<path d="M4 19V5M4 19h16M7 14l4-4 3 3 5-6"/>'],
     ['rp', '반복 결제', '<path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"/>'],
     ['cd', '카드 실적', '<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/>'],
     ['ye', '연말정산', '<path d="M4 7l8-4 8 4-8 4zM4 12l8 4 8-4M4 17l8 4 8-4"/>'],
     ['rc', '한 장 결산', '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/>'],
   ];
-  let tab = 'fc';
+  let tab = 'an';
   try { const t = sessionStorage.getItem('donsem:pro-tab'); if (TABS.some(x => x[0] === t)) tab = t; } catch (e) { /* 괜찮아요 */ }
   const seg = $('pro-seg');
   seg.innerHTML = TABS.map(([k, l, p]) => `<button type="button" role="tab" data-k="${k}" aria-selected="${k === tab}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg><span>${l}</span></button>`).join('');
@@ -54,7 +55,10 @@
     const since = new Date(t0); since.setDate(since.getDate() - 30);
     const fxNames = new Set(fixed().map(x => norm(x.name)));
     const recent = es.filter(e => e.type === 'out' && e.date >= ymd(since) && e.date <= ymd(t0) && !(e.cat === '구독' && fxNames.has(norm(e.memo))));
-    const daily = recent.reduce((s, e) => s + (+e.amt || 0), 0) / 30;
+    // 기록을 시작한 지 30일이 안 됐으면 시작한 날부터 나눠요 (최소 7일)
+    const first = es.filter(e => e.type === 'out' && e.date).reduce((m, e) => (e.date < m ? e.date : m), ymd(t0));
+    const span = Math.min(30, Math.max(7, Math.round((t0 - new Date(first)) / 864e5) + 1));
+    const daily = recent.reduce((s, e) => s + (+e.amt || 0), 0) / span;
     const ins = es.filter(e => e.type === 'in' && e.date >= ymd(new Date(t0.getFullYear(), t0.getMonth() - 2, 1)) && e.date < ymd(new Date(t0.getFullYear(), t0.getMonth(), 1)));
     const salaryGuess = Math.round(ins.reduce((s, e) => s + (+e.amt || 0), 0) / 2 / 1000) * 1000;
     const salary = P.salary || salaryGuess;
@@ -222,6 +226,115 @@
     const r = $('ye-dr'); if (r) { r.addEventListener('input', () => { $('ye-dbv').textContent = r.value + '%'; }); r.addEventListener('change', save); }
   }
 
+  // ── 0. 소비 분석: 쌓이는 지출 그래프 · 이번 달 리포트 · 지출 패턴 · 월별 흐름 · 기간별 리포트 ──
+  let anOff = 0, anPat = 'wd', anPer = 'q';
+  const outsAll = () => (typeof withFixed === 'function' ? withFixed(budget().entries) : budget().entries).filter(e => e && e.type === 'out' && e.date && +e.amt > 0);
+  const sumA = a => a.reduce((s, e) => s + (+e.amt || 0), 0);
+  const catOf = a => { const c = {}; a.forEach(e => { const k = e.cat || '기타'; c[k] = (c[k] || 0) + (+e.amt || 0); }); return c; };
+  const man = v => (v >= 1e4 ? (v >= 1e6 ? Math.round(v / 1e4) : Math.round(v / 1e3) / 10) + '만' : Math.round(v).toLocaleString('ko-KR'));
+  const josa = (w, a, b) => { const c = String(w).charCodeAt(String(w).length - 1); return w + (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? a : b); };
+  function cumChart(cur, prev, last, proj) {
+    const w = 320, h = 130, max = Math.max(1, proj || 0, ...cur, ...prev);
+    const x = d => ((d - 1) / Math.max(1, last - 1)) * w, y = v => h - 6 - (v / max) * (h - 14);
+    const line = a => a.map((v, i) => `${i ? 'L' : 'M'}${x(i + 1).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+    const n = cur.length, cl = n ? line(cur) : '';
+    return `<svg viewBox="0 0 ${w} ${h}" class="an-chart" aria-hidden="true"><defs><linearGradient id="an-g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7040A1" stop-opacity=".22"/><stop offset="1" stop-color="#7040A1" stop-opacity="0"/></linearGradient></defs>` +
+      (prev.length ? `<path d="${line(prev.slice(0, last))}" class="an-prev"/>` : '') +
+      (n ? `<path d="${cl} L${x(n).toFixed(1)} ${h} L0 ${h}Z" fill="url(#an-g)"/><path d="${cl}" class="an-cur"/>` : '') +
+      (proj && n && n < last ? `<path d="M${x(n).toFixed(1)} ${y(cur[n - 1]).toFixed(1)} L${x(last).toFixed(1)} ${y(proj).toFixed(1)}" class="an-proj"/><circle cx="${x(last).toFixed(1)}" cy="${y(proj).toFixed(1)}" r="4" class="an-dot"/>` : '') +
+      `</svg>`;
+  }
+  const cumOf = (es, upTo) => { const d = new Array(upTo).fill(0); es.forEach(e => { const k = +e.date.slice(8) - 1; if (k >= 0 && k < upTo) d[k] += +e.amt || 0; }); let s = 0; return d.map(v => (s += v)); };
+  function bars(items) {
+    const max = Math.max(1, ...items.map(i => i.v));
+    return `<div class="an-bars">${items.map(i => `<div class="${i.on ? 'on' : ''}"><small>${i.v ? man(i.v) : ''}</small><i style="height:${(i.v / max * 70).toFixed(1)}%"></i><b>${i.l}</b></div>`).join('')}</div>`;
+  }
+  function drawAn() {
+    const all = outsAll(), t0 = today();
+    if (!all.length) { box.innerHTML = `<p class="pro-empty">캘린더에 쓴 돈을 적으면 <b>이번 달 지출 흐름, 돈 샌 곳, 요일별 패턴, 분기·연간 리포트</b>를 자동으로 만들어 드려요.</p>` + example('an'); return; }
+    const d = new Date(t0.getFullYear(), t0.getMonth() + anOff, 1), ym = ymd(d).slice(0, 7), last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const isNow = anOff === 0, upTo = isNow ? t0.getDate() : last;
+    const pd = new Date(d.getFullYear(), d.getMonth() - 1, 1), pym = ymd(pd).slice(0, 7), plast = new Date(pd.getFullYear(), pd.getMonth() + 1, 0).getDate();
+    const mine = all.filter(e => e.date.startsWith(ym)), prevAll = all.filter(e => e.date.startsWith(pym));
+    const spent = sumA(mine), cur = cumOf(mine, upTo), prev = cumOf(prevAll, plast);
+    // 월말 예상: 지금까지 + 남은 날 × 평소 하루 지출 + 아직 안 나간 고정지출 (앞으로의 돈·예산 경고와 같은 셈)
+    let proj = 0, fxLeft = 0;
+    if (isNow) { const f = forecast(); fxLeft =fixed().filter(x => (x.cycle !== 'year' || +x.month === t0.getMonth() + 1) && Math.min(+x.day, last) > t0.getDate()).reduce((s, x) => s + (+x.amt || 0), 0); proj = Math.round(spent + f.daily * (last - upTo) + fxLeft); }
+    const B = +budget().budget || 0;
+    // ① 이번 달 리포트
+    const cats = Object.entries(catOf(mine)).sort((a, b) => b[1] - a[1]);
+    // 비교는 고정지출을 빼고 해요 (고정지출은 최근 두 달에만 자동으로 들어가서, 그 전 달과 비교하면 틀어져요)
+    const nf = a => a.filter(e => !e.fx), pSame = catOf(nf(prevAll).filter(e => +e.date.slice(8) <= upTo)), vCats = Object.entries(catOf(nf(mine)));
+    const rep = [];
+    if (cats.length) rep.push(['🏆', `${isNow ? '이번 달' : d.getMonth() + 1 + '월'} 1위는 ${cats[0][0]}`, `${W(cats[0][1])} · 전체의 ${Math.round(cats[0][1] / Math.max(1, spent) * 100)}%를 썼어요`]);
+    if (prevAll.length) {
+      const ups = vCats.map(([c, v]) => [c, v, v - (pSame[c] || 0), pSame[c] || 0]).filter(x => x[2] > 0).sort((a, b) => b[2] - a[2]);
+      const pTot = sumA(nf(prevAll).filter(e => +e.date.slice(8) <= upTo)), gap = sumA(nf(mine)) - pTot;
+      if (ups.length) rep.push(['💧', '돈 샌 곳', `${josa(ups[0][0], '이', '가')} 지난달 ${isNow ? '같은 기간' : ''}보다 ${ups[0][3] ? Math.round(ups[0][2] / ups[0][3] * 100) + '% ' : ''}늘었어요 (+${W(ups[0][2])})`.replace('지난달 보다', '지난달보다')]);
+      else rep.push(['👏', '돈 샌 곳 없음', `지난달 ${isNow ? '같은 기간' : ''}보다 늘어난 분류가 없어요`.replace('지난달 보다', '지난달보다')]);
+      rep.push(['📊', isNow ? (gap > 0 ? '지난달보다 더 쓰는 중' : '지난달보다 덜 쓰는 중') : (gap > 0 ? '지난달보다 더 썼어요' : '지난달보다 덜 썼어요'), `${isNow ? `지난달 ${upTo}일까지보다` : '지난달보다'} ${W(Math.abs(gap))} ${gap > 0 ? '더' : '덜'} 썼어요 (고정지출 빼고)`]);
+    }
+    if (isNow) rep.push(['🔮', '월말 예상', B ? (proj > B ? (B - spent - fxLeft <= 0 ? `예산 ${W(B)}을 남은 고정지출까지 합쳐 이미 다 썼어요. 남은 ${last - upTo}일은 꼭 필요한 데만 써요` : `이대로면 예산 ${W(B)}을 ${W(proj - B)} 넘겨요. 남은 ${last - upTo}일은 하루 ${W((B - spent - fxLeft) / Math.max(1, last - upTo))} 안에서 써 보세요`) : `약 ${W(proj)} · 예산 ${W(B)} 안에서 끝날 것 같아요`) : `이대로면 월말까지 약 ${W(proj)}을 써요`]);
+    // 다음 달 추천 예산: 지난 3달(기록 있는 달) 평균을 만 원 단위로
+    // 기록을 시작한 달은 중간부터라 평균에서 빼요 (3일 안에 시작했으면 넣어요)
+    const first0 = all.reduce((m, e) => (e.date < m ? e.date : m), ymd(t0)), full = y2 => y2 > first0.slice(0, 7) || +first0.slice(8) <= 3;
+    const past = [1, 2, 3].map(k => ymd(new Date(t0.getFullYear(), t0.getMonth() - k, 1)).slice(0, 7)).filter(full).map(y2 => sumA(all.filter(e => e.date.startsWith(y2)))).filter(v => v > 0);
+    const rec = past.length ? Math.ceil(past.reduce((s, v) => s + v, 0) / past.length / 1e4) * 1e4 : 0;
+    if (isNow && rec) rep.push(['🎯', '다음 달 추천 예산', `최근 ${past.length}달 평균으로 보면 ${W(rec)} 정도가 알맞아요${B && B !== rec ? ` (지금 예산 ${W(B)})` : ''}`, B !== rec ? `<button type="button" class="pro-mini" id="an-setb">이 금액으로 예산 정하기</button>` : '']);
+    const sim = cats[0] ? `<button type="button" class="an-simlink" id="an-sim"><span><b>${cats[0][0]} 20% 줄이면 한 달 ${W(cats[0][1] * (isNow ? last / upTo : 1) * 0.2)} 아껴요</b><small>10%·20%·30% 줄였을 때를 비교해 보세요</small></span><em>›</em></button>` : '';
+    // ② 지출 패턴 (최근 90일, 고정지출은 빼고)
+    const from = new Date(t0); from.setDate(from.getDate() - 89);
+    const firstD = all.filter(e => !e.fx).reduce((m, e) => (e.date < m ? e.date : m), ymd(t0));
+    const s0 = new Date(Math.max(+from, +new Date(firstD))), recent = all.filter(e => !e.fx && e.date >= ymd(s0) && e.date <= ymd(t0));
+    let pat, patHead;
+    if (anPat === 'wd') {
+      const cnt = new Array(7).fill(0), sum = new Array(7).fill(0);
+      for (let x = new Date(s0); x <= t0; x.setDate(x.getDate() + 1)) cnt[x.getDay()]++;
+      recent.forEach(e => { const [yy, mm, dd] = e.date.split('-').map(Number); sum[new Date(yy, mm - 1, dd).getDay()] += +e.amt || 0; });
+      const avg = sum.map((s, i) => (cnt[i] ? s / cnt[i] : 0)), order = [1, 2, 3, 4, 5, 6, 0], nm = '일월화수목금토';
+      const top = order.reduce((m, i) => (avg[i] > avg[m] ? i : m), 1), mean = avg.reduce((s, v) => s + v, 0) / 7;
+      pat = bars(order.map(i => ({ l: nm[i], v: avg[i], on: i === top })));
+      patHead = mean ? `${nm[top]}요일에 하루 평균 ${W(avg[top])}, 평소의 ${(avg[top] / mean).toFixed(1)}배를 써요` : '';
+    } else {
+      const parts = [[1, 10, '월초 1~10일'], [11, 20, '중순 11~20일'], [21, 31, '월말 21일~']], sum = [0, 0, 0], days = [0, 0, 0];
+      for (let x = new Date(s0); x <= t0; x.setDate(x.getDate() + 1)) days[x.getDate() <= 10 ? 0 : x.getDate() <= 20 ? 1 : 2]++;
+      recent.forEach(e => { const dd = +e.date.slice(8); sum[dd <= 10 ? 0 : dd <= 20 ? 1 : 2] += +e.amt || 0; });
+      const avg = sum.map((s, i) => (days[i] ? s / days[i] : 0)), top = avg.indexOf(Math.max(...avg));
+      pat = bars(parts.map((p, i) => ({ l: p[2], v: avg[i], on: i === top })));
+      patHead = avg[top] ? `${parts[top][2].split(' ')[0]}에 하루 평균 ${W(avg[top])}으로 가장 많이 써요` : '';
+    }
+    // ③ 월별 흐름 (6달)
+    const six = [5, 4, 3, 2, 1, 0].map(k => { const m = new Date(t0.getFullYear(), t0.getMonth() - k, 1), y2 = ymd(m).slice(0, 7); return { l: (m.getMonth() + 1) + '월', v: sumA(all.filter(e => e.date.startsWith(y2))), on: k === -anOff, full: full(y2) }; });
+    const known = six.slice(0, 5).filter(m => m.v && m.full), avg6 = known.length ? known.reduce((s, m) => s + m.v, 0) / known.length : 0;
+    // ④ 기간별 리포트
+    const per = (back) => {
+      const m = t0.getMonth(), len = anPer === 'q' ? 3 : anPer === 'h' ? 6 : 12, s = anPer === 'q' ? Math.floor(m / 3) * 3 : anPer === 'h' ? (m < 6 ? 0 : 6) : 0;
+      const st = new Date(t0.getFullYear(), s - back * len, 1), en = new Date(st.getFullYear(), st.getMonth() + len, 0);
+      const es = all.filter(e => e.date >= ymd(st) && e.date <= ymd(en));
+      const label = anPer === 'q' ? `${st.getFullYear()}년 ${Math.floor(st.getMonth() / 3) + 1}분기` : anPer === 'h' ? `${st.getFullYear()}년 ${st.getMonth() < 6 ? '상반기' : '하반기'}` : `${st.getFullYear()}년`;
+      const mon = {}; es.forEach(e => { const k = e.date.slice(0, 7); mon[k] = (mon[k] || 0) + (+e.amt || 0); });
+      const months = Object.keys(mon).length, tot = sumA(es);
+      return { label, tot, months, avg: months ? tot / months : 0, cats: Object.entries(catOf(es)).sort((a, b) => b[1] - a[1]), peak: Object.entries(mon).sort((a, b) => b[1] - a[1])[0] };
+    };
+    const P0 = per(0), P1 = per(1), pname = { q: '분기', h: '반기', y: '해' }[anPer];
+    const perHtml = P0.tot ? `<div class="pro-panel"><p class="an-ptitle">${P0.label} <small>· 기록한 ${P0.months}달</small></p><div class="pro-kpis"><div><span>쓴 돈</span><b>${W(P0.tot)}</b></div><div><span>한 달 평균</span><b>${W(P0.avg)}</b></div></div>` +
+      `<ul class="an-top">${P0.cats.slice(0, 3).map(([c, v], i) => `<li><i>${i + 1}</i><span>${E(c)}</span><div class="pro-bar"><i style="width:${(v / P0.cats[0][1] * 100).toFixed(1)}%"></i></div><em>${Math.round(v / P0.tot * 100)}%</em></li>`).join('')}</ul>` +
+      `<p class="pro-cap">가장 많이 쓴 달은 <b>${+P0.peak[0].slice(5)}월 (${W(P0.peak[1])})</b>${P1.tot ? ` · 지난 ${pname}보다 한 달 평균 <b>${W(Math.abs(P0.avg - P1.avg))} ${P0.avg > P1.avg ? '더' : '덜'}</b> 썼어요` : ''}</p></div>` : `<p class="pro-empty">${P0.label}에 적은 지출이 아직 없어요.</p>`;
+
+    box.innerHTML = `<div class="pro-mon"><button type="button" data-o="-1"${anOff <= -11 ? ' disabled' : ''}>‹</button><b>${d.getFullYear()}년 ${d.getMonth() + 1}월</b><button type="button" data-o="1"${anOff >= 0 ? ' disabled' : ''}>›</button></div>` +
+      `<div class="pro-panel"><div class="pro-kpis"><div><span>${isNow ? `${upTo}일까지 쓴 돈` : '이 달에 쓴 돈'}</span><b>${W(spent)}</b></div><div><span>${isNow ? `${last}일 예상` : '지난달'}</span><b>${W(isNow ? proj : sumA(prevAll))}</b></div></div>${cumChart(cur, prev, last, proj)}<div class="an-axis"><span>1일</span><span>${last}일</span></div><p class="an-legend"><span><i></i>${isNow ? '지금까지' : '이 달'}</span>${isNow ? '<span><i class="d"></i>월말 예상</span>' : ''}${prevAll.length ? '<span><i class="p"></i>지난달</span>' : ''}</p></div>` +
+      `<h3 class="pro-h">${isNow ? '이번 달' : d.getMonth() + 1 + '월'} 리포트</h3><ul class="an-rep">${rep.map(r => `<li><span class="ic" aria-hidden="true">${r[0]}</span><div><b>${r[1]}</b><span>${r[2]}</span>${r[3] || ''}</div></li>`).join('')}</ul>${sim}` +
+      `<div class="an-hrow"><h3 class="pro-h">지출 패턴</h3><div class="pro-tabs2" id="an-pat"><button type="button" data-v="wd" class="${anPat === 'wd' ? 'on' : ''}">요일별</button><button type="button" data-v="dm" class="${anPat === 'dm' ? 'on' : ''}">날짜별</button></div></div><p class="pro-cap">${patHead || '기록이 더 쌓이면 보여 드려요'} <small>(최근 90일 · 고정지출 빼고 하루 평균)</small></p>${pat}` +
+      `<h3 class="pro-h">월별 지출 흐름</h3><p class="pro-cap">${avg6 ? `지난 ${known.length}달 평균 ${W(avg6)}` : '달마다 쓴 돈을 비교해요'}</p>${bars(six)}` +
+      `<div class="an-hrow"><h3 class="pro-h">기간별 리포트</h3><div class="pro-tabs2" id="an-per"><button type="button" data-v="q" class="${anPer === 'q' ? 'on' : ''}">분기</button><button type="button" data-v="h" class="${anPer === 'h' ? 'on' : ''}">반기</button><button type="button" data-v="y" class="${anPer === 'y' ? 'on' : ''}">연간</button></div></div>${perHtml}` +
+      `<p class="pro-note">💡 고정지출은 캘린더처럼 지난달·이번 달만 자동으로 더해요. 그 전 달은 직접 적은 기록만 셈해요.</p>`;
+    box.querySelectorAll('.pro-mon button').forEach(b => b.addEventListener('click', () => { anOff += +b.dataset.o; drawAn(); }));
+    box.querySelectorAll('#an-pat button').forEach(b => b.addEventListener('click', () => { anPat = b.dataset.v; drawAn(); }));
+    box.querySelectorAll('#an-per button').forEach(b => b.addEventListener('click', () => { anPer = b.dataset.v; drawAn(); }));
+    const sb = $('an-setb'); if (sb) sb.addEventListener('click', () => { const b = rd('donsem:budget') || { entries: [] }; if (!Array.isArray(b.entries)) b.entries = []; b.budget = rec; if (wr('donsem:budget', b)) { say(`한 달 예산을 ${W(rec)}으로 정했어요 🎯`); drawAn(); } });
+    const sl = $('an-sim'); if (sl) sl.addEventListener('click', () => { rcOff = 0; tab = 'rc'; try { sessionStorage.setItem('donsem:pro-tab', tab); } catch (er) { /* 괜찮아요 */ } draw(); setTimeout(() => { const s = box.querySelector('.pro-sim'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60); });
+  }
+
   // ── 4. 한 장 결산: 이번 달을 영수증 한 장으로 + 소비 줄이면 1년에 얼마 남는지 ──
   let rcOff = 0;
   function monthStats(off) {
@@ -270,6 +383,8 @@
   // 기록이 없을 때 보여 주는 예시 (흐리게, 「예시」 표시)
   function example(k) {
     const ex = {
+      an: `<div class="pro-panel pro-ex"><span class="pro-extag">예시</span><div class="pro-kpis"><div><span>18일까지 쓴 돈</span><b>1,236,000원</b></div><div><span>30일 예상</span><b>1,980,000원</b></div></div>${cumChart([40, 52, 90, 120, 180, 230, 260, 300, 410, 470, 520, 600, 690, 760, 900, 1010, 1120, 1236].map(v => v * 1000), [30, 80, 110, 170, 220, 300, 330, 380, 450, 520, 610, 700, 760, 820, 930, 1050, 1150, 1260, 1330, 1400, 1480, 1560, 1600, 1680, 1750, 1810, 1870, 1900, 1950, 2010].map(v => v * 1000), 30, 1980000)}</div>` +
+        `<ul class="an-rep pro-ex"><li><span class="ic">💧</span><div><b>돈 샌 곳</b><span>쇼핑이 지난달 같은 기간보다 18% 늘었어요 (+48,000원)</span></div></li><li><span class="ic">🎯</span><div><b>다음 달 추천 예산</b><span>최근 3달 평균으로 보면 1,950,000원 정도가 알맞아요</span></div></li></ul>`,
       fc: `<div class="pro-panel pro-ex"><span class="pro-extag">예시</span><div class="pro-kpis"><div><span>월급 전날 (12/24)</span><b>412,000원</b></div><div><span>가장 적을 때 (12/23)</span><b>298,000원</b></div></div>${chart([1200, 1100, 980, 900, 760, 700, 640, 520, 430, 300, 2900, 2800, 2650, 2500].map(v => v * 1000), 1300000)}</div>`,
       rp: `<ul class="pro-list pro-ex"><li><span><b>영상 구독</b><small>매달 5일쯤 · 3달 연속</small></span><em>17,000원</em></li><li><span><b>클라우드 저장소</b><small>매달 12일쯤 · 4달 연속</small></span><em>2,900원</em></li><li><span><b>헬스장</b><small>매달 25일쯤 · 2달 연속</small></span><em>75,000원</em></li><span class="pro-extag">예시</span></ul>`,
       cd: `<ul class="pro-cards pro-ex"><li class="pro-card-row"><div class="pro-card-top"><b>생활 혜택 카드</b><span>82,000원 남음</span></div><div class="pro-bar"><i style="width:73%"></i></div><small>218,000원 / 300,000원 · 식비·카페·쇼핑</small></li><span class="pro-extag">예시</span></ul>`,
@@ -280,7 +395,7 @@
 
   function draw() {
     seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.k === tab)));
-    ({ fc: drawFc, rp: drawRp, cd: drawCd, ye: drawYe, rc: drawRc })[tab]();
+    ({ an: drawAn, fc: drawFc, rp: drawRp, cd: drawCd, ye: drawYe, rc: drawRc })[tab]();
     ping(tab);
   }
   // Pro 탭을 처음 열 때 그려요
