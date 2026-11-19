@@ -4391,3 +4391,35 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 .rz-gus { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; } .rz-gus a { padding: 7px 12px; border: 1px solid var(--line); border-radius: 99px; color: var(--text); font-size: 14px; text-decoration: none; } .rz-gus a:hover { border-color: var(--accent); color: var(--accent); } .rz-gus small { color: var(--muted); }
 #rz-stats .rd-tb { margin-top: 8px; border-radius: 12px; overflow: hidden; } #rz-stats .rd-tb th { width: 46%; font-size: 14px; }
 @media (max-width: 640px) { .rz-list { grid-template-columns: 1fr; } }
+
+/* 재건축 맞춤 리포트 (/redev/ #rdr) — redev-report.js */
+.rdr h2 { display: flex; align-items: center; gap: 8px; }
+.rdr-badge { padding: 2px 8px; border-radius: 99px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; }
+.rdr-form { margin-top: 8px; } .rdr-two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.rdr-form select { width: 100%; border: 0; background: transparent; color: var(--text); font: inherit; font-size: 15px; }
+.rdr-for { margin: 20px 0 8px; color: var(--muted); font-size: 13px; } .rdr-for b { color: var(--text); }
+.rdr-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rdr-sum > div { padding: 12px; border-radius: 12px; background: var(--accent-soft); } .rdr-sum small { display: block; color: var(--muted); font-size: 12px; } .rdr-sum b { display: block; margin-top: 2px; font-size: 16px; word-break: keep-all; }
+#rdr-out h3 { margin: 24px 0 6px; font-size: 17px; }
+#rdr-out .rows { margin-top: 10px; } #rdr-out .rows > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+#rdr-out .rows > div.sum { font-weight: 700; } #rdr-out .rows span { color: var(--muted); } #rdr-out .rows .sum span { color: var(--text); }
+.rdr-grid td, .rdr-grid th { text-align: center; } .rdr-grid td.on { outline: 2px solid var(--accent); outline-offset: -2px; font-weight: 700; }
+.rdr-minus { color: #d9482b; } .rdr-lead { margin: 6px 0; font-size: 14px; }
+.rdr-time { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; padding: 0; list-style: none; }
+.rdr-time li { flex: 1 1 110px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; } .rdr-time li b { display: block; font-size: 14px; } .rdr-time li span { color: var(--muted); }
+.rdr-time li.end { border-color: var(--accent); background: var(--accent-soft); }
+.rdr-todo { margin: 8px 0 0; padding: 0; list-style: none; } .rdr-todo li { padding: 12px 14px; margin-bottom: 8px; border-radius: 12px; background: var(--bg); }
+.rdr-todo b { display: block; margin-bottom: 4px; } .rdr-todo span { display: block; padding-left: 12px; position: relative; color: var(--text); font-size: 14px; line-height: 1.6; } .rdr-todo span::before { content: "·"; position: absolute; left: 2px; }
+.rdr-lock { position: relative; margin-top: 12px; min-height: 420px; overflow: hidden; border-radius: 14px; }
+.rdr-blur { filter: blur(6px); opacity: .55; pointer-events: none; user-select: none; max-height: 640px; overflow: hidden; }
+.rdr-cta { position: absolute; inset: 40px 12px auto; display: grid; gap: 10px; max-width: 420px; margin: 0 auto; padding: 22px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); box-shadow: 0 12px 40px rgba(0, 0, 0, .12); text-align: center; }
+.rdr-cta b { font-size: 18px; } .rdr-cta span { color: var(--muted); font-size: 14px; line-height: 1.6; } .rdr-cta small { color: var(--muted); font-size: 12px; }
+@media (max-width: 640px) { .rdr-sum { grid-template-columns: 1fr 1fr; } .rdr-sum > div:last-child { grid-column: 1 / -1; } .rdr-two { grid-template-columns: 1fr; } }
+@media print {
+  body.rdr-printing .topbar, body.rdr-printing .tabbar, body.rdr-printing nav, body.rdr-printing footer, body.rdr-printing .wrap > *:not(#rdr) { display: none !important; }
+  body.rdr-printing #rdr .rdr-form, body.rdr-printing #rdr .rdc-acts { display: none !important; }
+  body.rdr-printing #rdr { box-shadow: none; border: 0; }
+}
+#rdr-out .rdc-tbl { table-layout: fixed; } #rdr-out .rdc-tbl th, #rdr-out .rdc-tbl td { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+#rdr-out .rdc-tbl td:nth-child(2):not(:last-child) { text-align: left; }
+@media (max-width: 640px) { #rdr-out .rdc-tbl th, #rdr-out .rdc-tbl td { padding: 8px 4px; font-size: 13px; } }

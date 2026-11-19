@@ -15,7 +15,7 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = s => Number(String(s || '').replace(/[^0-9.-]/g, '')) || 0;
   const won = n => (n < 0 ? '-' : '') + Math.round(Math.abs(n)).toLocaleString('ko-KR') + '원';
-  const eok = n => { const a = Math.abs(n), s = n < 0 ? '-' : ''; if (a >= 1e8) { const e = Math.floor(a / 1e8), m = Math.round((a % 1e8) / 1e4); return `${s}${e}억${m ? ' ' + m.toLocaleString('ko-KR') + '만' : ''} 원`; } return `${s}${Math.round(a / 1e4).toLocaleString('ko-KR')}만 원`; };
+  const eok = n => { const a = Math.abs(n), s = n < 0 ? '-' : ''; const w = Math.round(a / 1e4); if (w >= 1e4) { const e = Math.floor(w / 1e4), m = w % 1e4; return `${s}${e}억${m ? ' ' + m.toLocaleString('ko-KR') + '만' : ''} 원`; } return `${s}${Math.round(a / 1e4).toLocaleString('ko-KR')}만 원`; };
   const norm = s => String(s || '').replace(/[\s·()\-]/g, '').toLowerCase();
   const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } };
   const write = v => { try { v ? localStorage.setItem(KEY, JSON.stringify(v)) : localStorage.removeItem(KEY); } catch (e) { /* 저장이 막힌 기기 */ } };
@@ -87,6 +87,8 @@
     const old = num($('rdc-old').value), ratio = num($('rdc-ratio').value) / 100, price = num($('rdc-new').value);
     const ltv = num($('rdc-ltv').value) / 100, rate = num($('rdc-rate').value) / 100, months = num($('rdc-months').value);
     const out = $('rdc-out');
+    window.donsemRdc = { zone, old, ratio, price, ltv, rate, months }; // 맞춤 리포트(redev-report.js)가 이 숫자를 읽어요
+    document.dispatchEvent(new CustomEvent('rdc:calc'));
     if (!old || !price || !ratio) { out.innerHTML = '<p class="rdc-wait">종전자산 평가액, 비례율, 조합원 분양가를 넣으면 계산돼요.</p>'; return; }
     const right = old * ratio, share = price - right;
     const loan = old * ltv, interest = loan * rate * months / 12;

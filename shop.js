@@ -3,13 +3,14 @@
   /* 클라이언트 키는 공개돼도 되는 키예요(시크릿 키는 워커 비밀에만 있어요). 심사가 끝나면 live_gck_… 로 바꿔요 */
   const CLIENT_KEY = 'live_gck_c19weG0gk7hCw83pftwraGuHV5slsB97Bp';
   const API = 'https://donsem-counter.hjjung330.workers.dev';
-  const PRODUCTS = { budget: { name: '돈셈 가계부·재테크 엑셀 템플릿', price: 9900, img: '/shop/sheet-summary.png' }, yearend: { name: '돈셈 연말정산 준비 키트', price: 4900, img: '/shop/kit-yearend-card.png' }, starter: { name: '돈셈 사회초년생 돈 관리 키트', price: 6900, img: '/shop/kit-starter-fixed.png' }, pro1y: { name: '돈셈 Pro 1년 이용권', price: 19900, img: '/icon-192.png', pass: true } };
+  const PRODUCTS = { budget: { name: '돈셈 가계부·재테크 엑셀 템플릿', price: 9900, img: '/shop/sheet-summary.png' }, yearend: { name: '돈셈 연말정산 준비 키트', price: 4900, img: '/shop/kit-yearend-card.png' }, starter: { name: '돈셈 사회초년생 돈 관리 키트', price: 6900, img: '/shop/kit-starter-fixed.png' }, pro1y: { name: '돈셈 Pro 1년 이용권', price: 19900, img: '/icon-192.png', pass: true }, redev1y: { name: '재건축 조합원 맞춤 리포트 1년 이용권', price: 9900, img: '/icons/real-estate.webp', pass: true, key: 'donsem:redev-pass', open: '/redev/#rdr', label: '리포트 열기', on: '맞춤 리포트가 열렸어요. 오늘부터 1년 동안 내 구역 숫자가 바뀔 때마다 다시 볼 수 있어요.' } };
   const LIVE = CLIENT_KEY.startsWith('live_');
   const q = new URLSearchParams(location.search);
   /* 2026-11-18: 상품을 새로 만드는 동안 판매를 잠시 쉬어요. 이미 산 분의 「다시 받기」와 결제 중이던 승인(s=ok)은 그대로 돼요. 다시 열 때 true */
-  const OPEN = { pro1y: true }; // 지금 파는 상품 (엑셀 키트는 새로 만드는 중이라 쉬어요)
+  const OPEN = { pro1y: true, redev1y: true }; // 지금 파는 상품 (엑셀 키트는 새로 만드는 중이라 쉬어요)
   const isOpen = k => !!OPEN[k];
   const PASS_K = 'donsem:pro-pass';
+  const passKey = D => (D && D.key) || PASS_K; // 이용권마다 저장하는 곳 (Pro: donsem:pro-pass, 재건축 리포트: donsem:redev-pass)
   const $ = id => document.getElementById(id);
   const SK = 'donsem:orders';
   const load = () => { try { return JSON.parse(localStorage.getItem(SK)) || []; } catch (e) { return []; } };
@@ -36,7 +37,7 @@
     const box = $('shop-mine'); if (!box) return;
     const list = load();
     const mine = $('shop-mine-list');
-    mine.innerHTML = list.length ? list.map(o => { const G = PRODUCTS[o.product] || PRODUCTS.budget; return `<li><span><b>${o.live ? G.name : '테스트 결제'}</b><small>주문번호 ${o.orderId.replace(/[^\w-]/g, '')} · ${new Date(o.t).toLocaleDateString('ko-KR')}</small></span>${G.pass ? '<a class="btn line" href="/budget/?pro=an#pro">Pro 열기</a>' : `<a class="btn line" href="${dlUrl(o.token)}" rel="nofollow">내려받기</a>`}</li>`; }).join('') : '';
+    mine.innerHTML = list.length ? list.map(o => { const G = PRODUCTS[o.product] || PRODUCTS.budget; return `<li><span><b>${o.live ? G.name : '테스트 결제'}</b><small>주문번호 ${o.orderId.replace(/[^\w-]/g, '')} · ${new Date(o.t).toLocaleDateString('ko-KR')}</small></span>${G.pass ? `<a class="btn line" href="${G.open || '/budget/?pro=an#pro'}">${G.label || 'Pro 열기'}</a>` : `<a class="btn line" href="${dlUrl(o.token)}" rel="nofollow">내려받기</a>`}</li>`; }).join('') : '';
     mine.hidden = !list.length;
     const form = $('shop-find');
     if (form && !form.dataset.on) {
@@ -48,8 +49,8 @@
         const btn = form.querySelector('button'); btn.disabled = true;
         post('/pay/find', { orderId, email }).then(j => {
           save({ orderId: j.orderId, token: j.token, live: j.live, product: j.product, t: j.created || Date.now() });
-          if ((PRODUCTS[j.product] || {}).pass) { try { localStorage.setItem(PASS_K, JSON.stringify({ token: j.token, orderId: j.orderId, live: j.live, t: j.created || Date.now() })); } catch (e) { /* 괜찮아요 */ } }
-          drawMine(); say((PRODUCTS[j.product] || {}).pass ? 'Pro 이용권을 이 기기에 불러왔어요.' : '주문을 찾았어요. 내려받기를 눌러 주세요.');
+          if ((PRODUCTS[j.product] || {}).pass) { try { localStorage.setItem(passKey(PRODUCTS[j.product]), JSON.stringify({ token: j.token, orderId: j.orderId, live: j.live, t: j.created || Date.now() })); } catch (e) { /* 괜찮아요 */ } }
+          drawMine(); say((PRODUCTS[j.product] || {}).pass ? '이용권을 이 기기에 불러왔어요.' : '주문을 찾았어요. 내려받기를 눌러 주세요.');
         }).catch(j => say((j && j.message) || '찾지 못했어요. 잠시 뒤 다시 해 주세요.')).finally(() => { btn.disabled = false; });
       });
     }
@@ -67,10 +68,10 @@
     const D = PRODUCTS[o.product] || PRODUCTS.budget; $('pay-pname').textContent = D.name; $('pay-pprice').textContent = money(D.price);
     $('pay-dl').href = dlUrl(o.token);
     if (D.pass) {
-      try { localStorage.setItem(PASS_K, JSON.stringify({ token: o.token, orderId: o.orderId, live: o.live, t: o.t || Date.now() })); } catch (e) { /* 괜찮아요 */ }
-      $('pay-done-sub').textContent = o.live ? 'Pro가 켜졌어요. 오늘부터 1년 동안 모든 Pro 기능을 쓸 수 있어요.' : '테스트 결제라서 진짜 돈은 나가지 않았어요. Pro가 시험으로 켜졌어요.';
-      $('pay-dl').href = '/budget/?pro=an#pro'; $('pay-dl').removeAttribute('rel'); $('pay-dl').textContent = 'Pro 열기';
-      const tips = document.querySelector('.pay-tips'); if (tips) tips.innerHTML = '<li>Pro는 캘린더 › Pro에서 바로 쓸 수 있어요.</li><li>다른 기기에서는 Pro 화면의 「이용권 불러오기」에 주문번호와 이메일을 넣으세요.</li><li>결제 후 7일 안에는 전액, 그 뒤에는 남은 기간만큼 환불돼요. <a href="mailto:hjjung330@gmail.com">hjjung330@gmail.com</a></li>';
+      try { localStorage.setItem(passKey(D), JSON.stringify({ token: o.token, orderId: o.orderId, live: o.live, t: o.t || Date.now() })); } catch (e) { /* 괜찮아요 */ }
+      $('pay-done-sub').textContent = o.live ? (D.on || 'Pro가 켜졌어요. 오늘부터 1년 동안 모든 Pro 기능을 쓸 수 있어요.') : '테스트 결제라서 진짜 돈은 나가지 않았어요. 시험으로 켜졌어요.';
+      $('pay-dl').href = D.open || '/budget/?pro=an#pro'; $('pay-dl').removeAttribute('rel'); $('pay-dl').textContent = D.label || 'Pro 열기';
+      const tips = document.querySelector('.pay-tips'); if (tips) tips.innerHTML = (D.key ? '<li>리포트는 재건축 조합원 도우미(/redev/) 「내 구역 맞춤 리포트」에서 바로 볼 수 있어요.</li><li>다른 기기에서는 리포트의 「다른 기기에서 산 이용권 불러오기」에 주문번호와 이메일을 넣으세요.</li>' : '<li>Pro는 캘린더 › Pro에서 바로 쓸 수 있어요.</li><li>다른 기기에서는 Pro 화면의 「이용권 불러오기」에 주문번호와 이메일을 넣으세요.</li>') + '<li>결제 후 7일 안에는 전액, 그 뒤에는 남은 기간만큼 환불돼요. <a href="mailto:hjjung330@gmail.com">hjjung330@gmail.com</a></li>';
       return;
     }
     if (!o.live && !D.pass) { $('pay-done-sub').textContent = '테스트 결제라서 진짜 상품 대신 확인용 파일을 받아요.'; $('pay-dl').textContent = '확인용 파일 내려받기'; }
@@ -112,7 +113,7 @@
   /* 결제창 그리기 */
   show('pay-checkout');
   $('pay-test').hidden = LIVE;
-  if (G.pass) { const sm = document.querySelector('.pay-item small'); if (sm) sm.textContent = '결제한 날부터 1년 · 결제하면 바로 켜져요'; const ag = document.querySelector('.pay-agree span'); if (ag) ag.innerHTML = '돈셈 Pro 1년 이용권(한 번 결제, 자동 갱신 없음)이에요. <b>결제 후 7일 안에는 전액 환불</b>, 그 뒤에는 남은 기간만큼 환불돼요. <a href="/refund/" target="_blank" rel="noopener">환불정책</a> · <a href="/terms/" target="_blank" rel="noopener">이용약관</a>'; const lb = document.querySelector('label[for="pay-email"] small'); if (lb) lb.textContent = '다른 기기에서 이용권을 불러오거나 환불할 때 써요'; }
+  if (G.pass) { const sm = document.querySelector('.pay-item small'); if (sm) sm.textContent = '결제한 날부터 1년 · 결제하면 바로 켜져요'; const ag = document.querySelector('.pay-agree span'); if (ag) ag.innerHTML = G.name.replace(' 1년 이용권', '') + ' 1년 이용권(한 번 결제, 자동 갱신 없음)이에요. <b>결제 후 7일 안에는 전액 환불</b>, 그 뒤에는 남은 기간만큼 환불돼요. <a href="/refund/" target="_blank" rel="noopener">환불정책</a> · <a href="/terms/" target="_blank" rel="noopener">이용약관</a>'; const lb = document.querySelector('label[for="pay-email"] small'); if (lb) lb.textContent = '다른 기기에서 이용권을 불러오거나 환불할 때 써요'; }
   $('pay-pimg').src = G.img; $('pay-iname').textContent = G.name; $('pay-iprice').textContent = money(G.price); $('pay-go').textContent = money(G.price) + ' 결제하기';
   const msg = $('pay-msg'), go = $('pay-go'), agree = $('pay-agree'), mail = $('pay-email');
   try { mail.value = localStorage.getItem('donsem:pay-email') || ''; } catch (e) { /* 없음 */ }
