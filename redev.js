@@ -169,8 +169,8 @@
   function onModal(e) {
     if (e.target === modal || e.target.closest('.rd-x')) return close();
     if (e.target.closest('[data-rdgo]')) {
-      if (!pos) return say('지도를 불러오는 중이에요. 잠시 뒤에 다시 눌러 주세요.');
-      const p = pos; close(); setTimeout(() => window.donsemMapGo && window.donsemMapGo(p.lat, p.lng), 80); return;
+      if (!pos && window.donsemMapGo) return say('지도를 불러오는 중이에요. 잠시 뒤에 다시 눌러 주세요.');
+      const p = pos, id = cur && cur.id; close(); setTimeout(() => window.donsemMapGo ? window.donsemMapGo(p.lat, p.lng) : (location.href = `/real-estate/?rd=${id}`), 80); return;
     }
     if (e.target.closest('[data-rdshare]')) {
       const u = `${location.origin}/real-estate/?rd=${cur.id}`;
@@ -230,6 +230,7 @@
     return `<div class="rdz-biz"><div class="rdz-donut" style="background:conic-gradient(#3182F6 0 ${p1}%,#FF9F0A ${p1}% ${p2}%,#34C759 ${p2}% 100%)"><span><b>${num(b.units)}</b>세대</span></div>
       <ul><li><i style="background:#3182F6"></i>조합원<b>${num(b.mem)} <small>${pc(b.mem)}%</small></b></li><li><i style="background:#FF9F0A"></i>일반분양<b>${num(b.gen)} <small>${pc(b.gen)}%</small></b></li><li><i style="background:#34C759"></i>임대<b>${num(b.rent)} <small>${pc(b.rent)}%</small></b></li></ul></div>
       <p class="rdz-bizn">조합원 수는 기존 세대수로 어림했어요. 일반분양이 많을수록 조합원 부담이 줄어요.</p>`; };
+  window.donsemRedevData = { RD, CODE, BY_CODE, loadAll, open: id => open(id), stepOf: r => PSTEPS[PAT[r[6]]] || r[6], biz, STEPS, PSTEPS }; // 재건축 도우미(/redev/)가 같이 써요
   window.donsemRedevBiz = code => loadAll().then(rows => { const r = rows.find(y => y[0] === code); const b = r && biz(r); return b ? donut(b) : ''; });
   const poiBox = document.getElementById('re-poi'), wrapEl = document.getElementById('re-mapwrap');
   if (poiBox && wrapEl) {

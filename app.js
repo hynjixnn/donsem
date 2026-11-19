@@ -1728,7 +1728,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   const path = location.pathname;
   const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/', '/money-calendar/'], MY = ['/my/', '/about/', '/privacy/', '/collection/'];
   const HOME = ['/', '/quiz/', '/money-type/', '/no-spend/']; // 퀴즈·돈BTI·무지출은 홈에서 들어가는 곳이라 '홈'이 켜져요 (예전엔 '계산기'가 켜졌어요)
-  const ESTATE = ['/real-estate/', '/acquisition-tax/', '/brokerage-fee/', '/jeonse-check/', '/subscription-score/'];
+  const ESTATE = ['/real-estate/', '/redev/', '/acquisition-tax/', '/brokerage-fee/', '/jeonse-check/', '/subscription-score/'];
   const SHOP = ['/shop/', '/shop/deals/', '/market/', '/shop/budget-template/', '/shop/year-end-kit/', '/shop/starter-kit/', '/shop/pay/', '/terms/', '/refund/'];
   const active = path.startsWith('/guide/') ? 'guide' : HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : ESTATE.includes(path) ? 'estate' : SHOP.includes(path) ? 'shop' : 'calc';
   const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
@@ -2462,8 +2462,8 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 })();
 
 // ── 3D 아이콘 (Microsoft Fluent Emoji, MIT): 카드와 계산기 화면 맨 위에 그림을 넣어 글자만 있는 딱딱함을 덜어요 ──
-const ICONS = ['year-end', 'savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'shop', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'loan-limit', 'asset-rank', 'time-value', 'lump-sum', 'should-i'];
-const ICON_FILE = { 'should-i': 'semi-think.svg' }; // 결정 도우미는 고민하는 셈이 얼굴
+const ICONS = ['year-end', 'savings', 'deposit', 'loan', 'compound', 'severance', 'rent', 'vat', 'holiday-pay', 'prepayment', 'inflation', 'discount', 'wage', 'goal', 'pyeong', 'percent', 'avg-price', 'dividend', 'retirement', 'car-loan', 'refinance', 'shop', 'unit-price', 'used-price', 'delivery', 'fan-budget', 'fuel', 'dutch-pay', 'date', 'salary', 'unemployment', 'year-end-tax', 'budget', 'fixed', 'assets', 'goals', 'quiz', 'money-type', 'salary-rank', 'no-spend', 'collection', 'isa', 'pension', 'corporate-tax', 'income-tax', 'money-calendar', 'invest', 'overseas-stock-tax', 'etf-fee', 'loss-recovery', 'financial-income-tax', 'hidden-money', 'guide', 'real-estate', 'acquisition-tax', 'brokerage-fee', 'jeonse-check', 'subscription-score', 'loan-limit', 'asset-rank', 'time-value', 'lump-sum', 'should-i', 'redev'];
+const ICON_FILE = { 'should-i': 'semi-think.svg', redev: 'real-estate.webp' }; // 결정 도우미는 고민하는 셈이 얼굴
 const iconOf = path => { const slug = String(path).split('#')[1] || String(path).replace(/\//g, ''); /* '/budget/#fixed' → 고정지출 아이콘 */ return ICONS.includes(slug) ? `<img class="ico" src="/icons/${ICON_FILE[slug] || slug + '.webp'}" alt="" width="44" height="44" loading="lazy" decoding="async">` : ''; };
 // 가계부 카테고리 아이콘 (가계부 화면, + 빠른 기록에서 같이 써요)
 const CAT_ICONS = { '식비': 'rice', '카페·간식': 'coffee', '교통': 'bus', '쇼핑': 'shopping', '생활': 'basket', '주거·통신': 'house', '구독': 'tv.png', '의료': 'pill', '문화·여가': 'popcorn', '경조사': 'envelope', '기타': 'package', '월급': 'banknote', '용돈': 'moneybag', '부수입': 'coin', '이자·배당': 'chart' };
@@ -2620,7 +2620,7 @@ const MENU = [
   ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/should-i/', '해야 할까, 말까?', '결정 도우미 적금 해지 깰까 담보대출 대출 갈아타기 물타기 손절 고민'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
     ['/dividend/', '배당금', '주식 배당 세금'], ['/avg-price/', '물타기', '평균 단가 주식'], ['/retirement/', '노후자금', '은퇴 연금'], ['/inflation/', '물가상승률', '화폐 가치'],
     ['/overseas-stock-tax/', '해외주식 양도세', '미국 주식 양도소득세 250만 원 공제 22% 손익통산'], ['/etf-fee/', 'ETF 보수 비교', '총보수 수수료 운용보수 장기 투자'], ['/loss-recovery/', '손실 회복 수익률', '본전 주식 하락 마이너스 손절'], ['/financial-income-tax/', '금융소득종합과세', '이자 배당 2천만 원 종합과세 건강보험료']]],
-  ['대출 · 집', [['/real-estate/', '부동산 지도', '서울 아파트 지도 관심 단지 실거래가 시세 부동산 뉴스 재건축 재개발 압구정 성수 한남 은마'], ['/acquisition-tax/', '취득세', '주택 아파트 취득세 다주택 중과 생애최초'], ['/brokerage-fee/', '중개수수료', '복비 부동산 중개보수 전세 월세 매매'], ['/jeonse-check/', '전세 안심 진단', '깡통전세 전세사기 보증금 근저당 전세가율 보증보험'], ['/subscription-score/', '청약 가점', '청약 가점 점수 무주택 부양가족 청약통장 84점 분양'], ['/loan-limit/', '대출 한도', 'DSR 대출 한도 주담대 신용대출 스트레스 얼마까지 빌릴 수'], ['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
+  ['대출 · 집', [['/redev/', '재건축 조합원 도우미', '재건축 재개발 분담금 비례율 권리가액 조합원 분양가 이주비 정비구역 총회 관리처분'], ['/real-estate/', '부동산 지도', '서울 아파트 지도 관심 단지 실거래가 시세 부동산 뉴스 재건축 재개발 압구정 성수 한남 은마'], ['/acquisition-tax/', '취득세', '주택 아파트 취득세 다주택 중과 생애최초'], ['/brokerage-fee/', '중개수수료', '복비 부동산 중개보수 전세 월세 매매'], ['/jeonse-check/', '전세 안심 진단', '깡통전세 전세사기 보증금 근저당 전세가율 보증보험'], ['/subscription-score/', '청약 가점', '청약 가점 점수 무주택 부양가족 청약통장 84점 분양'], ['/loan-limit/', '대출 한도', 'DSR 대출 한도 주담대 신용대출 스트레스 얼마까지 빌릴 수'], ['/loan/', '대출 이자', '원리금 균등 상환'], ['/refinance/', '대출 갈아타기', '대환'], ['/prepayment/', '중도상환수수료', '조기 상환'],
     ['/car-loan/', '자동차 할부', '차 할부'], ['/rent/', '전월세 전환', '전세 월세'], ['/pyeong/', '평수', '제곱미터 평당']]],
   ['월급 · 일', [['/salary/', '연봉 실수령액', '월급 세금 4대보험'], ['/salary-rank/', '연봉 상위 %', '연봉 순위 백분위 퍼센트'], ['/asset-rank/', '순자산 상위 %', '자산 순위 재산 백분위 가계금융복지조사'], ['/time-value/', '내 시간 가치', '시급 노동 시간 가격 몇 시간 충동구매'], ['/lump-sum/', '목돈 굴리기 비교', '1000만원 예금 파킹통장 채권 ISA 어디에 넣을까 이자'], ['/wage/', '시급·월급·연봉', '알바 최저시급'], ['/holiday-pay/', '주휴수당', '알바'],
     ['/severance/', '퇴직금', '퇴사'], ['/unemployment/', '실업급여', '퇴사 구직급여'], ['/year-end-tax/', '연말정산 환급', '13월의 월급 세금'], ['/year-end/', '연말정산 모아보기', '미리보기 체크리스트 일정 환급']]],
@@ -4037,6 +4037,13 @@ const GUIDE_FOR = {
           t: `놓치면 손해 · ${e.tag}${sub ? ' · 알림 받는 중' : ''}`, m: mcHook(e, dn), sub: e.t, go: e.go ? e.go[0] : '/budget/', r: e.soft ? '예정' : dn ? `D-${dn}` : 'D-DAY', hot: dn === 0 || (sub && dn <= 3), u: dn + 0.5 });
       });
     }
+    // ⑧ 내 재건축 구역 일정 (/redev/에서 저장한 구역의 총회·인가 등, 14일 안)
+    const rdm = read('donsem:redev-my');
+    (rdm && Array.isArray(rdm.events) ? rdm.events : []).forEach(e => {
+      const dn = Math.round((new Date(e.d + 'T00:00:00') - new Date(today + 'T00:00:00')) / 864e5);
+      if (dn < 0 || dn > 14) return;
+      out.push({ id: `rd-${rdm.id}-${e.d}`, ico: '🏗️', bg: '#EEE6FA', t: `내 구역 · ${rdm.name}`, m: dn ? `D-${dn} ${e.t} 🗓️ 결과에 따라 분담금이 달라질 수 있어요` : `오늘 ${e.t}! 결과가 나오면 분담금을 다시 계산해 보세요`, go: '/redev/', r: dn ? `D-${dn}` : 'D-DAY', hot: dn <= 3, u: dn + 0.3 });
+    });
     // ⑦ 내 일정 알림
     if (typeof planAlarmsDue === 'function') planAlarmsDue().forEach(a => out.push({ id: a.id, ico: '📅', bg: '#EEE6FA', t: '내 일정', m: `⏰ ${a.when}${a.p.allDay === false && a.p.st ? ` ${a.p.st}` : ''} 「${a.p.t}」 잊지 마세요!`, sub: a.p.place ? `📍 ${a.p.place}` : '', go: '/budget/', r: a.when, hot: a.when === '오늘', u: a.when === '오늘' ? 0 : 1 }));
     if (!out.length) out.push({ id: 'hello', ico: '👋', t: '돈셈 알림', m: entries.length ? '지금은 새 알림이 없어요. 결제 예정, 월급날, 예산을 넘을 때 여기서 알려 드려요.' : '가계부에 첫 기록을 남겨 보세요. 주간 지출과 결제 예정 알림을 여기서 보여 드려요.', go: '/budget/' });

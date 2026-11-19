@@ -4339,3 +4339,42 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 @media (max-width: 760px) {
   .home .showcase, .hq-chips, .ph-hero { overflow-y: hidden; overscroll-behavior-x: contain; }
 }
+
+/* ── 재건축·재개발 조합원 도우미 (/redev/) ── */
+.rdc-pick { position: relative; }
+.rdc-sug { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 6px; list-style: none; background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 32px rgba(20, 10, 40, .14); max-height: 360px; overflow: auto; }
+.rdc-sug button { width: 100%; display: grid; gap: 2px; text-align: left; border: 0; background: transparent; padding: 10px 12px; border-radius: 10px; font: inherit; color: var(--text); cursor: pointer; }
+.rdc-sug button:hover, .rdc-sug button:focus-visible { background: var(--field); }
+.rdc-sug small, .rdc-none { color: var(--muted); font-size: 12.5px; }
+.rdc-none { padding: 10px 12px; list-style: none; }
+.rdc-zone { margin: 12px 0 4px; padding: 14px 16px; border-radius: 14px; background: var(--accent-soft, #efe7f8); display: grid; gap: 2px; }
+.rdc-zone b { font-size: 17px; } .rdc-zone small { color: var(--muted); }
+.rdc-preset { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.rdc-est { display: flex; gap: 8px; align-items: stretch; margin: 8px 0 4px; }
+.rdc-est .field { flex: 1; min-width: 0; margin: 0; }
+.rdc-est .btn { flex: none; white-space: nowrap; }
+.rdc-more { margin: 16px 0 0; } .rdc-more summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
+.rdc-h4 { margin: 20px 0 6px; font-size: 14px; }
+.rdc-tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.rdc-tbl th, .rdc-tbl td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; }
+.rdc-tbl th:first-child, .rdc-tbl td:first-child { text-align: left; }
+.rdc-tbl th { font-size: 12px; color: var(--muted); font-weight: 600; }
+.rdc-tbl tr.on td { font-weight: 700; color: var(--text); background: var(--accent-soft, #efe7f8); }
+.rdc-plus { color: #1f9d55; }
+.rdc-note { font-size: 13px; color: var(--muted); margin: 12px 0 0; line-height: 1.6; }
+.rdc-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.rdc-acts .btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.rdc-wait { margin: 0; color: var(--muted); }
+.rdc-my { margin: 18px 0 8px; padding: 16px; border-radius: 16px; background: var(--card); border: 1.5px solid #8B5CC9; }
+.rdc-myh { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.rdc-myh b { font-size: 18px; } .rdc-myh small { color: var(--muted); }
+.rdc-tag { font-size: 11px; font-weight: 800; color: #fff; background: #7040A1; padding: 2px 8px; border-radius: 999px; }
+.rdc-mysum { margin: 8px 0 0; font-size: 15px; } .rdc-mysum b { font-size: 18px; } .rdc-mysum small { color: var(--muted); }
+.rdc-ev { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.rdc-ev li { display: flex; gap: 10px; align-items: center; }
+.rdc-ev em { font-style: normal; font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--field); color: var(--text); min-width: 52px; text-align: center; }
+.rdc-ev em.hot { background: #ff3b30; color: #fff; }
+:root[data-theme="dark"] .rdc-my { border-color: #A47FD6; } :root[data-theme="dark"] .rdc-tag { background: #8B5CC9; }
+@media (max-width: 640px) { .rdc-est { flex-direction: column; } .rdc-est .btn { width: 100%; } }
+.rd-helper { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 10px 0 14px; padding: 14px 16px; border-radius: 14px; background: var(--accent-soft, #efe7f8); color: var(--text); text-decoration: none; flex-wrap: wrap; }
+.rd-helper span { font-size: 13px; color: var(--muted); }
