@@ -4378,3 +4378,16 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 @media (max-width: 640px) { .rdc-est { flex-direction: column; } .rdc-est .btn { width: 100%; } }
 .rd-helper { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 10px 0 14px; padding: 14px 16px; border-radius: 14px; background: var(--accent-soft, #efe7f8); color: var(--text); text-decoration: none; flex-wrap: wrap; }
 .rd-helper span { font-size: 13px; color: var(--muted); }
+
+/* 재건축 구역별 페이지 (/redev/z/, /redev/gu/) — tools/build_redev.py */
+.rz-crumb { margin: 0 0 10px; color: var(--muted); font-size: 13px; } .rz-crumb a { color: var(--muted); text-decoration: none; } .rz-crumb a:hover { color: var(--accent); }
+.rz .rd-tb { margin-top: 16px; border-radius: 12px; overflow: hidden; }
+.rz .q-ans { margin-top: 18px; }
+.rz-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.rz-list a { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text); text-decoration: none; }
+.rz-list a:hover { border-color: var(--accent); }
+.rz-list span { min-width: 0; } .rz-list b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; } .rz-list small { color: var(--muted); font-size: 12px; }
+.rz-list em { flex: none; padding: 3px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-style: normal; font-weight: 700; }
+.rz-gus { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; } .rz-gus a { padding: 7px 12px; border: 1px solid var(--line); border-radius: 99px; color: var(--text); font-size: 14px; text-decoration: none; } .rz-gus a:hover { border-color: var(--accent); color: var(--accent); } .rz-gus small { color: var(--muted); }
+#rz-stats .rd-tb { margin-top: 8px; border-radius: 12px; overflow: hidden; } #rz-stats .rd-tb th { width: 46%; font-size: 14px; }
+@media (max-width: 640px) { .rz-list { grid-template-columns: 1fr; } }
