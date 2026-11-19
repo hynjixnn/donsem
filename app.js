@@ -3823,7 +3823,10 @@ function mcIcs(list, name) {
 // ── 스크롤하면 카드가 아래에서 살짝 떠오르며 나타나요 (애플·토스처럼). 처음 화면에 보이는 건 그대로 두고, 아래쪽 것만 ──
 (() => {
   if (calmMotion || !('IntersectionObserver' in window)) return;
-  const items = [...document.querySelectorAll('.wrap > section.showcase > *, .wrap > section.duo > *, .wrap > section.group, .wrap > section.mc-home, .wrap > .card.sub-card, .wrap > article.guide, .wrap > section.card:not(:first-of-type)')]
+  // 휴대폰에서 「지금 많이 해요」는 옆으로 넘기는 줄이라, 카드 하나하나를 띄우면 화면 밖(오른쪽) 카드가 아래로 내려간 채 남아서
+  // 줄이 위아래로도 끌려 다녀요 → 휴대폰에선 줄 전체를 한 번에 띄워요
+  const narrow = matchMedia('(max-width: 760px)').matches;
+  const items = [...document.querySelectorAll(`${narrow ? '.wrap > section.showcase' : '.wrap > section.showcase > *'}, .wrap > section.duo > *, .wrap > section.group, .wrap > section.mc-home, .wrap > .card.sub-card, .wrap > article.guide, .wrap > section.card:not(:first-of-type)`)]
     .filter(el => el.getBoundingClientRect().top > window.innerHeight);
   if (!items.length) return;
   items.forEach(el => el.classList.add('rise'));

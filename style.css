@@ -4335,3 +4335,7 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
   .hq-quick b { font-size: 12px; letter-spacing: -0.04em; padding: 0 1px; }
   .hq-tag { font-size: 9px; padding: 1px 4px; bottom: -5px; }
 }
+/* 휴대폰: 옆으로 넘기는 줄은 옆으로만 움직여요 (손가락으로 위아래로 끌어도 줄 안쪽이 밀리지 않게) */
+@media (max-width: 760px) {
+  .home .showcase, .hq-chips, .ph-hero { overflow-y: hidden; overscroll-behavior-x: contain; }
+}
