@@ -1,6 +1,6 @@
 // 돈셈 서비스 워커: 인터넷이 끊겨도 가계부와 계산기가 열리게, 사이트 파일을 기기에 보관해요.
 // 사이트를 고쳐서 올릴 때 VERSION을 바꾸면, 예전 보관 파일을 지우고 새로 받아요.
-const VERSION = 'donsem-2026-11-19-309';
+const VERSION = 'donsem-2026-11-20-310';
 const CORE = ['/', '/budget/', '/assets/', '/fixed/', '/calculators/', '/my/', '/quiz/', '/money-type/', '/no-spend/', '/collection/', '/money-calendar/', '/style.css', '/app.js', '/budget.js', '/assets.js', '/pro.js', '/fixed.js', '/vt.js', '/my.js', '/quiz.js', '/quiz-data.js', '/money-type.js', '/no-spend.js', '/collection.js', '/money-calendar.js', '/hidden-money.js', '/real-estate.js', '/redev.js', '/favicon.svg', '/favicon.ico', '/favicon-32.png', '/favicon-96.png', '/logo-donsam.png', '/logo-d.png', '/icon-192.png', '/manifest.webmanifest', '/kb.json'];
 
 self.addEventListener('install', e => {
@@ -19,6 +19,7 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (req.method !== 'GET' || url.origin !== location.origin) return; // 광고 같은 다른 사이트 파일은 건드리지 않아요
+  if (url.pathname === '/redev-news.json') { e.respondWith(fetch(req, { cache: 'no-cache' }).catch(() => caches.match(req))); return; } // 구역 소식은 늘 새것으로
   // 화면을 옮길 때 끊기지 않게: 기기에 보관해 둔 파일로 바로 보여 주고, 서버에서 새 파일은 뒤에서 받아 다음번에 써요.
   // 사이트를 새로 올리면(VERSION이 바뀌면) 보관함을 통째로 새로 받아서, 옛 파일과 새 파일이 섞이지 않아요.
   const key = req.mode === 'navigate' ? url.pathname : req;
@@ -30,5 +31,23 @@ self.addEventListener('fetch', e => {
     const net = update();
     if (hit) { e.waitUntil(net.catch(() => {})); return hit; } // 보관한 게 있으면 바로
     return net.catch(() => (req.mode === 'navigate' ? caches.match('/') : Response.error())); // 처음 보는 파일은 서버에서
+  }));
+});
+
+// ── 조합원 플러스 휴대폰 알림 (웹 푸시) ──
+// 워커가 내용 없는 알림 신호만 보내면, 여기서 워커(/push/msg)에 「무슨 알림인지」 물어보고 띄워요
+const PUSH_API = 'https://donsem-counter.hjjung330.workers.dev';
+self.addEventListener('push', e => {
+  e.waitUntil(self.registration.pushManager.getSubscription()
+    .then(s => fetch(PUSH_API + '/push/msg?e=' + encodeURIComponent(s ? s.endpoint : '')).then(r => r.json()))
+    .catch(() => ({}))
+    .then(m => self.registration.showNotification(m.title || '돈셈 · 내 구역 소식', { body: m.body || '내 구역에 새 소식이 있어요. 눌러서 확인해 보세요.', icon: '/icon-192.png', badge: '/favicon-96.png', tag: m.tag || 'redev', data: { url: m.url || '/redev/#rdp' } })));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || '/redev/';
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    const w = list.find(c => new URL(c.url).origin === location.origin);
+    return w ? w.navigate(url).then(c => (c || w).focus()) : self.clients.openWindow(url);
   }));
 });

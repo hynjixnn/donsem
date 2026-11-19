@@ -7,10 +7,9 @@
   // 구역별로 확인된 숫자 (조합·서울시 고시·보도로 확인한 것만 넣어요. 모르면 비워 두면 사용자가 직접 넣어요)
   // ratio: 비례율(%), price84: 전용 84㎡ 조합원 분양가(원), src: 출처
   const PRESET = {};
-  // 구역별 다가오는 일정 (확인된 것만). [날짜, 내용]
-  const EVENTS = {
-    ss2: [['2026-11-21', '시공사 선정 총회 (DL이앤씨 우선협상)']],
-  };
+  // 구역별 다가오는 일정·소식은 /redev-news.json 하나에 모아요 (매주 루틴이 고쳐요). events: { 구역: [[날짜, 내용]] }
+  let EVENTS = {};
+  const newsP = fetch('/redev-news.json', { cache: 'no-cache' }).then(r => r.json()).then(j => { EVENTS = j.events || {}; window.donsemRedevNews = j; document.dispatchEvent(new CustomEvent('rdn:load')); return j; }).catch(() => null);
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const num = s => Number(String(s || '').replace(/[^0-9.-]/g, '')) || 0;
@@ -140,6 +139,7 @@
   const m = read(), qz = new URLSearchParams(location.search).get('z');
   if (m && m.inputs) Object.entries(m.inputs).forEach(([k, v]) => { if ($(k) && v) $(k).value = v; });
   drawMy(); calc();
+  newsP.then(() => drawMy());
   const start = () => loadZones().then(() => { const id = qz || (m && m.id); if (id) pick(id, !!(m && m.id === id && !qz)); });
   D() ? start() : addEventListener('load', start);
 })();

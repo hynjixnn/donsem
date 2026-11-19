@@ -1,0 +1,244 @@
+{
+ "updated": "2026-11-20",
+ "note": "재건축 조합원 도우미 구역 소식·일정. 매주 목요일 루틴이 고쳐요. kind: stage(단계)·news(소식)·num(숫자 바뀜: ratio 비례율%, price84 84㎡ 조합원 분양가 원)·event. 확인된 사실만. names: 구역 id → 알림에 쓰는 이름.",
+ "names": {
+  "ap2": "압구정 2구역",
+  "ap3": "압구정 3구역",
+  "ap4": "컬리넌 압구정",
+  "ap5": "압구정 현대 갤러리아",
+  "ss1": "리베니크 자이",
+  "ss2": "아크로 성수",
+  "ss3": "래미안 레비르 성수",
+  "ss4": "성수 르엘 S70",
+  "hn1": "한남 1구역",
+  "hn2": "한남 써밋",
+  "hn3": "디에이치 한남",
+  "hn4": "래미안 글로우 힐즈 한남",
+  "hn5": "아크로 한남",
+  "em": "대치 은마아파트",
+  "js5": "잠실주공 5단지",
+  "bp": "디에이치 반포124",
+  "ys": "래미안 소넬리",
+  "yh": "디에이치 여의도퍼스트",
+  "md6": "아크로 목동 리젠시"
+ },
+ "events": {
+  "ss2": [
+   [
+    "2026-11-21",
+    "시공사 선정 총회 (DL이앤씨 우선협상)"
+   ]
+  ]
+ },
+ "news": [
+  {
+   "id": "ss2-stage-1107",
+   "z": "ss2",
+   "d": "2026-11-07",
+   "kind": "stage",
+   "t": "2026년 11월 21일 시공사 선정 총회 예정",
+   "src": [
+    "아시아투데이",
+    "https://www.asiatoday.co.kr/kn/view.php?key=20261018010005549"
+   ]
+  },
+  {
+   "id": "hn3-stage-1107",
+   "z": "hn3",
+   "d": "2026-11-07",
+   "kind": "stage",
+   "t": "이주 완료, 철거 막바지",
+   "src": [
+    "대한경제",
+    "https://www.dnews.co.kr/uhtml/view.jsp?idxno=202604301926138690361"
+   ]
+  },
+  {
+   "id": "hn5-stage-1107",
+   "z": "hn5",
+   "d": "2026-11-07",
+   "kind": "stage",
+   "t": "2026년 사업시행인가",
+   "src": [
+    "한국주택경제",
+    "https://www.arunews.com/news/articleView.html?idxno=62296"
+   ]
+  },
+  {
+   "id": "bp-stage-1107",
+   "z": "bp",
+   "d": "2026-11-07",
+   "kind": "stage",
+   "t": "공사 중",
+   "src": [
+    "한국경제",
+    "https://www.hankyung.com/article/2026101394701"
+   ]
+  },
+  {
+   "id": "ys-stage-1107",
+   "z": "ys",
+   "d": "2026-10-01",
+   "kind": "stage",
+   "t": "2026년 10월 사업시행인가·시공사 선정",
+   "src": [
+    "파이낸셜뉴스",
+    "https://www.fnnews.com/news/202610190907596825"
+   ]
+  },
+  {
+   "id": "ss3-stage-1107",
+   "z": "ss3",
+   "d": "2026-09-01",
+   "kind": "stage",
+   "t": "2026년 9월 시공사 선정",
+   "src": [
+    "MTN",
+    "https://news.mtn.co.kr/news-detail/2026091916154196913"
+   ]
+  },
+  {
+   "id": "ss4-stage-1107",
+   "z": "ss4",
+   "d": "2026-07-01",
+   "kind": "stage",
+   "t": "2026년 7월 시공사 선정",
+   "src": [
+    "MTN",
+    "https://news.mtn.co.kr/news-detail/2026070516423546615"
+   ]
+  },
+  {
+   "id": "em-stage-1107",
+   "z": "em",
+   "d": "2026-07-01",
+   "kind": "stage",
+   "t": "2026년 7월 사업시행인가",
+   "src": [
+    "한국경제",
+    "https://www.hankyung.com/article/202607021829i"
+   ]
+  },
+  {
+   "id": "js5-stage-1107",
+   "z": "js5",
+   "d": "2026-07-01",
+   "kind": "stage",
+   "t": "2026년 7월 사업시행인가",
+   "src": [
+    "에너지경제",
+    "https://m.ekn.kr/view.php?key=20260701024477940"
+   ]
+  },
+  {
+   "id": "md6-stage-1107",
+   "z": "md6",
+   "d": "2026-06-01",
+   "kind": "stage",
+   "t": "2026년 6월 시공사 선정",
+   "src": [
+    "서울경제",
+    "https://www.sedaily.com/article/20060867"
+   ]
+  },
+  {
+   "id": "ap3-stage-1107",
+   "z": "ap3",
+   "d": "2026-05-01",
+   "kind": "stage",
+   "t": "2026년 5월 시공사 선정",
+   "src": [
+    "서울시 정비사업 고시",
+    "https://news.seoul.go.kr/citybuild/archives/531576"
+   ]
+  },
+  {
+   "id": "ap4-stage-1107",
+   "z": "ap4",
+   "d": "2026-05-01",
+   "kind": "stage",
+   "t": "2026년 5월 시공사 선정, 8월 공사 계약",
+   "src": [
+    "서울시 정비사업 고시",
+    "https://news.seoul.go.kr/citybuild/archives/531576"
+   ]
+  },
+  {
+   "id": "ap5-stage-1107",
+   "z": "ap5",
+   "d": "2026-05-01",
+   "kind": "stage",
+   "t": "2026년 5월 시공사 선정, 10월 공사 계약",
+   "src": [
+    "서울시 정비사업 고시",
+    "https://news.seoul.go.kr/citybuild/archives/531576"
+   ]
+  },
+  {
+   "id": "ss1-stage-1107",
+   "z": "ss1",
+   "d": "2026-04-01",
+   "kind": "stage",
+   "t": "2026년 4월 시공사 선정",
+   "src": [
+    "MTN",
+    "https://news.mtn.co.kr/news-detail/2026042519451152950"
+   ]
+  },
+  {
+   "id": "hn2-stage-1107",
+   "z": "hn2",
+   "d": "2026-01-01",
+   "kind": "stage",
+   "t": "2026년 1월 이주 시작",
+   "src": [
+    "서울신문",
+    "https://m.go.seoul.co.kr/news/2026/05/15/20260515019009"
+   ]
+  },
+  {
+   "id": "hn4-stage-1107",
+   "z": "hn4",
+   "d": "2025-11-01",
+   "kind": "stage",
+   "t": "2025년 11월 사업시행인가",
+   "src": [
+    "머니투데이",
+    "https://www.mt.co.kr/estate/2026/09/16/2026091612191969761"
+   ]
+  },
+  {
+   "id": "yh-stage-1107",
+   "z": "yh",
+   "d": "2025-10-01",
+   "kind": "stage",
+   "t": "2025년 10월 사업시행인가",
+   "src": [
+    "뉴스토마토",
+    "https://www.newstomato.com/ReadNews.aspx?no=1284620"
+   ]
+  },
+  {
+   "id": "ap2-stage-1107",
+   "z": "ap2",
+   "d": "2025-09-01",
+   "kind": "stage",
+   "t": "2025년 9월 시공사 선정",
+   "src": [
+    "서울시 정비사업 고시",
+    "https://news.seoul.go.kr/citybuild/archives/531576"
+   ]
+  },
+  {
+   "id": "hn1-stage-1107",
+   "z": "hn1",
+   "d": "2025-02-01",
+   "kind": "stage",
+   "t": "2025년 2월 신속통합기획 후보지 선정",
+   "src": [
+    "서울시 보도자료",
+    "https://www.seoul.go.kr/news/news_report.do?nttNo=429742"
+   ]
+  }
+ ]
+}

@@ -5,7 +5,7 @@
   const root = document.getElementById('rdr');
   if (!root) return;
   const API = 'https://donsem-counter.hjjung330.workers.dev';
-  const PASS = 'donsem:redev-pass', PRO = 'donsem:pro-pass', IN = 'donsem:redev-report';
+  const PASS = 'donsem:redev-pass', PRO = 'donsem:pro-pass', PLUS = 'donsem:redevplus-pass', IN = 'donsem:redev-report';
   const $ = id => document.getElementById(id);
   const rd = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
   const wr = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 저장이 막힌 기기 */ } };
@@ -15,12 +15,12 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   // ── 이용권 ──
-  const passes = () => [rd(PASS), rd(PRO)].filter(x => x && x.token);
+  const passes = () => [rd(PASS), rd(PRO), rd(PLUS)].filter(x => x && x.token);
   const okPass = () => passes().some(x => !x.exp || x.exp > Date.now());
   const dev = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).has('unlock');
   const unlocked = () => dev || okPass();
   const check = () => Promise.all(passes().filter(x => !x.chk || Date.now() - x.chk > 864e5).map(x => fetch(API + '/pay/pro?t=' + encodeURIComponent(x.token)).then(r => r.json()).then(j => {
-    const k = rd(PASS) && rd(PASS).token === x.token ? PASS : PRO;
+    const k = [PASS, PRO, PLUS].find(k => rd(k) && rd(k).token === x.token) || PASS;
     x.exp = j && j.exp ? j.exp : (j && j.ok === false ? 1 : x.exp); x.chk = Date.now(); wr(k, x);
   }).catch(() => {})));
 
@@ -143,7 +143,7 @@
       box.innerHTML = title + r.head + `<div class="rdr-lock"><div class="rdr-blur" aria-hidden="true">${r.body.replace(/>([^<]*)</g, (m, t) => '>' + t.replace(/[0-9]/g, '●') + '<')}</div>
         <div class="rdr-cta"><b>🔒 맞춤 리포트 열기</b><span>경우의 수 표, 공사비가 오를 때 더 내는 돈, 연도별로 나가는 돈, 입주 후 차익, 지금 단계 할 일까지 내 숫자로 보여 드려요.</span>
           <a class="btn fill wide" href="/shop/pay/?p=redev1y">1년 이용권 9,900원</a>
-          <small>한 번 결제 · 자동 갱신 없음 · 7일 안 전액 환불 · 돈셈 Pro 이용권이 있으면 바로 열려요</small>
+          <small>한 번 결제 · 자동 갱신 없음 · 7일 안 전액 환불 · 위 「조합원 플러스」나 돈셈 Pro 이용권이 있으면 바로 열려요</small>
           <button type="button" class="btn line" id="rdr-load">다른 기기에서 산 이용권 불러오기</button></div></div>`;
     }
   }
@@ -160,8 +160,8 @@
       const email = (prompt('결제할 때 쓴 이메일을 넣어 주세요') || '').trim(); if (!email) return;
       fetch(API + '/pay/find', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId, email }) }).then(r => r.json()).then(j => {
         if (!j.ok) return say(j.message || '주문을 찾지 못했어요.');
-        if (j.product !== 'redev1y' && j.product !== 'pro1y') return say('재건축 리포트 이용권 주문이 아니에요.');
-        wr(j.product === 'pro1y' ? PRO : PASS, { token: j.token, orderId: j.orderId, live: j.live, t: j.created });
+        if (!['redev1y', 'pro1y', 'redevplus1y'].includes(j.product)) return say('재건축 리포트 이용권 주문이 아니에요.');
+        wr({ pro1y: PRO, redevplus1y: PLUS }[j.product] || PASS, { token: j.token, orderId: j.orderId, live: j.live, t: j.created });
         return check().then(() => { say(okPass() ? '이용권을 불러왔어요 ✨' : '환불했거나 기간이 끝난 이용권이에요.'); draw(); });
       }).catch(() => say('잠시 뒤 다시 해 주세요.'));
     }
