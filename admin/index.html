@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>돈셈 관리자</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#f6f6f8">
+<style>
+/* 플러서블식 관리자 대시보드: 위 막대 → 숫자 줄(누르면 그래프가 바뀜) → 선 그래프 + 바꾼 날 → 탭 카드 2단 → 돈 → 최근 결제 */
+:root { --bg: #f6f6f8; --panel: #ffffff; --fg: #1d1d1f; --muted: #6e6e78; --line: #e6e6eb; --soft: #f0eef5; --acc: #7040A1; --acc2: #8B5CC9; --accsoft: rgba(139, 92, 201, .14); --ok: #1f9d55; --bad: #d93f3f; --tip: #ffffff; --shadow: 0 8px 24px rgba(20, 10, 40, .12); color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0e0e10; --panel: #17171a; --fg: #f2f2f5; --muted: #9a9aa6; --line: #2a2a30; --soft: #1f1d25; --acc: #B69AD8; --acc2: #A47FD6; --accsoft: rgba(164, 127, 214, .2); --ok: #3ccf7f; --bad: #ff6b6b; --tip: #232329; --shadow: 0 8px 24px rgba(0, 0, 0, .5); color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #0e0e10; --panel: #17171a; --fg: #f2f2f5; --muted: #9a9aa6; --line: #2a2a30; --soft: #1f1d25; --acc: #B69AD8; --acc2: #A47FD6; --accsoft: rgba(164, 127, 214, .2); --ok: #3ccf7f; --bad: #ff6b6b; --tip: #232329; --shadow: 0 8px 24px rgba(0, 0, 0, .5); color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+#dash { display: grid; gap: 16px; min-width: 0; } #dash > * { min-width: 0; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif; letter-spacing: -0.01em; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 20px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 16px; }
+.num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.site { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo { width: 34px; height: 34px; border-radius: 10px; background: #1d1d1f; color: #fff; display: grid; place-items: center; font-weight: 800; letter-spacing: -0.04em; }
+.site h1 { margin: 0; font-size: 18px; font-weight: 700; }
+.site p { margin: 0; font-size: 12px; color: var(--muted); }
+.ctrl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.btn { border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: inherit; font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 999px; cursor: pointer; }
+.btn.main { background: #FEE500; color: #191919; border-color: #FEE500; font-size: 15px; padding: 12px 20px; }
+button:focus-visible { outline: 2px solid var(--acc2); outline-offset: 2px; }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.live i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.take { margin: 0; font-size: 15px; line-height: 1.65; }
+.take b { font-weight: 700; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; min-width: 0; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+.kpi { appearance: none; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; padding: 16px 18px 14px; display: grid; gap: 4px; position: relative; min-width: 0; }
+.kpi + .kpi { border-left: 1px solid var(--line); }
+button.kpi { cursor: pointer; } button.kpi:hover { background: var(--soft); }
+.kpi[aria-pressed="true"]::after { content: ""; position: absolute; left: 18px; right: 18px; bottom: -1px; height: 2px; background: var(--acc2); border-radius: 2px; }
+.kpi span { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--muted); }
+.kpi[aria-pressed="true"] span { color: var(--acc2); }
+.kpi strong { font-size: 26px; font-weight: 700; line-height: 1.15; }
+.kpi em { font-style: normal; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.up { color: var(--ok) !important; font-weight: 600; } .down { color: var(--bad) !important; font-weight: 600; } .neg { color: var(--bad); }
+.chart { position: relative; min-height: 270px; padding: 10px 14px 6px; }
+.chart svg { display: block; overflow: visible; }
+.chart text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+.tip { position: absolute; pointer-events: none; background: var(--tip); border: 1px solid var(--line); box-shadow: var(--shadow); border-radius: 10px; padding: 8px 12px; font-size: 12px; line-height: 1.5; white-space: nowrap; z-index: 3; }
+.tip b { display: block; font-size: 15px; } .tip i { display: block; font-style: normal; color: var(--muted); }
+.evs { border-top: 1px solid var(--line); padding: 12px 18px 14px; }
+.cap { margin: 0 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--muted); }
+.ev { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; }
+.ev li { display: flex; align-items: center; gap: 6px; }
+.ev i { font-style: normal; width: 18px; height: 18px; border-radius: 50%; background: var(--fg); color: var(--bg); font-size: 10.5px; font-weight: 700; display: grid; place-items: center; }
+.ev time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.tabs { display: flex; gap: 18px; padding: 0 18px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tabs button { border: 0; background: transparent; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--muted); padding: 14px 0 12px; cursor: pointer; position: relative; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); }
+.tabs button[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--fg); border-radius: 2px; }
+.panel { padding: 10px 14px 16px; min-height: 120px; }
+.cols { display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 600; color: var(--muted); padding: 6px 8px 8px; }
+.list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; min-width: 0; } .panel, .two > * { min-width: 0; }
+.row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 8px; font-size: 13.5px; border-radius: 6px; isolation: isolate; }
+.row::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w, 0%); background: var(--accsoft); border-radius: 6px; z-index: -1; }
+.row > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row small { color: var(--muted); font-size: 12px; margin-left: 6px; }
+.row b { font-weight: 600; flex: none; font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); font-size: 13px; padding: 10px 8px; margin: 0; }
+.cardh { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 16px 18px 6px; flex-wrap: wrap; }
+.cardh h2 { margin: 0; font-size: 14px; font-weight: 700; } .cardh p { margin: 0; font-size: 12px; color: var(--muted); }
+.k3 { grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tbl th, .tbl td { padding: 10px 18px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.tbl tr:last-child td { border-bottom: 0; } .tbl th { font-size: 11.5px; font-weight: 600; color: var(--muted); } .tbl .n { text-align: right; font-variant-numeric: tabular-nums; }
+.scroll { overflow-x: auto; }
+.note { background: var(--soft); border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.7; }
+.note b { display: block; margin-bottom: 4px; }
+.note ol { margin: 6px 0 0; padding-left: 18px; }
+.note code { background: var(--panel); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
+details { font-size: 13px; color: var(--muted); } summary { cursor: pointer; font-weight: 600; color: var(--fg); } details ul { margin: 8px 0 0; padding-left: 18px; line-height: 1.75; }
+.gate { min-height: 70vh; display: grid; place-items: center; text-align: center; }
+.gate h1 { font-size: 22px; margin: 14px 0 6px; } .gate p { color: var(--muted); margin: 0 0 20px; }
+.skel { color: transparent !important; background: var(--soft); border-radius: 6px; }
+@media (max-width: 640px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-left: 0; } .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .kpi strong { font-size: 22px; }
+  .k3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .k3 .kpi { border-top: 0 !important; padding: 14px 12px; } .k3 .kpi:nth-child(3) { border-left: 1px solid var(--line); } .k3 .kpi strong { font-size: 17px; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="gate" id="gate">
+    <div>
+      <div class="logo" style="margin:0 auto">D</div>
+      <h1>돈셈 관리자</h1>
+      <p id="gate-msg">운영자 계정으로 로그인해 주세요.</p>
+      <div id="gbtn" style="display:flex;justify-content:center;min-height:44px;margin-bottom:12px"></div>
+      <button type="button" class="btn" id="login">카카오로 로그인</button>
+    </div>
+  </div>
+
+  <div id="dash" hidden>
+    <div class="top">
+      <div class="site"><div class="logo" aria-hidden="true">D</div><div><h1>돈셈 관리자</h1><p>doncalculator.com</p></div></div>
+      <div class="ctrl">
+        <div class="seg" role="group" aria-label="기간"><button type="button" data-days="7" aria-pressed="false">7일</button><button type="button" data-days="30" aria-pressed="true">30일</button><button type="button" data-days="90" aria-pressed="false">90일</button></div>
+        <button type="button" class="btn" id="reload">새로 고침</button>
+        <span class="live"><i aria-hidden="true"></i><span id="asof">—</span></span>
+      </div>
+    </div>
+
+    <p class="take" id="take">—</p>
+
+    <div class="note" id="setup" hidden>
+      <b>방문 통계를 켜려면 한 번만 설정해 주세요</b>
+      Cloudflare 방문 통계를 읽을 열쇠(API 토큰)가 아직 돈셈 서버에 없어요. 아래 기능 사용·결제 숫자는 지금도 보여요.
+      <ol>
+        <li>dash.cloudflare.com → 오른쪽 위 사람 아이콘 → <b style="display:inline">프로필</b> → <b style="display:inline">API 토큰</b> → <b style="display:inline">토큰 생성</b></li>
+        <li>「사용자 지정 토큰」 → 권한: <code>계정 · Account Analytics · 읽기</code> → 토큰 만들기 → 나온 토큰 복사</li>
+        <li>Workers → <code>donsem-counter</code> → 설정 → 변수 및 비밀 → 추가 → 종류 「비밀」, 이름 <code>CF_STATS_TOKEN</code>, 값에 토큰 붙여 넣기 → 배포</li>
+      </ol>
+      <span id="setup-err"></span>
+    </div>
+
+    <div class="card" id="overview">
+      <div class="kpis">
+        <button type="button" class="kpi" data-metric="v" aria-pressed="true"><span>방문</span><strong class="num" id="k-v">—</strong><em id="k-v-sub">—</em></button>
+        <button type="button" class="kpi" data-metric="pv" aria-pressed="false"><span>페이지뷰</span><strong class="num" id="k-pv">—</strong><em id="k-pv-sub">—</em></button>
+        <div class="kpi"><span>방문당 화면</span><strong class="num" id="k-ppv">—</strong><em>한 번 와서 본 화면 수</em></div>
+        <div class="kpi"><span>휴대폰</span><strong class="num" id="k-mob">—</strong><em>방문 중 휴대폰 비율</em></div>
+      </div>
+      <div class="chart" id="chart"></div>
+      <div class="evs"><p class="cap">바꾼 날</p><ol class="ev" id="events"></ol></div>
+    </div>
+
+    <div class="two">
+      <div class="card" data-tabs>
+        <div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-tab="refs">들어온 곳</button><button type="button" role="tab" aria-selected="false" data-tab="chan">채널</button></div>
+        <div class="panel" data-panel="refs"><div class="cols"><span>들어온 곳</span><span>방문</span></div><div class="list" id="l-refs"></div></div>
+        <div class="panel" data-panel="chan" hidden><div class="cols"><span>채널</span><span>방문</span></div><div class="list" id="l-chan"></div></div>
+      </div>
+      <div class="card" data-tabs>
+        <div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-tab="pv">페이지뷰순</button><button type="button" role="tab" aria-selected="false" data-tab="entry">들어온 화면</button></div>
+        <div class="panel" data-panel="pv"><div class="cols"><span>화면</span><span>페이지뷰</span></div><div class="list" id="l-pv"></div></div>
+        <div class="panel" data-panel="entry" hidden><div class="cols"><span>처음 들어온 화면</span><span>방문</span></div><div class="list" id="l-entry"></div></div>
+      </div>
+      <div class="card" data-tabs>
+        <div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-tab="dev">기기</button><button type="button" role="tab" aria-selected="false" data-tab="br">브라우저</button><button type="button" role="tab" aria-selected="false" data-tab="os">운영체제</button><button type="button" role="tab" aria-selected="false" data-tab="cty">나라</button></div>
+        <div class="panel" data-panel="dev"><div class="cols"><span>기기</span><span>방문</span></div><div class="list" id="l-dev"></div></div>
+        <div class="panel" data-panel="br" hidden><div class="cols"><span>브라우저</span><span>방문</span></div><div class="list" id="l-br"></div></div>
+        <div class="panel" data-panel="os" hidden><div class="cols"><span>운영체제</span><span>방문</span></div><div class="list" id="l-os"></div></div>
+        <div class="panel" data-panel="cty" hidden><div class="cols"><span>나라</span><span>방문</span></div><div class="list" id="l-cty"></div></div>
+      </div>
+      <div class="card" data-tabs>
+        <div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-tab="pro">Pro 기능</button><button type="button" role="tab" aria-selected="false" data-tab="eng">참여</button><button type="button" role="tab" aria-selected="false" data-tab="mk">중고거래</button></div>
+        <div class="panel" data-panel="pro"><div class="cols"><span>기능</span><span>누른 횟수 (지금까지)</span></div><div class="list" id="l-pro"></div></div>
+        <div class="panel" data-panel="eng" hidden><div class="cols"><span>참여</span><span>지금까지</span></div><div class="list" id="l-eng"></div></div>
+        <div class="panel" data-panel="mk" hidden><div class="cols"><span>중고거래</span><span>지금까지</span></div><div class="list" id="l-mk"></div></div>
+      </div>
+    </div>
+
+    <div class="card" id="money">
+      <div class="cardh"><h2>들어온 돈 vs 나간 돈</h2><p>지금까지 · 달러는 1달러 1,400원 어림</p></div>
+      <div class="kpis k3">
+        <div class="kpi"><span>들어온 돈</span><strong class="num" id="m-net">—</strong><em id="m-net-sub">—</em></div>
+        <div class="kpi"><span>나간 돈</span><strong class="num" id="m-cost">—</strong><em>도메인·AI·서버</em></div>
+        <div class="kpi"><span>남은 돈</span><strong class="num" id="m-profit">—</strong><em id="m-profit-sub">—</em></div>
+      </div>
+      <div class="panel"><div class="cols"><span>항목</span><span>금액</span></div><div class="list" id="l-money"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="cardh"><h2>최근 결제</h2><p>실제 결제만 · 최근 10건</p></div>
+      <div class="scroll"><table class="tbl"><thead><tr><th>날짜</th><th>상품</th><th class="n">금액</th><th>상태</th></tr></thead><tbody id="orders"></tbody></table></div>
+    </div>
+
+    <details>
+      <summary>숫자를 읽을 때 알아 둘 것</summary>
+      <ul>
+        <li>방문·페이지뷰는 Cloudflare 웹 분석이 일부를 골라 세서 10 단위로 어림한 숫자예요. 화면을 열 때마다 새로 가져와요 (5분 동안은 같은 숫자를 다시 써요).</li>
+        <li>운영자가 테스트로 연 화면도 들어 있어요.</li>
+        <li>「방문」은 밖에서 들어와 시작된 이용 한 번이에요. 돈셈 안에서 화면을 옮겨 다닌 건 페이지뷰로만 세요.</li>
+        <li>바뀐 비율은 바로 앞의 같은 길이 기간과 비교해요. 앞 기간에 기록이 없으면 비교하지 않아요.</li>
+        <li>Pro 기능·퀴즈·결제는 돈셈 서버에서 이름·이메일 없이 합계만 가져와요.</li>
+        <li>이 화면은 운영자 계정(관리자로 표시된 카카오 계정)만 열 수 있고, 검색에 나오지 않아요.</li>
+      </ul>
+    </details>
+  </div>
+</div>
+
+<script>
+(() => {
+  const API = 'https://donsem-counter.hjjung330.workers.dev', TK = 'donsem:mk-token';
+  const GOOGLE_CLIENT_ID = '881155721587-1u4nfhulenqrusptkvf2iv8j0v92ae4s.apps.googleusercontent.com'; // 구글 클라우드 OAuth 웹 클라이언트 ID (비밀 아님). 비어 있으면 카카오 로그인만 보여요
+  // 바꾼 날과 고정 비용: 큰 변경을 올리면 여기에 한 줄 더해요
+  const EVENTS = [
+    ['2026-10-21', '돈셈 이름·새 디자인으로 사이트 열기'], ['2026-11-07', '재건축 정보표·사용방법 안내'], ['2026-11-10', '스토어 실제 결제 시작·재개발 지도'],
+    ['2026-11-17', '매거진 70개·홈 새 디자인'], ['2026-11-18', 'Pro 캡처 AI·연봉별 실수령액 표'], ['2026-11-19', '결정 도우미·급여명세서·관리자 화면'],
+  ];
+  const COSTS = [['도메인 doncalculator.com (1년)', 23800, '연 $16.99'], ['AI 크레딧 충전 (Anthropic)', 7000, '$5 충전'], ['서버·호스팅', 0, 'GitHub Pages·Cloudflare 무료']];
+  const SCAN_WON = 28;
+  const PRO = { an: '소비 분석', cd: '카드 실적', fc: '앞으로의 잔액', hb: '돈 습관', rc: '숨은 반복 결제', rp: '한 달 결산', ye: '연말정산', buy: '이용권 결제 버튼', like: '좋아요', scan: '캡처 AI 읽기', url: '링크 읽기', pdf: 'PDF 읽기', ypdf: '간소화 PDF', wp: '월급 계획' };
+  const PRODUCT = { pro1y: 'Pro 1년 이용권', yearend: '연말정산 키트', budget: '가계부 템플릿', starter: '재테크 스타터 키트' };
+  const PAGE = { '/': '홈', '/budget/': '캘린더·가계부', '/real-estate/': '부동산 지도', '/salary/': '연봉 실수령액', '/wage/hours/': '주 몇 시간 월급표', '/guide/': '매거진', '/calculators/': '모든 계산기', '/shop/': '돈셈 스토어', '/market/': '중고거래', '/my/': '마이', '/fixed/': '고정지출', '/should-i/': '결정 도우미', '/quiz/': '오늘의 돈 퀴즈', '/money-type/': '돈BTI 테스트', '/salary-rank/': '연봉 상위 %', '/savings/': '적금 이자', '/year-end/': '연말정산 모아보기', '/year-end-tax/': '연말정산 환급', '/loan/': '대출 이자', '/admin/': '관리자' };
+  const DEV = { mobile: '휴대폰', desktop: '컴퓨터', tablet: '태블릿' };
+  const BR = { Chrome: 'Chrome (컴퓨터)', MobileSafari: 'Safari (아이폰)', ChromeMobile: 'Chrome (휴대폰)', ChromeMobileWebview: '앱 안 브라우저', ChromeDerivative: 'Whale 등 Chrome 계열', SamsungInternet: '삼성 인터넷', Unknown: '알 수 없음', Safari: 'Safari (맥)', Firefox: 'Firefox', Edge: 'Edge' };
+  const OS = { MacOSX: 'macOS', Unknown: '알 수 없음' };
+  const CTY = { KR: '한국', US: '미국', JP: '일본', CN: '중국', IN: '인도', VN: '베트남', CA: '캐나다', AU: '호주', DE: '독일', GB: '영국', FR: '프랑스', SG: '싱가포르', TW: '대만', HK: '홍콩', SE: '스웨덴', PL: '폴란드', IE: '아일랜드' };
+  const src = h => { // 들어온 사이트 → 이름·채널
+    if (!h) return ['직접 방문·앱', '직접'];
+    if (/threads/.test(h)) return ['Threads', 'SNS']; if (/facebook/.test(h)) return ['Facebook', 'SNS']; if (/instagram/.test(h)) return ['Instagram', 'SNS'];
+    if (/(^|\.)t\.co$|twitter|x\.com/.test(h)) return ['X', 'SNS']; if (/kakao/.test(h) && !/search/.test(h)) return ['카카오톡', 'SNS'];
+    if (/google\./.test(h)) return ['Google 검색', '검색']; if (/naver/.test(h)) return ['Naver 검색', '검색']; if (/daum|search\.kakao/.test(h)) return ['Daum 검색', '검색'];
+    if (/bing/.test(h)) return ['Bing 검색', '검색']; if (/chatgpt|openai/.test(h)) return ['ChatGPT', 'AI']; if (/perplexity/.test(h)) return ['Perplexity', 'AI']; if (/gemini|bard/.test(h)) return ['Gemini', 'AI'];
+    return [h.replace(/^www\./, ''), '기타'];
+  };
+  const $ = id => document.getElementById(id);
+  const n = v => (+v || 0).toLocaleString('ko-KR'), won = v => (v < 0 ? '-' : '') + n(Math.abs(v)) + '원', pct = v => Math.round(v * 100) + '%';
+  const get = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const put = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { /* 저장 막힘 */ } };
+  let token = get(TK), days = 30, metric = 'v', data = null;
+  const m = location.hash.match(/#t=([a-f0-9]{48})/);
+  if (m) { token = m[1]; put(TK, token); history.replaceState(null, '', location.pathname); }
+  if (/#login=/.test(location.hash)) { $('gate-msg').textContent = '로그인하지 못했어요. 다시 해 주세요.'; history.replaceState(null, '', location.pathname); }
+  $('login').addEventListener('click', () => { location.href = `${API}/m/auth/start?back=${encodeURIComponent('/admin/')}`; });
+  // 구글로 로그인 (크롬에 로그인된 구글 계정으로 한 번에)
+  if (GOOGLE_CLIENT_ID) {
+    const gs = document.createElement('script'); gs.src = 'https://accounts.google.com/gsi/client'; gs.async = true;
+    gs.onload = () => {
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, auto_select: true, callback: async ({ credential }) => {
+        $('gate-msg').textContent = '확인하는 중…';
+        try {
+          const r = await fetch(`${API}/m/admin/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ credential }) });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok || !j.token) { $('gate-msg').textContent = j.message || '로그인하지 못했어요. 다시 해 주세요.'; return; }
+          token = j.token; put(TK, token); load();
+        } catch (e) { $('gate-msg').textContent = '서버에 닿지 않았어요. 잠시 뒤 다시 해 주세요.'; }
+      } });
+      google.accounts.id.renderButton($('gbtn'), { theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', locale: 'ko' });
+      if (!token) google.accounts.id.prompt();
+    };
+    document.head.append(gs);
+  } else $('login').classList.add('main');
+
+  const list = (el, rows, sub) => {
+    el.replaceChildren();
+    if (!rows.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = '아직 없어요'; el.append(p); return; }
+    const max = Math.max(...rows.map(r => Math.abs(r[1]))) || 1;
+    rows.forEach(([label, val, small, cls]) => {
+      const row = document.createElement('div'); row.className = 'row'; row.style.setProperty('--w', Math.max(1.5, Math.abs(val) / max * 100).toFixed(1) + '%');
+      const s = document.createElement('span'); s.textContent = label; if (small) { const sm = document.createElement('small'); sm.textContent = small; s.append(sm); }
+      const b = document.createElement('b'); b.textContent = sub ? sub(val) : n(val); if (cls) b.className = cls;
+      row.append(s, b); el.append(row);
+    });
+  };
+  const chg = (now, prev) => prev ? (now - prev) / prev : null;
+  const chgText = (el, now, prev, label) => {
+    el.classList.remove('up', 'down'); const c = chg(now, prev);
+    if (c == null) { el.textContent = label || '앞 기간 기록 없음'; return; }
+    el.classList.add(c >= 0 ? 'up' : 'down'); el.textContent = `앞 ${days}일보다 ${c >= 0 ? '↗ +' : '↘ '}${Math.round(c * 100)}%`;
+  };
+
+  function drawChart() {
+    const el = $('chart'), w = data && data.web; el.replaceChildren();
+    if (!w) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = '방문 통계를 켜면 여기에 그래프가 나와요.'; el.append(p); return; }
+    const s0 = new Date(data.range.s + 'T00:00:00Z'), byDay = new Map(w.daily.map(r => [r.k, r]));
+    const rows = d3.range(data.range.days).map(i => { const d = new Date(s0.getTime() + i * 864e5), k = d.toISOString().slice(0, 10), r = byDay.get(k); return { k, d, v: r ? r[metric] : 0 }; });
+    const label = metric === 'v' ? '방문' : '페이지뷰';
+    const W = Math.max(260, el.clientWidth - 28), H = el.clientWidth < 500 ? 210 : 260, mg = { t: 28, r: 12, b: 26, l: 10 };
+    const y = d3.scaleLinear().domain([0, (d3.max(rows, r => r.v) || 1) * 1.08]).nice(4).range([H - mg.b, mg.t]);
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', `최근 ${data.range.days}일 날짜별 ${label}`);
+    const yt = svg.append('g').selectAll('text').data(y.ticks(4)).join('text').attr('y', d => y(d) + 4).text(d => d3.format(',')(d));
+    let lw = 0; yt.each(function () { lw = Math.max(lw, this.getComputedTextLength()); }); mg.l = Math.ceil(lw) + 12; yt.attr('x', mg.l - 10).attr('text-anchor', 'end');
+    const x = d3.scaleUtc().domain(d3.extent(rows, r => r.d)).range([mg.l, W - mg.r]);
+    svg.insert('g', ':first-child').selectAll('line').data(y.ticks(4)).join('line').attr('x1', mg.l).attr('x2', W - mg.r).attr('y1', d => y(d)).attr('y2', d => y(d)).style('stroke', 'var(--line)').style('stroke-dasharray', d => d ? '3 3' : null);
+    svg.append('g').selectAll('text').data(x.ticks(Math.max(2, Math.min(6, Math.floor((W - mg.l) / 80))))).join('text').attr('x', d => x(d)).attr('y', H - 6).attr('text-anchor', 'middle').text(d => d3.utcFormat('%-m월 %-d일')(d));
+    const gid = 'g' + Math.random().toString(36).slice(2, 7), gr = svg.append('defs').append('linearGradient').attr('id', gid).attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1);
+    gr.append('stop').attr('offset', '0%').style('stop-color', 'var(--acc2)').style('stop-opacity', .28); gr.append('stop').attr('offset', '100%').style('stop-color', 'var(--acc2)').style('stop-opacity', 0);
+    svg.append('path').datum(rows).attr('d', d3.area().x(r => x(r.d)).y0(y(0)).y1(r => y(r.v))).style('fill', `url(#${gid})`);
+    svg.append('path').datum(rows).attr('d', d3.line().x(r => x(r.d)).y(r => y(r.v))).style('fill', 'none').style('stroke', 'var(--acc2)').style('stroke-width', 2.25).style('stroke-linejoin', 'round');
+    const evs = EVENTS.map(([k, t], i) => ({ k, t, i: i + 1, d: new Date(k + 'T00:00:00Z') })), evMap = new Map(evs.map(e => [e.k, e]));
+    evs.filter(e => e.d >= x.domain()[0] && e.d <= x.domain()[1]).forEach(e => {
+      svg.append('line').attr('x1', x(e.d)).attr('x2', x(e.d)).attr('y1', mg.t + 10).attr('y2', H - mg.b).style('stroke', 'var(--muted)').style('stroke-opacity', .5).style('stroke-dasharray', '2 3');
+      svg.append('circle').attr('cx', x(e.d)).attr('cy', mg.t + 2).attr('r', 8).style('fill', 'var(--fg)');
+      svg.append('text').attr('x', x(e.d)).attr('y', mg.t + 5.5).attr('text-anchor', 'middle').style('fill', 'var(--bg)').style('font-size', '10px').style('font-weight', 700).text(e.i);
+    });
+    const last = rows[rows.length - 1];
+    svg.append('circle').attr('cx', x(last.d)).attr('cy', y(last.v)).attr('r', 4).style('fill', 'var(--acc2)').style('stroke', 'var(--panel)').style('stroke-width', 2);
+    const guide = svg.append('line').attr('y1', mg.t).attr('y2', H - mg.b).style('stroke', 'var(--muted)').style('stroke-dasharray', '2 3').style('opacity', 0);
+    const dot = svg.append('circle').attr('r', 5).style('fill', 'var(--acc2)').style('stroke', 'var(--panel)').style('stroke-width', 2).style('opacity', 0);
+    const tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; const tl = document.createElement('span'), tb = document.createElement('b'), ti = document.createElement('i'); tip.append(tl, tb, ti); el.append(tip);
+    const bis = d3.bisector(r => r.d).center, WD = ['일', '월', '화', '수', '목', '금', '토'];
+    svg.append('rect').attr('x', mg.l).attr('y', mg.t).attr('width', W - mg.l - mg.r).attr('height', H - mg.t - mg.b).style('fill', 'transparent')
+      .on('pointerenter pointermove', ev => {
+        const r = rows[bis(rows, x.invert(d3.pointer(ev)[0]))], sc = (el.clientWidth - 28) / W;
+        guide.attr('x1', x(r.d)).attr('x2', x(r.d)).style('opacity', 1); dot.attr('cx', x(r.d)).attr('cy', y(r.v)).style('opacity', 1);
+        tl.textContent = `${d3.utcFormat('%-m월 %-d일')(r.d)} (${WD[r.d.getUTCDay()]}) · ${label}`; tb.textContent = n(r.v);
+        const e = evMap.get(r.k); ti.textContent = e ? `${e.i}. ${e.t}` : ''; ti.hidden = !e; tip.hidden = false;
+        tip.style.left = Math.min(Math.max(0, 14 + x(r.d) * sc - tip.offsetWidth / 2), el.clientWidth - tip.offsetWidth) + 'px';
+        tip.style.top = Math.max(0, 10 + y(r.v) * sc - tip.offsetHeight - 12) + 'px';
+      })
+      .on('pointerleave', () => { tip.hidden = true; guide.style('opacity', 0); dot.style('opacity', 0); });
+  }
+
+  function render() {
+    const w = data.web, a = data.app;
+    $('asof').textContent = `${new Date(data.at).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' })} 기준`;
+    $('setup').hidden = !!w;
+    $('setup-err').textContent = data.webError && data.webError !== 'token' ? `(Cloudflare가 알려 준 오류: ${data.webError})` : '';
+    // 방문
+    const tot = w ? w.daily.reduce((s, r) => ({ v: s.v + r.v, pv: s.pv + r.pv }), { v: 0, pv: 0 }) : null;
+    const mob = w ? (w.dev.find(r => r.k === 'mobile') || { v: 0 }).v : 0, devAll = w ? w.dev.reduce((s, r) => s + r.v, 0) : 0;
+    const prevV = w && w.prev ? w.prev.v : 0, prevPv = w && w.prev ? w.prev.pv : 0;
+    $('k-v').textContent = tot ? n(tot.v) : '—'; $('k-pv').textContent = tot ? n(tot.pv) : '—';
+    if (tot) { chgText($('k-v-sub'), tot.v, prevV); chgText($('k-pv-sub'), tot.pv, prevPv); } else { $('k-v-sub').textContent = '방문 통계 꺼짐'; $('k-pv-sub').textContent = '—'; }
+    $('k-ppv').textContent = tot && tot.v ? (tot.pv / tot.v).toFixed(1) : '—'; $('k-mob').textContent = devAll ? pct(mob / devAll) : '—';
+    const refs = w ? w.refs.filter(r => r.v > 0 && !/doncalculator\.com$|^localhost$|^127\.0\.0\.1$/.test(r.k)) : [];
+    const merged = new Map(); refs.forEach(r => { const [name, kind] = src(r.k), o = merged.get(name) || { name, kind, v: 0, hosts: [] }; o.v += r.v; if (r.k) o.hosts.push(r.k); merged.set(name, o); });
+    const srcRows = [...merged.values()].sort((x, y) => y.v - x.v);
+    const ext = srcRows.filter(r => r.kind !== '직접');
+    const c = tot ? chg(tot.v, prevV) : null;
+    $('take').textContent = !tot ? '방문 통계를 켜면 여기에 한 줄 요약이 나와요. 아래 기능 사용과 결제 숫자는 지금도 최신이에요.'
+      : `최근 ${days}일 동안 ${n(tot.v)}번 들어왔어요${c == null ? '' : `. 앞 ${days}일보다 ${Math.abs(Math.round(c * 100))}% ${c >= 0 ? '늘었고' : '줄었고'}`}${ext.length ? `, 밖에서 들어온 길은 ${ext[0].name}가 가장 많아요` : ''}. 검색으로 들어온 방문은 ${n(srcRows.filter(r => r.kind === '검색').reduce((s, r) => s + r.v, 0))}번이에요.`;
+    list($('l-refs'), srcRows.map(r => [r.name, r.v, r.kind]));
+    const ch = d3.rollups(srcRows, v => d3.sum(v, r => r.v), r => r.kind).sort((x, y) => y[1] - x[1]);
+    list($('l-chan'), ch.map(([k, v]) => [k === '직접' ? '직접 방문·앱' : k, v]));
+    const pg = w ? w.pages : [];
+    list($('l-pv'), [...pg].sort((x, y) => y.pv - x.pv).slice(0, 12).map(r => [PAGE[r.k] || r.k, r.pv, PAGE[r.k] ? r.k : '']));
+    list($('l-entry'), pg.filter(r => r.v > 0).sort((x, y) => y.v - x.v).slice(0, 12).map(r => [PAGE[r.k] || r.k, r.v, PAGE[r.k] ? r.k : '']));
+    list($('l-dev'), (w ? w.dev : []).map(r => [DEV[r.k] || r.k, r.v]));
+    list($('l-br'), (w ? w.br : []).filter(r => r.k !== 'ChromeHeadless').map(r => [BR[r.k] || r.k, r.v]));
+    list($('l-os'), (w ? w.os : []).map(r => [OS[r.k] || r.k, r.v]));
+    list($('l-cty'), (w ? w.cty : []).map(r => [CTY[r.k] || r.k, r.v]));
+    // 기능 사용
+    list($('l-pro'), a.pro.map(r => [PRO[r.v] || r.v, +r.n]));
+    list($('l-eng'), [[`오늘의 돈 퀴즈 답한 수`, a.quiz.n, `${a.quiz.days}일`], [`무지출 도장`, a.noSpend.n, `${a.noSpend.days}일`], ['돈BTI 결과', a.moneyType]]);
+    list($('l-mk'), [['가입한 사람', a.market.users], ['올린 물건', a.market.items, `보이는 것 ${a.market.shown}`]]);
+    // 돈
+    const gross = a.orders.reduce((s, o) => s + +o.amount, 0), refund = a.orders.reduce((s, o) => s + +o.refunded, 0), net = gross - refund;
+    const cost = COSTS.reduce((s, x) => s + x[1], 0), profit = net - cost, scans = +((a.pro.find(r => r.v === 'scan') || {}).n || 0);
+    $('m-net').textContent = won(net); $('m-net-sub').textContent = `결제 ${n(gross)}원 · 환불 ${n(refund)}원`;
+    $('m-cost').textContent = won(cost); $('m-profit').textContent = won(profit); $('m-profit').classList.toggle('neg', profit < 0);
+    $('m-profit-sub').textContent = profit < 0 ? `본전까지 ${n(-profit)}원` : '본전을 넘었어요';
+    const mrows = [];
+    a.orders.forEach(o => { mrows.push([`${PRODUCT[o.product] || o.product} 결제`, +o.amount, `${o.orders}건`]); if (+o.refunded) mrows.push([`${PRODUCT[o.product] || o.product} 환불`, -o.refunded, `${o.canceled}건`, 'neg']); });
+    COSTS.forEach(([t, v, b]) => mrows.push([t, -v, b, v ? 'neg' : '']));
+    mrows.push(['AI 캡처 쓴 만큼 (어림)', -scans * SCAN_WON, `${scans}장 × 약 ${SCAN_WON}원 · 충전한 크레딧 안에서 빠져요`, scans ? 'neg' : '']);
+    list($('l-money'), mrows, won);
+    const tb = $('orders'); tb.replaceChildren();
+    if (!a.ordersRecent.length) { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = 4; td.className = 'empty'; td.textContent = '아직 결제가 없어요'; tr.append(td); tb.append(tr); }
+    a.ordersRecent.forEach(o => {
+      const tr = document.createElement('tr');
+      [new Date(+o.created).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }), PRODUCT[o.product] || o.product, n(o.amount) + '원', o.canceled ? '환불됨' : '결제 완료'].forEach((t, i) => { const td = document.createElement('td'); if (i === 2) td.className = 'n'; td.textContent = t; tr.append(td); });
+      tb.append(tr);
+    });
+    drawChart();
+  }
+
+  async function load(fresh) {
+    if (!token) return;
+    $('reload').disabled = true; $('reload').textContent = '불러오는 중…';
+    try {
+      const r = await fetch(`${API}/m/admin/stats?days=${days}${fresh ? '&fresh=1' : ''}`, { headers: { Authorization: 'Bearer ' + token } });
+      if (r.status === 401) { put(TK, null); token = null; $('dash').hidden = true; $('gate').hidden = false; $('gate-msg').textContent = '로그인이 끝났어요. 다시 로그인해 주세요.'; return; }
+      if (r.status === 403) { $('dash').hidden = true; $('gate').hidden = false; $('gate-msg').textContent = '운영자 계정이 아니에요. 운영자 카카오 계정으로 로그인해 주세요.'; return; }
+      if (!r.ok) throw new Error('서버 ' + r.status);
+      data = await r.json(); $('gate').hidden = true; $('dash').hidden = false; render();
+    } catch (e) { $('take').textContent = '숫자를 불러오지 못했어요. 잠시 뒤 「새로 고침」을 눌러 주세요.'; }
+    finally { $('reload').disabled = false; $('reload').textContent = '새로 고침'; }
+  }
+
+  // 바꾼 날 목록
+  $('events').replaceChildren(...EVENTS.map(([k, t], i) => { const li = document.createElement('li'), a = document.createElement('i'), tm = document.createElement('time'), s = document.createElement('span'); a.textContent = i + 1; tm.textContent = k.slice(5).replace('-', '/'); s.textContent = t; li.append(a, tm, s); return li; }));
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => { days = +b.dataset.days; document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); load(); }));
+  document.querySelectorAll('button.kpi').forEach(b => b.addEventListener('click', () => { metric = b.dataset.metric; document.querySelectorAll('button.kpi').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (data) drawChart(); }));
+  document.querySelectorAll('[data-tabs]').forEach(card => card.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
+    card.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+    card.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== b.dataset.tab; });
+  })));
+  $('reload').addEventListener('click', () => load(true));
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => data && drawChart(), 120); });
+  if (token) { $('gate-msg').textContent = '불러오는 중…'; $('login').hidden = true; load().then(() => { $('login').hidden = false; }); }
+})();
+</script>
+</body>
+</html>
