@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 
 Sitemap: https://doncalculator.com/sitemap.xml
+
+#DaumWebMasterTool:7142b63561a7594dd0c7bc699fd0f37c33e636a187383a4b73abea3f1fc544dd:MqfNpbtb2g8b8TIcUfNFlQ==
