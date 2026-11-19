@@ -4469,3 +4469,12 @@ const GUIDE_FOR = {
   const keep = () => { const first = [...wrap.children].find(c => !/^(NAV|SCRIPT)$/.test(c.tagName)); if (first && first !== hero) wrap.insertBefore(hero, first); };
   keep(); new MutationObserver(keep).observe(wrap, { childList: true });
 })();
+
+// ── 홈 바로가기 딱지: data-dday="MM-DD"면 그날까지 남은 날을 「D-n」으로 (90일 안일 때만) ──
+document.querySelectorAll('.hq-tag[data-dday]').forEach(t => {
+  const k = new Date(Date.now() + 9 * 3600e3), [m, d] = t.dataset.dday.split('-').map(Number);
+  const now = Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate());
+  let to = Date.UTC(k.getUTCFullYear(), m - 1, d); if (to < now) to = Date.UTC(k.getUTCFullYear() + 1, m - 1, d);
+  const n = Math.round((to - now) / 864e5);
+  if (n <= 90) { t.textContent = n ? `D-${n}` : 'D-day'; t.hidden = false; }
+});
