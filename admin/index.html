@@ -327,7 +327,7 @@ details { font-size: 13px; color: var(--muted); } summary { cursor: pointer; fon
     const ext = srcRows.filter(r => r.kind !== '직접');
     const c = tot ? chg(tot.v, prevV) : null;
     $('take').textContent = !tot ? '방문 통계를 켜면 여기에 한 줄 요약이 나와요. 아래 기능 사용과 결제 숫자는 지금도 최신이에요.'
-      : `최근 ${days}일 동안 ${n(tot.v)}번 들어왔어요${c == null ? '' : `. 앞 ${days}일보다 ${Math.abs(Math.round(c * 100))}% ${c >= 0 ? '늘었고' : '줄었고'}`}${ext.length ? `, 밖에서 들어온 길은 ${ext[0].name}가 가장 많아요` : ''}. 검색으로 들어온 방문은 ${n(srcRows.filter(r => r.kind === '검색').reduce((s, r) => s + r.v, 0))}번이에요.`;
+      : `최근 ${days}일 동안 ${n(tot.v)}번 들어왔어요.${c == null ? '' : ` 앞 ${days}일보다 ${Math.abs(Math.round(c * 100))}% ${c >= 0 ? '늘었어요' : '줄었어요'}.`}${ext.length ? ` 밖에서 들어온 길은 ${ext[0].name}가 가장 많아요.` : ''} 검색으로 들어온 방문은 ${n(srcRows.filter(r => r.kind === '검색').reduce((s, r) => s + r.v, 0))}번이에요.`;
     list($('l-refs'), srcRows.map(r => [r.name, r.v, r.kind]));
     const ch = d3.rollups(srcRows, v => d3.sum(v, r => r.v), r => r.kind).sort((x, y) => y[1] - x[1]);
     list($('l-chan'), ch.map(([k, v]) => [k === '직접' ? '직접 방문·앱' : k, v]));
