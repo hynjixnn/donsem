@@ -4487,3 +4487,34 @@ document.querySelectorAll('.hq-tag[data-dday]').forEach(t => {
   const n = Math.round((to - now) / 864e5);
   if (n <= 90) { t.textContent = n ? `D-${n}` : 'D-day'; t.hidden = false; }
 });
+
+// ── 돈셈 레터 (주간 이메일 뉴스레터) 구독 상자: 매거진 글 아래와 홈에 보여요. 워커 /nl/sub 에 저장해요 ──
+(() => {
+  const path = location.pathname;
+  if (!(path === '/' || /^\/guide\/[^/]+\/$/.test(path))) return;
+  let done = false; try { done = localStorage.getItem('donsem:nl') === '1'; } catch (e) { /* 저장이 막힌 기기 */ }
+  const box = document.createElement('section');
+  box.className = 'card nl-box'; box.id = 'nl';
+  box.innerHTML = done ? '<b>📮 돈셈 레터 구독 중이에요</b><p>매주 한 번, 놓치면 손해인 돈 소식을 보내 드릴게요.</p>' :
+    `<b>📮 돈셈 레터</b><p>바뀌는 세금·보험료, 놓치면 손해인 일정, 새 계산기를 <strong>매주 한 번</strong> 메일로 보내 드려요.</p>
+    <form class="nl-form" novalidate><input type="email" name="email" placeholder="이메일 주소" autocomplete="email" required aria-label="이메일 주소"><button type="submit" class="btn fill">무료 구독</button></form>
+    <label class="nl-agree"><input type="checkbox" name="agree"> 이메일 수집·이용에 동의해요 (구독 취소 시 바로 삭제) · <a href="/privacy/#newsletter">자세히</a></label>
+    <p class="nl-msg" aria-live="polite"></p>`;
+  const anchor = document.querySelector('.wrap > footer') || document.querySelector('footer');
+  if (!anchor) return;
+  anchor.before(box);
+  const f = box.querySelector('form'); if (!f) return;
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = box.querySelector('.nl-msg'), email = f.email.value.trim(), agree = box.querySelector('[name=agree]').checked;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { msg.textContent = '이메일 주소를 확인해 주세요.'; return; }
+    if (!agree) { msg.textContent = '이메일 수집·이용에 동의해 주세요.'; return; }
+    msg.textContent = '등록하고 있어요…';
+    try {
+      const r = await fetch(COUNTER_URL + '/nl/sub', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, src: path === '/' ? 'home' : path.split('/')[2] || 'guide', agree: true }) }).then(x => x.json());
+      if (!r.ok) { msg.textContent = r.message || '잠시 뒤 다시 해 주세요.'; return; }
+      try { localStorage.setItem('donsem:nl', '1'); } catch (x) { /* 괜찮아요 */ }
+      box.innerHTML = '<b>📮 구독 완료!</b><p>매주 한 번 돈셈 레터를 보내 드릴게요. 메일이 안 보이면 스팸함도 확인해 주세요.</p>';
+    } catch (x) { msg.textContent = '잠시 뒤 다시 해 주세요.'; }
+  });
+})();
