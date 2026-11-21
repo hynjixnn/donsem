@@ -4437,6 +4437,12 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 .rdp-push > div { flex: 1 1 200px; } .rdp-push b { display: block; } .rdp-push span { color: var(--muted); font-size: 13px; line-height: 1.5; } .rdp-push .btn { width: auto; margin: 0; }
 @media (max-width: 640px) { .rdp-list { grid-template-columns: 1fr; } }
 
+/* 제휴 상자 (app.js PARTNER_LINKS) */
+.pt-box { display: grid; gap: 10px; } .pt-box > b { font-size: 17px; }
+.pt-list { display: grid; gap: 8px; } .pt-list a { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; color: var(--text); text-decoration: none; }
+.pt-list a:hover { border-color: var(--accent); } .pt-list em { font-size: 22px; font-style: normal; } .pt-list span { flex: 1; } .pt-list strong { display: block; font-size: 15px; } .pt-list small { color: var(--muted); font-size: 12px; } .pt-list i { color: var(--muted); font-style: normal; }
+.pt-ad { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
 /* 돈셈 레터 구독 상자 (app.js) */
 .nl-box { display: grid; gap: 8px; background: var(--accent-soft, #efe7f8); }
 .nl-box > b { font-size: 17px; } .nl-box p { margin: 0; color: var(--text); font-size: 14px; line-height: 1.6; }

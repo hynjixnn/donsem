@@ -4488,6 +4488,25 @@ document.querySelectorAll('.hq-tag[data-dday]').forEach(t => {
   if (n <= 90) { t.textContent = n ? `D-${n}` : 'D-day'; t.hidden = false; }
 });
 
+// ── 제휴(CPA) 상자: 재건축·부동산·취득세 화면 아래에 「이사 견적 비교」 등 비금융 제휴 링크를 보여요 ──
+// 링크는 CPA 네트워크(디비센스 등)에서 받은 캠페인 주소를 넣어요. 비어 있으면 상자가 안 보여요. 대출·보험·카드 비교는 넣지 않기 (금소법 중개 등록 필요)
+const PARTNER_LINKS = {
+  move: '', // 포장이사 견적 비교 캠페인 링크
+  interior: '', // 인테리어 견적 캠페인 링크
+  clean: '', // 입주청소 캠페인 링크
+};
+(() => {
+  const path = location.pathname;
+  if (!/^\/(redev|real-estate|acquisition-tax|brokerage-fee|jeonse-check)\//.test(path)) return;
+  const items = [['move', '🚚', '포장이사 견적 비교', '이사업체 여러 곳 견적을 한 번에 받아요'], ['interior', '🛠️', '인테리어 견적 비교', '입주 전 시공 견적을 무료로 받아요'], ['clean', '🧽', '입주청소 견적', '이사 들어가기 전 청소 견적을 받아요']].filter(([k]) => PARTNER_LINKS[k]);
+  if (!items.length) return;
+  const box = document.createElement('section');
+  box.className = 'card pt-box';
+  box.innerHTML = `<b>이사 준비 중이라면</b><div class="pt-list">${items.map(([k, i, t, s]) => `<a href="${PARTNER_LINKS[k]}" target="_blank" rel="sponsored noopener"><em>${i}</em><span><strong>${t}</strong><small>${s}</small></span><i>›</i></a>`).join('')}</div><p class="pt-ad">광고 · 이 링크로 신청하면 돈셈이 제휴 수수료를 받을 수 있어요. 견적과 계약은 각 업체와 직접 진행돼요.</p>`;
+  const anchor = document.querySelector('.wrap > footer') || document.querySelector('footer');
+  if (anchor) anchor.before(box);
+})();
+
 // ── 돈셈 레터 (주간 이메일 뉴스레터) 구독 상자: 매거진 글 아래와 홈에 보여요. 워커 /nl/sub 에 저장해요 ──
 (() => {
   const path = location.pathname;
