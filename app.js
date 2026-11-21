@@ -3420,6 +3420,20 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
 // 피클 첫 화면 띠처럼: 셈이가 '대신 해 주는 일'이 옆으로 흘러가요. 누르면 그 말로 셈이에게 바로 맡겨요
 const SEMI_FLOW = [['💸', '연봉 실수령액 대신 계산', '연봉 4천 실수령액'], ['☕', '쓴 돈 대신 적기', '커피 4500원 썼어'], ['🏠', '고정지출 대신 등록', '월세 50만 매달 25일'], ['🍕', '더치페이 대신 나누기', '12만원 4명 나눠줘'], ['📅', '다음 결제일 대신 챙기기', '다음 결제는 언제야?'], ['🔍', '숨은 돈 대신 찾기', '숨은 환급금 찾아줘']];
 
+// ── 마이: 피클처럼 맨 위 '일일 사용량 한도' (셈이 AI를 오늘 몇 번 썼는지, 워커에 횟수를 쓰지 않고 물어봐요) ──
+(() => {
+  const box = document.getElementById('my-usage'); if (!box) return;
+  const t = ['donsem:semi-pass', 'donsem:pro-pass', 'donsem:redevplus-pass'].map(k => { try { return (JSON.parse(localStorage.getItem(k)) || {}).token; } catch (e) { return ''; } }).filter(Boolean);
+  fetch(COUNTER_URL + '/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ peek: true, t }) }).then(r => r.json()).then(j => {
+    if (!j.ok) return;
+    const pct = Math.min(100, Math.round(j.used / j.lim * 100));
+    document.getElementById('uz-pct').textContent = `${pct}% 사용`;
+    document.getElementById('uz-fill').style.width = Math.max(pct, 3) + '%';
+    document.getElementById('uz-sub').innerHTML = `${j.paid ? '셈이 넉넉 이용권을 쓰고 있어요 · ' : ''}오늘 ${j.used}번 / 하루 ${j.lim}번<br>매일 자정에 한도가 초기화돼요`;
+    if (j.paid) document.getElementById('uz-tk').hidden = true;
+  }).catch(() => {});
+})();
+
 // ── 셈이가 먼저 챙겨 볼 일 (피클 '할 일 제안'처럼): 내 기록과 오늘 날짜를 보고 해 드릴 만한 일을 골라요. 홈 카드와 셈이 대화창이 같이 써요 ──
 // [이모지, 굵은 제목, 설명, 누르면: { q: 셈이에게 물을 말 } 또는 { href: 주소 }]
 function semiTodos() {
@@ -4417,8 +4431,9 @@ const GUIDE_FOR = {
   const g = document.querySelector('.gnav');
 })();
 
-// ── 홈: 마이가 위로 올라가도 출석체크·미션은 잘 보이게 ──
+// ── 홈: 마이가 위로 올라가도 출석체크·미션은 잘 보이게 ── (11-22 마이를 설정 화면으로 바꾸면서 출석체크·미션을 뺐어요 → 쉬어요)
 (() => {
+  return;
   const hero = document.querySelector('.home .wrap > .hero'); if (!hero) return;
   const d = document.createElement('div'); d.className = 'home-my';
   d.innerHTML = '<a href="/my/#my-attend"><span aria-hidden="true">✅</span><b>오늘 출석체크</b><i>›</i></a><a href="/my/#my-mission"><span aria-hidden="true">🎯</span><b>이달의 돈 미션</b><i>›</i></a>';

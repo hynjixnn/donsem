@@ -4490,3 +4490,32 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 .ai-form { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
 .ai-chips button { background: color-mix(in srgb, var(--bg) 70%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 @media (max-width: 640px) { .ai-inv { height: 42px; padding: 0 16px; font-size: 14px; } }
+
+/* ── 피클과 같은 투명도 (11-22): 셈이 입력창·홈 아래 탭바 — 뒤 글자가 살짝 흐리게 그대로 비쳐요 ── */
+.ai-foot { background: none !important; }
+html body .ai-form, html body .tabbar { background: rgba(255, 255, 255, .4) !important; -webkit-backdrop-filter: blur(3px) saturate(150%) !important; backdrop-filter: blur(3px) saturate(150%) !important; border: 1px solid rgba(0, 0, 0, .07) !important; box-shadow: 0 8px 24px -12px rgba(0, 0, 0, .22) !important; }
+html body .ai-chips button { background: rgba(255, 255, 255, .4); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+:root[data-theme="dark"] body .ai-form, :root[data-theme="dark"] body .tabbar { background: rgba(40, 40, 46, .42) !important; border-color: rgba(255, 255, 255, .1) !important; box-shadow: 0 8px 24px -12px rgba(0, 0, 0, .6) !important; }
+:root[data-theme="dark"] body .ai-chips button { background: rgba(40, 40, 46, .42); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body .ai-form, :root:not([data-theme="light"]) body .tabbar { background: rgba(40, 40, 46, .42) !important; border-color: rgba(255, 255, 255, .1) !important; box-shadow: 0 8px 24px -12px rgba(0, 0, 0, .6) !important; }
+  :root:not([data-theme="light"]) body .ai-chips button { background: rgba(40, 40, 46, .42); }
+}
+/* 돈셈 레터: 휴대폰에서 「무료 구독」 버튼이 오른쪽으로 잘리지 않게 */
+.nl-form { display: flex; flex-wrap: wrap; gap: 8px; max-width: 100%; }
+.nl-form input[type="email"] { flex: 1 1 180px; min-width: 0; }
+.nl-form button { flex: 0 0 auto; }
+.nl-box { overflow-wrap: anywhere; box-sizing: border-box; max-width: 100%; }
+/* ── 마이 (11-22 피클식): 사용량 한도 → Pro → 설정 목록. 출석·돈 온도·미션은 빼요 ── */
+#my-attend, #my-temp, #my-mission { display: none !important; }
+.my-top { padding-bottom: 14px; }
+.uz-card { margin: 14px 0; padding: 18px 18px 6px; border-radius: 20px; }
+.uz-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.uz-h b { font-size: 17px; letter-spacing: -0.02em; }
+.uz-h span { font-size: 14px; color: var(--muted); white-space: nowrap; }
+.uz-sub { margin: 6px 0 12px; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+.uz-bar { height: 8px; border-radius: 99px; background: color-mix(in srgb, var(--line) 55%, transparent); overflow: hidden; }
+.uz-bar i { display: block; width: 3%; height: 100%; border-radius: inherit; background: var(--blue); transition: width .6s cubic-bezier(.22, 1, .36, 1); }
+.uz-tk { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; padding: 14px 0 10px; border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); color: var(--blue); font-weight: 700; font-size: 15px; text-decoration: none; }
+.uz-tk em { font-style: normal; font-weight: 600; font-size: 13px; color: var(--muted); }
+.uz-tk:hover { text-decoration: none; }
