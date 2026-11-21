@@ -4538,19 +4538,6 @@ html body .ai-chips button { background: rgba(255, 255, 255, .4); -webkit-backdr
   .home .showcase { margin-bottom: 20px !important; }
   .home .showcase .sc-card { flex: 0 0 100%; } /* 아래 셈이 카드와 가로 길이를 똑같이 */
   .semi-card { margin-top: 0; }
-  /* 모든 계산기: 카드끼리 붙지 않게 + 무신사 카테고리처럼 왼쪽 회색 분류·오른쪽 큰 아이콘 */
-  #calc-list, .svc-recent { margin-bottom: 16px !important; }
-  body.cb-on:not(.cb-search) .cb { margin: 0 0 16px; border-radius: 20px; overflow: hidden; background: var(--card); }
-  .cb-side { width: 88px; padding: 0; border-right: 0; background: color-mix(in srgb, var(--line) 30%, var(--card)); }
-  .cb-side button { padding: 15px 12px; font-size: 14px; color: var(--muted); }
-  .cb-side button.on { background: var(--card); color: var(--text); font-weight: 800; }
-  .cb-main { padding: 14px 12px 12px 14px; }
-  .cb-sec { padding: 6px 0 18px; } .cb-sec + .cb-sec { border-top: 0; }
-  .cb-sec h2 { display: flex; align-items: center; gap: 4px; margin: 0 0 14px; font-size: 16px; font-weight: 800; }
-  .cb-sec h2::after { content: '›'; font-size: 20px; line-height: 1; color: var(--text); }
-  .cb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 6px; }
-  .cb-grid a { font-size: 13px; }
-  .cb-ico { width: 52px; height: 52px; }
 }
 /* 마이: 스티커 프로필 대신 셈이 (스티커·별명 꾸미기는 뺐어요) */
 #my-pf, #pf-panel, li:has(> #set-pf) { display: none !important; }
@@ -4584,6 +4571,5 @@ html body .ai-ava .semi { width: calc(var(--ai-ava, 70px) * .8); height: calc(va
 .uz-shop p { flex: 1 0 100%; margin: 0 0 4px; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
 .uz-shop .btn { flex: 1 1 120px; margin: 0; text-align: center; }
 
-.uz-shop a.btn { display: none; } /* TK-OFF: 초기화 티켓 판매를 열 때 이 줄을 지워요 */
 .cs-seg button.on { background: var(--blue) !important; color: #fff !important; border-color: var(--blue) !important; }
 @media (max-width: 640px) { .home .semi-card { margin-left: 4px !important; margin-right: 4px !important; } }

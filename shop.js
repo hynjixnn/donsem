@@ -7,7 +7,7 @@
   const LIVE = CLIENT_KEY.startsWith('live_');
   const q = new URLSearchParams(location.search);
   /* 2026-11-18: 상품을 새로 만드는 동안 판매를 잠시 쉬어요. 이미 산 분의 「다시 받기」와 결제 중이던 승인(s=ok)은 그대로 돼요. 다시 열 때 true */
-  const OPEN = { pro1y: true, redev1y: true, redevplus1y: true, semitk3: false, semitk10: false }; /* 셈이 초기화 티켓: 워커(/ai/reset)를 올린 뒤 true */ // 지금 파는 상품 (엑셀 키트는 새로 만드는 중이라 쉬어요)
+  const OPEN = { pro1y: true, redev1y: true, redevplus1y: true, semitk3: true, semitk10: true }; // 지금 파는 상품 (엑셀 키트는 새로 만드는 중이라 쉬어요)
   const isOpen = k => !!OPEN[k];
   const PASS_K = 'donsem:pro-pass';
   const passKey = D => (D && D.key) || PASS_K; // 이용권마다 저장하는 곳 (Pro: donsem:pro-pass, 재건축 리포트: donsem:redev-pass)
