@@ -3431,6 +3431,8 @@ function semiTodos() {
   const out = [];
   // 놓치면 손해인 큰 일정이 2주 안에 있으면 맨 먼저 (예: 연금저축·IRP 납입 마감 D-9)
   if (typeof mcUpcoming === 'function') { const e = mcUpcoming().find(x => x.imp >= 3 && mcDays(x.d) <= 14); if (e) { const d = mcDays(e.d); out.push(['⏰', `${d ? `D-${d}` : '오늘'} ${esc(e.t)}`, e.who, e.go ? { href: e.go[0] } : { href: '/money-calendar/' }]); } }
+  const fz = (rd('donsem:semi-zones') || [])[0];
+  if (fz && fz.name) out.push(['⭐', `관심 구역 ${esc(fz.name)} 소식을 정리해 드릴까요?`, '단계·일정과 최근 소식을 셈이가 한 번에 요약해 드려요.', { q: `${fz.name} 재건축 진행 상황 정리해줘` }]);
   if (b && b.budget > 0) out.push(['📊', used <= b.budget ? `이번 달 예산이 ${won(b.budget - used)} 남았어요.` : `이번 달 예산을 ${won(used - b.budget)} 넘었어요.`, `예산 ${won(b.budget)} 중 ${Math.round(used / b.budget * 100)}%를 썼어요. 어디에 많이 썼는지 알려 드릴까요?`, { q: '이번 달 어디에 많이 썼어?' }]);
   else if (es.length) out.push(['🧾', `이번 달은 ${won(used)}을 썼어요.`, '지난달 같은 기간과 비교해 드릴까요?', { q: '이번 달 얼마 썼어?' }]);
   const pi = typeof paydayInfo === 'function' ? paydayInfo(b) : null;
@@ -3617,6 +3619,63 @@ function semiTodos() {
     }
     return null;
   }
+  // ── 셈이 AI (워커 /ai/chat): 위에서 바로 못 한 말은 AI가 알아듣고 할 일을 골라 줘요. 저장은 여기서 확인 버튼을 눌러야 해요 ──
+  const hist = [];
+  let rz = null, rn = null;
+  const getJ = (u, keep) => keep || fetch(u).then(r => r.json()).catch(() => null);
+  async function aiCtx(q) {
+    const rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+    const n = new Date(), ym = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+    const b = rd('donsem:budget'), es = withFixed(b && Array.isArray(b.entries) ? b.entries : []), outs = es.filter(e => e.type === 'out' && e.date.startsWith(ym));
+    const by = {}; outs.forEach(e => { by[e.cat] = (by[e.cat] || 0) + e.amt; });
+    const f = rd('donsem:fixed'), fx = f && Array.isArray(f.items) ? f.items : [];
+    const ctx = { month: { spent: outs.reduce((s, e) => s + e.amt, 0), budget: (b && b.budget) || 0, byCat: by }, recent: es.filter(e => !String(e.id).startsWith('fx-')).slice(-5).map(e => [e.date, e.type, e.cat, e.amt, e.memo || '']),
+      fixed: fx.slice(0, 12).map(x => [x.name || x.cat, +x.amt, x.cycle === 'year' ? 'year' : +x.day]),
+      events: (typeof MONEY_CAL !== 'undefined' ? MONEY_CAL : []).filter(e => { const d = mcDays(e.d); return d >= -3 && d <= 120; }).map(e => ({ d: e.d, when: e.when, t: e.t, who: e.who })),
+      favZones: rd('donsem:semi-zones') || [], page: location.pathname };
+    // 부동산·재건축 이야기면 서울시 정비사업 자료와 구역 소식에서 맞는 곳을 찾아 같이 보내요
+    if (/재건축|재개발|구역|정비|아파트|단지|조합|분담금|부동산|[가-힣]{1,4}(동|구)(\s|$)/.test(q)) {
+      [rz, rn] = await Promise.all([rz || getJ('/redev-seoul.json'), rn || getJ('/redev-news.json')]);
+      const ws = q.replace(/[^가-힣0-9\s]/g, ' ').split(/\s+/).map(w => w.replace(/(재건축|재개발|구역|아파트|은|는|이|가|을|를|에|의|도|좀|요)$/, '')).filter(w => w.length >= 2 && !/재건축|재개발|가능성|정리|요약|알려|어때|관심|기사|진행|단계/.test(w));
+      if (rz && rz.rows && ws.length) ctx.zones = rz.rows.filter(r => ws.some(w => (r[1] + r[2] + r[3]).includes(w))).slice(0, 6).map(r => ({ id: r[0], gu: r[1], name: r[2], addr: r[3], type: r[5], stage: r[6], dates: r[11], asof: rz.asof }));
+      if (rn && rn.news && ws.length) ctx.news = rn.news.filter(x => ws.some(w => String((rn.names || {})[x.z] || '').includes(w))).slice(0, 6).map(x => ({ zone: (rn.names || {})[x.z], d: x.d, t: x.t }));
+    }
+    return ctx;
+  }
+  const passes = () => ['donsem:semi-pass', 'donsem:pro-pass', 'donsem:redevplus-pass'].map(k => { try { return (JSON.parse(localStorage.getItem(k)) || {}).token; } catch (e) { return ''; } }).filter(Boolean);
+  async function askAI(q) {
+    let r, j;
+    try {
+      const ctx = await aiCtx(q);
+      r = await fetch(COUNTER_URL + '/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ msgs: hist.concat([{ role: 'user', content: q }]), ctx, t: passes() }) });
+      j = await r.json().catch(() => ({}));
+    } catch (e) { return null; }
+    if (r.status === 429 && j.error === 'limit') return { face: 'worry', html: `<b>${esc(j.message || '오늘 셈이 한도를 다 썼어요.')}</b><p>${j.paid ? '' : '셈이 넉넉 이용권이 있으면 하루 150번까지 부를 수 있어요. 계산기·가계부는 그대로 무료예요.'}</p>${j.paid ? '' : '<a class="ai-go" href="/shop/pay/?p=semi30">셈이 넉넉 30일 3,900원 ›</a>'}` };
+    if (!r.ok || !j.ok) return null; // 워커가 아직 없거나 바쁘면 → 돈셈 설명 찾기로 대신해요
+    hist.push({ role: 'user', content: q }, { role: 'assistant', content: j.reply }); if (hist.length > 8) hist.splice(0, hist.length - 8);
+    const today = new Date(), yd = new Date(Date.now() - 864e5), iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if ((j.actions || []).some(a => a.type === 'salary') && !window.TAX_TABLE) await new Promise(res => { const s = document.createElement('script'); s.src = '/salary/table.js'; s.onload = s.onerror = res; document.head.append(s); });
+    const extra = (j.actions || []).map(a => {
+      const m = String(a.memo || a.name || '').replace(/[0-9,]/g, '').slice(0, 20);
+      if (a.type === 'add_entry' && a.amt > 0) return act(`${a.date === iso(yd) ? '어제 ' : ''}${m || (a.inc ? '수입' : '지출')} ${a.amt}원 ${a.inc ? '받았어' : '썼어'}`);
+      if (a.type === 'add_fixed' && a.amt > 0 && a.day >= 1 && a.day <= 31) return act(`${m || '고정지출'} ${a.amt}원 매달 ${a.day}일`);
+      if (a.type === 'salary' && a.annual > 0) return act(`연봉 ${Math.round(a.annual / 1e4)}만 실수령`);
+      if (a.type === 'split' && a.total > 0 && a.n >= 2) return act(`${m || '정산'} ${a.total}원 ${a.n}명 나눠줘`);
+      if (a.type === 'fav_zone' && /^[0-9a-z]{1,12}$/i.test(String(a.zone || ''))) {
+        const id = String(a.zone), name = String(a.name || id).slice(0, 30);
+        return { html: confirmCard('관심 구역으로 저장할까요?', [['구역', esc(name)]], () => {
+          let l; try { l = JSON.parse(localStorage.getItem('donsem:semi-zones')) || []; } catch (e) { l = []; }
+          if (!l.some(z => z.id === id)) l.unshift({ id, name }); localStorage.setItem('donsem:semi-zones', JSON.stringify(l.slice(0, 10)));
+          return `<b>관심 구역에 넣었어요 ⭐</b><p>다음부터 셈이가 ${esc(name)} 소식을 먼저 챙겨 드려요.</p><a class="ai-go" href="/redev/z/${esc(id)}/">구역 정보 보기 ›</a>`;
+        }, '저장하기') };
+      }
+      if (a.type === 'open' && /^\/[a-z0-9\-/#?=&_.%]*$/i.test(String(a.href || '')) && !String(a.href).startsWith('//')) return { html: `<a class="ai-go" href="${esc(a.href)}">${esc(String(a.label || '열기').slice(0, 24))} ›</a>` };
+      return null;
+    }).filter(Boolean);
+    const links = extra.filter(x => x.html.startsWith('<a class="ai-go"')).map(x => x.html).join(' ');
+    const cards = extra.filter(x => !x.html.startsWith('<a class="ai-go"')).map(x => `<div class="ai-a ai-did">${x.html}</div>`).join('');
+    return { face: 'happy', html: `<p>${esc(j.reply).replace(/\n/g, '<br>')}</p>${links}${j.paid || j.left == null ? '' : `<p class="ai-small">오늘 남은 무료 대화 ${j.left}번</p>`}`, cards };
+  }
   // 맞는 계산기 버튼 (메뉴 이름·찾기 단어에서)
   function calcFor(q) {
     if (typeof MENU === 'undefined') return null;
@@ -3665,12 +3724,14 @@ function semiTodos() {
     box = document.createElement('div');
     box.className = 'ai'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '셈이와 대화');
     box.innerHTML = `<div class="ai-head"><button type="button" class="ai-x" aria-label="닫기"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-        <div class="ai-prof"><span class="ai-ava">${semi(58, 'semi-bob', 'happy')}</span><b>셈이</b></div><div class="ai-hr"><button type="button" class="ai-inv" aria-label="친구 초대" title="친구 초대"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M19 8v6M16 11h6"/></svg></button><button type="button" class="ai-new">새 대화</button></div></div>
+        <div class="ai-prof"><span class="ai-ava">${semi(58, 'semi-bob', 'happy')}</span><b>셈이</b></div><button type="button" class="ai-inv">초대</button></div>
       <div class="ai-body"><div class="ai-log" aria-live="polite">${helloHtml()}</div></div>
       <div class="ai-foot"><div class="ai-chips">${SUGGEST.map(t => `<button type="button">${t}</button>`).join('')}</div>
-        <form class="ai-form"><button type="button" class="ai-plus" aria-label="바로 기록하기"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><input type="text" placeholder="메시지 보내기" aria-label="셈이에게 메시지" enterkeyhint="send" autocomplete="off"><button type="submit" class="ai-send" aria-label="보내기"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></form>
-        <p class="ai-note">돈셈에 정리된 내용으로 답해요. 세금·투자 결정 전에는 국세청 등 공식 안내도 확인하세요.</p></div>`;
+        <form class="ai-form"><button type="button" class="ai-plus" aria-label="바로 기록하기"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><input type="text" placeholder="메시지 보내기" aria-label="셈이에게 메시지" enterkeyhint="send" autocomplete="off"><button type="submit" class="ai-send" aria-label="보내기"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></form></div>`;
     document.body.append(box);
+    // 피클처럼 위 버튼줄·아래 입력창이 대화 위에 떠 있어요 → 그 높이만큼 대화에 여백을 줘서 첫 말·마지막 말이 가려지지 않게
+    { const hd = box.querySelector('.ai-head'), ft = box.querySelector('.ai-foot'), pad = () => { box.style.setProperty('--ai-hh', hd.offsetHeight + 'px'); box.style.setProperty('--ai-fh', ft.offsetHeight + 'px'); };
+      if (window.ResizeObserver) { const ro = new ResizeObserver(pad); ro.observe(hd); ro.observe(ft); } else pad(); }
     const log = box.querySelector('.ai-log'), input = box.querySelector('input'), body = box.querySelector('.ai-body');
     const ask = async q => {
       q = q.trim(); if (!q) return;
@@ -3682,11 +3743,13 @@ function semiTodos() {
       // 실수령액을 대신 계산할 때는 간이세액표(/salary/table.js)가 있어야 세금이 맞아요 → 없으면 그때 불러와요
       const needTax = /(연봉|월급).*(실수령|세후|얼마|손에|통장)/.test(q) && !window.TAX_TABLE;
       await Promise.all([!kb || !kb.length ? loadKb() : 0, new Promise(r => setTimeout(r, 650)), needTax ? new Promise(r => { const s = document.createElement('script'); s.src = '/salary/table.js'; s.onload = s.onerror = r; document.head.append(s); }) : 0]);
+      const talk0 = smallTalk(q), did0 = talk0 ? null : act(q), my0 = talk0 || did0 ? null : mine(q);
+      const ai = talk0 || did0 || my0 ? null : await askAI(q); // 바로 못 한 말은 셈이 AI가 (실패하면 아래 설명 찾기)
       thinking.remove();
-      const talk = smallTalk(q), did = talk ? null : act(q), hits = talk || did ? [] : search(q), calc = talk || did ? null : calcFor(q), my = talk || did ? null : mine(q);
+      const talk = talk0, did = did0 || ai, hits = talk || did ? [] : search(q), calc = talk || did ? null : calcFor(q), my = talk || did ? null : my0;
       let html = '';
       if (talk) html = `<div class="ai-a">${talk}</div>`;
-      else if (did) html = `<div class="ai-a ai-did">${did.html}</div>`;
+      else if (did) html = `<div class="ai-a ai-did">${did.html}</div>${did.cards || ''}`;
       else if (my) html = `<div class="ai-a"><span class="ai-src">내 기록</span>${my}</div>`;
       else if (hits.length) {
         const k = hits[0];

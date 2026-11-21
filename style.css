@@ -4478,3 +4478,15 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 @keyframes semiFlow { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .semi-flow { overflow-x: auto; } .semi-flow-in { animation: none; } }
 @media (max-width: 640px) { .ai-new { padding: 10px 13px; font-size: 14px; } .ai-inv { width: 40px; height: 40px; } }
+
+/* ── 셈이 화면: 피클처럼 위 버튼줄·아래 입력창이 대화 위에 투명하게 떠 있어요 (11-22) ── */
+.ai-body { padding-top: calc(var(--ai-hh, 110px) + 4px); padding-bottom: calc(var(--ai-fh, 80px) + 12px); scroll-padding-top: var(--ai-hh, 110px); }
+.ai-head { position: absolute; top: 0; left: 0; right: 0; z-index: 2; align-items: center; pointer-events: none; background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 92%, transparent) 0, color-mix(in srgb, var(--bg) 55%, transparent) 55%, transparent); }
+.ai-head > * { pointer-events: auto; }
+.ai-head .ai-x, .ai-inv { background: color-mix(in srgb, var(--card) 62%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 40%, transparent), 0 4px 14px -6px rgba(0, 0, 0, .18); }
+.ai-inv { justify-self: end; width: auto; height: 46px; margin: 0; padding: 0 18px; border-radius: 999px; color: var(--text); font: inherit; font-size: 15px; font-weight: 600; }
+.ai-head .ai-x { align-self: center; }
+.ai-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; background: linear-gradient(to top, color-mix(in srgb, var(--bg) 70%, transparent) 0, transparent 100%); }
+.ai-form { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
+.ai-chips button { background: color-mix(in srgb, var(--bg) 70%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+@media (max-width: 640px) { .ai-inv { height: 42px; padding: 0 16px; font-size: 14px; } }
