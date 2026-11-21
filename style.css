@@ -4450,3 +4450,31 @@ html .topbar .gnav a.gnav-en.here b { box-shadow: inset 0 -2px 0 #B69AD8; }
 .nl-form .btn { width: auto; margin: 0; white-space: nowrap; }
 .nl-agree { color: var(--muted); font-size: 12px; } .nl-agree a { color: var(--muted); }
 .nl-msg { color: var(--accent) !important; font-size: 13px !important; min-height: 1em; }
+
+/* ── 셈이가 대신 해 주기 (피클 벤치마크, 11-22) ── */
+.ai-hr { display: flex; gap: 6px; align-items: center; }
+.ai-inv { display: grid; place-items: center; width: 44px; height: 44px; margin-top: 2px; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--blue) 14%, var(--card)); color: var(--blue); cursor: pointer; }
+.ai-did .ai-src, .ai-a .ai-src { display: inline-block; }
+.ai-do { margin: 10px 0 4px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--line) 22%, transparent); }
+.ai-do div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 14px; }
+.ai-do dt { color: var(--muted); }
+.ai-do dd { margin: 0; font-weight: 700; text-align: right; }
+.ai-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.ai-btns button { flex: 1 1 auto; min-height: 44px; padding: 10px 16px; border: 0; border-radius: 14px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.ai-ok { background: var(--blue); color: #fff; }
+.ai-no { background: color-mix(in srgb, var(--line) 40%, transparent); color: var(--text); flex: 0 0 auto !important; }
+.ai-small { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.ai-todo ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.ai-todo li + li { border-top: 1px solid color-mix(in srgb, var(--line) 45%, transparent); }
+.ai-todo a, .ai-todo button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 14px; font-weight: 600; line-height: 1.45; text-align: left; cursor: pointer; }
+.ai-todo a:hover { text-decoration: none; }
+.ai-todo a > span:nth-child(2), .ai-todo button > span:nth-child(2) { flex: 1; }
+.ai-todo em { font-style: normal; color: var(--muted); }
+/* 홈: 셈이가 대신 해 주는 일이 옆으로 흘러가는 띠 */
+.semi-flow { margin: 4px -18px 12px; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent); mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent); }
+.semi-flow-in { display: flex; gap: 8px; width: max-content; padding: 2px 18px; animation: semiFlow 38s linear infinite; }
+.semi-flow:hover .semi-flow-in, .semi-flow:focus-within .semi-flow-in { animation-play-state: paused; }
+.semi-flow button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border: 0; border-radius: 999px; background: var(--card); box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 55%, transparent); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+@keyframes semiFlow { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .semi-flow { overflow-x: auto; } .semi-flow-in { animation: none; } }
+@media (max-width: 640px) { .ai-new { padding: 10px 13px; font-size: 14px; } .ai-inv { width: 40px; height: 40px; } }

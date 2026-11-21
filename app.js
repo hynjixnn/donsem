@@ -3417,6 +3417,34 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   root.classList.toggle('near-top', window.scrollY < 360);
 })();
 
+// 피클 첫 화면 띠처럼: 셈이가 '대신 해 주는 일'이 옆으로 흘러가요. 누르면 그 말로 셈이에게 바로 맡겨요
+const SEMI_FLOW = [['💸', '연봉 실수령액 대신 계산', '연봉 4천 실수령액'], ['☕', '쓴 돈 대신 적기', '커피 4500원 썼어'], ['🏠', '고정지출 대신 등록', '월세 50만 매달 25일'], ['🍕', '더치페이 대신 나누기', '12만원 4명 나눠줘'], ['📅', '다음 결제일 대신 챙기기', '다음 결제는 언제야?'], ['🔍', '숨은 돈 대신 찾기', '숨은 환급금 찾아줘']];
+
+// ── 셈이가 먼저 챙겨 볼 일 (피클 '할 일 제안'처럼): 내 기록과 오늘 날짜를 보고 해 드릴 만한 일을 골라요. 홈 카드와 셈이 대화창이 같이 써요 ──
+// [이모지, 굵은 제목, 설명, 누르면: { q: 셈이에게 물을 말 } 또는 { href: 주소 }]
+function semiTodos() {
+  const rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const n = new Date(), m = n.getMonth() + 1, ym = `${n.getFullYear()}-${String(m).padStart(2, '0')}`;
+  const b = rd('donsem:budget'), es = withFixed(b && Array.isArray(b.entries) ? b.entries : []);
+  const used = es.filter(e => e.type === 'out' && e.date.startsWith(ym)).reduce((a, e) => a + e.amt, 0);
+  const out = [];
+  // 놓치면 손해인 큰 일정이 2주 안에 있으면 맨 먼저 (예: 연금저축·IRP 납입 마감 D-9)
+  if (typeof mcUpcoming === 'function') { const e = mcUpcoming().find(x => x.imp >= 3 && mcDays(x.d) <= 14); if (e) { const d = mcDays(e.d); out.push(['⏰', `${d ? `D-${d}` : '오늘'} ${esc(e.t)}`, e.who, e.go ? { href: e.go[0] } : { href: '/money-calendar/' }]); } }
+  if (b && b.budget > 0) out.push(['📊', used <= b.budget ? `이번 달 예산이 ${won(b.budget - used)} 남았어요.` : `이번 달 예산을 ${won(used - b.budget)} 넘었어요.`, `예산 ${won(b.budget)} 중 ${Math.round(used / b.budget * 100)}%를 썼어요. 어디에 많이 썼는지 알려 드릴까요?`, { q: '이번 달 어디에 많이 썼어?' }]);
+  else if (es.length) out.push(['🧾', `이번 달은 ${won(used)}을 썼어요.`, '지난달 같은 기간과 비교해 드릴까요?', { q: '이번 달 얼마 썼어?' }]);
+  const pi = typeof paydayInfo === 'function' ? paydayInfo(b) : null;
+  if (pi) out.push(['💸', pi.days ? `월급날까지 ${pi.days}일 남았어요.` : '오늘은 월급날이에요!', `${pi.next.getMonth() + 1}월 ${pi.next.getDate()}일이에요. 들어오면 실수령액이 맞는지 확인해 드릴게요.`, { href: '/salary/' }]);
+  const f = rd('donsem:fixed'), fx = f && Array.isArray(f.items) ? f.items.filter(x => +x.amt > 0 && +x.day > 0) : [];
+  const soon = fx.map(x => [x, +x.day - n.getDate()]).filter(([, d]) => d >= 0 && d <= 3).sort((a, c) => a[1] - c[1])[0];
+  if (soon) out.push(['🔔', `${soon[1] ? `${soon[1]}일 뒤` : '오늘'} ${esc(soon[0].name || soon[0].cat)} ${won(+soon[0].amt)}이 빠져나가요.`, '통장에 돈이 있는지 미리 확인해 두세요.', { href: '/budget/#fixed' }]);
+  if (!fx.length) out.push(['🏠', '월세·통신비 같은 고정지출을 대신 등록해 드릴게요.', '"월세 50만 매달 25일"처럼 말만 하면 캘린더에 매달 자동으로 들어가요.', { q: '월세 50만 매달 25일' }]);
+  if (m >= 10 || m <= 1) out.push(['🧮', '연말정산 환급액을 미리 계산해 드릴 수 있어요.', '올해 카드 쓴 돈과 월세만 넣으면, 13월의 월급이 얼마일지 미리 볼 수 있어요.', { href: '/year-end-tax/' }]);
+  if (!es.length) out.push(['📒', '오늘 쓴 돈을 대신 적어 드릴게요.', '"점심 12000원"처럼 말하면 가계부에 바로 적어요.', { q: '점심 12000원' }]);
+  out.push(['🔍', '아직 안 받은 숨은 돈을 찾아 드릴 수 있어요.', '월세·의료비 환급, 근로장려금처럼 신청만 하면 받는 돈이 있는지 확인해 보세요.', { href: '/hidden-money/' }]);
+  return out;
+}
+
 // ── 돈셈 도우미: 오른쪽 위 알록달록한 버튼 → 궁금한 걸 물으면, 돈셈에 이미 정리된 설명(kb.json)에서 찾아 답해요 ──
 // 진짜 AI가 아니라 '찾아 주는' 도우미라 돈이 들지 않고, 확인된 내용만 보여 줘서 틀린 답을 지어내지 않아요
 (() => {
@@ -3432,7 +3460,7 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   btn.addEventListener('pointerenter', () => { btn.firstChild.src = '/icons/semi-wink.svg'; });
   btn.addEventListener('pointerleave', () => { btn.firstChild.src = '/icons/semi-default.svg'; });
 
-  const SUGGEST = ['이번 달 얼마 썼어?', '내 순자산은?', '다음 결제는 언제야?', '연말정산 월세 공제 조건', 'ISA랑 연금저축 차이', '주휴수당 받는 조건', '실업급여 자진퇴사', '백업은 어떻게 해?', '적금 이자가 생각보다 적은 이유'];
+  const SUGGEST = ['연봉 4천 실수령액', '커피 4500원 썼어', '월세 50만 매달 25일', '12만원 4명 나눠줘', '이번 달 얼마 썼어?','내 순자산은?', '다음 결제는 언제야?', '연말정산 월세 공제 조건', 'ISA랑 연금저축 차이', '주휴수당 받는 조건', '실업급여 자진퇴사', '백업은 어떻게 해?', '적금 이자가 생각보다 적은 이유'];
   let box = null, kb = null, kbWait = null;
   const loadKb = () => kbWait || (kbWait = fetch('/kb.json').then(r => r.json()).then(d => (kb = d)).catch(() => { kbWait = null; return (kb = []); }));
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -3520,6 +3548,75 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
     }
     return '';
   }
+  // ── 셈이가 대신 해 주기 (피클처럼 '답'이 아니라 '일'을 끝내요): 계산은 바로 해 주고, 기록·등록은 확인 버튼을 누른 뒤에만 저장해요 ──
+  // 금액 읽기: "4천" "50만" "1만2천" "12,000원" "1.5억" → 원
+  const UNIT = { '억': 1e8, '천만': 1e7, '백만': 1e6, '만': 1e4, '천': 1e3, '백': 100 };
+  function money(t) {
+    const m = String(t).replace(/,/g, '').match(/\d+(?:\.\d+)?\s*(?:억|천만|백만|만|천|백)?(?:\s*\d+(?:\.\d+)?\s*(?:천만|백만|만|천|백)?)*\s*원?/);
+    if (!m) return 0;
+    let sum = 0; m[0].replace(/(\d+(?:\.\d+)?)\s*(억|천만|백만|만|천|백)?/g, (_, v, u) => { sum += parseFloat(v) * (u ? UNIT[u] : 1); });
+    return Math.round(sum);
+  }
+  const CAT_WORDS = [['카페·간식', /커피|카페|스벅|스타벅스|라떼|아메리카노|간식|빵|디저트|아이스크림|편의점/], ['식비', /점심|저녁|아침|밥|식비|식사|배달|치킨|피자|햄버거|국밥|라면|마라탕|술|회식|장보|마트/], ['교통', /택시|버스|지하철|교통|기름|주유|주차|KTX|기차|톨게이트/i], ['주거·통신', /월세|관리비|전기|가스|수도|통신|휴대폰|핸드폰|인터넷/], ['구독', /넷플|유튜브|구독|멜론|스포티|쿠팡와우|디즈니|티빙|웨이브/], ['쇼핑', /옷|신발|쇼핑|쿠팡|무신사|올리브영|화장품/], ['의료', /병원|약국|약값|치과|한의원/], ['문화·여가', /영화|공연|여행|숙소|호텔|게임|책|헬스|운동/], ['경조사', /축의|부의|조의|선물|경조/], ['생활', /다이소|생활|세탁|미용|헤어|미용실/]];
+  const catOf = t => (CAT_WORDS.find(([, re]) => re.test(t)) || ['기타'])[0];
+  const memoOf = t => t.replace(/[\d,.]+\s*(억|천만|백만|만|천|백)?\s*원?/g, ' ').replace(/(오늘|어제|썼어요?|썼다|썼음|씀|샀어요?|결제했?어?|냈어요?|지출|기록해?줘?|적어줘|받았어요?|들어왔어|매달|매월|고정지출?|등록해?줘?|에|으로|로|을|를)\s*/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 20);
+  const pend = new Map(); let pid = 0;
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const confirmCard = (title, rows, job, okLabel) => { const id = 'p' + (++pid); pend.set(id, job); return `<b>${title}</b><dl class="ai-do">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl><div class="ai-btns"><button type="button" class="ai-ok" data-ok="${id}">${okLabel}</button><button type="button" class="ai-no" data-no="${id}">취소</button></div><p class="ai-small">확인을 누르기 전에는 아무것도 저장하지 않아요.</p>`; };
+  function act(q) {
+    const t = q.replace(/\s+/g, ' ').trim(), amt = money(t);
+    // ① 실수령액: "연봉 4천 실수령" "월급 300 세후"
+    const sal = t.match(/(연봉|월급)\s*([\d,.]+\s*(?:억|천만|백만|만|천)?(?:\s*\d+\s*(?:천만|백만|만|천)?)?)/);
+    if (sal && /실수령|세후|얼마|손에|통장/.test(t) && typeof takeHome === 'function') {
+      let v = money(sal[2]); const raw = sal[2].replace(/[\s,]/g, '');
+      if (/^\d+(\.\d+)?$/.test(raw)) v = Math.round(parseFloat(raw) * 1e4);     // "연봉 4000" → 4,000만 원
+      else if (/^\d+천$/.test(raw)) v = parseInt(raw, 10) * 1e7;               // "연봉 4천" → 4천만 원
+      const year = sal[1] === '연봉', month = Math.floor(year ? v / 12 : v);
+      if (month < 100000 || month > 1e9) return null;
+      const r = takeHome(month, Math.min(200000, month), 1, 0, 1, 0);
+      const link = `/salary/?m_mode=${year ? 'year' : 'month'}&m_amt=${v}`;
+      return { face: 'happy', html: `<span class="ai-src">대신 계산했어요</span><b>${year ? '연봉' : '월급'} ${won(v)}이면 한 달 실수령액은 ${won(r.net)}이에요</b><p>국민연금 ${won(r.pension)}, 건강·장기요양 ${won(r.health + r.care)}, 고용보험 ${won(r.job)}, 세금 ${won(r.tax + r.local)}이 빠져요. 1년이면 ${won(r.net * 12)}이에요. (부양가족 1명·식대 비과세 20만 원 기준)</p><a class="ai-go" href="${link}">가족 수 바꿔서 자세히 보기 ›</a>` };
+    }
+    // ② 더치페이: "12만원 4명 나눠줘"
+    const ppl = t.match(/(\d+)\s*(명|사람|인)/);
+    if (ppl && amt && /나눠|나누|더치|엔빵|n빵|N빵|정산|1인당|각자/.test(t)) {
+      const N = +ppl[1], tot = money(t.replace(ppl[0], ' '));
+      if (N < 2 || N > 50 || !tot) return null;
+      const per = Math.ceil(tot / N / 10) * 10, memo = memoOf(t.replace(ppl[0], ' ').replace(/나눠줘|나눠|나누기|더치페이|더치|엔빵|n빵|정산|1인당|각자/gi, '')) || '더치페이';
+      const url = `${location.origin}/?split=${tot}&n=${N}&w=${encodeURIComponent(memo)}`;
+      return { face: 'happy', html: `<span class="ai-src">대신 나눴어요</span><b>${won(tot)}을 ${N}명이 나누면 1인당 ${won(per)}이에요</b><p>10원 단위로 올려서, 다 모으면 ${won(per * N - tot)}이 남아요.</p><div class="ai-btns"><button type="button" class="ai-ok" data-share="${esc(url)}" data-st="${esc(`[돈셈 정산] ${memo} 1인당 ${won(per)} 보내 줘!`)}">친구들에게 정산 요청 보내기</button></div>` };
+    }
+    if (!amt || amt > 1e11) return null;
+    // ③ 고정지출 등록: "월세 50만 매달 25일" "넷플릭스 13500원 매월 3일"
+    const day = t.match(/(\d{1,2})\s*일/);
+    if (/매달|매월|고정|달마다|정기/.test(t) && day && +day[1] >= 1 && +day[1] <= 31) {
+      const v = money(t.replace(day[0], ' ')), name = memoOf(t.replace(day[0], ' ')) || '고정지출', cat = catOf(t) === '기타' ? '주거·통신' : catOf(t);
+      if (!v) return null;
+      return { face: 'default', html: confirmCard('고정지출로 등록할까요?', [['이름', esc(name)], ['금액', won(v)], ['빠져나가는 날', `매달 ${+day[1]}일`], ['분류', cat]], () => {
+        let f; try { f = JSON.parse(localStorage.getItem('donsem:fixed')); } catch (e) { f = null; }
+        if (!f || !Array.isArray(f.items)) f = { items: [] };
+        f.items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, cat, amt: v, cycle: 'month', day: +day[1] });
+        localStorage.setItem('donsem:fixed', JSON.stringify(f));
+        return `<b>등록했어요 ✓</b><p>매달 ${+day[1]}일 캘린더에 ${esc(name)} ${won(v)}이 들어가고, 3일 전부터 셈이가 알려 드려요.</p><a class="ai-go" href="/budget/#fixed">고정지출 보기 ›</a>`;
+      }, '등록하기') };
+    }
+    // ④ 가계부 기록: "커피 4500원 썼어" "점심 12000원" "용돈 5만원 받았어"
+    const inc = /받았|들어왔|입금|월급 들어|용돈 받/.test(t), spent = /썼|샀|결제|냈|지출|사먹|먹었/.test(t) || catOf(t) !== '기타';
+    if ((inc || spent) && !/얼마|언제|\?|어디/.test(t)) {
+      const type = inc ? 'in' : 'out', cat = inc ? (/월급|급여|상여|보너스/.test(t) ? '월급' : /용돈/.test(t) ? '용돈' : /이자|배당/.test(t) ? '이자·배당' : '부수입') : catOf(t);
+      const date = /어제/.test(t) ? (() => { const d = new Date(Date.now() - 864e5); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })() : today();
+      const memo = memoOf(t);
+      return { face: 'default', html: confirmCard(`가계부에 ${inc ? '수입으로' : ''} 적을까요?`, [['날짜', `${+date.slice(5, 7)}월 ${+date.slice(8)}일`], ['금액', `${inc ? '+' : '−'}${won(amt)}`], ['분류', cat], ...(memo ? [['메모', esc(memo)]] : [])], () => {
+        let b; try { b = JSON.parse(localStorage.getItem('donsem:budget')); } catch (e) { b = null; }
+        if (!b || !Array.isArray(b.entries)) b = { entries: [], budget: (b && b.budget) || 0 };
+        b.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, cat, amt, date, memo });
+        localStorage.setItem('donsem:budget', JSON.stringify(b));
+        const ym = date.slice(0, 7), mon = withFixed(b.entries).filter(e => e.type === 'out' && e.date.startsWith(ym)).reduce((s, e) => s + e.amt, 0);
+        return `<b>적었어요 ✓</b><p>${type === 'out' ? `이번 달 지출은 지금까지 ${won(mon)}이에요.${b.budget > 0 ? ` 예산이 ${won(Math.max(0, b.budget - mon))} 남았어요.` : ''}` : '수입으로 적었어요.'}</p><a class="ai-go" href="/budget/">캘린더 보기 ›</a>`;
+      }, '적기') };
+    }
+    return null;
+  }
   // 맞는 계산기 버튼 (메뉴 이름·찾기 단어에서)
   function calcFor(q) {
     if (typeof MENU === 'undefined') return null;
@@ -3555,17 +3652,20 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   const exploreHtml = i => `<div class="ai-ex-tabs" role="tablist">${EXPLORE.map(([ico, n], k) => `<button type="button" role="tab" data-ex="${k}" class="${k === i ? 'on' : ''}" aria-selected="${k === i}"><span aria-hidden="true">${ico}</span>${n}</button>`).join('')}</div>
     <ul class="ai-ex-list">${EXPLORE[i][2].map(([ico, t, d, u]) => `<li><a href="${u}"><span class="ai-ex-ico" aria-hidden="true">${ico}</span><div><b>${t}</b><p>${d}</p></div><em class="ai-ex-go">해 보기</em></a></li>`).join('')}</ul>`;
   const stamp = () => { const d = new Date(), h = d.getHours(); return `${d.getMonth() + 1}월 ${d.getDate()}일 ${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  // 피클 '할 일 제안'처럼: 대화창을 열면 셈이가 먼저 챙겨 본 일 3개를 말풍선으로 꺼내요
+  const todoHtml = () => { const l = semiTodos().slice(0, 3); return l.length ? `<div class="ai-a ai-todo"><b>먼저 챙겨 봤어요 👀</b><ul>${l.map(([ico, t, , go]) => `<li>${go.href ? `<a href="${go.href}">` : `<button type="button" data-q="${esc(go.q)}">`}<span aria-hidden="true">${ico}</span><span>${t}</span><em>›</em>${go.href ? '</a>' : '</button>'}</li>`).join('')}</ul></div>` : ''; };
   // 피클처럼: 위에 셈이 프로필, 아래로 말풍선이 쌓이는 친구 DM 화면
   const helloHtml = () => `<p class="ai-time">${stamp()}</p>
       <div class="ai-a">안녕하세요! 저는 계산만 해 주는 도우미가 아니라, 돈 관리를 같이 챙겨 주는 셈이예요.</div>
       <div class="ai-a">저에 대해 몇 가지 알려 드릴게요:<ul><li>세금·금융 상식, 계산 방법, 돈셈 쓰는 법을 바로 찾아 드려요.</li><li>"이번 달 얼마 썼어?"처럼 물어보면 내 가계부 기록을 보고 알려 드려요.</li><li>놓치면 손해인 환급·지원금 일정도 챙겨 드려요.</li></ul></div>
-      <div class="ai-a">바로 해 볼 수 있는 걸 아래에 골라 뒀어요! 아니면 궁금한 점을 채팅으로 말씀해 주셔도 돼요.</div>
+      ${todoHtml()}
+      <div class="ai-a">"커피 4500원 썼어", "월세 50만 매달 25일"처럼 말만 하면 제가 대신 적고 등록해 드려요. 아래에서 골라도 돼요!</div>
       <div class="ai-a ai-ex"><div class="ai-ex-h"><b><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/></svg>셈이 둘러보기</b><a href="/calculators/">더보기 ›</a></div><div class="ai-ex-in">${exploreHtml(0)}</div></div>`;
   function build() {
     box = document.createElement('div');
     box.className = 'ai'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', '셈이와 대화');
     box.innerHTML = `<div class="ai-head"><button type="button" class="ai-x" aria-label="닫기"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-        <div class="ai-prof"><span class="ai-ava">${semi(58, 'semi-bob', 'happy')}</span><b>셈이</b></div><button type="button" class="ai-new">새 대화</button></div>
+        <div class="ai-prof"><span class="ai-ava">${semi(58, 'semi-bob', 'happy')}</span><b>셈이</b></div><div class="ai-hr"><button type="button" class="ai-inv" aria-label="친구 초대" title="친구 초대"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M19 8v6M16 11h6"/></svg></button><button type="button" class="ai-new">새 대화</button></div></div>
       <div class="ai-body"><div class="ai-log" aria-live="polite">${helloHtml()}</div></div>
       <div class="ai-foot"><div class="ai-chips">${SUGGEST.map(t => `<button type="button">${t}</button>`).join('')}</div>
         <form class="ai-form"><button type="button" class="ai-plus" aria-label="바로 기록하기"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><input type="text" placeholder="메시지 보내기" aria-label="셈이에게 메시지" enterkeyhint="send" autocomplete="off"><button type="submit" class="ai-send" aria-label="보내기"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></form>
@@ -3579,11 +3679,14 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       // 셈이가 생각하는 표정으로 잠깐 찾아보는 척해요 (바로 답이 튀어나오면 기계 같아서)
       log.insertAdjacentHTML('beforeend', `<div class="ai-a ai-thinking" aria-label="셈이가 찾아보고 있어요"><i></i><i></i><i></i></div>`);
       const thinking = log.lastElementChild; requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
-      await Promise.all([!kb || !kb.length ? loadKb() : 0, new Promise(r => setTimeout(r, 650))]);
+      // 실수령액을 대신 계산할 때는 간이세액표(/salary/table.js)가 있어야 세금이 맞아요 → 없으면 그때 불러와요
+      const needTax = /(연봉|월급).*(실수령|세후|얼마|손에|통장)/.test(q) && !window.TAX_TABLE;
+      await Promise.all([!kb || !kb.length ? loadKb() : 0, new Promise(r => setTimeout(r, 650)), needTax ? new Promise(r => { const s = document.createElement('script'); s.src = '/salary/table.js'; s.onload = s.onerror = r; document.head.append(s); }) : 0]);
       thinking.remove();
-      const talk = smallTalk(q), hits = talk ? [] : search(q), calc = talk ? null : calcFor(q), my = talk ? null : mine(q);
+      const talk = smallTalk(q), did = talk ? null : act(q), hits = talk || did ? [] : search(q), calc = talk || did ? null : calcFor(q), my = talk || did ? null : mine(q);
       let html = '';
       if (talk) html = `<div class="ai-a">${talk}</div>`;
+      else if (did) html = `<div class="ai-a ai-did">${did.html}</div>`;
       else if (my) html = `<div class="ai-a"><span class="ai-src">내 기록</span>${my}</div>`;
       else if (hits.length) {
         const k = hits[0];
@@ -3595,14 +3698,29 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
       } else {
         html = `<div class="ai-a"><p>음… 그건 아직 잘 모르겠어요. 다른 말로 물어봐 주세요.${calc ? '' : ' 계산이 필요하면 모든 계산기에서 찾아볼 수 있어요.'}</p>${calc ? `<a class="ai-go" href="${calc[0]}">${esc(calc[1])} 계산기 열기 ›</a>` : '<a class="ai-go" href="/calculators/">모든 계산기 보기 ›</a>'}</div>`;
       }
-      const face = talk ? 'wink' : my ? 'default' : hits.length ? 'happy' : 'worry'; // 답을 찾으면 웃고, 못 찾으면 고민해요
+      const face = talk ? 'wink' : did ? did.face : my ? 'default' : hits.length ? 'happy' : 'worry'; // 답을 찾으면 웃고, 못 찾으면 고민해요
       log.insertAdjacentHTML('beforeend', html); { const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = `/icons/semi-${face}.svg`; } // 프로필 얼굴이 답에 맞춰 바뀌어요
       requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
     };
     box.__ask = ask;
     box.querySelector('.ai-form').addEventListener('submit', e => { e.preventDefault(); ask(input.value); input.value = ''; });
     box.addEventListener('click', e => {
-      const b = e.target.closest('.ai-chips button, .ai-more button'); if (b) ask(b.dataset.q || b.textContent);
+      const b = e.target.closest('.ai-chips button, .ai-more button, .ai-todo button[data-q]'); if (b) ask(b.dataset.q || b.textContent);
+      // 확인 카드: '적기·등록하기'를 눌러야 저장해요 (피클이 결제 전에 승인을 받는 것처럼)
+      const ok = e.target.closest('[data-ok]'), no = e.target.closest('[data-no]');
+      if (ok || no) {
+        const id = (ok || no).dataset.ok || (ok || no).dataset.no, job = pend.get(id), card = (ok || no).closest('.ai-a');
+        pend.delete(id);
+        if (card && job) { let res; try { res = ok ? job() : '<b>취소했어요.</b><p>아무것도 저장하지 않았어요.</p>'; } catch (err) { res = '<b>저장하지 못했어요 😢</b><p>이 브라우저에서는 저장이 막혀 있어요.</p>'; } card.innerHTML = res; const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = `/icons/semi-${ok ? 'happy' : 'default'}.svg`; }
+      }
+      // 정산 요청·초대: 휴대폰이면 카카오톡 등 공유 창이 뜨고, 컴퓨터면 링크를 복사해요
+      const sh = e.target.closest('[data-share]'), inv = e.target.closest('.ai-inv');
+      if (sh || inv) {
+        const url = sh ? sh.dataset.share : `${location.origin}/?semi=hi`, text = sh ? sh.dataset.st : '돈 계산·가계부를 말로 대신 해 주는 셈이 같이 쓰자! "커피 4500원 썼어"라고만 하면 알아서 적어 줘 🌱';
+        if (navigator.share) navigator.share({ title: '돈셈 셈이', text, url }).catch(() => {});
+        else if (navigator.clipboard) navigator.clipboard.writeText(`${text}\n${url}`).then(() => toast('링크를 복사했어요. 카카오톡에 붙여 넣어 보내세요.'), () => toast(url));
+        else toast(url);
+      }
       const ex = e.target.closest('[data-ex]'); if (ex) box.querySelector('.ai-ex-in').innerHTML = exploreHtml(+ex.dataset.ex);
       if (e.target.closest('.ai-x')) close();
       if (e.target.closest('.ai-new')) { log.innerHTML = helloHtml(); box.classList.remove('chatting'); body.scrollTo({ top: 0 }); const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = '/icons/semi-happy.svg'; }
@@ -3626,6 +3744,21 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
   btn.addEventListener('click', open);
   // 다른 곳(홈 '셈이가 챙겨 줄게요' 카드)에서도 셈이를 불러요. q가 있으면 바로 물어봐요
   window.donsemAsk = q => { open(); if (q) setTimeout(() => box.__ask(q), 350); };
+  // 친구가 보낸 링크로 들어오면 (피클 '친구의 피클과 약속 잡기'처럼): 정산 요청이나 초대를 셈이가 먼저 말해 줘요
+  {
+    const sp = new URLSearchParams(location.search), tot = +sp.get('split'), N = +sp.get('n');
+    if ((tot > 0 && N >= 2 && N <= 50 && tot <= 1e9) || sp.get('semi') === 'hi') {
+      setTimeout(() => {
+        open();
+        const log = box.querySelector('.ai-log'), w = (sp.get('w') || '더치페이').slice(0, 20), per = Math.ceil(tot / N / 10) * 10;
+        box.classList.add('chatting');
+        log.insertAdjacentHTML('beforeend', tot ? `<div class="ai-a ai-did"><span class="ai-src">친구가 보낸 정산 요청</span><b>${esc(w)} 1인당 ${won(per)}이에요</b><p>총 ${won(tot)}을 ${N}명이 나눴어요. 보내고 나면 가계부에도 적어 둘까요?</p></div>` : `<div class="ai-a"><b>친구가 셈이를 소개했어요 🌱</b><p>"커피 4500원 썼어", "월세 50만 매달 25일"처럼 말만 하면 제가 대신 적고, 계산하고, 챙겨 드려요. 가입도 필요 없어요.</p></div>`);
+        const rec = tot ? act(`${w.replace(/[?？]/g, '')} ${per}원 썼어`) : null;
+        if (rec) log.insertAdjacentHTML('beforeend', `<div class="ai-a">${rec.html}</div>`);
+        history.replaceState(null, '', location.pathname);
+      }, 500);
+    }
+  }
   // 아이폰에서 자판이 올라오면 화면이 위로 밀리면서 아래가 비어 보였어요 → 도우미 창을 '자판 위 보이는 부분'에 딱 맞춰요
   const vv = window.visualViewport, desk = matchMedia('(min-width: 641px)');
   function fit() {
@@ -4112,22 +4245,13 @@ const GUIDE_FOR = {
   const n = new Date(), m = n.getMonth() + 1, ym = `${n.getFullYear()}-${String(m).padStart(2, '0')}`;
   const b = rd('donsem:budget'), es = withFixed(b && Array.isArray(b.entries) ? b.entries : []);
   const used = es.filter(e => e.type === 'out' && e.date.startsWith(ym)).reduce((a, e) => a + e.amt, 0);
-  const out = []; // [이모지, 굵은 제목, 설명, 누르면: 질문(q) 또는 주소(href)]
-  if (b && b.budget > 0) out.push(['📊', used <= b.budget ? `이번 달 예산이 ${won(b.budget - used)} 남았어요.` : `이번 달 예산을 ${won(used - b.budget)} 넘었어요.`, `예산 ${won(b.budget)} 중 ${Math.round(used / b.budget * 100)}%를 썼어요. 어디에 많이 썼는지 알려 드릴까요?`, { q: '이번 달 어디에 많이 썼어?' }]);
-  else if (es.length) out.push(['🧾', `이번 달은 ${won(used)}을 썼어요.`, '지난달 같은 기간과 비교해 드릴까요?', { q: '이번 달 얼마 썼어?' }]);
-  const pi = typeof paydayInfo === 'function' ? paydayInfo(b) : null;
-  if (pi) out.push(['💸', pi.days ? `월급날까지 ${pi.days}일 남았어요.` : '오늘은 월급날이에요!', `${pi.next.getMonth() + 1}월 ${pi.next.getDate()}일이에요. 들어오면 실수령액이 맞는지 확인해 드릴게요.`, { href: '/salary/' }]);
-  const f = rd('donsem:fixed'), fx = f && Array.isArray(f.items) ? f.items.filter(x => +x.amt > 0 && +x.day > 0) : [];
-  const soon = fx.map(x => [x, +x.day - n.getDate()]).filter(([, d]) => d >= 0 && d <= 3).sort((a, c) => a[1] - c[1])[0];
-  if (soon) out.push(['🔔', `${soon[1] ? `${soon[1]}일 뒤` : '오늘'} ${esc(soon[0].name || soon[0].cat)} ${won(+soon[0].amt)}이 빠져나가요.`, '통장에 돈이 있는지 미리 확인해 두세요.', { href: '/budget/#fixed' }]);
-  if (m >= 10 || m <= 1) out.push(['🧮', '연말정산 환급액을 미리 계산해 드릴 수 있어요.', '올해 카드 쓴 돈과 월세만 넣으면, 13월의 월급이 얼마일지 미리 볼 수 있어요.', { href: '/year-end-tax/' }]);
-  if (!es.length) out.push(['📒', '이번 달 쓴 돈을 챙겨 드릴 수 있어요.', '캘린더에 한 번만 적어 두면, 예산이 얼마 남았는지 셈이가 먼저 알려 드려요.', { href: '/budget/' }]);
-  out.push(['🔍', '아직 안 받은 숨은 돈을 찾아 드릴 수 있어요.', '월세·의료비 환급, 근로장려금처럼 신청만 하면 받는 돈이 있는지 확인해 보세요.', { href: '/hidden-money/' }]);
+  const out = semiTodos(); // 내 기록과 날짜로 고른 '먼저 챙겨 줄 일'
   const sec = document.createElement('section');
   sec.className = 'semi-card'; sec.setAttribute('aria-label', '셈이가 챙겨 줄게요');
   sec.innerHTML = `<div class="semi-head"><button type="button" class="semi-poke" aria-label="셈이 쓰다듬기"><img class="semi semi-bob" src="/icons/semi-wink.svg" width="58" height="58" alt=""></button><div><b>셈이가 챙겨 줄게요</b><span>내 기록과 오늘 날짜를 보고 골랐어요</span></div></div>
     <ul>${out.slice(0, 3).map(([ico, t, d, go]) => `<li><${go.href ? `a href="${go.href}"` : `button type="button" data-q="${esc(go.q)}"`} class="semi-row"><span class="semi-ico" aria-hidden="true">${ico}</span><span><b>${t}</b><small>${esc(d)}</small></span></${go.href ? 'a' : 'button'}></li>`).join('')}</ul>
-    <button type="button" class="semi-ask">셈이에게 물어보기</button>`;
+    <div class="semi-flow" aria-label="셈이에게 이렇게 맡겨 보세요"><div class="semi-flow-in">${[0, 1].map(k => SEMI_FLOW.map(([ico, t, q]) => `<button type="button" data-q="${esc(q)}"${k ? ' tabindex="-1" aria-hidden="true"' : ''}><span aria-hidden="true">${ico}</span>${t}</button>`).join('')).join('')}</div></div>
+    <button type="button" class="semi-ask">셈이에게 대신 맡기기</button>`;
   // 출석체크·미션 줄 바로 아래 (그 줄은 뒤에서 만들어져서 한 박자 늦게 자리를 잡아요)
   daily.before(sec);
   setTimeout(() => { const my = document.querySelector('.home-my'); if (my) my.after(sec); });
