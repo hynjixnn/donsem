@@ -1729,7 +1729,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
   const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/', '/money-calendar/'], MY = ['/my/', '/about/', '/privacy/', '/collection/'];
   const HOME = ['/', '/quiz/', '/money-type/', '/no-spend/']; // 퀴즈·돈BTI·무지출은 홈에서 들어가는 곳이라 '홈'이 켜져요 (예전엔 '계산기'가 켜졌어요)
   const ESTATE = ['/real-estate/', '/redev/', '/acquisition-tax/', '/brokerage-fee/', '/jeonse-check/', '/subscription-score/'];
-  const SHOP = ['/shop/', '/shop/deals/', '/market/', '/shop/budget-template/', '/shop/year-end-kit/', '/shop/starter-kit/', '/shop/pay/', '/terms/', '/refund/'];
+  const SHOP = ['/shop/', '/shop/deals/','/shop/budget-template/', '/shop/year-end-kit/', '/shop/starter-kit/', '/shop/pay/', '/terms/', '/refund/'];
   const active = path.startsWith('/guide/') ? 'guide' : HOME.includes(path) ? 'home' : MONEY.includes(path) ? 'money' : MY.includes(path) ? 'my' : (ESTATE.includes(path) || path.startsWith('/redev/')) ? 'estate' : SHOP.includes(path) ? 'shop' : 'calc';
   const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const tabs = [
@@ -3420,18 +3420,55 @@ setTimeout(() => document.documentElement.classList.remove('mm-in-next', 'mm-in-
 // 피클 첫 화면 띠처럼: 셈이가 '대신 해 주는 일'이 옆으로 흘러가요. 누르면 그 말로 셈이에게 바로 맡겨요
 const SEMI_FLOW = [['💸', '연봉 실수령액 대신 계산', '연봉 4천 실수령액'], ['☕', '쓴 돈 대신 적기', '커피 4500원 썼어'], ['🏠', '고정지출 대신 등록', '월세 50만 매달 25일'], ['🍕', '더치페이 대신 나누기', '12만원 4명 나눠줘'], ['📅', '다음 결제일 대신 챙기기', '다음 결제는 언제야?'], ['🔍', '숨은 돈 대신 찾기', '숨은 환급금 찾아줘']];
 
+// 셈이 이용권·초기화 티켓 토큰 (스토어가 같은 자리에 덮어써서, 산 티켓을 모두 따로 모아 둬요)
+function semiPasses() { return ['donsem:semi-pass', 'donsem:pro-pass', 'donsem:redevplus-pass'].map(k => { try { return (JSON.parse(localStorage.getItem(k)) || {}).token; } catch (e) { return ''; } }).filter(Boolean); }
+function semiTks() {
+  try {
+    const l = JSON.parse(localStorage.getItem('donsem:semi-tks')) || [], c = (JSON.parse(localStorage.getItem('donsem:semi-tk')) || {}).token;
+    if (c && !l.includes(c)) { l.push(c); localStorage.setItem('donsem:semi-tks', JSON.stringify(l.slice(-20))); }
+    return l.slice(-5);
+  } catch (e) { return []; }
+}
+semiTks();
+
+// ── 셈이 대화창 꾸미기 (피클 '화면 및 디자인'처럼): 말풍선 색깔·셈이 크기·글씨 크기 (이 기기에 저장, donsem:chat-style) ──
+(() => {
+  const CS = ['', '#FFF4D6', '#CFE6FF', '#9FB6C8', '#111111', '#0F8F7A', '#F4C6DC', '#DCC8F2', '#E4A3A3', '#EF4444', '#F97316', '#FACC15', '#22C55E', '#14B8A6', '#3B82F6', '#8B5CF6', '#EC4899', '#6B4423'];
+  const get = () => { try { return Object.assign({ c: '', s: 'm', f: 'm' }, JSON.parse(localStorage.getItem('donsem:chat-style')) || {}); } catch (e) { return { c: '', s: 'm', f: 'm' }; } };
+  const lightC = h => { const n = parseInt(h.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) / 255 > 0.62; };
+  const apply = () => {
+    const v = get(), r = document.documentElement.style;
+    if (v.c) { r.setProperty('--aiq-bg', v.c); r.setProperty('--aiq-fg', lightC(v.c) ? '#111' : '#fff'); } else { r.removeProperty('--aiq-bg'); r.removeProperty('--aiq-fg'); }
+    r.setProperty('--ai-ava', { s: '54px', m: '70px', l: '86px' }[v.s] || '70px'); r.setProperty('--ai-fs', { s: '14px', m: '16px', l: '18px' }[v.f] || '16px');
+  };
+  apply();
+  const sw = document.getElementById('cs-sw'); if (!sw) return;
+  const save = o => { try { localStorage.setItem('donsem:chat-style', JSON.stringify(Object.assign(get(), o))); } catch (e) { /* 저장이 막힌 브라우저 */ } apply(); draw(); };
+  const draw = () => {
+    const v = get();
+    sw.innerHTML = CS.map(c => `<button type="button" role="radio" aria-checked="${c === v.c}" class="${c === v.c ? 'on' : ''}" data-c="${c}" aria-label="${c || '기본 보라'}" style="background:${c || 'var(--blue)'}">${c ? '' : '<img src="/icons/semi-wink.svg" alt="">'}</button>`).join('');
+    document.querySelectorAll('.cs-seg').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v[g.dataset.cs])));
+  };
+  sw.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) save({ c: b.dataset.c }); });
+  document.querySelectorAll('.cs-seg').forEach(g => g.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) save({ [g.dataset.cs]: b.dataset.v }); }));
+  draw();
+})();
+
 // ── 마이: 피클처럼 맨 위 '일일 사용량 한도' (셈이 AI를 오늘 몇 번 썼는지, 워커에 횟수를 쓰지 않고 물어봐요) ──
 (() => {
   const box = document.getElementById('my-usage'); if (!box) return;
-  const t = ['donsem:semi-pass', 'donsem:pro-pass', 'donsem:redevplus-pass'].map(k => { try { return (JSON.parse(localStorage.getItem(k)) || {}).token; } catch (e) { return ''; } }).filter(Boolean);
-  fetch(COUNTER_URL + '/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ peek: true, t }) }).then(r => r.json()).then(j => {
+  const $ = id => document.getElementById(id);
+  const body = extra => JSON.stringify(Object.assign({ t: semiPasses(), tk: semiTks() }, extra));
+  let left = 0;
+  const load = () => fetch(COUNTER_URL + '/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body({ peek: true }) }).then(r => r.json()).then(j => {
     if (!j.ok) return;
-    const pct = Math.min(100, Math.round(j.used / j.lim * 100));
-    document.getElementById('uz-pct').textContent = `${pct}% 사용`;
-    document.getElementById('uz-fill').style.width = Math.max(pct, 3) + '%';
-    document.getElementById('uz-sub').innerHTML = `${j.paid ? '셈이 넉넉 이용권을 쓰고 있어요 · ' : ''}오늘 ${j.used}번 / 하루 ${j.lim}번<br>매일 자정에 한도가 초기화돼요`;
-    if (j.paid) document.getElementById('uz-tk').hidden = true;
+    const pct = Math.min(100, Math.round(j.used / j.lim * 100)); left = j.tk || 0;
+    $('uz-pct').textContent = `${pct}% 사용`; $('uz-fill').style.width = Math.max(pct, 3) + '%'; $('uz-tkn').textContent = left;
+    $('uz-use').hidden = !left; $('uz-msg').textContent = left ? `티켓이 ${left}장 있어요. 한도를 다 썼을 때 쓰면 바로 0%로 돌아가요.` : '한도를 다 썼을 때 티켓을 쓰면 기다리지 않고 바로 다시 셈이에게 맡길 수 있어요.';
   }).catch(() => {});
+  $('uz-tk').addEventListener('click', () => { $('uz-shop').hidden = !$('uz-shop').hidden; });
+  $('uz-use').addEventListener('click', () => fetch(COUNTER_URL + '/ai/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body({}) }).then(r => r.json()).then(j => { toast(j.ok ? '한도를 초기화했어요. 다시 셈이에게 맡겨 보세요!' : (j.message || '잠시 뒤 다시 해 주세요.')); load(); }).catch(() => toast('잠시 뒤 다시 해 주세요.')));
+  load();
 })();
 
 // ── 셈이가 먼저 챙겨 볼 일 (피클 '할 일 제안'처럼): 내 기록과 오늘 날짜를 보고 해 드릴 만한 일을 골라요. 홈 카드와 셈이 대화창이 같이 써요 ──
@@ -3664,7 +3701,7 @@ function semiTodos() {
       r = await fetch(COUNTER_URL + '/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ msgs: hist.concat([{ role: 'user', content: q }]), ctx, t: passes() }) });
       j = await r.json().catch(() => ({}));
     } catch (e) { return null; }
-    if (r.status === 429 && j.error === 'limit') return { face: 'worry', html: `<b>${esc(j.message || '오늘 셈이 한도를 다 썼어요.')}</b><p>${j.paid ? '' : '셈이 넉넉 이용권이 있으면 하루 150번까지 부를 수 있어요. 계산기·가계부는 그대로 무료예요.'}</p>${j.paid ? '' : '<a class="ai-go" href="/shop/pay/?p=semi30">셈이 넉넉 30일 3,900원 ›</a>'}` };
+    if (r.status === 429 && j.error === 'limit') return { face: 'worry', html: `<b>오늘 사용량 한도를 다 썼어요</b><p>자정이 지나면 다시 채워져요. 한도 초기화 티켓이 있으면 지금 바로 다시 쓸 수 있어요. 계산기·가계부는 그대로 무료예요.</p><a class="ai-go" href="/my/#my-usage">한도 초기화 티켓 ›</a>` };
     if (!r.ok || !j.ok) return null; // 워커가 아직 없거나 바쁘면 → 돈셈 설명 찾기로 대신해요
     hist.push({ role: 'user', content: q }, { role: 'assistant', content: j.reply }); if (hist.length > 8) hist.splice(0, hist.length - 8);
     const today = new Date(), yd = new Date(Date.now() - 864e5), iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

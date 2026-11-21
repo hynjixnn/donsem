@@ -4519,3 +4519,71 @@ html body .ai-chips button { background: rgba(255, 255, 255, .4); -webkit-backdr
 .uz-tk { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; padding: 14px 0 10px; border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); color: var(--blue); font-weight: 700; font-size: 15px; text-decoration: none; }
 .uz-tk em { font-style: normal; font-weight: 600; font-size: 13px; color: var(--muted); }
 .uz-tk:hover { text-decoration: none; }
+
+/* ── 11-22: 홈 큰 카드는 라이트·다크 모드 모두 같은 색 (다크 톤 + 흰 글씨) ── */
+.home .showcase .sc-card { --text: #f5f5f7; --muted: #a1a1a6; --bg: #1c1c1e; --card: rgba(255, 255, 255, .07); --field: rgba(255, 255, 255, .08); --line: rgba(255, 255, 255, .12); color: #f5f5f7; box-shadow: none !important; border: 0 !important; }
+.home .showcase .sc-card p { color: rgba(245, 245, 247, .75); }
+.home .showcase .sc-lav { background: #221a2e !important; }
+.home .showcase .sc-mint { background: #12261b !important; }
+.home .showcase .sc-peach { background: #2b1f16 !important; }
+.home .showcase .sc-sky { background: #142036 !important; }
+.home .showcase .sc-pink { background: #2a1d22 !important; }
+.home .showcase .sc-tag, .home .showcase .sc-rankvis { background: rgba(255, 255, 255, .08) !important; color: #f5f5f7; }
+.home .showcase .sc-go { background: #fff !important; color: #111 !important; }
+.home .showcase .sc-bar i { border-color: #1c1c1e; }
+/* 큰 카드와 「셈이가 챙겨 줄게요」 사이 여백 */
+.home .showcase { margin-bottom: 28px !important; }
+.semi-card { margin-top: 20px; }
+@media (max-width: 640px) {
+  .home .showcase { margin-bottom: 20px !important; }
+  .home .showcase .sc-card { flex: 0 0 100%; } /* 아래 셈이 카드와 가로 길이를 똑같이 */
+  .semi-card { margin-top: 0; }
+  /* 모든 계산기: 카드끼리 붙지 않게 + 무신사 카테고리처럼 왼쪽 회색 분류·오른쪽 큰 아이콘 */
+  #calc-list, .svc-recent { margin-bottom: 16px !important; }
+  body.cb-on:not(.cb-search) .cb { margin: 0 0 16px; border-radius: 20px; overflow: hidden; background: var(--card); }
+  .cb-side { width: 88px; padding: 0; border-right: 0; background: color-mix(in srgb, var(--line) 30%, var(--card)); }
+  .cb-side button { padding: 15px 12px; font-size: 14px; color: var(--muted); }
+  .cb-side button.on { background: var(--card); color: var(--text); font-weight: 800; }
+  .cb-main { padding: 14px 12px 12px 14px; }
+  .cb-sec { padding: 6px 0 18px; } .cb-sec + .cb-sec { border-top: 0; }
+  .cb-sec h2 { display: flex; align-items: center; gap: 4px; margin: 0 0 14px; font-size: 16px; font-weight: 800; }
+  .cb-sec h2::after { content: '›'; font-size: 20px; line-height: 1; color: var(--text); }
+  .cb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 6px; }
+  .cb-grid a { font-size: 13px; }
+  .cb-ico { width: 52px; height: 52px; }
+}
+/* 마이: 스티커 프로필 대신 셈이 (스티커·별명 꾸미기는 뺐어요) */
+#my-pf, #pf-panel, li:has(> #set-pf) { display: none !important; }
+.my-semi { display: flex; align-items: center; gap: 14px; }
+.my-semi img { flex: none; width: 68px; height: 68px; }
+.my-semi div { flex: 1; min-width: 0; }
+.my-semi b { display: block; font-size: 19px; letter-spacing: -0.02em; }
+.my-semi span { font-size: 13.5px; color: var(--muted); }
+.my-semi-go { flex: none; padding: 9px 16px; border: 1px solid color-mix(in srgb, var(--line) 90%, transparent); border-radius: 999px; background: none; color: var(--text); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+/* 셈이 대화창 꾸미기 값 적용 */
+html body .ai-q, .cs-prev .cs-q { background: var(--aiq-bg, var(--blue)) !important; color: var(--aiq-fg, #fff) !important; }
+html body .ai-a, html body .ai-q { font-size: var(--ai-fs, 16px); }
+html body .ai-ava { width: var(--ai-ava, 70px); height: var(--ai-ava, 70px); }
+html body .ai-ava .semi { width: calc(var(--ai-ava, 70px) * .8); height: calc(var(--ai-ava, 70px) * .8); }
+.cs-prev { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 14px; padding: 14px; border-radius: 18px; background: var(--bg); }
+.cs-prev img { align-self: center; width: calc(var(--ai-ava, 70px) * .7); height: calc(var(--ai-ava, 70px) * .7); }
+.cs-prev i { font-style: normal; max-width: 80%; padding: 9px 13px; border-radius: 18px; font-size: var(--ai-fs, 16px); }
+.cs-prev .cs-a { align-self: flex-start; background: var(--card); }
+.cs-prev .cs-q { align-self: flex-end; }
+.cs-h { margin: 14px 0 8px; font-size: 14px; font-weight: 700; }
+.cs-sw { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 8px; }
+.cs-sw button { aspect-ratio: 1; width: 100%; padding: 0; border: 2px solid transparent; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1); cursor: pointer; display: grid; place-items: center; }
+.cs-sw button img { width: 70%; height: 70%; }
+.cs-sw button.on { border-color: var(--text); box-shadow: inset 0 0 0 2px var(--bg); }
+.cs-seg { display: flex; }
+.uz-tk { width: 100%; border: 0; border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent); background: none; font: inherit; font-size: 15px; font-weight: 700; color: var(--blue); cursor: pointer; text-align: left; }
+.uz-tk em { display: inline-flex; align-items: center; gap: 4px; }
+.uz-tk em b { color: var(--text); font-size: 15px; }
+.uz-tkic { font-style: normal; }
+.uz-shop { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0 14px; }
+.uz-shop p { flex: 1 0 100%; margin: 0 0 4px; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+.uz-shop .btn { flex: 1 1 120px; margin: 0; text-align: center; }
+
+.uz-shop a.btn { display: none; } /* TK-OFF: 초기화 티켓 판매를 열 때 이 줄을 지워요 */
+.cs-seg button.on { background: var(--blue) !important; color: #fff !important; border-color: var(--blue) !important; }
+@media (max-width: 640px) { .home .semi-card { margin-left: 4px !important; margin-right: 4px !important; } }

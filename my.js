@@ -252,7 +252,7 @@
 (() => {
   const $ = id => document.getElementById(id);
   const fold = (btn, panel) => { const b = $(btn), p = $(panel); if (!b || !p) return; b.addEventListener('click', () => { const open = p.hidden; p.hidden = !open; b.setAttribute('aria-expanded', String(open)); b.classList.toggle('open', open); }); };
-  fold('set-theme', 'set-theme-p'); fold('set-ins', 'set-ins-p');
+  fold('set-theme', 'set-theme-p'); fold('set-chat', 'set-chat-p'); fold('set-ins', 'set-ins-p');
   const label = () => { const v = $('set-theme-v'); if (!v) return; let s = ''; try { s = localStorage.getItem('donsem:theme') || ''; } catch (e) { /* 괜찮아요 */ } s = s.replace(/"/g, ''); v.textContent = { light: '라이트', dark: '다크', auto: '기기 설정' }[s] || (document.documentElement.dataset.theme === 'dark' ? '다크' : '라이트'); };
   label(); document.addEventListener('click', e => { if (e.target.closest('#my-theme, .theme-btn')) setTimeout(label, 0); });
   const pf = $('set-pf'); if (pf) pf.addEventListener('click', () => { const ed = $('pf-edit'), panel = $('pf-panel'); if (ed && panel && panel.hidden) ed.click(); (panel || ed).scrollIntoView({ behavior: 'smooth', block: 'center' }); });
