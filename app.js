@@ -4491,14 +4491,14 @@ document.querySelectorAll('.hq-tag[data-dday]').forEach(t => {
 // ── 제휴(CPA) 상자: 재건축·부동산·취득세 화면 아래에 「이사 견적 비교」 등 비금융 제휴 링크를 보여요 ──
 // 링크는 CPA 네트워크(디비센스 등)에서 받은 캠페인 주소를 넣어요. 비어 있으면 상자가 안 보여요. 대출·보험·카드 비교는 넣지 않기 (금소법 중개 등록 필요)
 const PARTNER_LINKS = {
-  move: '', // 포장이사 견적 비교 캠페인 링크
+  move: 'https://u3sup08669.sens.kr', // 디비센스 CPA: [기타] 서경석의 이사방 (원룸·용달 제외, 「최저가」 금지)
   interior: '', // 인테리어 견적 캠페인 링크
   clean: '', // 입주청소 캠페인 링크
 };
 (() => {
   const path = location.pathname;
   if (!/^\/(redev|real-estate|acquisition-tax|brokerage-fee|jeonse-check)\//.test(path)) return;
-  const items = [['move', '🚚', '포장이사 견적 비교', '이사업체 여러 곳 견적을 한 번에 받아요'], ['interior', '🛠️', '인테리어 견적 비교', '입주 전 시공 견적을 무료로 받아요'], ['clean', '🧽', '입주청소 견적', '이사 들어가기 전 청소 견적을 받아요']].filter(([k]) => PARTNER_LINKS[k]);
+  const items = [['move', '🚚', '포장이사 무료 방문견적 비교', '우수 업체 2곳 견적을 비교해요 (원룸·용달 제외)'], ['interior', '🛠️', '인테리어 견적 비교', '입주 전 시공 견적을 무료로 받아요'], ['clean', '🧽', '입주청소 견적', '이사 들어가기 전 청소 견적을 받아요']].filter(([k]) => PARTNER_LINKS[k]);
   if (!items.length) return;
   const box = document.createElement('section');
   box.className = 'card pt-box';
