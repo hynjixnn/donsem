@@ -4573,3 +4573,24 @@ html body .ai-ava .semi { width: calc(var(--ai-ava, 70px) * .8); height: calc(va
 
 .cs-seg button.on { background: var(--blue) !important; color: #fff !important; border-color: var(--blue) !important; }
 @media (max-width: 640px) { .home .semi-card { margin-left: 4px !important; margin-right: 4px !important; } }
+
+/* ── 11-22: 연봉 상위 카드(휴대폰) 아래 글자 잘림 ── */
+@media (max-width: 640px) { .home .showcase .sc-vis.sc-rankvis, .home .showcase .sc-rankvis { height: auto !important; overflow: visible !important; padding: 16px 18px 18px !important; gap: 6px; } }
+/* ── 11-22: 휴대폰 아래 탭바를 무신사처럼 — 옅은 회색 유리, 뒤 글자가 은은하게 비쳐요. 위쪽 마이 아이콘은 탭바로 옮겨서 숨겨요 ── */
+@media (max-width: 640px) {
+  .topbar .my-btn { display: none !important; }
+  html body .tabbar { background: rgba(244, 244, 246, .38) !important; -webkit-backdrop-filter: blur(1.5px) saturate(120%) !important; backdrop-filter: blur(1.5px) saturate(120%) !important; border: 1px solid rgba(255, 255, 255, .75) !important; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .08), 0 8px 24px -10px rgba(0, 0, 0, .22) !important; }
+  html body .tabbar a, html body .tabbar button { color: #111 !important; background: none !important; }
+  html body .tabbar a.on { font-weight: 800; }
+  html body .tabbar a.on svg { stroke-width: 2.3; }
+  html body .tabbar.has-pill .tb-pill, html body .tabbar a.on { background: rgba(120, 120, 128, .2) !important; box-shadow: none !important; }
+  html body .tabbar.has-pill a.on { background: none !important; }
+  :root[data-theme="dark"] body .tabbar { background: rgba(36, 36, 40, .38) !important; border-color: rgba(255, 255, 255, .12) !important; }
+  :root[data-theme="dark"] body .tabbar a, :root[data-theme="dark"] body .tabbar button { color: #f5f5f7 !important; text-shadow: none !important; }
+  :root[data-theme="dark"] body .tabbar.has-pill .tb-pill { background: rgba(255, 255, 255, .16) !important; }
+}
+@media (max-width: 640px) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body .tabbar { background: rgba(36, 36, 40, .38) !important; border-color: rgba(255, 255, 255, .12) !important; }
+  :root:not([data-theme="light"]) body .tabbar a, :root:not([data-theme="light"]) body .tabbar button { color: #f5f5f7 !important; text-shadow: none !important; }
+  :root:not([data-theme="light"]) body .tabbar.has-pill .tb-pill { background: rgba(255, 255, 255, .16) !important; }
+}
