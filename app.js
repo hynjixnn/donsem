@@ -4522,7 +4522,7 @@ const GUIDE_FOR = {
   // 무신사 '이벤트/회원혜택'처럼: 오른쪽 위 ₩ 동그라미 → 혜택·미션 화면 (아이콘은 알림 종과 같은 굵기·크기로 맞춰요)
   const w = document.createElement('a'); w.className = 'benefit-btn' + (location.pathname === '/benefits/' ? ' on' : ''); w.href = '/benefits/'; w.setAttribute('aria-label', '혜택·미션');
   w.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7.2 8.5l1.9 7 2.9-6 2.9 6 1.9-7M6.8 11.6h10.4"/></svg>';
-  right.prepend(w);
+  { const ai = right.querySelector('.ai-btn'); ai ? ai.after(w) : right.prepend(w); } // 순서: 셈이 → ₩ → 알림
   if (location.pathname.startsWith('/shop/')) document.querySelectorAll('.gnav .here:not([href="/shop/"]), .gnav-chips .here').forEach(b => b.classList.remove('here')); /* 쇼핑 안에서는 '돈 관리'가 켜지지 않게 */
   const g = document.querySelector('.gnav');
 })();
