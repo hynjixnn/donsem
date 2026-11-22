@@ -2,7 +2,7 @@
 // 자료는 서울시 고시와 뉴스 보도로 직접 확인해서 넣어요. 바뀌면 아래 UPDATED와 RD만 고치면 돼요
 (() => {
   const root = document.getElementById('re-redev');
-  const UPDATED = '2026년 11월 7일';
+  const UPDATED = '2026년 11월 22일';
   const STEPS = ['구역 지정', '조합 설립', '시공사 선정', '사업시행인가', '관리처분인가', '이주·철거', '착공', '입주'];
   const C = { 대우: '#1b4d9b', 현대: '#d9482b', 삼성: '#1b3f94', GS: '#00796b', DL: '#5b3a8c', 롯데: '#b3202c', 공동: '#2f4858' };
   const GROUPS = ['압구정', '성수', '한남', '강남권', '여의도·목동'];
@@ -21,8 +21,8 @@
       keys: ['한양1차', '한양2차'], src: [['서울시 정비사업 고시', 'https://news.seoul.go.kr/citybuild/archives/531576'], ['머니투데이', 'https://www.mt.co.kr/estate/2026/05/30/2026053013404961177'], ['이투데이', 'https://etoday.co.kr/news/view/2641654'], ['뉴시스', 'https://www.newsis.com/view/NISX20260518_0003633898'], ['나무위키', 'https://namu.wiki/w/압구정%20현대%20갤러리아']] },
     { id: 'ss1', park: '세대당 3.05대', type2: '주상복합', brandName: '자이 (GS건설)', dongs: '17개동', ll: [37.5382, 127.0485], g: '성수', short: '1지구', name: '성수전략정비구역 1지구', brand: '리베니크 자이', kind: '재개발', c: C.GS, addr: '서울 성동구 성수동1가 72-10', addrText: '서울특별시 성동구 성수동1가 일대',
       units: '3,014세대', floors: '최고 64~69층 (보도마다 달라요)', builder: 'GS건설', cost: '2조 1,540억 원', at: 2, stage: '2026년 4월 시공사 선정', move: '미정', src: [['MTN', 'https://news.mtn.co.kr/news-detail/2026042519451152950'], ['디벨로퍼뉴스', 'https://www.dpnews.co.kr/news/articleView.html?idxno=1768'], ['나무위키', 'https://namu.wiki/w/리베니크자이']] },
-    { id: 'ss2', brand: '아크로 성수', type2: '아파트', brandName: '아크로 (DL이앤씨 제안)', g: '성수', short: '2지구', name: '성수전략정비구역 2지구', kind: '재개발', c: C.DL, addr: '서울 성동구 성수동2가 506', addrText: '서울특별시 성동구 성수동2가 일대',
-      units: '약 2,350세대 (제안 기준)', floors: '최고 62층 (제안 기준)', dongs: '9개동 (제안 기준)', builder: 'DL이앤씨 (우선협상대상자)', cost: '약 1조 7,864억 원', at: 1, stage: '2026년 11월 21일 시공사 선정 총회 예정', move: '미정', src: [['아시아투데이', 'https://www.asiatoday.co.kr/kn/view.php?key=20261018010005549'], ['MTN', 'https://news.mtn.co.kr/news-detail/2026090816353962276']] },
+    { id: 'ss2', brand: '아크로 성수', type2: '아파트', brandName: '아크로 (DL이앤씨)', g: '성수', short: '2지구', name: '성수전략정비구역 2지구', kind: '재개발', c: C.DL, addr: '서울 성동구 성수동2가 506', addrText: '서울특별시 성동구 성수동2가 일대',
+      units: '약 2,350세대 (DL이앤씨 설계안)', floors: '최고 62층 (DL이앤씨 설계안)', dongs: '9개동 (DL이앤씨 설계안)', builder: 'DL이앤씨', cost: '약 2조 137억 원 (부가세 별도)', at: 2, stage: '2026년 11월 시공사 선정', move: '미정', src: [['글로벌이코노믹', 'https://www.g-enews.com/article/Real-Estate/2026/11/2026112209261757202aa6f4cdad_1'], ['투데이신문', 'https://www.ntoday.co.kr/news/articleView.html?idxno=131045'], ['아시아투데이', 'https://www.asiatoday.co.kr/kn/view.php?key=20261018010005549'], ['MTN', 'https://news.mtn.co.kr/news-detail/2026090816353962276']] },
     { id: 'ss3', type2: '주상복합', brandName: '래미안 (삼성물산)', g: '성수', short: '3지구', name: '성수전략정비구역 3지구', brand: '래미안 레비르 성수', kind: '재개발', c: C.삼성, addr: '서울 성동구 성수동2가 572-6', addrText: '서울특별시 성동구 성수동2가 일대',
       units: '약 2,200세대', floors: '최고 250m 초고층', dongs: '11개동', builder: '삼성물산', cost: '약 1조 8,275억 원', at: 2, stage: '2026년 9월 시공사 선정', move: '미정', src: [['MTN', 'https://news.mtn.co.kr/news-detail/2026091916154196913'], ['아시아투데이', 'https://www.asiatoday.co.kr/kn/view.php?key=20261018010005549'], ['나무위키', 'https://namu.wiki/w/래미안%20레비르%20성수']] },
     { id: 'ss4', park: '세대당 3.0대', dongs: '7개동', type2: '주상복합', brandName: '르엘 (롯데건설)', g: '성수', short: '4지구', name: '성수전략정비구역 4지구', brand: '성수 르엘 S70', kind: '재개발', c: C.롯데, addr: '서울 성동구 성수동2가 219-4', addrText: '서울특별시 성동구 성수동2가 일대',
