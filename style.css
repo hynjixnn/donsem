@@ -4600,3 +4600,51 @@ html body .ai-form { background: rgba(244, 244, 246, .38) !important; -webkit-ba
 html body .ai-chips button { background: rgba(244, 244, 246, .38) !important; -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px); }
 :root[data-theme="dark"] body .ai-form, :root[data-theme="dark"] body .ai-chips button { background: rgba(36, 36, 40, .38) !important; border-color: rgba(255, 255, 255, .12) !important; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body .ai-form, :root:not([data-theme="light"]) body .ai-chips button { background: rgba(36, 36, 40, .38) !important; border-color: rgba(255, 255, 255, .12) !important; } }
+
+/* ── 11-22 위쪽 바 (무신사처럼): 사용방법은 로고 바로 옆, 오른쪽 아이콘은 같은 크기·굵기, 숫자 알림은 연보라 ── */
+.topbar .how-pill { margin-right: auto !important; }
+.benefit-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex: none; color: var(--text); border-radius: 50%; }
+.benefit-btn svg, .topbar .noti-btn svg { width: 24px; height: 24px; }
+.benefit-btn:hover { text-decoration: none; }
+.topbar .ai-btn .semi { width: 30px; height: 30px; }
+.topbar .top-right { gap: 6px; }
+.noti-btn i { background: #A47CDB !important; color: #fff !important; }
+
+/* ── 11-22 혜택·미션 (무신사 이벤트/회원혜택처럼) ── */
+.bn { padding: 4px 0 8px; }
+.bn-h1 { margin: 6px 2px 14px; font-size: 26px; letter-spacing: -0.03em; }
+.bn-mine { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px 20px; border-radius: 18px; background: var(--card); color: var(--text); text-decoration: none; }
+.bn-mine:hover { text-decoration: none; }
+.bn-mine b { font-size: 16px; }
+.bn-chips { display: flex; gap: 12px; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
+.bn-chips span { display: inline-flex; align-items: center; gap: 4px; }
+.bn-chips i { font-style: normal; }
+.bn-coin { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #f8d24b, #e8a90c); color: #fff; font-size: 11px; font-weight: 900; }
+.bn-chips em { font-style: normal; }
+.bn-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 28px 2px 12px; }
+.bn-sec h2 { margin: 0; font-size: 21px; letter-spacing: -0.03em; }
+.bn-sec h2 em { font-style: normal; color: var(--blue); }
+.bn-max { font-size: 13px; color: var(--muted); } .bn-max b { color: var(--blue); }
+.bn-more { font-size: 14px; color: var(--muted); text-decoration: underline; }
+.bn-dots { position: relative; display: flex; justify-content: space-between; margin: 0 4px 16px; }
+.bn-dots::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 3px; transform: translateY(-50%); background: color-mix(in srgb, var(--line) 80%, transparent); border-radius: 3px; }
+.bn-dots i { position: relative; width: 12px; height: 12px; border-radius: 50%; background: color-mix(in srgb, var(--line) 100%, var(--card)); }
+.bn-dots i.on { background: var(--blue); }
+.bn-cards { display: flex; gap: 10px; overflow-x: auto; margin: 0 -16px; padding: 14px 16px 4px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.bn-cards::-webkit-scrollbar { display: none; }
+.bn-card { position: relative; flex: 0 0 150px; scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 34px 10px 16px; border: 0; border-radius: 18px; background: var(--c); color: #111; font: inherit; text-align: center; cursor: pointer; }
+.bn-card b { font-size: 15px; line-height: 1.35; letter-spacing: -0.02em; }
+.bn-card small { font-size: 12px; opacity: .75; }
+.bn-ico { font-size: 40px; line-height: 1; }
+.bn-badge { position: absolute; top: -10px; right: 8px; padding: 6px 12px; border-radius: 999px; background: #2D5BFF; background: var(--blue); color: #fff; font-style: normal; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.bn-badge.got { background: #111; }
+.bn-list { list-style: none; margin: 0; padding: 0; }
+.bn-list a { display: flex; align-items: center; gap: 14px; padding: 14px 2px; color: var(--text); text-decoration: none; }
+.bn-list a:hover { text-decoration: none; }
+.bn-li { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--card); font-size: 24px; }
+.bn-list span:nth-child(2) { flex: 1; min-width: 0; }
+.bn-list b { display: block; font-size: 15.5px; line-height: 1.35; }
+.bn-list small { font-size: 13px; color: var(--muted); }
+.bn-list em { flex: none; padding: 8px 16px; border-radius: 999px; background: var(--blue); color: #fff; font-style: normal; font-weight: 800; font-size: 14px; }
+.bn-note { margin: 18px 2px 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+.bn-cards { margin: 0 -8px !important; padding: 14px 8px 4px !important; }

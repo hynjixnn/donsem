@@ -1726,7 +1726,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
 // ── 휴대폰 하단 탭: 홈 · 계산기 · 부동산 · 캘린더(가계부 달력) · 마이 ── (＋기록 창은 첫 화면 '오늘 쓴 돈 정리'에서 열려요)
 (() => {
   const path = location.pathname;
-  const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/', '/money-calendar/'], MY = ['/my/', '/about/', '/privacy/', '/collection/'];
+  const MONEY = ['/budget/', '/fixed/', '/assets/', '/goals/', '/money-calendar/'], MY = ['/my/', '/about/', '/privacy/', '/collection/', '/benefits/'];
   const HOME = ['/', '/quiz/', '/money-type/', '/no-spend/']; // 퀴즈·돈BTI·무지출은 홈에서 들어가는 곳이라 '홈'이 켜져요 (예전엔 '계산기'가 켜졌어요)
   const ESTATE = ['/real-estate/', '/redev/', '/acquisition-tax/', '/brokerage-fee/', '/jeonse-check/', '/subscription-score/'];
   const SHOP = ['/shop/', '/shop/deals/','/shop/budget-template/', '/shop/year-end-kit/', '/shop/starter-kit/', '/shop/pay/', '/terms/', '/refund/'];
@@ -3455,6 +3455,54 @@ semiTks();
   draw();
 })();
 
+// ── 혜택·미션 (무신사 '이벤트/회원혜택'처럼): 오늘의 미션 5개 → 셈 포인트, 놓치면 손해인 돈 혜택 목록 (포인트는 이 기기에, donsem:points) ──
+(() => {
+  const root = document.getElementById('bn-root'); if (!root) return;
+  const $ = id => document.getElementById(id), rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const st = typeof dailyStatus === 'function' ? dailyStatus() : { today: '' }, today = st.today;
+  const P = () => Object.assign({ n: 0, got: {} }, rd('donsem:points') || {});
+  const saveP = p => { try { localStorage.setItem('donsem:points', JSON.stringify(p)); } catch (e) { /* 저장이 막힌 브라우저 */ } };
+  const attend = () => (rd('donsem:bn-attend') || {})[today];
+  // [id, 색, 그림, 제목, 했는지, 하러 가기(주소 또는 함수)]
+  const M = () => [
+    ['attend', '#2EE59D', '✅', '오늘 출석하고\n10P 받기', !!attend(), () => { const a = rd('donsem:bn-attend') || {}; a[today] = 1; try { localStorage.setItem('donsem:bn-attend', JSON.stringify(a)); } catch (e) { /* 괜찮아요 */ } draw(); }],
+    ['quiz', '#FF7A1A', '🎯', '오늘의 돈 퀴즈\n한 문제 풀기', !!st.quiz, '/quiz/'],
+    ['money', '#3FD8F2', '📒', '가계부에\n오늘 쓴 돈 적기', !!st.money, () => { if (window.openQuickAdd) window.openQuickAdd(); else location.href = '/budget/'; }],
+    ['semi', '#A3E635', '🌱', '셈이에게\n일 하나 맡기기', localStorage.getItem('donsem:semi-day') === today, () => window.donsemAsk && window.donsemAsk()],
+    ['calc', '#C4A5F5', '🧮', '계산기로\n하나 따져 보기', !!st.calc, '/calculators/'],
+  ];
+  function draw() {
+    const p = P(), got = p.got[today] || [], ms = M(), done = ms.filter(m => m[4]).length;
+    $('bn-pt').textContent = p.n.toLocaleString('ko-KR'); $('bn-done').textContent = done;
+    $('bn-dots').innerHTML = ms.map((m, i) => `<i class="${i < done ? 'on' : ''}"></i>`).join('');
+    $('bn-cards').innerHTML = ms.map(([id, c, ico, t, ok], i) => { const g = got.includes(id); return `<button type="button" class="bn-card" data-i="${i}" style="--c:${c}"><em class="bn-badge${g ? ' got' : ''}">${g ? '받았어요 ✓' : ok ? '🪙 받기' : '참여하기'}</em><span class="bn-ico" aria-hidden="true">${ico}</span><b>${t.replace('\n', '<br>')}</b><small>${g ? '+10P 적립' : ok ? '+10P 받을 수 있어요' : '+10P'}</small></button>`; }).join('');
+  }
+  root.addEventListener('click', e => {
+    const b = e.target.closest('.bn-card'); if (!b) return;
+    const m = M()[+b.dataset.i], p = P(), got = p.got[today] || [];
+    if (got.includes(m[0])) return toast('오늘은 이미 받았어요. 내일 다시 도전해요!');
+    if (m[4]) { p.n += 10; p.got = { [today]: got.concat(m[0]) }; saveP(p); toast('셈 포인트 10P를 받았어요 🪙'); return draw(); }
+    if (typeof m[5] === 'string') location.href = m[5]; else m[5]();
+  });
+  addEventListener('pageshow', draw); addEventListener('focus', () => setTimeout(draw, 300));
+  draw();
+  // 놓치면 손해인 돈 혜택: 돈 달력의 다가오는 큰 일정 + 숨은 돈 + 친구 초대
+  setTimeout(() => { // 돈 달력 자료(MONEY_CAL)는 이 파일 아래쪽에서 만들어져서 한 박자 뒤에 읽어요
+  const evs = (typeof mcUpcoming === 'function' ? mcUpcoming() : []).filter(x => x.imp >= 2 && x.go).slice(0, 4);
+  const esc2 = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  $('bn-list').innerHTML = [['🔍', '아직 안 받은 숨은 돈 찾기', '월세·의료비 환급, 근로장려금 확인', '/hidden-money/'],
+    ...evs.map(x => ['⏰', `${mcDays(x.d) ? `D-${mcDays(x.d)}` : '오늘'} ${x.t}`, x.go[1], x.go[0]]),
+    ['💌', '친구에게 셈이 소개하기', '돈셈 주소 보내기', '#invite'], ['🎟️', '셈이 한도 초기화 티켓', '한도를 다 쓰면 바로 다시', '/my/#my-usage']]
+    .map(([ico, t, d, u]) => `<li><a href="${u}"><span class="bn-li" aria-hidden="true">${ico}</span><span><b>${esc2(t)}</b><small>${esc2(d)}</small></span><em>받기</em></a></li>`).join('');
+  $('bn-list').addEventListener('click', e => { const a = e.target.closest('a[href="#invite"]'); if (!a) return; e.preventDefault(); const url = location.origin + '/?semi=hi', text = '돈 계산·가계부를 말로 대신 해 주는 셈이 같이 쓰자 🌱'; if (navigator.share) navigator.share({ title: '돈셈', text, url }).catch(() => {}); else if (navigator.clipboard) navigator.clipboard.writeText(text + '\n' + url).then(() => toast('링크를 복사했어요.')); });
+  });
+  // 나의 혜택: 초기화 티켓 수·이용권
+  if (typeof semiPasses === 'function') {
+    if (semiPasses().length) $('bn-pass').hidden = false;
+    fetch(COUNTER_URL + '/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ peek: true, t: semiPasses(), tk: semiTks() }) }).then(r => r.json()).then(j => { if (j.ok) $('bn-tkn').textContent = j.tk || 0; }).catch(() => {});
+  }
+})();
+
 // ── 마이: 피클처럼 맨 위 '일일 사용량 한도' (셈이 AI를 오늘 몇 번 썼는지, 워커에 횟수를 쓰지 않고 물어봐요) ──
 (() => {
   const box = document.getElementById('my-usage'); if (!box) return;
@@ -3788,6 +3836,7 @@ function semiTodos() {
     const ask = async q => {
       q = q.trim(); if (!q) return;
       box.classList.add('chatting');
+      { const d = new Date(); try { localStorage.setItem('donsem:semi-day', `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`); } catch (e) { /* 괜찮아요 */ } } // 혜택·미션 「셈이에게 일 하나 맡기기」
       log.insertAdjacentHTML('beforeend', `<div class="ai-q">${esc(q)}</div>`);
       // 셈이가 생각하는 표정으로 잠깐 찾아보는 척해요 (바로 답이 튀어나오면 기계 같아서)
       log.insertAdjacentHTML('beforeend', `<div class="ai-a ai-thinking" aria-label="셈이가 찾아보고 있어요"><i></i><i></i><i></i></div>`);
@@ -4470,6 +4519,10 @@ const GUIDE_FOR = {
   const a = document.createElement('a'); a.className = 'my-btn' + (location.pathname === '/my/' ? ' on' : ''); a.href = '/my/'; a.setAttribute('aria-label', '마이');
   a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>';
   const theme = right.querySelector('.theme-btn'); theme ? theme.before(a) : right.append(a);
+  // 무신사 '이벤트/회원혜택'처럼: 오른쪽 위 ₩ 동그라미 → 혜택·미션 화면 (아이콘은 알림 종과 같은 굵기·크기로 맞춰요)
+  const w = document.createElement('a'); w.className = 'benefit-btn' + (location.pathname === '/benefits/' ? ' on' : ''); w.href = '/benefits/'; w.setAttribute('aria-label', '혜택·미션');
+  w.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7.2 8.5l1.9 7 2.9-6 2.9 6 1.9-7M6.8 11.6h10.4"/></svg>';
+  right.prepend(w);
   if (location.pathname.startsWith('/shop/')) document.querySelectorAll('.gnav .here:not([href="/shop/"]), .gnav-chips .here').forEach(b => b.classList.remove('here')); /* 쇼핑 안에서는 '돈 관리'가 켜지지 않게 */
   const g = document.querySelector('.gnav');
 })();
@@ -4550,6 +4603,7 @@ const GUIDE_FOR = {
     ['매거진에서 돈 이야기를 읽어 보세요', '홈 검색창 아래 「매거진」 메뉴나 홈의 「돈셈 매거진」에서 연말정산·월급·집·저축 기사를 사진으로 골라 읽어요. 위 메뉴로 「이번 달」 마감과 「용어」 사전도 볼 수 있어요.', '/how/mag.jpg'],
     ['DONSAM 로고를 누르면 홈으로 가요', '어느 화면에 있어도 왼쪽 위 로고만 누르면 홈으로 돌아와요. 홈 검색창 아래 「추천·계산기·매거진·연말정산…」 메뉴를 옆으로 밀면 원하는 곳으로 바로 갈 수 있어요. 이 안내는 모든 화면 위쪽 「사용방법」을 누르면 다시 볼 수 있어요.', '/how/5.jpg', 1],
     ['궁금하면 셈이에게 물어보세요', '오른쪽 위 보라색 셈이를 누르면 세금·금융 상식과 이번 달 쓴 돈까지 찾아 알려 드려요.', '/how/6.jpg'],
+    ['₩ 버튼에서 오늘의 미션을 해 보세요', '오른쪽 위 ₩ 동그라미를 누르면 오늘의 돈 미션 5개(출석·퀴즈·가계부·셈이·계산기)로 셈 포인트를 모으고, 놓치면 손해인 혜택도 한눈에 봐요.', '/how/8.jpg'],
     ['마이는 아래 메뉴 맨 오른쪽에 있어요', '아래 메뉴 다섯 번째 「마이」에서 셈이 사용량, 돈셈 Pro, 화면 모드·대화창 꾸미기·백업 같은 설정을 한곳에서 바꿔요.', '/how/7.jpg'],
   ];
   S.push([app ? '다른 폰에도 이렇게 넣을 수 있어요' : '홈 화면에 넣으면 앱처럼 쓸 수 있어요', '', 'install']); // 앱으로 연 사람에게도 보여 줘요 (가족·친구 폰에 넣어 줄 때)
