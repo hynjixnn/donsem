@@ -3816,9 +3816,12 @@ function semiTodos() {
       const face = talk ? 'wink' : did ? did.face : my ? 'default' : hits.length ? 'happy' : 'worry'; // 답을 찾으면 웃고, 못 찾으면 고민해요
       log.insertAdjacentHTML('beforeend', html); { const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = `/icons/semi-${face}.svg`; } // 프로필 얼굴이 답에 맞춰 바뀌어요
       requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
+      setTimeout(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }), 400); // 입력창 높이가 바뀐 뒤에도 답이 가려지지 않게 한 번 더
     };
     box.__ask = ask;
-    box.querySelector('.ai-form').addEventListener('submit', e => { e.preventDefault(); ask(input.value); input.value = ''; });
+    // 피클처럼: 보내도 자판은 그대로 열려 있고, 답이 자판 바로 위에 보여요
+    box.querySelector('.ai-form').addEventListener('submit', e => { e.preventDefault(); const typing = document.activeElement === input; ask(input.value); input.value = ''; if (typing) input.focus({ preventScroll: true }); });
+    input.addEventListener('focus', () => { [80, 350, 700].forEach(t => setTimeout(() => body.scrollTo({ top: body.scrollHeight }), t)); }); // 자판이 올라오며 창이 줄어도 마지막 말이 입력창 위에 보이게
     box.addEventListener('click', e => {
       const b = e.target.closest('.ai-chips button, .ai-more button, .ai-todo button[data-q]'); if (b) ask(b.dataset.q || b.textContent);
       // 확인 카드: '적기·등록하기'를 눌러야 저장해요 (피클이 결제 전에 승인을 받는 것처럼)
@@ -3878,7 +3881,9 @@ function semiTodos() {
   const vv = window.visualViewport, desk = matchMedia('(min-width: 641px)');
   function fit() {
     if (!vv || !box || !box.classList.contains('show') || desk.matches) return;
+    const b = box.querySelector('.ai-body'), near = b && b.scrollHeight - b.scrollTop - b.clientHeight < 160; // 맨 아래(최근 말)를 보고 있었나요?
     box.style.top = vv.offsetTop + 'px'; box.style.height = vv.height + 'px';
+    if (near) requestAnimationFrame(() => { b.scrollTop = b.scrollHeight; }); // 자판이 열리고 닫혀도 최근 말이 입력창 바로 위에 남아요
   }
   if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
 })();
