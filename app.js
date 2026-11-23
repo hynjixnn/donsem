@@ -2035,7 +2035,7 @@ if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListen
           <div class="qa-head"><b id="qa-title">바로 기록하기</b><button type="button" class="qa-x" data-close="1" aria-label="닫기">×</button></div>
           <div class="qa-tabs" data-on="quick"><i></i><button type="button" data-mode="quick" class="on">빠른 입력</button><button type="button" data-mode="direct">직접 입력</button></div>
           <div class="qa-quick">
-            <div class="qa-hero"><img class="semi semi-bob" src="/icons/semi-blink.svg" width="92" height="92" alt="" aria-hidden="true"><b>말하듯이 적으면 셈이가 정리해요</b><span>내용과 금액만 적으면 자동으로 분류돼요</span></div>
+            <div class="qa-hero"><img class="semi semi-bob" src="/icons/semi-3d.png" width="92" height="92" alt="" aria-hidden="true"><b>말하듯이 적으면 셈이가 정리해요</b><span>내용과 금액만 적으면 자동으로 분류돼요</span></div>
             <div class="qa-tbox"><textarea class="qa-text" rows="1" maxlength="400" placeholder="예: 애플뮤직 8,900 커피 4,500" aria-label="빠른 입력: 이름과 금액" autocomplete="off" enterkeyhint="enter"></textarea></div>
             <div class="qa-tmeta"><span></span><button type="button" data-sub="help"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6M12 17h.01"/></svg>쓰는 법</button></div>
             <div class="qa-items" hidden></div>
@@ -3451,7 +3451,7 @@ semiTks();
   const save = o => { try { localStorage.setItem('donsem:chat-style', JSON.stringify(Object.assign(get(), o))); } catch (e) { /* 저장이 막힌 브라우저 */ } apply(); draw(); };
   const draw = () => {
     const v = get();
-    sw.innerHTML = CS.map(c => `<button type="button" role="radio" aria-checked="${c === v.c}" class="${c === v.c ? 'on' : ''}" data-c="${c}" aria-label="${c || '기본 보라'}" style="background:${c || 'var(--blue)'}">${c ? '' : '<img src="/icons/semi-blink.svg" alt="">'}</button>`).join('');
+    sw.innerHTML = CS.map(c => `<button type="button" role="radio" aria-checked="${c === v.c}" class="${c === v.c ? 'on' : ''}" data-c="${c}" aria-label="${c || '기본 보라'}" style="background:${c || 'var(--blue)'}">${c ? '' : '<img src="/icons/semi-3d.png" alt="">'}</button>`).join('');
     document.querySelectorAll('.cs-seg').forEach(g => g.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v[g.dataset.cs])));
   };
   sw.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) save({ c: b.dataset.c }); });
@@ -3559,11 +3559,11 @@ function semiTodos() {
   let uid = 0;
   const spark = size => { const id = 'aig' + (++uid); return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="${id}" x1="6" y1="5" x2="17" y2="18" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#34d399"/><stop offset=".5" stop-color="#38bdf8"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><path fill="url(#${id})" d="M11 3c.5 4.6 3.4 7.5 8 8-4.6.5-7.5 3.4-8 8-.5-4.6-3.4-7.5-8-8 4.6-.5 7.5-3.4 8-8z"/><path fill="url(#${id})" d="M19 1.5c.2 1.6 1 2.4 2.5 2.5-1.5.2-2.3 1-2.5 2.5-.2-1.5-1-2.3-2.5-2.5 1.5-.1 2.3-.9 2.5-2.5z" opacity=".85"/></svg>`; };
   const btn = document.createElement('button');
-  const semi = (size, cls = '', face = 'default') => `<img class="semi ${cls}" src="/icons/semi-blink.svg" data-face="${face}" width="${size}" height="${size}" alt="" aria-hidden="true">`;
+  const semi = (size, cls = '', face = 'default') => `<img class="semi ${cls}" src="/icons/semi-3d.png" data-face="${face}" width="${size}" height="${size}" alt="" aria-hidden="true">`;
   btn.type = 'button'; btn.className = 'ai-btn'; btn.setAttribute('aria-label', '셈이에게 물어보기'); btn.innerHTML = semi(32);
   right.prepend(btn);
   // 마우스를 올리면 찡긋 (장난)
-  btn.firstChild.src = '/icons/semi-blink.svg'; // 11-23: 찡긋 대신 앱 아이콘 셈이가 눈만 깜빡여요
+  btn.firstChild.src = '/icons/semi-3d.png'; // 11-23: 찡긋 대신 앱 아이콘 셈이가 눈만 깜빡여요
 
   const SUGGEST = ['연봉 4천 실수령액', '커피 4500원 썼어', '월세 50만 매달 25일', '12만원 4명 나눠줘', '이번 달 얼마 썼어?','내 순자산은?', '다음 결제는 언제야?', '연말정산 월세 공제 조건', 'ISA랑 연금저축 차이', '주휴수당 받는 조건', '실업급여 자진퇴사', '백업은 어떻게 해?', '적금 이자가 생각보다 적은 이유'];
   let box = null, kb = null, kbWait = null;
@@ -3866,7 +3866,7 @@ function semiTodos() {
         html = `<div class="ai-a"><p>음… 그건 아직 잘 모르겠어요. 다른 말로 물어봐 주세요.${calc ? '' : ' 계산이 필요하면 모든 계산기에서 찾아볼 수 있어요.'}</p>${calc ? `<a class="ai-go" href="${calc[0]}">${esc(calc[1])} 계산기 열기 ›</a>` : '<a class="ai-go" href="/calculators/">모든 계산기 보기 ›</a>'}</div>`;
       }
       const face = talk ? 'wink' : did ? did.face : my ? 'default' : hits.length ? 'happy' : 'worry'; // 답을 찾으면 웃고, 못 찾으면 고민해요
-      log.insertAdjacentHTML('beforeend', html); { const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = '/icons/semi-blink.svg'; } // 11-23: 표정은 바꾸지 않고 앱 아이콘 셈이가 눈만 깜빡여요
+      log.insertAdjacentHTML('beforeend', html); { const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = '/icons/semi-3d.png'; } // 11-23: 표정은 바꾸지 않고 앱 아이콘 셈이가 눈만 깜빡여요
       requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
       setTimeout(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }), 400); // 입력창 높이가 바뀐 뒤에도 답이 가려지지 않게 한 번 더
     };
@@ -3881,7 +3881,7 @@ function semiTodos() {
       if (ok || no) {
         const id = (ok || no).dataset.ok || (ok || no).dataset.no, job = pend.get(id), card = (ok || no).closest('.ai-a');
         pend.delete(id);
-        if (card && job) { let res; try { res = ok ? job() : '<b>취소했어요.</b><p>아무것도 저장하지 않았어요.</p>'; } catch (err) { res = '<b>저장하지 못했어요 😢</b><p>이 브라우저에서는 저장이 막혀 있어요.</p>'; } card.innerHTML = res; const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = '/icons/semi-blink.svg'; }
+        if (card && job) { let res; try { res = ok ? job() : '<b>취소했어요.</b><p>아무것도 저장하지 않았어요.</p>'; } catch (err) { res = '<b>저장하지 못했어요 😢</b><p>이 브라우저에서는 저장이 막혀 있어요.</p>'; } card.innerHTML = res; const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = '/icons/semi-3d.png'; }
       }
       // 정산 요청·초대: 휴대폰이면 카카오톡 등 공유 창이 뜨고, 컴퓨터면 링크를 복사해요
       const sh = e.target.closest('[data-share]'), inv = e.target.closest('.ai-inv');
@@ -3893,7 +3893,7 @@ function semiTodos() {
       }
       const ex = e.target.closest('[data-ex]'); if (ex) box.querySelector('.ai-ex-in').innerHTML = exploreHtml(+ex.dataset.ex);
       if (e.target.closest('.ai-x')) close();
-      if (e.target.closest('.ai-new')) { log.innerHTML = helloHtml(); box.classList.remove('chatting'); body.scrollTo({ top: 0 }); const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = '/icons/semi-blink.svg'; }
+      if (e.target.closest('.ai-new')) { log.innerHTML = helloHtml(); box.classList.remove('chatting'); body.scrollTo({ top: 0 }); const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = '/icons/semi-3d.png'; }
       if (e.target.closest('.ai-plus')) { close(); if (window.openQuickAdd) setTimeout(() => window.openQuickAdd(), 250); }
     });
     box.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
@@ -4420,7 +4420,7 @@ const GUIDE_FOR = {
   const out = semiTodos(); // 내 기록과 날짜로 고른 '먼저 챙겨 줄 일'
   const sec = document.createElement('section');
   sec.className = 'semi-card'; sec.setAttribute('aria-label', '셈이가 챙겨 줄게요');
-  sec.innerHTML = `<div class="semi-head"><button type="button" class="semi-poke" aria-label="셈이 쓰다듬기"><img class="semi semi-bob" src="/icons/semi-blink.svg" width="58" height="58" alt=""></button><div><b>셈이가 챙겨 줄게요</b><span>내 기록과 오늘 날짜를 보고 골랐어요</span></div></div>
+  sec.innerHTML = `<div class="semi-head"><button type="button" class="semi-poke" aria-label="셈이 쓰다듬기"><img class="semi semi-bob" src="/icons/semi-3d.png" width="58" height="58" alt=""></button><div><b>셈이가 챙겨 줄게요</b><span>내 기록과 오늘 날짜를 보고 골랐어요</span></div></div>
     <ul>${out.slice(0, 3).map(([ico, t, d, go]) => `<li><${go.href ? `a href="${go.href}"` : `button type="button" data-q="${esc(go.q)}"`} class="semi-row"><span class="semi-ico" aria-hidden="true">${ico}</span><span><b>${t}</b><small>${esc(d)}</small></span></${go.href ? 'a' : 'button'}></li>`).join('')}</ul>
     <div class="semi-flow" aria-label="셈이에게 이렇게 맡겨 보세요"><div class="semi-flow-in">${[0, 1].map(k => SEMI_FLOW.map(([ico, t, q]) => `<button type="button" data-q="${esc(q)}"${k ? ' tabindex="-1" aria-hidden="true"' : ''}><span aria-hidden="true">${ico}</span>${t}</button>`).join('')).join('')}</div></div>
     <button type="button" class="semi-ask">셈이에게 대신 맡기기</button>`;
@@ -4431,7 +4431,7 @@ const GUIDE_FOR = {
     const q = e.target.closest('[data-q]'); if (q && window.donsemAsk) window.donsemAsk(q.dataset.q);
     if (e.target.closest('.semi-ask') && window.donsemAsk) window.donsemAsk();
     const pk = e.target.closest('.semi-poke'); // 누르면 행복한 표정으로 통 튀어요
-    if (pk) { const im = pk.firstChild; im.src = '/icons/semi-blink.svg'; pk.classList.remove('hop'); void pk.offsetWidth; pk.classList.add('hop'); clearTimeout(pk._t); pk._t = setTimeout(() => { im.src = '/icons/semi-blink.svg'; }, 1400); }
+    if (pk) { const im = pk.firstChild; im.src = '/icons/semi-3d.png'; pk.classList.remove('hop'); void pk.offsetWidth; pk.classList.add('hop'); clearTimeout(pk._t); pk._t = setTimeout(() => { im.src = '/icons/semi-3d.png'; }, 1400); }
   });
 })();
 
