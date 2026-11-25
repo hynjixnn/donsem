@@ -4610,6 +4610,7 @@ const GUIDE_FOR = {
   const bar = document.querySelector('.topbar-in'); if (!bar || !bar.querySelector('.brand')) return;
   const KEY = 'donsem:how-seen', app = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   const S = [
+    ['처음이라면 돈셈 소개부터 보세요', '돈셈 소개 페이지(doncalculator.com/intro/)에서 화면을 아래로 내리기만 하면 연봉 실수령액·캘린더·셈이·혜택을 한 번에 둘러볼 수 있어요.', '/how/intro.jpg'],
     ['궁금한 계산을 골라 주세요', '계산기 메뉴에서 연봉, 대출, 세금 계산기를 찾을 수 있어요.', '/how/1.jpg'],
     ['숫자만 넣으면 바로 계산돼요', '가입도 설치도 필요 없어요. 금액을 바꾸면 결과도 함께 바뀌어요.', '/how/2.jpg'],
     ['캘린더에 쓴 돈을 적어 보세요', '가계부 기록은 이 기기에만 저장되고, 서버로 보내지 않아요.', '/how/3.jpg'],
