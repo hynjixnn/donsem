@@ -4662,4 +4662,4 @@ html body .ai-chips button { background: rgba(244, 244, 246, .38) !important; -w
 .srch-semi.on { max-height: 60px; opacity: 1; margin: 4px 0 10px; }
 @media (prefers-reduced-motion: reduce) { .semi-lap, .ai-searching i, .srch-semi i { animation: none !important; } }
 /* 11-24 3D 털 셈이 그림 (사진이라 찌그러지지 않게) */
-img[src*="semi-3d.png"] { object-fit: contain; }
+img[src*="semi-blink.svg"] { object-fit: contain; }
