@@ -32,9 +32,7 @@ img{display:block}
 .top{position:fixed;inset:0 0 auto;z-index:20;display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 max(16px,env(safe-area-inset-left));
   background:rgba(11,10,16,.55);backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);color:#fff;transition:background .4s,color .4s}
 .top.lt{background:rgba(245,245,247,.72);color:var(--ink)}
-.top b{font:italic 900 21px/1 'Saira',sans-serif;letter-spacing:-.01em}
-.top b i{font-style:normal;color:var(--p3)}
-.top.lt b i{color:var(--p)}
+.lg{display:block;width:118px;height:21px;background:currentColor;-webkit-mask:url(/logo-donsam.png) left center/contain no-repeat;mask:url(/logo-donsam.png) left center/contain no-repeat}
 .skip{font-size:13px;font-weight:600;padding:7px 13px;border-radius:99px;background:rgba(255,255,255,.14)}
 .top.lt .skip{background:#fff;box-shadow:0 0 0 1px var(--line)}
 /* 고정 장면 공통 */
@@ -164,10 +162,12 @@ img{display:block}
 /* 4. 글자 밝히기 */
 #words{height:200vh;background:#0b0a10}
 #words .stick{display:flex;align-items:center;justify-content:center;padding:0 24px}
-.say{max-width:900px;font-size:clamp(32px,5.6vw,68px);line-height:1.22;font-weight:800;letter-spacing:-.03em;color:#fff;text-align:center}
+.say{max-width:900px;font-size:clamp(38px,6vw,72px);line-height:1.22;font-weight:800;letter-spacing:-.03em;color:#fff;text-align:center}
 .say span{opacity:.16;transition:opacity .35s}
 .say span.lit{opacity:1}
 .say span.pu{color:var(--p3)}
+.say{word-break:keep-all}
+.say small{display:inline-block;margin-top:.6em;font-size:.56em;line-height:1.4;letter-spacing:-.02em}
 /* 5. 시작 */
 .cta{background:var(--p);color:#fff;text-align:center;padding:110px 24px 90px;position:relative;overflow:hidden}
 .cta img{width:190px;margin:0 auto 24px;filter:drop-shadow(0 24px 40px rgba(0,0,0,.3))}
@@ -199,7 +199,7 @@ img{display:block}
 </style>
 </head>
 <body>
-<header class="top" id="top"><a href="/"><b>DON<i>SAM</i></b></a><a class="skip" href="/" data-go>돈셈 바로 가기</a></header>
+<header class="top" id="top"><a href="/" aria-label="DONSAM 홈"><span class="lg"></span></a><a class="skip" href="/" data-go>돈셈 바로 가기</a></header>
 
 <section class="pin" id="hero"><div class="stick">
   <div class="glow" id="glow"></div>
@@ -277,7 +277,7 @@ img{display:block}
 </div></section>
 
 <section class="pin" id="words"><div class="stick">
-  <p class="say" id="say">계산은 <span class="pu">돈셈이,</span> 결정은 <span class="pu">당신이.</span> 모르고 놓치는 돈 없이, 오늘부터 가볍게.</p>
+  <p class="say" id="say">계산은 <span class="pu">돈셈이,</span><br>결정은 <span class="pu">당신이.</span><br><small>모르고 놓치는 돈 없이, 오늘부터 가볍게.</small></p>
 </div></section>
 
 <section class="cta">
@@ -306,7 +306,7 @@ const tile=t=>'<div class="tile" style="--bg:'+t[2]+'"><img src="/icons/'+t[0]+'
 $('r1').innerHTML=T.slice(0,9).concat(T.slice(0,9)).map(tile).join('');$('r2').innerHTML=T.slice(9).concat(T.slice(9)).map(tile).join('');
 
 /* 글자 하나씩 밝히기 */
-const say=$('say');const parts=[];say.childNodes.forEach(n=>{if(n.nodeType==3)n.textContent.split(/(\s+)/).forEach(w=>parts.push(w.trim()?'<span>'+w+'</span>':w));else parts.push(n.outerHTML)});say.innerHTML=parts.join('');const W=[...say.querySelectorAll('span')];
+const say=$('say');const parts=[];const sp=t=>t.split(/(\s+)/).map(w=>w.trim()?'<span>'+w+'</span>':w).join('');say.childNodes.forEach(n=>{if(n.nodeType==3)parts.push(sp(n.textContent));else if(n.tagName=='SMALL')parts.push('<small>'+sp(n.textContent)+'</small>');else parts.push(n.outerHTML)});say.innerHTML=parts.join('');const W=[...say.querySelectorAll('span')];
 
 const top=$('top'),apps=[...document.querySelectorAll('.app')],beats=[...$('beats').children],mis=[...$('mis').children],dedB=[...$('ded').querySelectorAll('b')],dedE=[...$('ded').querySelectorAll('em')],DED=[156650,112640,93080];
 const prog=el=>{const r=el.getBoundingClientRect();return cl(-r.top/(el.offsetHeight-innerHeight))};
