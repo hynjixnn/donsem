@@ -50,7 +50,7 @@ img{display:block}
 .h-big span{display:block}
 .h-sub{margin-top:22px;font-size:clamp(17px,2.2vw,22px);font-weight:600;color:rgba(255,255,255,.72)}
 .h-semi{position:relative;width:clamp(150px,22vw,230px);margin-bottom:26px;will-change:transform;filter:drop-shadow(0 30px 60px rgba(112,64,161,.55))}
-.h-semi img{width:100%}
+.h-semi img{width:100%;height:auto}
 .cue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:.12em;color:rgba(255,255,255,.5);display:flex;flex-direction:column;align-items:center;gap:8px}
 .cue i{width:1px;height:30px;background:linear-gradient(#fff,transparent);animation:cue 1.6s ease-in-out infinite}
 @keyframes cue{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
@@ -170,7 +170,7 @@ img{display:block}
 .say span.pu{color:var(--p3)}
 /* 5. 시작 */
 .cta{background:var(--p);color:#fff;text-align:center;padding:110px 24px 90px;position:relative;overflow:hidden}
-.cta img{width:150px;margin:0 auto 24px;filter:drop-shadow(0 24px 40px rgba(0,0,0,.3))}
+.cta img{width:190px;margin:0 auto 24px;filter:drop-shadow(0 24px 40px rgba(0,0,0,.3))}
 .cta h2{font-family:var(--st);font-weight:400;font-size:clamp(44px,8vw,96px);line-height:.92;letter-spacing:.01em}
 .cta p{margin-top:16px;font-size:18px;opacity:.8;font-weight:600}
 .go{display:inline-flex;align-items:center;gap:8px;margin-top:34px;padding:17px 34px;border-radius:99px;background:#fff;color:var(--p);font-size:17px;font-weight:800;box-shadow:0 18px 40px -14px rgba(0,0,0,.45);transition:transform .2s}
@@ -199,14 +199,14 @@ img{display:block}
 </style>
 </head>
 <body>
-<header class="top" id="top"><a href="/"><b>DON<i>SEM</i></b></a><a class="skip" href="/" data-go>돈셈 바로 가기</a></header>
+<header class="top" id="top"><a href="/"><b>DON<i>SAM</i></b></a><a class="skip" href="/" data-go>돈셈 바로 가기</a></header>
 
 <section class="pin" id="hero"><div class="stick">
   <div class="glow" id="glow"></div>
-  <div class="h-semi" id="hsemi"><img src="/icons/semi-happy.svg" alt="돈셈 캐릭터 셈이" width="230" height="230"></div>
+  <div class="h-semi" id="hsemi"><img src="/img/semi-front.png" alt="돈셈 캐릭터 셈이" width="230" height="230"></div>
   <div id="htx">
-    <p class="h-kick">DONSEM</p>
-    <h1 class="h-big"><span>MONEY,</span><span>CALCULATED.</span></h1>
+    <p class="h-kick">DONSAM</p>
+    <h1 class="h-big"><span>MONEY,</span><span>SIMPLE.</span></h1>
     <p class="h-sub">복잡한 돈 계산, 셈이가 대신 해 줄게요</p>
   </div>
   <div class="cue" id="cue">SCROLL<i></i></div>
@@ -281,8 +281,8 @@ img{display:block}
 </div></section>
 
 <section class="cta">
-  <img src="/icons/semi-wink.svg" alt="" width="150" height="150">
-  <h2>START<br>DONSEM</h2>
+  <img src="/img/semi-laptop.png" alt="" width="190" height="190">
+  <h2>START<br>DONSAM</h2>
   <p>가입 없이, 무료로 바로 써요</p>
   <a class="go" href="/" data-go>돈셈 시작하기 →</a>
   <p class="foot"><a href="/calculators/" data-go>모든 계산기 보기</a></p>
