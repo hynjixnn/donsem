@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>돈셈 소개 - 돈 계산, 셈이가 대신 해 줄게요</title>
+<meta name="description" content="연봉 실수령액, 가계부 캘린더, 셈이 AI 기록, 혜택 미션까지. 스크롤하면서 돈셈이 어떻게 돈 관리를 쉽게 만드는지 확인해 보세요.">
+<link rel="canonical" href="https://doncalculator.com/intro/">
+<meta property="og:title" content="돈셈 소개 - 돈 계산, 셈이가 대신 해 줄게요">
+<meta property="og:description" content="연봉 실수령액, 가계부 캘린더, 셈이 AI 기록, 혜택 미션까지 한 곳에서.">
+<meta property="og:url" content="https://doncalculator.com/intro/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="돈셈">
+<meta property="og:image" content="https://doncalculator.com/og/about.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0a10">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&family=Saira:ital,wght@0,700;1,900&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--p:#7040A1;--p2:#8B5CC9;--p3:#B69AD8;--ink:#191f28;--mut:#6b7684;--line:#eceef2;--soft:#f5f5f7;
+--f:'Pretendard Variable',Pretendard,-apple-system,system-ui,sans-serif;--st:'Saira Stencil One','Saira',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#0b0a10}
+body{font-family:var(--f);color:var(--ink);background:#0b0a10;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+img{display:block}
+/* 위 막대 */
+.top{position:fixed;inset:0 0 auto;z-index:20;display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 max(16px,env(safe-area-inset-left));
+  background:rgba(11,10,16,.55);backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);color:#fff;transition:background .4s,color .4s}
+.top.lt{background:rgba(245,245,247,.72);color:var(--ink)}
+.top b{font:italic 900 21px/1 'Saira',sans-serif;letter-spacing:-.01em}
+.top b i{font-style:normal;color:var(--p3)}
+.top.lt b i{color:var(--p)}
+.skip{font-size:13px;font-weight:600;padding:7px 13px;border-radius:99px;background:rgba(255,255,255,.14)}
+.top.lt .skip{background:#fff;box-shadow:0 0 0 1px var(--line)}
+/* 고정 장면 공통 */
+.pin{position:relative}
+.stick{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+/* 1. 첫 화면 */
+#hero{height:230vh;background:#0b0a10}
+#hero .stick{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff}
+.glow{position:absolute;left:50%;top:50%;width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;
+  background:radial-gradient(circle,rgba(139,92,201,.55) 0,rgba(112,64,161,.18) 38%,transparent 66%);pointer-events:none}
+.h-kick{font:700 13px/1 'Saira',sans-serif;letter-spacing:.32em;color:var(--p3);margin-bottom:18px}
+.h-big{font-family:var(--st);font-weight:400;font-size:clamp(52px,11vw,148px);line-height:.9;letter-spacing:.01em}
+.h-big span{display:block}
+.h-sub{margin-top:22px;font-size:clamp(17px,2.2vw,22px);font-weight:600;color:rgba(255,255,255,.72)}
+.h-semi{position:relative;width:clamp(150px,22vw,230px);margin-bottom:26px;will-change:transform;filter:drop-shadow(0 30px 60px rgba(112,64,161,.55))}
+.h-semi img{width:100%}
+.cue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:.12em;color:rgba(255,255,255,.5);display:flex;flex-direction:column;align-items:center;gap:8px}
+.cue i{width:1px;height:30px;background:linear-gradient(#fff,transparent);animation:cue 1.6s ease-in-out infinite}
+@keyframes cue{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.wipe{position:absolute;inset:0;background:var(--soft);opacity:0;pointer-events:none}
+/* 2. 휴대폰 이야기 */
+#story{height:560vh;background:var(--soft)}
+#story .stick{display:grid;grid-template-columns:1fr auto;align-items:center;gap:7vw;max-width:1100px;margin:0 auto;padding:0 40px}
+.beats{list-style:none;position:relative;height:300px}
+.beats li{position:absolute;left:0;right:0;top:50%;opacity:0;transition:opacity .5s,transform .6s cubic-bezier(.2,.8,.2,1);transform:translateY(-35%)}
+.beats li.on{opacity:1;transform:translateY(-50%)}
+.beats h2{font-size:clamp(30px,4vw,52px)!important}
+.beats em{display:block;font:400 14px/1 var(--st);letter-spacing:.14em;color:var(--p);margin-bottom:10px}
+.beats h2{font-size:clamp(26px,3.3vw,40px);line-height:1.22;letter-spacing:-.02em;font-weight:800}
+.beats p{margin-top:10px;font-size:17px;line-height:1.55;color:var(--mut);max-width:400px}
+.prog{position:absolute;left:40px;right:40px;bottom:28px;height:3px;border-radius:3px;background:#e3e1ea;overflow:hidden;max-width:1020px;margin:0 auto}
+.prog i{display:block;height:100%;width:0;background:var(--p);border-radius:3px}
+/* 휴대폰 */
+.phone-wrap{width:316px;height:650px;transform-origin:center center}
+.phone{position:relative;width:316px;height:650px;border-radius:54px;background:#0e0e12;padding:11px;
+  box-shadow:0 0 0 1.5px #3a3840 inset,0 50px 90px -30px rgba(60,30,100,.45),0 30px 50px -30px rgba(0,0,0,.35)}
+.scrn{position:relative;width:100%;height:100%;border-radius:44px;background:#fff;overflow:hidden}
+.island{position:absolute;top:11px;left:50%;width:98px;height:29px;margin-left:-49px;border-radius:20px;background:#0e0e12;z-index:5}
+.sbar{position:absolute;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 34px;font-size:14px;font-weight:700;z-index:4}
+.sbar s{text-decoration:none;display:flex;gap:5px;align-items:center}
+.sbar s i{display:block;width:22px;height:11px;border-radius:3.5px;border:1.5px solid #191f28;position:relative}
+.sbar s i:after{content:"";position:absolute;inset:1.5px 4px 1.5px 1.5px;background:#191f28;border-radius:1.5px}
+.home-ind{position:absolute;bottom:8px;left:50%;width:120px;height:4.5px;margin-left:-60px;border-radius:3px;background:#191f28;z-index:6}
+.app{position:absolute;inset:0;padding:58px 18px 0;opacity:0;transform:translateY(18px) scale(.985);transition:opacity .5s,transform .55s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.app.on{opacity:1;transform:none}
+.ah{display:flex;align-items:center;justify-content:space-between;margin:6px 0 16px}
+.ah b{font-size:21px;font-weight:800;letter-spacing:-.02em}
+.ah img{width:30px;height:30px}
+.bar{display:block;height:9px;border-radius:5px;background:#eef0f3}
+/* 연봉 */
+.fld{border-radius:16px;background:#f4f5f7;padding:13px 15px}
+.fld small{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-bottom:5px}
+.fld div{font-size:22px;font-weight:800;letter-spacing:-.01em;min-height:28px;display:flex;align-items:center}
+.caret{display:inline-block;width:2px;height:22px;background:var(--p);margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.res{margin-top:14px;border-radius:20px;background:linear-gradient(150deg,#7f4fb5,#5d3389);color:#fff;padding:18px 18px 16px;opacity:0;transform:translateY(14px);transition:opacity .4s,transform .5s cubic-bezier(.2,.8,.2,1)}
+.res.on{opacity:1;transform:none}
+.res small{font-size:12px;opacity:.75;font-weight:600}
+.res strong{display:block;margin-top:4px;font-size:31px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.res strong u{text-decoration:none;font-size:19px;margin-left:2px}
+.res p{margin-top:6px;font-size:12px;opacity:.72}
+.ded{margin-top:14px;display:grid;gap:12px}
+.ded div{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:10px;font-size:13px;font-weight:600}
+.ded span{color:var(--mut)}
+.ded i{height:8px;border-radius:5px;background:#f0edf6;overflow:hidden;display:block}
+.ded i b{display:block;height:100%;width:0;background:var(--p3);border-radius:5px}
+.ded em{font-style:normal;font-variant-numeric:tabular-nums;color:var(--ink);font-size:12.5px}
+.fill{margin-top:20px;display:grid;gap:9px}
+/* 캘린더 */
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.sum div{border-radius:14px;background:#f4f5f7;padding:10px 12px}
+.sum small{display:block;font-size:11px;color:var(--mut);font-weight:600}
+.sum b{display:block;margin-top:3px;font-size:16px;font-variant-numeric:tabular-nums}
+.sum .in b{color:var(--p)}
+.wk,.cal{display:grid;grid-template-columns:repeat(7,1fr)}
+.wk span{font-size:10.5px;text-align:center;color:var(--mut);font-weight:600;padding-bottom:6px}
+.wk span:first-child{color:#f2708f}
+.cal div{height:62px;border-top:1px solid var(--line);padding-top:5px;text-align:center;font-size:11.5px;font-weight:600;position:relative}
+.cal div em{position:absolute;left:0;right:0;bottom:8px;font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:-.03em;color:#8b95a1;opacity:0;transform:translateY(5px);transition:opacity .3s,transform .35s}
+.cal div em.in{color:var(--p)}
+.cal div.sh em{opacity:1;transform:none}
+.cal div.td span{display:inline-grid;place-items:center;width:21px;height:21px;margin-top:-3px;border-radius:50%;background:var(--p);color:#fff}
+/* 셈이 대화 */
+.chat{display:flex;flex-direction:column;gap:10px;padding-top:4px}
+.bub{max-width:78%;padding:10px 14px;border-radius:20px;font-size:14.5px;line-height:1.4;font-weight:500;opacity:0;transform:translateY(10px) scale(.96);transition:opacity .3s,transform .4s cubic-bezier(.2,.9,.25,1.2)}
+.bub.on{opacity:1;transform:none}
+.me{align-self:flex-end;background:var(--p);color:#fff;border-bottom-right-radius:6px;transform-origin:right bottom}
+.ai{display:flex;gap:8px;align-items:flex-end}
+.ai img{width:30px;height:30px;flex:none;opacity:0;transition:opacity .3s}
+.ai.on img{opacity:1}
+.they{background:#f1f0f5;border-bottom-left-radius:6px;transform-origin:left bottom;max-width:none}
+.dots{display:inline-flex;gap:4px;padding:4px 2px}
+.dots i{width:7px;height:7px;border-radius:50%;background:#a9a3b8;animation:dot 1.1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+.act{margin-left:38px;border-radius:18px;border:1px solid var(--line);padding:13px 14px;background:#fff;box-shadow:0 8px 20px -12px rgba(60,30,100,.25);opacity:0;transform:translateY(10px);transition:opacity .35s,transform .45s cubic-bezier(.2,.8,.2,1)}
+.act.on{opacity:1;transform:none}
+.act small{font-size:11px;font-weight:700;color:var(--p);letter-spacing:.02em}
+.act b{display:block;margin:4px 0 2px;font-size:16px}
+.act span{font-size:12px;color:var(--mut)}
+.act button{display:block;width:100%;margin-top:11px;border:0;border-radius:12px;padding:10px 0;font:700 14px var(--f);background:var(--p);color:#fff;transition:background .3s,transform .15s}
+.act button.done{background:#e9e1f4;color:var(--p)}
+.act button.press{transform:scale(.96)}
+/* 혜택 */
+.lv{border-radius:20px;background:#191f28;color:#fff;padding:16px 16px 15px}
+.lv small{font-size:11.5px;opacity:.6;font-weight:600}
+.lv b{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;font-size:22px}
+.lv b u{text-decoration:none;font:400 22px var(--st);color:var(--p3);font-variant-numeric:tabular-nums}
+.lv .tr{margin-top:12px;height:8px;border-radius:5px;background:rgba(255,255,255,.14);overflow:hidden}
+.lv .tr i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--p3),#fff);border-radius:5px}
+.mis{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.mi{border-radius:18px;padding:12px 12px 11px;position:relative;min-height:104px}
+.mi img{width:44px;height:44px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.12))}
+.mi b{display:block;margin-top:6px;font-size:13px}
+.mi u{position:absolute;top:10px;right:10px;text-decoration:none;font-size:10.5px;font-weight:700;padding:4px 8px;border-radius:99px;background:rgba(255,255,255,.75);color:#4e5968;transition:background .3s,color .3s}
+.mi.ok u{background:var(--th);color:#fff}
+/* 3. 계산기 띠 */
+#tools{height:220vh;background:#fff}
+#tools .stick{display:flex;flex-direction:column;justify-content:center;gap:22px}
+.t-hd{text-align:center;padding:0 20px;margin-bottom:18px}
+.t-hd em{font:400 14px/1 var(--st);letter-spacing:.14em;color:var(--p)}
+.t-hd h2{margin-top:10px;font-size:clamp(28px,4.2vw,50px);font-weight:800;letter-spacing:-.025em;line-height:1.18}
+.row{display:flex;gap:16px;will-change:transform;width:max-content}
+.tile{flex:none;width:168px;height:168px;border-radius:30px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;background:var(--bg)}
+.tile img{width:70px;height:70px;filter:drop-shadow(0 10px 12px rgba(0,0,0,.12))}
+.tile b{font-size:15px;font-weight:700;letter-spacing:-.01em}
+/* 4. 글자 밝히기 */
+#words{height:200vh;background:#0b0a10}
+#words .stick{display:flex;align-items:center;justify-content:center;padding:0 24px}
+.say{max-width:900px;font-size:clamp(32px,5.6vw,68px);line-height:1.22;font-weight:800;letter-spacing:-.03em;color:#fff;text-align:center}
+.say span{opacity:.16;transition:opacity .35s}
+.say span.lit{opacity:1}
+.say span.pu{color:var(--p3)}
+/* 5. 시작 */
+.cta{background:var(--p);color:#fff;text-align:center;padding:110px 24px 90px;position:relative;overflow:hidden}
+.cta img{width:150px;margin:0 auto 24px;filter:drop-shadow(0 24px 40px rgba(0,0,0,.3))}
+.cta h2{font-family:var(--st);font-weight:400;font-size:clamp(44px,8vw,96px);line-height:.92;letter-spacing:.01em}
+.cta p{margin-top:16px;font-size:18px;opacity:.8;font-weight:600}
+.go{display:inline-flex;align-items:center;gap:8px;margin-top:34px;padding:17px 34px;border-radius:99px;background:#fff;color:var(--p);font-size:17px;font-weight:800;box-shadow:0 18px 40px -14px rgba(0,0,0,.45);transition:transform .2s}
+.go:active{transform:scale(.96)}
+.foot{margin-top:22px;font-size:13px;opacity:.6}
+.foot a{text-decoration:underline;text-underline-offset:3px}
+/* 휴대폰 화면 */
+@media (max-width:760px){
+  #story .stick{grid-template-columns:1fr;grid-template-rows:auto 1fr;gap:0;padding:62px 16px 0;align-items:start;justify-items:center}
+  .beats{width:100%;height:118px}
+  .beats li{top:0;text-align:center;transform:translateY(12px)}
+  .beats li.on{transform:none}
+  .beats h2{font-size:23px!important}
+  .beats em{font-size:12px;margin-bottom:7px}
+  .beats h2{font-size:23px}
+  .beats p{font-size:14px;margin:6px auto 0;max-width:330px}
+  .phone-wrap{transform-origin:top center;margin-top:6px}
+  .prog{left:16px;right:16px;bottom:14px}
+  .tile{width:128px;height:128px;border-radius:24px;padding:14px}
+  .tile img{width:54px;height:54px}
+  .tile b{font-size:13px}
+  .row{gap:12px}
+  #tools .stick{gap:12px}
+}
+@media (prefers-reduced-motion:reduce){.cue i,.dots i,.caret{animation:none}}
+</style>
+</head>
+<body>
+<header class="top" id="top"><a href="/"><b>DON<i>SEM</i></b></a><a class="skip" href="/" data-go>돈셈 바로 가기</a></header>
+
+<section class="pin" id="hero"><div class="stick">
+  <div class="glow" id="glow"></div>
+  <div class="h-semi" id="hsemi"><img src="/icons/semi-happy.svg" alt="돈셈 캐릭터 셈이" width="230" height="230"></div>
+  <div id="htx">
+    <p class="h-kick">DONSEM</p>
+    <h1 class="h-big"><span>MONEY,</span><span>CALCULATED.</span></h1>
+    <p class="h-sub">복잡한 돈 계산, 셈이가 대신 해 줄게요</p>
+  </div>
+  <div class="cue" id="cue">SCROLL<i></i></div>
+  <div class="wipe" id="wipe"></div>
+</div></section>
+
+<section class="pin" id="story"><div class="stick">
+  <ol class="beats" id="beats">
+    <li class="on"><em>01 SALARY</em><h2>연봉만 넣으면<br>월 실수령액이 바로</h2><p>국민연금·건강보험·소득세가 얼마씩 빠지는지 한눈에 보여요.</p></li>
+    <li><em>02 CALENDAR</em><h2>한 달 돈 흐름을<br>달력 한 장에</h2><p>들어온 돈은 보라, 나간 돈은 회색. 고정지출까지 날짜마다 쌓여요.</p></li>
+    <li><em>03 SEMI AI</em><h2>말만 하면<br>셈이가 대신 기록</h2><p>“점심 국밥 9,000원” 한마디면 가계부에 들어가요.</p></li>
+    <li><em>04 BENEFITS</em><h2>매일 미션하고<br>셈 포인트 모으기</h2><p>출석·퀴즈·계산 미션을 끝내면 포인트가 쌓이고 단계가 올라요.</p></li>
+  </ol>
+  <div class="phone-wrap" id="pw"><div class="phone"><div class="scrn">
+    <div class="island"></div>
+    <div class="sbar"><span>9:41</span><s><i></i></s></div>
+
+    <div class="app on" data-a="0">
+      <div class="ah"><b>연봉 실수령액</b><img src="/icons/salary.webp" alt=""></div>
+      <div class="fld"><small>연봉</small><div><span id="typ"></span><span class="caret"></span><span id="won" style="margin-left:4px;opacity:0">원</span></div></div>
+      <div class="res" id="res"><small>한 달에 받는 돈</small><strong><span id="net">0</span><u>원</u></strong><p>1년이면 약 3,513만 원 · 2027년 기준</p></div>
+      <div class="ded" id="ded">
+        <div><span>국민연금</span><i><b></b></i><em>-</em></div>
+        <div><span>건강보험</span><i><b></b></i><em>-</em></div>
+        <div><span>소득세</span><i><b></b></i><em>-</em></div>
+      </div>
+      <div class="fill"><span class="bar" style="width:72%"></span><span class="bar" style="width:54%"></span><span class="bar" style="width:63%"></span></div>
+    </div>
+
+    <div class="app" data-a="1">
+      <div class="ah"><b>2026년 11월</b><img src="/icons/money-calendar.webp" alt=""></div>
+      <div class="sum"><div class="in"><small>수입</small><b id="sin">0원</b></div><div><small>지출</small><b id="sout">0원</b></div></div>
+      <div class="wk"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div class="cal" id="cal"></div>
+    </div>
+
+    <div class="app" data-a="2">
+      <div class="ah"><b>셈이</b><img src="/icons/semi-default.svg" alt=""></div>
+      <div class="chat">
+        <div class="bub me" id="c1">점심 국밥 9,000원</div>
+        <div class="ai" id="c2"><img src="/icons/semi-wink.svg" alt=""><div class="bub they" id="c2b"><span class="dots"><i></i><i></i><i></i></span></div></div>
+        <div class="act" id="c3"><small>가계부에 기록</small><b>식비 9,000원</b><span>11월 26일 · 국밥</span><button type="button" id="c3btn" tabindex="-1">기록하기</button></div>
+        <div class="bub they" id="c4" style="margin-left:38px">이번 달 식비 21만 4천 원.<br>지난달보다 3만 원 덜 썼어요!</div>
+      </div>
+    </div>
+
+    <div class="app" data-a="3">
+      <div class="ah"><b>혜택·미션</b><img src="/icons/piggy-big.webp" alt=""></div>
+      <div class="lv"><small>내 셈 포인트</small><b><span id="lvt">1단계</span><u id="pt">0P</u></b><div class="tr"><i id="ptb"></i></div></div>
+      <div class="mis" id="mis">
+        <div class="mi" style="background:#d6f0eb;--th:#22b59c"><u>참여하기</u><img src="/icons/money-calendar.webp" alt=""><b>출석체크</b></div>
+        <div class="mi" style="background:#fde7d9;--th:#ff9459"><u>참여하기</u><img src="/icons/quiz.webp" alt=""><b>돈 퀴즈</b></div>
+        <div class="mi" style="background:#dcedfb;--th:#4ea3e6"><u>참여하기</u><img src="/icons/budget.webp" alt=""><b>오늘 기록</b></div>
+        <div class="mi" style="background:#ebe5f8;--th:#9a7aea"><u>참여하기</u><img src="/icons/percent.webp" alt=""><b>계산 1번</b></div>
+      </div>
+      <div class="fill" style="margin-top:16px"><span class="bar" style="width:40%;height:11px"></span><span class="bar" style="width:86%"></span><span class="bar" style="width:68%"></span></div>
+    </div>
+
+    <div class="home-ind"></div>
+  </div></div></div>
+  <div class="prog"><i id="prog"></i></div>
+</div></section>
+
+<section class="pin" id="tools"><div class="stick">
+  <div class="t-hd"><em>ALL IN ONE</em><h2>생활 속 돈 계산,<br>여기 다 있어요</h2></div>
+  <div class="row" id="r1"></div>
+  <div class="row" id="r2"></div>
+</div></section>
+
+<section class="pin" id="words"><div class="stick">
+  <p class="say" id="say">계산은 <span class="pu">돈셈이,</span> 결정은 <span class="pu">당신이.</span> 모르고 놓치는 돈 없이, 오늘부터 가볍게.</p>
+</div></section>
+
+<section class="cta">
+  <img src="/icons/semi-wink.svg" alt="" width="150" height="150">
+  <h2>START<br>DONSEM</h2>
+  <p>가입 없이, 무료로 바로 써요</p>
+  <a class="go" href="/" data-go>돈셈 시작하기 →</a>
+  <p class="foot"><a href="/calculators/" data-go>모든 계산기 보기</a></p>
+</section>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id),cl=(v,a=0,b=1)=>Math.min(b,Math.max(a,v)),ez=t=>1-Math.pow(1-t,3),won=n=>Math.round(n).toLocaleString('ko-KR');
+try{localStorage.setItem('donsem:intro-seen','1')}catch(e){}
+try{document.querySelectorAll('[data-go]').forEach(a=>a.addEventListener('click',()=>{try{localStorage.setItem('donsem:intro-seen','1')}catch(e){}}))}catch(e){}
+
+/* 캘린더 칸: 2026년 11월 1일 = 일요일 */
+const ex={2:'-1.2만',3:'-4.5만',5:'-0.8만',6:'-12만',9:'-2.1만',10:'-5.5만',11:'-0.9만',13:'-3.2만',16:'-1.4만',17:'-6만',19:'-2.7만',20:'-0.6만',23:'-1.9만',24:'-3.8만',25:'+292만',26:'-0.9만',27:'-4.1만'},cal=$('cal'),cells=[];
+for(let d=1;d<=35;d++){const c=document.createElement('div');if(d<=30){c.innerHTML='<span>'+d+'</span>'+(ex[d]?'<em class="'+(ex[d][0]=='+'?'in':'')+'">'+ex[d]+'</em>':'');if(d==26)c.className='td';if(ex[d])cells.push(c)}cal.appendChild(c)}
+const OUT=[12e3,45e3,8e3,12e4,21e3,55e3,9e3,32e3,14e3,6e4,27e3,6e3,19e3,38e3,0,9e3,41e3];
+
+/* 계산기 띠 */
+const T=[['salary','연봉 실수령액','#ebe5f8'],['loan','대출 이자','#dcedfb'],['savings','적금 이자','#d6f0eb'],['severance','퇴직금','#fde7d9'],['year-end-tax','연말정산','#fbe3ea'],['unemployment','실업급여','#ebe5f8'],['acquisition-tax','취득세','#dcedfb'],['dutch-pay','더치페이','#d6f0eb'],['hidden-money','숨은 돈 찾기','#fde7d9'],
+['wage','주휴수당','#fbe3ea'],['real-estate','부동산','#ebe5f8'],['compound','복리 계산','#dcedfb'],['pension','국민연금','#d6f0eb'],['discount','할인 계산','#fde7d9'],['budget','가계부','#fbe3ea'],['rent','월세·전세','#ebe5f8'],['dividend','배당금','#dcedfb'],['vat','부가세','#d6f0eb']];
+const tile=t=>'<div class="tile" style="--bg:'+t[2]+'"><img src="/icons/'+t[0]+'.webp" alt="" loading="lazy" width="70" height="70"><b>'+t[1]+'</b></div>';
+$('r1').innerHTML=T.slice(0,9).concat(T.slice(0,9)).map(tile).join('');$('r2').innerHTML=T.slice(9).concat(T.slice(9)).map(tile).join('');
+
+/* 글자 하나씩 밝히기 */
+const say=$('say');const parts=[];say.childNodes.forEach(n=>{if(n.nodeType==3)n.textContent.split(/(\s+)/).forEach(w=>parts.push(w.trim()?'<span>'+w+'</span>':w));else parts.push(n.outerHTML)});say.innerHTML=parts.join('');const W=[...say.querySelectorAll('span')];
+
+const top=$('top'),apps=[...document.querySelectorAll('.app')],beats=[...$('beats').children],mis=[...$('mis').children],dedB=[...$('ded').querySelectorAll('b')],dedE=[...$('ded').querySelectorAll('em')],DED=[156650,112640,93080];
+const prog=el=>{const r=el.getBoundingClientRect();return cl(-r.top/(el.offsetHeight-innerHeight))};
+const pw=$('pw');
+function fit(){const m=innerWidth<=760,h=innerHeight,s=m?Math.min(1,(h-62-118-40)/650,(innerWidth-32)/316):Math.min(1,(h-90)/650),ph=pw.firstElementChild;
+  ph.style.transform='scale('+s+')';ph.style.transformOrigin='top left';pw.style.width=316*s+'px';pw.style.height=650*s+'px'}
+let cur=-1;
+function frame(){
+  /* 1. 첫 화면 */
+  const a=prog($('hero'));
+  $('hsemi').style.transform='translateY('+(a*40)+'px) scale('+(1+a*.55)+') rotate('+(a*-8)+'deg)';
+  $('htx').style.opacity=1-cl(a*2.2);$('htx').style.transform='scale('+(1-a*.12)+')';
+  $('cue').style.opacity=1-cl(a*6);$('glow').style.transform='scale('+(1+a*1.4)+')';
+  $('wipe').style.opacity=cl((a-.62)/.38);
+  /* 2. 휴대폰 */
+  const s=$('story'),p=prog(s),r=s.getBoundingClientRect();
+  top.classList.toggle('lt',(r.top<=52&&r.bottom>52)||$('tools').getBoundingClientRect().top<=52&&$('tools').getBoundingClientRect().bottom>52);
+  $('prog').style.width=p*100+'%';
+  const b=Math.min(3,Math.floor(p*4)),q=cl(p*4-b);
+  if(b!==cur){cur=b;apps.forEach((x,i)=>x.classList.toggle('on',i===b));beats.forEach((x,i)=>x.classList.toggle('on',i===b))}
+  // 연봉
+  const s0=b>0?1:q,txt='40,000,000',k=Math.ceil(cl(s0/.28)*txt.length);
+  $('typ').textContent=txt.slice(0,k);$('won').style.opacity=k>=txt.length?1:0;
+  $('res').classList.toggle('on',s0>.32);$('net').textContent=won(2927123*ez(cl((s0-.32)/.33)));
+  const dq=cl((s0-.5)/.22);dedB.forEach((x,i)=>{const t=cl(dq*3-i);x.style.width=[48,35,29][i]*ez(t)+'%';dedE[i].textContent=t>0?'-'+won(DED[i]*ez(t))+'원':'-'});
+  // 캘린더
+  const s1=b>1?1:b<1?0:q,n=Math.round(cl(s1/.75)*cells.length);let o=0,inc=0;
+  cells.forEach((c,i)=>{c.classList.toggle('sh',i<n);if(i<n){if(i==14)inc=2927123;else o+=OUT[i]}});
+  $('sin').textContent=won(inc)+'원';$('sout').textContent=won(o)+'원';
+  // 셈이
+  const s2=b>2?1:b<2?0:q;
+  $('c1').classList.toggle('on',s2>.08);$('c2').classList.toggle('on',s2>.22);$('c2b').classList.toggle('on',s2>.22);
+  $('c2b').innerHTML=s2>.38?'식비로 기록해 둘까요?':'<span class="dots"><i></i><i></i><i></i></span>';
+  $('c3').classList.toggle('on',s2>.42);const bt=$('c3btn');bt.classList.toggle('press',s2>.6&&s2<.66);bt.classList.toggle('done',s2>=.66);bt.textContent=s2>=.66?'기록했어요 ✓':'기록하기';
+  $('c4').classList.toggle('on',s2>.76);
+  // 혜택
+  const s3=b<3?0:q,pt=Math.round(260*ez(cl(s3/.8)));
+  $('pt').textContent=pt+'P';$('lvt').textContent=(1+Math.floor(pt/100))+'단계';$('ptb').style.width=(pt%100||(pt?100:0))+'%';
+  mis.forEach((m,i)=>{const ok=s3>.12+i*.17;m.classList.toggle('ok',ok);m.querySelector('u').textContent=ok?'₩ 받기 완료':'참여하기'});
+  /* 3. 계산기 띠 */
+  const t=prog($('tools'));$('r1').style.transform='translateX('+(-t*38)+'%)';$('r2').style.transform='translateX('+(-50+t*38)+'%)';
+  /* 4. 글자 */
+  const w=prog($('words')),lit=Math.round(cl(w/.8)*W.length);W.forEach((x,i)=>x.classList.toggle('lit',i<lit));
+  /* 위 막대 색 */
+  const hr=$('hero').getBoundingClientRect();if(hr.bottom>52&&a>.8)top.classList.add('lt');
+}
+let tick=false;addEventListener('scroll',()=>{if(!tick){tick=true;requestAnimationFrame(()=>{tick=false;frame()})}},{passive:true});
+addEventListener('resize',()=>{fit();frame()});fit();frame();
+})();
+</script>
+</body>
+</html>
