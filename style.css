@@ -4520,17 +4520,17 @@ html body .ai-chips button { background: rgba(255, 255, 255, .4); -webkit-backdr
 .uz-tk em { font-style: normal; font-weight: 600; font-size: 13px; color: var(--muted); }
 .uz-tk:hover { text-decoration: none; }
 
-/* ── 11-22: 홈 큰 카드는 라이트·다크 모드 모두 같은 색 (다크 톤 + 흰 글씨) ── */
-.home .showcase .sc-card { --text: #f5f5f7; --muted: #a1a1a6; --bg: #1c1c1e; --card: rgba(255, 255, 255, .07); --field: rgba(255, 255, 255, .08); --line: rgba(255, 255, 255, .12); color: #f5f5f7; box-shadow: none !important; border: 0 !important; }
-.home .showcase .sc-card p { color: rgba(245, 245, 247, .75); }
-.home .showcase .sc-lav { background: #221a2e !important; }
-.home .showcase .sc-mint { background: #12261b !important; }
-.home .showcase .sc-peach { background: #2b1f16 !important; }
-.home .showcase .sc-sky { background: #142036 !important; }
-.home .showcase .sc-pink { background: #2a1d22 !important; }
-.home .showcase .sc-tag, .home .showcase .sc-rankvis { background: rgba(255, 255, 255, .08) !important; color: #f5f5f7; }
-.home .showcase .sc-go { background: #fff !important; color: #111 !important; }
-.home .showcase .sc-bar i { border-color: #1c1c1e; }
+/* ── 11-25: 홈 큰 카드 = 돈셈 캘린더 「달력 꾸미기」 색 그대로 (라이트·다크 같은 색) ── */
+.home .showcase .sc-card { --text: #191f28; --muted: #4e5968; --bg: #fff; --card: rgba(255, 255, 255, .6); --field: rgba(255, 255, 255, .7); --line: rgba(0, 0, 0, .08); color: #191f28; box-shadow: none !important; border: 0 !important; }
+.home .showcase .sc-card p { color: #4e5968; }
+.home .showcase .sc-lav { background: #ebe5f8 !important; --th: #9a7aea; }   /* 라벤더 */
+.home .showcase .sc-mint { background: #d6f0eb !important; --th: #22b59c; }  /* 민트 */
+.home .showcase .sc-peach { background: #fde7d9 !important; --th: #ff9459; } /* 연주황 */
+.home .showcase .sc-sky { background: #dcedfb !important; --th: #4ea3e6; }   /* 연하늘 */
+.home .showcase .sc-pink { background: #fbe3ea !important; --th: #f2708f; }  /* 연분홍 */
+.home .showcase .sc-tag, .home .showcase .sc-rankvis { background: rgba(255, 255, 255, .7) !important; color: #191f28; }
+.home .showcase .sc-go { background: var(--th) !important; color: #fff !important; }
+.home .showcase .sc-bar i { border-color: #fff; }
 /* 큰 카드와 「셈이가 챙겨 줄게요」 사이 여백 */
 .home .showcase { margin-bottom: 28px !important; }
 .semi-card { margin-top: 20px; }
