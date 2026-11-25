@@ -3469,17 +3469,22 @@ semiTks();
   const attend = () => (rd('donsem:bn-attend') || {})[today];
   // [id, 색, 그림, 제목, 했는지, 하러 가기(주소 또는 함수)]
   const M = () => [
-    ['attend', '#2EE59D', '✅', '오늘 출석하고\n10P 받기', !!attend(), () => { const a = rd('donsem:bn-attend') || {}; a[today] = 1; try { localStorage.setItem('donsem:bn-attend', JSON.stringify(a)); } catch (e) { /* 괜찮아요 */ } draw(); }],
-    ['quiz', '#FF7A1A', '🎯', '오늘의 돈 퀴즈\n한 문제 풀기', !!st.quiz, '/quiz/'],
-    ['money', '#3FD8F2', '📒', '가계부에\n오늘 쓴 돈 적기', !!st.money, () => { if (window.openQuickAdd) window.openQuickAdd(); else location.href = '/budget/'; }],
-    ['semi', '#A3E635', '🌱', '셈이에게\n일 하나 맡기기', localStorage.getItem('donsem:semi-day') === today, () => window.donsemAsk && window.donsemAsk()],
-    ['calc', '#C4A5F5', '🧮', '계산기로\n하나 따져 보기', !!st.calc, '/calculators/'],
+    // 색은 돈셈 캘린더 「달력 꾸미기」 색 그대로 (민트·연주황·연하늘·라벤더·연분홍)
+    ['attend', '#d6f0eb', 'money-calendar.webp', '오늘 출석하고\n10P 받기', !!attend(), () => { const a = rd('donsem:bn-attend') || {}; a[today] = 1; try { localStorage.setItem('donsem:bn-attend', JSON.stringify(a)); } catch (e) { /* 괜찮아요 */ } draw(); }],
+    ['quiz', '#fde7d9', 'quiz.webp', '오늘의 돈 퀴즈\n한 문제 풀기', !!st.quiz, '/quiz/'],
+    ['money', '#dcedfb', 'budget.webp', '가계부에\n오늘 쓴 돈 적기', !!st.money, () => { if (window.openQuickAdd) window.openQuickAdd(); else location.href = '/budget/'; }],
+    ['semi', '#ebe5f8', 'semi-blink.svg', '셈이에게\n일 하나 맡기기', localStorage.getItem('donsem:semi-day') === today, () => window.donsemAsk && window.donsemAsk()],
+    ['calc', '#fbe3ea', 'percent.webp', '계산기로\n하나 따져 보기', !!st.calc, '/calculators/'],
   ];
   function draw() {
     const p = P(), got = p.got[today] || [], ms = M(), done = ms.filter(m => m[4]).length;
     $('bn-pt').textContent = p.n.toLocaleString('ko-KR'); $('bn-done').textContent = done;
     $('bn-dots').innerHTML = ms.map((m, i) => `<i class="${i < done ? 'on' : ''}"></i>`).join('');
-    $('bn-cards').innerHTML = ms.map(([id, c, ico, t, ok], i) => { const g = got.includes(id); return `<button type="button" class="bn-card" data-i="${i}" style="--c:${c}"><em class="bn-badge${g ? ' got' : ''}">${g ? '받았어요 ✓' : ok ? '🪙 받기' : '참여하기'}</em><span class="bn-ico" aria-hidden="true">${ico}</span><b>${t.replace('\n', '<br>')}</b><small>${g ? '+10P 적립' : ok ? '+10P 받을 수 있어요' : '+10P'}</small></button>`; }).join('');
+    $('bn-cards').innerHTML = ms.map(([id, c, ico, t, ok], i) => { const g = got.includes(id); return `<button type="button" class="bn-card" data-i="${i}" style="--c:${c}"><em class="bn-badge${g ? ' got' : ''}">${g ? '받았어요 ✓' : ok ? '<i class="bn-coin">₩</i> 받기' : '참여하기'}</em><img class="bn-ico" src="/icons/${ico}" alt="" width="64" height="64"><b>${t.replace('\n', '<br>')}</b><small>${g ? '+10P 적립' : ok ? '+10P 받을 수 있어요' : '+10P'}</small></button>`; }).join('');
+    // 무신사 '무진장 1~6단계'처럼: 100P마다 한 단계
+    const lv = Math.min(6, 1 + Math.floor(p.n / 100)), rest = 100 - p.n % 100;
+    $('bn-lv-n').textContent = lv; $('bn-lv-t').textContent = lv >= 6 ? '최고 단계예요!' : `${rest}P 더 모으면 ${lv + 1}단계`;
+    $('bn-lv-fill').style.width = Math.max(2, Math.min(100, p.n / 6)) + '%';
   }
   root.addEventListener('click', e => {
     const b = e.target.closest('.bn-card'); if (!b) return;
@@ -3492,13 +3497,19 @@ semiTks();
   draw();
   // 놓치면 손해인 돈 혜택: 돈 달력의 다가오는 큰 일정 + 숨은 돈 + 친구 초대
   setTimeout(() => { // 돈 달력 자료(MONEY_CAL)는 이 파일 아래쪽에서 만들어져서 한 박자 뒤에 읽어요
-  const evs = (typeof mcUpcoming === 'function' ? mcUpcoming() : []).filter(x => x.imp >= 2 && x.go).slice(0, 4);
+  const all = (typeof mcUpcoming === 'function' ? mcUpcoming() : []).filter(x => x.go);
+  const evs = all.filter(x => x.imp >= 2).slice(0, 4);
   const esc2 = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-  $('bn-list').innerHTML = [['🔍', '아직 안 받은 숨은 돈 찾기', '월세·의료비 환급, 근로장려금 확인', '/hidden-money/'],
-    ...evs.map(x => ['⏰', `${mcDays(x.d) ? `D-${mcDays(x.d)}` : '오늘'} ${x.t}`, x.go[1], x.go[0]]),
-    ['💌', '친구에게 셈이 소개하기', '돈셈 주소 보내기', '#invite'], ['🎟️', '셈이 한도 초기화 티켓', '한도를 다 쓰면 바로 다시', '/my/#my-usage']]
-    .map(([ico, t, d, u]) => `<li><a href="${u}"><span class="bn-li" aria-hidden="true">${ico}</span><span><b>${esc2(t)}</b><small>${esc2(d)}</small></span><em>받기</em></a></li>`).join('');
-  $('bn-list').addEventListener('click', e => { const a = e.target.closest('a[href="#invite"]'); if (!a) return; e.preventDefault(); const url = location.origin + '/?semi=hi', text = '돈 계산·가계부를 말로 대신 해 주는 셈이 같이 쓰자 🌱'; if (navigator.share) navigator.share({ title: '돈셈', text, url }).catch(() => {}); else if (navigator.clipboard) navigator.clipboard.writeText(text + '\n' + url).then(() => toast('링크를 복사했어요.')); });
+  const ic = u => { const k = String(u).split('/').filter(Boolean)[0]; return `/icons/${k || 'money-calendar'}.webp`; };
+  const dd = x => mcDays(x.d) ? `D-${mcDays(x.d)}` : '오늘';
+  const TH = ['#d6f0eb', '#dcedfb', '#fde7d9', '#fbe3ea', '#ebe5f8'];
+  // 무신사 '놓치면 아쉬운 래플'처럼: 다가오는 돈 일정을 가로로 넘겨 봐요
+  $('bn-rail').innerHTML = all.slice(0, 8).map((x, i) => `<a href="${esc2(x.go[0])}"><span class="bn-rail-im" style="background:${TH[i % 5]}"><img src="${ic(x.go[0])}" alt="" width="72" height="72" loading="lazy" onerror="this.src='/icons/money-calendar.webp'"><em>${dd(x)}</em></span><span class="bn-rail-tx"><b>${esc2(x.t)}</b><small>${esc2(x.go[1])}</small></span></a>`).join('') || '<p class="bn-note">다가오는 돈 일정이 없어요.</p>';
+  $('bn-list').innerHTML = [['/icons/hidden-money.webp', '아직 안 받은 숨은 돈 찾기', '월세·의료비 환급, 근로장려금 확인', '/hidden-money/'],
+    ...evs.map(x => [ic(x.go[0]), `${dd(x)} ${x.t}`, x.go[1], x.go[0]]),
+    ['/icons/wrap.webp', '친구에게 셈이 소개하기', '돈셈 주소 보내기', '#invite'], ['/icons/semi-blink.svg', '셈이 한도 초기화 티켓', '한도를 다 쓰면 바로 다시', '/my/#my-usage']]
+    .map(([im, t, d, u]) => `<li><a href="${u}"><span class="bn-li" aria-hidden="true"><img src="${im}" alt="" width="40" height="40" loading="lazy" onerror="this.src='/icons/money-calendar.webp'"></span><span><b>${esc2(t)}</b><small>${esc2(d)}</small></span><em><i class="bn-coin">₩</i> 받기</em></a></li>`).join('');
+  root.addEventListener('click', e => { const a = e.target.closest('a[href="#invite"]'); if (!a) return; e.preventDefault(); const url = location.origin + '/?semi=hi', text = '돈 계산·가계부를 말로 대신 해 주는 셈이 같이 쓰자 🌱'; if (navigator.share) navigator.share({ title: '돈셈', text, url }).catch(() => {}); else if (navigator.clipboard) navigator.clipboard.writeText(text + '\n' + url).then(() => toast('링크를 복사했어요.')); });
   });
   // 나의 혜택: 초기화 티켓 수·이용권
   if (typeof semiPasses === 'function') {
