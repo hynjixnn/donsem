@@ -221,7 +221,7 @@ img{display:block}
 /* 휴대폰 화면 */
 @media (max-width:760px){
   #story .stick{grid-template-columns:1fr;grid-template-rows:auto 1fr;gap:0;padding:62px 16px 0;align-items:start;justify-items:center}
-  .beats{width:100%;height:118px}
+  .beats{width:100%;height:130px}
   .beats li{top:0;text-align:center;transform:translateY(12px)}
   .beats li.on{transform:none}
   .beats h2{font-size:23px!important}
@@ -257,9 +257,9 @@ img{display:block}
 <section class="pin" id="story"><div class="stick">
   <ol class="beats" id="beats">
     <li class="on"><em>01 SALARY</em><h2>연봉만 넣으면<br>월 실수령액이 바로</h2><p>국민연금·건강보험·소득세가 얼마씩 빠지는지 한눈에 보여요.</p></li>
-    <li><em>02 CALENDAR</em><h2>한 달 돈 흐름을<br>달력 한 장에</h2><p>들어온 돈은 보라, 나간 돈은 회색. 고정지출까지 날짜마다 쌓여요.</p></li>
-    <li><em>03 SEMI AI</em><h2>말만 하면<br>셈이가 대신 기록</h2><p>“점심 국밥 9,000원” 한마디면 가계부에 들어가요.</p></li>
-    <li><em>04 BENEFITS</em><h2>매일 미션하고<br>셈 포인트 모으기</h2><p>출석·퀴즈·계산 미션을 끝내면 포인트가 쌓이고 단계가 올라요.</p></li>
+    <li><em>02 CALENDAR</em><h2>한 달 돈 흐름을<br>달력 한 장에</h2><p>들어온 돈은 보라, 나간 돈은 날짜 칸 아래에. 구독·돈 일정도 달력에 함께 보여요.</p></li>
+    <li><em>03 SEMI AI</em><h2>말만 하면<br>셈이가 대신 기록</h2><p>“점심 국밥 9,000원” 한마디면 셈이가 날짜·금액·분류를 채워 줘요. 「적기」만 누르면 끝.</p></li>
+    <li><em>04 BENEFITS</em><h2>매일 미션하고<br>셈 포인트 모으기</h2><p>출석·퀴즈·가계부·셈이·계산기 미션 5개로 하루 최대 50P. 100P마다 한 단계씩 올라요.</p></li>
   </ol>
   <div class="phone-wrap" id="pw"><div class="phone"><div class="scrn">
     <div class="island"></div>
@@ -358,8 +358,8 @@ for(let k=0;k<35;k++){const d=k<30?k+1:k-29,c=document.createElement('div'),w=k%
   c.innerHTML=h;cal.appendChild(c)}
 
 /* 계산기 띠 */
-const T=[['salary','연봉 실수령액','#ebe5f8'],['loan','대출 이자','#dcedfb'],['savings','적금 이자','#d6f0eb'],['severance','퇴직금','#fde7d9'],['year-end-tax','연말정산','#fbe3ea'],['unemployment','실업급여','#ebe5f8'],['acquisition-tax','취득세','#dcedfb'],['dutch-pay','더치페이','#d6f0eb'],['hidden-money','숨은 돈 찾기','#fde7d9'],
-['wage','주휴수당','#fbe3ea'],['real-estate','부동산','#ebe5f8'],['compound','복리 계산','#dcedfb'],['pension','국민연금','#d6f0eb'],['discount','할인 계산','#fde7d9'],['budget','가계부','#fbe3ea'],['rent','월세·전세','#ebe5f8'],['dividend','배당금','#dcedfb'],['vat','부가세','#d6f0eb']];
+const T=[['salary','연봉 실수령액','#ebe5f8'],['loan','대출 이자','#dcedfb'],['savings','적금 이자','#d6f0eb'],['severance','퇴직금','#fde7d9'],['year-end-tax','연말정산 환급','#fbe3ea'],['unemployment','실업급여','#ebe5f8'],['acquisition-tax','취득세','#dcedfb'],['dutch-pay','더치페이','#d6f0eb'],['hidden-money','숨은 돈 찾기','#fde7d9'],
+['wage','시급·월급·연봉','#fbe3ea'],['real-estate','부동산','#ebe5f8'],['compound','복리 투자','#dcedfb'],['pension','연금저축·IRP','#d6f0eb'],['discount','할인율','#fde7d9'],['budget','캘린더 가계부','#fbe3ea'],['rent','전월세 전환','#ebe5f8'],['dividend','배당금','#dcedfb'],['vat','부가세','#d6f0eb']];
 const tile=t=>'<div class="tile" style="--bg:'+t[2]+'"><img src="/icons/'+t[0]+'.webp" alt="" loading="lazy" width="70" height="70"><b>'+t[1]+'</b></div>';
 $('r1').innerHTML=T.slice(0,9).concat(T.slice(0,9)).map(tile).join('');$('r2').innerHTML=T.slice(9).concat(T.slice(9)).map(tile).join('');
 
@@ -369,7 +369,7 @@ const say=$('say');const parts=[];const sp=t=>t.split(/(\s+)/).map(w=>w.trim()?'
 const top=$('top'),apps=[...document.querySelectorAll('.app')],beats=[...$('beats').children],mis=[...$('mis').children],dedR=[...$('ded').children];
 const prog=el=>{const r=el.getBoundingClientRect();return cl(-r.top/(el.offsetHeight-innerHeight))};
 const pw=$('pw');
-function fit(){const m=innerWidth<=760,h=innerHeight,s=m?Math.min(1,(h-62-118-40)/650,(innerWidth-32)/316):Math.min(1,(h-90)/650),ph=pw.firstElementChild;
+function fit(){const m=innerWidth<=760,h=innerHeight,s=m?Math.min(1,(h-62-130-36)/650,(innerWidth-32)/316):Math.min(1,(h-90)/650),ph=pw.firstElementChild;
   ph.style.transform='scale('+s+')';ph.style.transformOrigin='top left';pw.style.width=316*s+'px';pw.style.height=650*s+'px'}
 let cur=-1;
 function frame(){
