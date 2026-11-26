@@ -82,24 +82,42 @@ img{display:block}
 .ah b{font-size:21px;font-weight:800;letter-spacing:-.02em}
 .ah img{width:30px;height:30px}
 .bar{display:block;height:9px;border-radius:5px;background:#eef0f3}
-/* 연봉 */
-.fld{border-radius:16px;background:#f4f5f7;padding:13px 15px}
-.fld small{display:block;font-size:12px;color:var(--mut);font-weight:600;margin-bottom:5px}
-.fld div{font-size:22px;font-weight:800;letter-spacing:-.01em;min-height:28px;display:flex;align-items:center}
-.caret{display:inline-block;width:2px;height:22px;background:var(--p);margin-left:2px;animation:blink 1s steps(1) infinite}
-@keyframes blink{50%{opacity:0}}
-.res{margin-top:14px;border-radius:20px;background:linear-gradient(150deg,#7f4fb5,#5d3389);color:#fff;padding:18px 18px 16px;opacity:0;transform:translateY(14px);transition:opacity .4s,transform .5s cubic-bezier(.2,.8,.2,1)}
-.res.on{opacity:1;transform:none}
-.res small{font-size:12px;opacity:.75;font-weight:600}
-.res strong{display:block;margin-top:4px;font-size:31px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.res strong u{text-decoration:none;font-size:19px;margin-left:2px}
-.res p{margin-top:6px;font-size:12px;opacity:.72}
-.ded{margin-top:14px;display:grid;gap:12px}
-.ded div{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:10px;font-size:13px;font-weight:600}
-.ded span{color:var(--mut)}
-.ded i{height:8px;border-radius:5px;background:#f0edf6;overflow:hidden;display:block}
-.ded i b{display:block;height:100%;width:0;background:var(--p3);border-radius:5px}
-.ded em{font-style:normal;font-variant-numeric:tabular-nums;color:var(--ink);font-size:12.5px}
+/* 연봉 (실제 돈셈 연봉 실수령액 화면처럼: 입력 → 아래 결과 막대 → 급여명세서로 내려가기) */
+.app.sal{padding:0;background:#f4f4f7;overflow:hidden}
+.app.sal::before{content:"";position:absolute;left:0;right:0;top:0;height:56px;background:linear-gradient(#f4f4f7 70%,rgba(244,244,247,0));z-index:3}
+.scol{padding:60px 14px 90px;will-change:transform}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg span{display:grid;place-items:center;height:32px;border-radius:16px;border:1.5px solid var(--p);color:var(--p);font-size:12px;font-weight:700}
+.seg span.on{background:var(--p);color:#fff}
+.sl{margin:13px 0 6px;font-size:12px;font-weight:800}
+.sin{display:flex;align-items:baseline;justify-content:flex-end;gap:5px;height:46px;padding:0 16px;border-radius:14px;background:#fff;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.sin small{font-size:12px;color:#8b95a1;font-weight:500}
+.sin .caret{align-self:center;height:20px;margin:0}
+.chips{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:10.5px;font-weight:600}
+.chips span{padding:6px 9px;border-radius:14px;background:#e9e9ee}
+.chips i{font-style:normal;color:#6b7684;padding:0 4px}.chips em{margin-left:auto;font-style:normal;color:#8b95a1;font-weight:500}
+.rbar{position:absolute;left:8px;right:8px;bottom:22px;z-index:5;display:flex;align-items:center;gap:8px;height:44px;padding:0 13px;border-radius:15px;background:#26262b;color:#fff;transform:translateY(80px);opacity:0;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .3s}
+.rbar.on{transform:none;opacity:1}.rbar.gone{transform:translateY(80px);opacity:0}
+.rbar small{font-size:10px;opacity:.75}.rbar b{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.rbar i{margin-left:auto;font-style:normal;font-size:10.5px;color:#c9b6ea;font-weight:600;padding:5px 6px;border-radius:8px;transition:background .15s}
+.rbar i.press{background:rgba(255,255,255,.16)}
+.rcard{opacity:0;transition:opacity .4s;margin-top:22px;border-radius:18px;background:#fff;padding:15px 13px 13px}
+.rcard>small{font-size:11.5px;color:#6b7684}
+.rcard>b{display:block;margin:2px 0 11px;font-size:25px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.slip{border-radius:14px;border:1px solid #e5e5ea;border-top:3px solid #9a7aea;background:#f7f7f9;padding:10px 11px 11px}
+.slip>em{font-style:normal;font-size:9px;font-weight:800;letter-spacing:.18em;color:#6b7684}
+.slip>b{display:block;margin:3px 0 7px;font-size:13px;font-weight:800}
+.sh{display:flex;align-items:center;gap:6px;margin:8px 0 3px;font-size:11px;font-weight:800}
+.sh i{display:grid;place-items:center;width:16px;height:16px;border-radius:50%;font-style:normal;font-size:12px;font-weight:800;background:#e9e2f6;color:var(--p)}
+.sh i.mn{background:#fde4e4;color:#e5484d}
+.slip dl{display:grid}
+.slip dl div{display:flex;justify-content:space-between;padding:4.5px 0;border-bottom:1px dashed #dfe1e6;font-size:10.5px;font-variant-numeric:tabular-nums}
+.slip dt{color:#6b7684}.slip dd{font-weight:600}
+.slip .tot{border-bottom:0;border-top:1.5px solid #191f28;margin-top:2px;font-weight:800}.slip .tot dt{color:#191f28}
+.slip .tot dd.pu{color:var(--p);font-weight:800}.slip .tot dd.rd{color:#e5484d;font-weight:800}
+.net{margin-top:9px;border-radius:12px;background:#1d1d21;color:#fff;padding:11px 13px}
+.net small{font-size:10px;opacity:.8}.net b{display:block;margin:2px 0;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}.net span{font-size:9.5px;opacity:.7}
+.bar{display:block;height:9px;border-radius:5px;background:#eef0f3}
 .fill{margin-top:20px;display:grid;gap:9px}
 /* 캘린더 (실제 돈셈 캘린더처럼) */
 .app.gr{background:#f2f3f6}
@@ -247,16 +265,26 @@ img{display:block}
     <div class="island"></div>
     <div class="sbar"><span>9:41</span><s><i></i></s></div>
 
-    <div class="app on" data-a="0">
-      <div class="ah"><b>연봉 실수령액</b><img src="/icons/salary.webp" alt=""></div>
-      <div class="fld"><small>연봉</small><div><span id="typ"></span><span class="caret"></span><span id="won" style="margin-left:4px;opacity:0">원</span></div></div>
-      <div class="res" id="res"><small>한 달에 받는 돈</small><strong><span id="net">0</span><u>원</u></strong><p>1년이면 약 3,513만 원 · 2027년 기준</p></div>
-      <div class="ded" id="ded">
-        <div><span>국민연금</span><i><b></b></i><em>-</em></div>
-        <div><span>건강보험</span><i><b></b></i><em>-</em></div>
-        <div><span>소득세</span><i><b></b></i><em>-</em></div>
+    <div class="app sal on" data-a="0">
+      <div class="scol" id="scol">
+        <div class="seg"><span class="on">연봉</span><span>월급</span></div>
+        <div class="sl">금액 (세전)</div>
+        <div class="sin"><span id="typ"></span><span class="caret" id="crt"></span><small>원</small></div>
+        <div class="chips"><span>+100만</span><span>+1000만</span><span>+1억</span><i>지우기</i><em id="kor"></em></div>
+        <div class="sl">비과세액 (식대 등, 한 달)</div>
+        <div class="sin">200,000<small>원</small></div>
+        <div class="rcard" id="rcard">
+          <small>한 달 실수령액</small><b id="net">2,935,813원</b>
+          <div class="slip"><em>PAYSLIP</em><b>연봉 4,000만 원 급여명세서</b>
+            <div class="sh"><i>+</i>받는 돈</div>
+            <dl><div><dt>기본급</dt><dd>3,133,333원</dd></div><div><dt>비과세 (식대 등)</dt><dd>200,000원</dd></div><div class="tot"><dt>지급 총액</dt><dd class="pu">3,333,333원</dd></div></dl>
+            <div class="sh"><i class="mn">−</i>빠지는 돈</div>
+            <dl id="ded"><div><dt>국민연금 (4.75%)</dt><dd>-148,810원</dd></div><div><dt>건강보험 (3.595%)</dt><dd>-112,640원</dd></div><div><dt>장기요양보험</dt><dd>-14,800원</dd></div><div><dt>고용보험 (0.9%)</dt><dd>-28,190원</dd></div><div><dt>근로소득세</dt><dd>-84,620원</dd></div><div><dt>지방소득세</dt><dd>-8,460원</dd></div><div class="tot"><dt>공제 총액</dt><dd class="rd" id="dtot">-397,520원</dd></div></dl>
+            <div class="net"><small>실수령액 (차인지급액)</small><b id="net2">2,935,813원</b><span>1년이면 35,229,756원</span></div>
+          </div>
+        </div>
       </div>
-      <div class="fill"><span class="bar" style="width:72%"></span><span class="bar" style="width:54%"></span><span class="bar" style="width:63%"></span></div>
+      <div class="rbar" id="rbar"><small>한 달 실수령액</small><b id="rnet">0원</b><i id="rgo">결과 보기 ↓</i></div>
     </div>
 
     <div class="app gr" data-a="1">
@@ -320,7 +348,7 @@ try{localStorage.setItem('donsem:intro-seen','1')}catch(e){}
 try{document.querySelectorAll('[data-go]').forEach(a=>a.addEventListener('click',()=>{try{localStorage.setItem('donsem:intro-seen','1')}catch(e){}}))}catch(e){}
 
 /* 캘린더 칸: 2026년 11월 1일 = 일요일 (실제 돈셈 캘린더처럼 칸 안 일정 + 아래 금액) */
-const AM={2:-8900,3:-4400,13:-31500,16:-31500,19:-33000,20:-4500,23:-10000,24:-31500,25:2927123};
+const AM={2:-8900,3:-4400,13:-31500,16:-31500,19:-33000,20:-4500,23:-10000,24:-31500,25:2935813};
 const EV={2:[['sub','♫ 음악 구독']],3:[['sub','☁ 클라우드']],11:[['pk','11.11 쇼핑데이']],19:[['sub','✳ AI 구독']],26:[['tl','한국은행 기준금리']],27:[['pk','블랙프라이데이']],30:[['lv','연말정산 간소화'],['or','종합소득세'],['pk','사이버먼데이']]};
 const cal=$('cal'),cells=[];
 for(let k=0;k<35;k++){const d=k<30?k+1:k-29,c=document.createElement('div'),w=k%7;
@@ -338,7 +366,7 @@ $('r1').innerHTML=T.slice(0,9).concat(T.slice(0,9)).map(tile).join('');$('r2').i
 /* 글자 하나씩 밝히기 */
 const say=$('say');const parts=[];const sp=t=>t.split(/(\s+)/).map(w=>w.trim()?'<span>'+w+'</span>':w).join('');say.childNodes.forEach(n=>{if(n.nodeType==3)parts.push(sp(n.textContent));else if(n.tagName=='SMALL')parts.push('<small>'+sp(n.textContent)+'</small>');else parts.push(n.outerHTML)});say.innerHTML=parts.join('');const W=[...say.querySelectorAll('span')];
 
-const top=$('top'),apps=[...document.querySelectorAll('.app')],beats=[...$('beats').children],mis=[...$('mis').children],dedB=[...$('ded').querySelectorAll('b')],dedE=[...$('ded').querySelectorAll('em')],DED=[156650,112640,93080];
+const top=$('top'),apps=[...document.querySelectorAll('.app')],beats=[...$('beats').children],mis=[...$('mis').children],dedR=[...$('ded').children];
 const prog=el=>{const r=el.getBoundingClientRect();return cl(-r.top/(el.offsetHeight-innerHeight))};
 const pw=$('pw');
 function fit(){const m=innerWidth<=760,h=innerHeight,s=m?Math.min(1,(h-62-118-40)/650,(innerWidth-32)/316):Math.min(1,(h-90)/650),ph=pw.firstElementChild;
@@ -357,11 +385,12 @@ function frame(){
   $('prog').style.width=p*100+'%';
   const b=Math.min(3,Math.floor(p*4)),q=cl(p*4-b);
   if(b!==cur){cur=b;apps.forEach((x,i)=>x.classList.toggle('on',i===b));beats.forEach((x,i)=>x.classList.toggle('on',i===b))}
-  // 연봉
-  const s0=b>0?1:q,txt='40,000,000',k=Math.ceil(cl(s0/.28)*txt.length);
-  $('typ').textContent=txt.slice(0,k);$('won').style.opacity=k>=txt.length?1:0;
-  $('res').classList.toggle('on',s0>.32);$('net').textContent=won(2927123*ez(cl((s0-.32)/.33)));
-  const dq=cl((s0-.5)/.22);dedB.forEach((x,i)=>{const t=cl(dq*3-i);x.style.width=[48,35,29][i]*ez(t)+'%';dedE[i].textContent=t>0?'-'+won(DED[i]*ez(t))+'원':'-'});
+  // 연봉: 금액 입력 → 아래 결과 막대 → 「결과 보기」 → 급여명세서로 내려가기
+  const s0=b>0?1:q,txt='40,000,000',k=Math.ceil(cl(s0/.24)*txt.length);
+  $('typ').textContent=txt.slice(0,k);$('crt').style.display=s0>.45?'none':'';$('kor').textContent=k>=txt.length?'4,000만 원':'';
+  const rb=$('rbar');rb.classList.toggle('on',s0>.27);rb.classList.toggle('gone',s0>.5);$('rnet').textContent=won(2935813*ez(cl((s0-.27)/.15)))+'원';$('rgo').classList.toggle('press',s0>.42&&s0<.5);
+  const sc=ez(cl((s0-.48)/.3)),rc=$('rcard');rc.style.opacity=s0>.3?1:0;$('scol').style.transform='translateY('+(-sc*(rc.offsetTop-52))+'px)';
+  const rq=cl((s0-.62)/.3);dedR.forEach((x,i)=>x.style.opacity=rq*7>i?1:.15);$('dtot').textContent='-'+won(397520*ez(rq))+'원';
   // 캘린더
   const s1=b>1?1:b<1?0:q,n=Math.round(cl(s1/.7)*cells.length);let o=0,inc=0;
   cells.forEach(([c,v],i)=>{c.classList.toggle('sh',i<n);if(i<n){if(v>0)inc+=v;else o-=v}});
