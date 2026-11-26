@@ -90,8 +90,9 @@ img{display:block}
 .seg span{display:grid;place-items:center;height:32px;border-radius:16px;border:1.5px solid var(--p);color:var(--p);font-size:12px;font-weight:700}
 .seg span.on{background:var(--p);color:#fff}
 .sl{margin:13px 0 6px;font-size:12px;font-weight:800}
-.sin{display:flex;align-items:baseline;justify-content:flex-end;gap:5px;height:46px;padding:0 16px;border-radius:14px;background:#fff;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.01em}
-.sin small{font-size:12px;color:#8b95a1;font-weight:500}
+.sin{display:flex;align-items:center;justify-content:flex-end;gap:6px;height:46px;line-height:1;padding:0 16px;border-radius:14px;background:#fff;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.sin small{font-size:12px;color:#8b95a1;font-weight:500;line-height:1}
+.sin span{line-height:1}
 .sin .caret{align-self:center;height:20px;margin:0}
 .chips{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:10.5px;font-weight:600}
 .chips span{padding:6px 9px;border-radius:14px;background:#e9e9ee}
@@ -135,18 +136,20 @@ img{display:block}
 .cmp svg{flex:none;width:78px;height:28px}
 .wk2,.cal2{display:grid;grid-template-columns:repeat(7,1fr)}
 .wk2{margin:9px 0 4px}.wk2 span{font-size:9.5px;text-align:center;color:#4e5968;font-weight:600}
-.wk2 span:first-child,.cal2 .su{color:#f04452}.wk2 span:last-child,.cal2 .sa{color:#3182f6}
-.cal2{gap:3px}
-.cal2 div{position:relative;height:60px;border-radius:8px;background:#fff;padding-top:4px;text-align:center;font-size:10.5px;font-weight:700;overflow:hidden}
-.cal2 div.nx{opacity:.45;color:#8b95a1;background:#fafafb}
-.cal2 div.td{box-shadow:0 0 0 1.5px var(--p) inset}
-.cal2 div.td>span{display:inline-grid;place-items:center;width:18px;height:18px;margin-top:-2px;border-radius:50%;background:var(--p);color:#fff}
-.cal2 s{display:block;margin:2px 2px 0;padding:1px 2px;border-radius:4px;font-size:7.5px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none;text-align:left}
-.cal2 s.sub{background:#fff;box-shadow:0 0 0 1px #dfe1e6 inset;color:#333d4b}
-.cal2 s.pk{background:#fde2e8;color:#d6336c}.cal2 s.tl{background:#d8f1f3;color:#0b7285}.cal2 s.lv{background:#e9e4fb;color:#5b3fc4}.cal2 s.or{background:#ffe8d4;color:#d9480f}
-.cal2 em{position:absolute;left:0;right:0;bottom:4px;font-style:normal;font-size:8px;font-weight:600;color:#8b95a1;letter-spacing:-.03em;opacity:0;transform:translateY(4px);transition:opacity .3s,transform .35s}
+.wk2 span:first-child{color:#f04452}.wk2 span:last-child{color:#3182f6}
+.cal2{gap:3px;align-items:start}
+.cal2>div{position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;height:60px;min-width:0;border-radius:8px;background:#fff;padding:4px 0 0;overflow:hidden}
+.cal2>div.nx{opacity:.45;background:#fafafb}.cal2>div.nx b{color:#8b95a1}
+.cal2>div.td{box-shadow:0 0 0 1.5px var(--p) inset}
+.cal2 b{display:block;flex:none;height:18px;line-height:18px;text-align:center;font-size:10.5px;font-weight:700}
+.cal2>div.su b{color:#f04452}.cal2>div.sa b{color:#3182f6}
+.cal2>div.td b{width:18px;margin:0 auto;border-radius:50%;background:var(--p);color:#fff}
+.cal2 i{display:block;flex:none;margin:2px 2px 0;padding:1px 2px;border-radius:4px;font-style:normal;font-size:7.5px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.cal2 i.sub{background:#fff;box-shadow:0 0 0 1px #dfe1e6 inset;color:#333d4b}
+.cal2 i.pk{background:#fde2e8;color:#d6336c}.cal2 i.tl{background:#d8f1f3;color:#0b7285}.cal2 i.lv{background:#e9e4fb;color:#5b3fc4}.cal2 i.or{background:#ffe8d4;color:#d9480f}
+.cal2 em{position:absolute;left:0;right:0;bottom:4px;display:block;text-align:center;font-style:normal;font-size:8px;font-weight:600;line-height:1;color:#8b95a1;letter-spacing:-.03em;opacity:0;transform:translateY(4px);transition:opacity .3s,transform .35s}
 .cal2 em.in{color:var(--p);font-weight:800}
-.cal2 div.sh em{opacity:1;transform:none}
+.cal2>div.vis em{opacity:1;transform:none}
 /* 셈이 대화 (실제 셈이 채팅방처럼) */
 .chat{display:flex;flex-direction:column;gap:10px;padding-top:4px}
 .bub{max-width:80%;padding:10px 14px;border-radius:20px;font-size:14px;line-height:1.4;font-weight:500;opacity:0;transform:translateY(10px) scale(.96);transition:opacity .3s,transform .4s cubic-bezier(.2,.9,.25,1.2)}
@@ -272,7 +275,8 @@ img{display:block}
         <div class="sin"><span id="typ"></span><span class="caret" id="crt"></span><small>원</small></div>
         <div class="chips"><span>+100만</span><span>+1000만</span><span>+1억</span><i>지우기</i><em id="kor"></em></div>
         <div class="sl">비과세액 (식대 등, 한 달)</div>
-        <div class="sin">200,000<small>원</small></div>
+        <div class="sin"><span>200,000</span><small>원</small></div>
+        <div class="chips"><span>+1만</span><span>+10만</span><span>+100만</span><i>지우기</i><em>20만 원</em></div>
         <div class="rcard" id="rcard">
           <small>한 달 실수령액</small><b id="net">2,935,813원</b>
           <div class="slip"><em>PAYSLIP</em><b>연봉 4,000만 원 급여명세서</b>
@@ -354,7 +358,7 @@ const cal=$('cal'),cells=[];
 for(let k=0;k<35;k++){const d=k<30?k+1:k-29,c=document.createElement('div'),w=k%7;
   if(k>=30)c.className='nx';else{if(d==26)c.classList.add('td');(EV[d]||[]).forEach(e=>{})}
   if(w==0)c.classList.add('su');if(w==6)c.classList.add('sa');
-  let h='<span>'+d+'</span>';if(k<30){(EV[d]||[]).forEach(e=>h+='<s class="'+e[0]+'">'+e[1]+'</s>');if(AM[d]){const v=AM[d];h+='<em'+(v>0?' class="in">+'+Math.round(v/1e4)+'만':'>-'+won(-v))+'</em>';cells.push([c,v])}}
+  let h='<b>'+d+'</b>';if(k<30){(EV[d]||[]).forEach(e=>h+='<i class="'+e[0]+'">'+e[1]+'</i>');if(AM[d]){const v=AM[d];h+='<em'+(v>0?' class="in">+'+Math.round(v/1e4)+'만':'>-'+won(-v))+'</em>';cells.push([c,v])}}
   c.innerHTML=h;cal.appendChild(c)}
 
 /* 계산기 띠 */
@@ -393,7 +397,7 @@ function frame(){
   const rq=cl((s0-.62)/.3);dedR.forEach((x,i)=>x.style.opacity=rq*7>i?1:.15);$('dtot').textContent='-'+won(397520*ez(rq))+'원';
   // 캘린더
   const s1=b>1?1:b<1?0:q,n=Math.round(cl(s1/.7)*cells.length);let o=0,inc=0;
-  cells.forEach(([c,v],i)=>{c.classList.toggle('sh',i<n);if(i<n){if(v>0)inc+=v;else o-=v}});
+  cells.forEach(([c,v],i)=>{c.classList.toggle('vis',i<n);if(i<n){if(v>0)inc+=v;else o-=v}});
   $('sout').textContent=(o?'-':'')+won(o)+'원';$('sin').textContent='+'+won(inc)+'원';
   const lq=cl((s1-.7)/.25);$('cline').style.strokeDashoffset=1-lq;$('cdot').setAttribute('opacity',lq>=1?1:0);
   // 셈이: 보내기 → 찾아보는 중 → 가계부에 적을까요? 카드 → 적기 → 적었어요
