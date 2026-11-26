@@ -4709,3 +4709,31 @@ img[src*="semi-blink.svg"] { object-fit: contain; }
 .bn-grid b { font-size: 16px; letter-spacing: -0.02em; }
 .bn-grid small { font-size: 13px; color: var(--muted); }
 @media (min-width: 761px) { .bn-grid { grid-template-columns: repeat(3, 1fr); } .bn-rail a { flex-basis: 180px; } }
+
+/* ── 11-26 혜택·미션: 소개 페이지 휴대폰 화면처럼 (위 '내 셈 포인트' 검은 카드 + 미션 2칸 격자, 사진 배너·나의 혜택은 아래로) ── */
+.bn-pts { display: block; margin: 4px 0 18px; padding: 16px 18px 15px; border-radius: 20px; background: #191f28; color: #fff; text-decoration: none; }
+.bn-pts:hover { text-decoration: none; }
+html[data-theme="dark"] .bn-pts { background: #23232b; box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset; }
+.bn-pts small { display: block; font-size: 12.5px; font-weight: 600; opacity: .6; }
+.bn-pts-h { display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px; }
+.bn-pts-h b { font-size: 24px; letter-spacing: -0.02em; } .bn-pts-h b em { font-style: normal; }
+.bn-pts-h u { text-decoration: none; font-family: var(--f-stencil); font-size: 26px; letter-spacing: .02em; color: #B69AD8; font-variant-numeric: tabular-nums; }
+.bn-pts-h u em { font-style: normal; }
+.bn-pts-bar { position: relative; display: block; height: 8px; margin-top: 12px; border-radius: 6px; background: rgba(255,255,255,.14); overflow: hidden; }
+.bn-pts-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit; background: linear-gradient(90deg, #B69AD8, #fff); transition: width .6s; }
+.bn-pts-t { display: block; margin-top: 9px; font-size: 13px; opacity: .7; }
+.bn-mgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 22px; }
+.bn-m { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-height: 132px; padding: 14px 14px 14px; border: 0; border-radius: 20px; background: var(--c); color: #191f28; font: inherit; text-align: left; cursor: pointer; }
+.bn-m img { width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 6px 8px rgba(0,0,0,.12)); }
+.bn-m b { font-size: 14.5px; line-height: 1.35; letter-spacing: -0.02em; }
+.bn-m small { margin-top: auto; font-size: 12px; color: #4e5968; }
+.bn-m em { position: absolute; top: 12px; right: 12px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.78); color: #4e5968; font-style: normal; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.bn-m em i { font-style: normal; }
+.bn-m.ok em, .bn-m.got em { background: var(--th); color: #fff; }
+.bn-m.got { opacity: .82; }
+.bn-m:last-child:nth-child(odd) { grid-column: 1 / -1; display: grid; grid-template-columns: 48px 1fr; grid-template-rows: auto auto; column-gap: 14px; row-gap: 3px; align-items: center; min-height: 0; padding-right: 104px; }
+.bn-m:last-child:nth-child(odd) img { grid-row: 1 / 3; }
+.bn-m:last-child:nth-child(odd) b { align-self: end; } .bn-m:last-child:nth-child(odd) b br { display: none; }
+.bn-m:last-child:nth-child(odd) small { margin-top: 0; align-self: start; }
+.bn-m:last-child:nth-child(odd) em { top: 50%; transform: translateY(-50%); }
+@media (min-width: 761px) { .bn-mgrid { grid-template-columns: repeat(5, 1fr); } .bn-m:last-child:nth-child(odd) { grid-column: auto; display: flex; flex-direction: column; align-items: flex-start; padding-right: 14px; min-height: 150px; } .bn-m:last-child:nth-child(odd) b br { display: inline; } .bn-m:last-child:nth-child(odd) small { margin-top: auto; } .bn-m:last-child:nth-child(odd) em { top: 12px; transform: none; } .bn-m img { margin-top: 26px; } }

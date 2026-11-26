@@ -3474,20 +3474,22 @@ semiTks();
     ['quiz', '#fde7d9', 'quiz.webp', '오늘의 돈 퀴즈\n한 문제 풀기', !!st.quiz, '/quiz/'],
     ['money', '#dcedfb', 'budget.webp', '가계부에\n오늘 쓴 돈 적기', !!st.money, () => { if (window.openQuickAdd) window.openQuickAdd(); else location.href = '/budget/'; }],
     ['semi', '#ebe5f8', 'semi-blink.svg', '셈이에게\n일 하나 맡기기', localStorage.getItem('donsem:semi-day') === today, () => window.donsemAsk && window.donsemAsk()],
-    ['calc', '#fbe3ea', 'percent.webp', '계산기로\n하나 따져 보기', !!st.calc, '/calculators/'],
+    ['calc', '#fbe3ea', 'percent.webp', '계산기로 \n하나 따져 보기', !!st.calc, '/calculators/'],
   ];
   function draw() {
     const p = P(), got = p.got[today] || [], ms = M(), done = ms.filter(m => m[4]).length;
     $('bn-pt').textContent = p.n.toLocaleString('ko-KR'); $('bn-done').textContent = done;
-    $('bn-dots').innerHTML = ms.map((m, i) => `<i class="${i < done ? 'on' : ''}"></i>`).join('');
-    $('bn-cards').innerHTML = ms.map(([id, c, ico, t, ok], i) => { const g = got.includes(id); return `<button type="button" class="bn-card" data-i="${i}" style="--c:${c}"><em class="bn-badge${g ? ' got' : ''}">${g ? '받았어요 ✓' : ok ? '<i class="bn-coin">₩</i> 받기' : '참여하기'}</em><img class="bn-ico" src="/icons/${ico}" alt="" width="64" height="64"><b>${t.replace('\n', '<br>')}</b><small>${g ? '+10P 적립' : ok ? '+10P 받을 수 있어요' : '+10P'}</small></button>`; }).join('');
-    // 무신사 '무진장 1~6단계'처럼: 100P마다 한 단계
+    // 11-26: 소개 페이지처럼 미션을 2칸 격자로 한눈에 (옆으로 넘기지 않아요), 배지는 캘린더 진한 색
+    const TH = { attend: '#22b59c', quiz: '#ff9459', money: '#4ea3e6', semi: '#9a7aea', calc: '#f2708f' };
+    $('bn-cards').innerHTML = ms.map(([id, c, ico, t, ok], i) => { const g = got.includes(id); return `<button type="button" class="bn-m${g ? ' got' : ok ? ' ok' : ''}" data-i="${i}" style="--c:${c};--th:${TH[id]}"><em>${g ? '<i>₩</i> 받기 완료' : ok ? '<i>₩</i> 받기' : '참여하기'}</em><img src="/icons/${ico}" alt="" width="48" height="48"><b>${t.replace('\n', '<br>')}</b><small>${g ? '+10P 적립했어요' : ok ? '+10P 받을 수 있어요' : '+10P'}</small></button>`; }).join('');
+    // 무신사 '무진장 1~6단계'처럼: 100P마다 한 단계 (막대는 이번 단계 안에서 얼마나 찼는지)
     const lv = Math.min(6, 1 + Math.floor(p.n / 100)), rest = 100 - p.n % 100;
     $('bn-lv-n').textContent = lv; $('bn-lv-t').textContent = lv >= 6 ? '최고 단계예요!' : `${rest}P 더 모으면 ${lv + 1}단계`;
-    $('bn-lv-fill').style.width = Math.max(2, Math.min(100, p.n / 6)) + '%';
+    $('bn-pt2').textContent = p.n.toLocaleString('ko-KR');
+    $('bn-lv-fill').style.width = (lv >= 6 ? 100 : Math.max(3, p.n % 100)) + '%';
   }
   root.addEventListener('click', e => {
-    const b = e.target.closest('.bn-card'); if (!b) return;
+    const b = e.target.closest('.bn-m'); if (!b) return;
     const m = M()[+b.dataset.i], p = P(), got = p.got[today] || [];
     if (got.includes(m[0])) return toast('오늘은 이미 받았어요. 내일 다시 도전해요!');
     if (m[4]) { p.n += 10; p.got = { [today]: got.concat(m[0]) }; saveP(p); toast('셈 포인트 10P를 받았어요 🪙'); return draw(); }
