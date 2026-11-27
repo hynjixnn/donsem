@@ -3879,6 +3879,14 @@ function semiTodos() {
         html = `<div class="ai-a"><p>음… 그건 아직 잘 모르겠어요. 다른 말로 물어봐 주세요.${calc ? '' : ' 계산이 필요하면 모든 계산기에서 찾아볼 수 있어요.'}</p>${calc ? `<a class="ai-go" href="${calc[0]}">${esc(calc[1])} 계산기 열기 ›</a>` : '<a class="ai-go" href="/calculators/">모든 계산기 보기 ›</a>'}</div>`;
       }
       const face = talk ? 'wink' : did ? did.face : my ? 'default' : hits.length ? 'happy' : 'worry'; // 답을 찾으면 웃고, 못 찾으면 고민해요
+      // 11-27: 요청에 어울리는 셈이 그림을 답 위에 붙여요 (커피면 커피 셈이, 집이면 집 셈이…)
+      const PICK = [[/커피|카페|라떼|음료/, 'coffee'], [/쇼핑|샀어|구매|할인|쿠팡|옷/, 'bag'], [/나눠|더치|정산|n빵|엔빵/, 'wallet'], [/월세|전세|집|아파트|부동산|청약|재건축|재개발/, 'house'], [/대출|빚|갚/, 'key'],
+        [/주식|ETF|투자|수익률|코인|펀드/, 'chart'], [/배당/, 'pouch'], [/적금|예금|저축|모으|모아/, 'piggy'], [/연봉|월급|실수령|급여|세후/, 'briefcase'], [/연말정산|세금|세액|소득세|부가세|취득세|양도세/, 'scroll'],
+        [/숨은|환급|돌려받/, 'search'], [/퇴직|실업|해고/, 'umbrella'], [/연금|노후|은퇴/, 'cushion'], [/고정지출|매달|구독|결제일|결제는|다음 결제/, 'calendar'], [/언제|며칠|D-?day|마감/i, 'clock'],
+        [/순자산|자산/, 'crown'], [/목표/, 'rocket'], [/상위|순위|몇 ?%/, 'medal'], [/퀴즈|공부|배우/, 'grad'], [/알림|알려줘/, 'bell'], [/고마|감사|사랑|최고/, 'flower'], [/안녕|하이|반가|ㅎㅇ/, 'wave'],
+        [/썼어|썼다|지출|얼마 썼|기록|가계부|적어/, 'pencil'], [/비교|뭐가 나아|어느 쪽|할까 말까/, 'scale'], [/계산|얼마/, 'calc']];
+      const pic = (PICK.find(([re]) => re.test(q)) || [0, talk ? 'happy' : did || my || hits.length ? 'idea' : 'glasses'])[1];
+      html = `<div class="ai-pic"><img src="/img/semi/${pic}.png" alt="" width="64" height="64"></div>` + html;
       log.insertAdjacentHTML('beforeend', html); { const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = '/icons/semi-blink.svg'; } // 11-23: 표정은 바꾸지 않고 앱 아이콘 셈이가 눈만 깜빡여요
       requestAnimationFrame(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }));
       setTimeout(() => body.scrollTo({ top: body.scrollHeight, behavior: 'smooth' }), 400); // 입력창 높이가 바뀐 뒤에도 답이 가려지지 않게 한 번 더

@@ -4905,3 +4905,9 @@ html[data-theme="dark"] .bn-pts { background: #23232b; box-shadow: 0 0 0 1px rgb
 .calc-semi { position: absolute; right: 10px; top: 54px; width: 88px; height: 88px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 8px 8px rgba(30,20,50,.14)); z-index: 1; }
 .has-semi > h1, .has-semi > .sub { padding-right: 92px; }
 @media (min-width: 761px) { .calc-semi { width: 104px; height: 104px; top: 74px; right: 20px; } .has-semi > h1, .has-semi > .sub { padding-right: 124px; } }
+
+/* ── 11-27 셈이 채팅: 답 위 요청별 셈이 그림 (말풍선과 겹치지 않게 일반 흐름) ── */
+.ai-pic { display: block; margin: 6px 0 -2px 2px; line-height: 0; }
+.ai-pic img { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 6px 6px rgba(30,20,50,.14)); animation: aiPicIn .45s cubic-bezier(.2,1.5,.4,1) both; }
+@keyframes aiPicIn { from { transform: scale(.5) translateY(8px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ai-pic img { animation: none; } }
