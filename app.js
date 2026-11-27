@@ -4613,6 +4613,7 @@ const GUIDE_FOR = {
   const KEY = 'donsem:how-seen', app = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   const S = [
     ['처음이라면 돈셈 소개부터 보세요', '돈셈 소개 페이지(doncalculator.com/intro/)에서 화면을 아래로 내리기만 하면 연봉 실수령액·캘린더·셈이·혜택을 한 번에 둘러볼 수 있어요.', '/how/intro.jpg'],
+    ['돈 관리 코스를 게임처럼 깨 보세요', '₩ 혜택·미션의 「돈 관리 코스」에서 섹션 3개·유닛 20개를 한 칸씩 깨면 돈셈 계산기와 기능을 자연스럽게 익혀요. 유닛을 다 깨면 보물 상자에서 30P를 받아요.', '/how/path.jpg'],
     ['궁금한 계산을 골라 주세요', '계산기 메뉴에서 연봉, 대출, 세금 계산기를 찾을 수 있어요.', '/how/1.jpg'],
     ['숫자만 넣으면 바로 계산돼요', '가입도 설치도 필요 없어요. 금액을 바꾸면 결과도 함께 바뀌어요.', '/how/2.jpg'],
     ['캘린더에 쓴 돈을 적어 보세요', '가계부 기록은 이 기기에만 저장되고, 서버로 보내지 않아요.', '/how/3.jpg'],
@@ -4975,6 +4976,8 @@ const PARTNER_LINKS = {
   ];
   const SEC = { 1: ['돈 계산 기초', '생활 속 돈 계산을 하나씩 해 보며 돈셈 계산기와 친해져요.'], 2: ['돈 관리 습관', '출석·캘린더·셈이·자산 기능으로 매일 돈을 챙기는 습관을 만들어요.'], 3: ['돈 고수', '투자·절세·내 집 마련까지, 한 단계 깊은 돈 계산에 도전해요.'] };
   const icon = id => I[id] || `/icons/${id}.webp`;
+  // 유닛마다 다른 셈이 (듀오링고 길 옆 캐릭터처럼)
+  const SEMI = ['coin', 'coffee', 'piggy', 'search', 'house', 'happy', 'idea', 'music', 'sleep', 'book', 'happy', 'book', 'music', 'piggy', 'search', 'idea', 'coin', 'house', 'piggy', 'happy'];
   const data = () => U.map(u => Object.assign({}, u, { d: u.n.map(x => { try { return !!(x[3] ? x[3]() : used(x[2])); } catch (e) { return false; } }) }));
   const OFF = [0, -58, -82, -58, 0, 58, 82, 58];
   window.drawPath = function drawPath() {
@@ -4993,11 +4996,11 @@ const PARTNER_LINKS = {
     nav.innerHTML = [1, 2, 3].map(n => `<a href="#sec-${n}"><b>섹션 ${n}</b><span>${SEC[n][0]}</span><i><u style="width:${secPct(n)}%"></u></i></a>`).join('');
     map.innerHTML = D.map((u, ui) => { const ud = u.d.filter(Boolean).length, full = ud === u.n.length, got = chest[ui];
       const head = u.s !== ps ? (ps = u.s, `<header class="psec" id="sec-${u.s}"><small>SECTION ${u.s}</small><b>섹션 ${u.s} · ${SEC[u.s][0]}</b><p>${SEC[u.s][1]}</p><i><u style="width:${secPct(u.s)}%"></u></i><em>${secPct(u.s)}% 완료</em></header>`) : '';
-      const nodes = u.n.map((x, j) => { const st = u.d[j] ? 'done' : ui === cu && j === cn ? 'cur' : 'lock', off = OFF[(k++) % OFF.length];
+      const nodes = u.n.map((x, j) => { const st = u.d[j] ? 'done' : ui === cu && j === cn ? 'cur' : 'lock', off = [0, 55, 85, 55, 25][j % 5] * (ui % 2 ? 1 : -1); k++;
         return `<a class="pn ${st}" href="${x[2]}" style="--x:${off}px" aria-label="${x[1]}${st === 'done' ? ' (완료)' : ''}">${st === 'cur' ? '<i class="pn-tip">시작!</i>' : ''}<span class="pn-c"><img src="${icon(x[0])}" alt="" width="40" height="40">${st === 'done' ? '<em>✓</em>' : ''}</span><b>${x[1]}</b></a>`; }).join('');
-      const off = OFF[(k++) % OFF.length];
+      const off = 0;
       return `${head}<section class="pu" style="--c:${u.c};--bg:${u.bg}"><header class="pu-h"><small>섹션 ${u.s} · 유닛 ${ui + 1}</small><b>${u.t}</b><em>${ud}/${u.n.length}</em></header>
-        <div class="pu-path"><img class="pu-semi ${ui % 2 ? 'l' : 'r'}" src="${u.semi}" alt="" width="110" height="110" loading="lazy">${nodes}
+        <div class="pu-path"><img class="pu-semi ${ui % 2 ? 'l' : 'r'}" src="/img/semi/${SEMI[ui % SEMI.length]}.png" alt="" width="120" height="120" loading="lazy">${nodes}
         <button type="button" class="pc ${got ? 'open' : full ? 'ready' : ''}" data-u="${ui}" style="--x:${off}px"${got || !full ? ' disabled' : ''}><span>${got ? '🎉' : '🎁'}</span><b>${got ? '받았어요 +30P' : full ? '상자 열기 +30P' : '유닛을 다 깨면 열려요'}</b></button></div></section>`; }).join('');
     map.querySelectorAll('.pc.ready').forEach(b => b.onclick = () => { const ui = +b.dataset.u, c = rd('donsem:path-chest') || {}; if (c[ui]) return; c[ui] = 1; wr('donsem:path-chest', c);
       const p = rd('donsem:points') || { n: 0, got: {} }; p.n = (p.n || 0) + 30; wr('donsem:points', p); say(`🎁 유닛 ${ui + 1} 상자에서 30P를 받았어요!`); drawPath(); });
