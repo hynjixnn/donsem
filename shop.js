@@ -99,7 +99,7 @@
   if (s === 'done') {
     const o = load().find(x => x.orderId === q.get('o'));
     if (o) return done(o);
-    location.replace('/shop/'); return;
+    location.replace('/'); return;
   }
   if (s === 'fail') {
     show('pay-fail');

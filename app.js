@@ -2615,7 +2615,7 @@ function addTileIcon(t) {
 
 // ── 위쪽 메뉴: 분류를 누르면(컴퓨터는 올리기만 해도) 그 분류 계산기가 펼쳐져요 ──
 const MENU = [
-  ['돈 관리', [['/budget/', '캘린더 · 가계부', '지출 수입 예산 달력 일정'], ['/shop/', '돈셈 스토어', '엑셀 가계부 템플릿 재테크 구글 시트 구매'], ['/hidden-money/', '숨은 돈 찾기', '환급 공제 지원금 월세 의료비 근로장려금 놓친 돈'], ['/budget/#fixed', '고정지출', '구독 월세 보험'], ['/budget/#assets', '내 자산', '순자산 부채'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금'], ['/guide/', '돈 가이드', '글 정리 연말정산 실업급여 실수령액 IRP 카드 공제 월세']]],
+  ['돈 관리', [['/budget/', '캘린더 · 가계부', '지출 수입 예산 달력 일정'], ['/hidden-money/', '숨은 돈 찾기', '환급 공제 지원금 월세 의료비 근로장려금 놓친 돈'], ['/budget/#fixed', '고정지출', '구독 월세 보험'], ['/budget/#assets', '내 자산', '순자산 부채'], ['/money-calendar/', '돈 달력', '세금 일정 신고 납부 마감 디데이 연말정산 최저임금'], ['/guide/', '돈 가이드', '글 정리 연말정산 실업급여 실수령액 IRP 카드 공제 월세']]],
   ['챌린지 · 테스트', [['/quiz/', '오늘의 돈 퀴즈', '상식 OX 문제 금전운 돈나무'], ['/no-spend/', '무지출 챌린지', '절약 무지출 달력 도장'], ['/money-type/', '돈BTI 테스트', '소비 성향 성격 테스트 mbti'],
     ['/collection/', '내 컬렉션', '돈나무 배지 기록 모음']]],
   ['저축 · 투자', [['/invest/', '투자 계산 모음', '주식 ETF 세금 수수료'], ['/should-i/', '해야 할까, 말까?', '결정 도우미 적금 해지 깰까 담보대출 대출 갈아타기 물타기 손절 고민'], ['/savings/', '적금 이자', '만기'], ['/deposit/', '예금 이자', '정기예금 만기'], ['/compound/', '복리 투자', '투자 수익'], ['/isa/', 'ISA 절세', '세금 비과세 계좌 주식'], ['/pension/', '연금저축·IRP', '세액공제 연말정산 노후'], ['/goal/', '목표 저축', '1억 모으기'],
@@ -2641,7 +2641,7 @@ const MENU = [
   gnav.className = 'gnav'; gnav.setAttribute('role', 'navigation'); gnav.setAttribute('aria-label', '주요 메뉴');
   const onTab = (document.querySelector('.tabbar a.on') || {}).pathname; // 위쪽 메뉴는 아래 독바와 같은 4칸: 돈셈의 핵심 기능만 (홈은 로고를 누르면 가요)
   // 크림·무신사처럼 위 메뉴는 영어 대문자 (읽어 주는 기능에는 한글 이름을 알려 줘요)
-  gnav.innerHTML = [['/calculators/', 'CALCULATOR', '계산기'], ['/guide/', 'MAGAZINE', '매거진'], ['/real-estate/', 'REAL ESTATE', '부동산'], ['/budget/', 'CALENDAR', '캘린더'], ['/shop/', 'SHOP', '쇼핑']].map(([h, t, ko]) => `<a class="gnav-shop gnav-en${h === onTab || (h === '/shop/' && /^\/(shop|market)\//.test(location.pathname)) ? ' here' : ''}" href="${h}" aria-label="${ko}"${h === onTab ? ' aria-current="page"' : ''}><b lang="en">${t}</b><small aria-hidden="true">${ko}</small></a>`).join('');
+  gnav.innerHTML = [['/calculators/', 'CALCULATOR', '계산기'], ['/guide/', 'MAGAZINE', '매거진'], ['/real-estate/', 'REAL ESTATE', '부동산'], ['/budget/', 'CALENDAR', '캘린더']].map(([h, t, ko]) => `<a class="gnav-shop gnav-en${h === onTab ? ' here' : ''}" href="${h}" aria-label="${ko}"${h === onTab ? ' aria-current="page"' : ''}><b lang="en">${t}</b><small aria-hidden="true">${ko}</small></a>`).join('');
   inner.querySelector('.brand').after(gnav);
   const sBtn = document.createElement('button');
   sBtn.type = 'button'; sBtn.className = 'search-btn'; sBtn.dataset.g = 'search'; sBtn.setAttribute('aria-label', '계산기 검색'); sBtn.setAttribute('aria-expanded', 'false');
@@ -4208,7 +4208,7 @@ const COUPANG = {
   '/budget/': { t: '손으로도 적고 싶다면', d: '가계부 노트 보기', url: 'https://link.coupang.com/a/ibZWCyJErc' },
 };
 (() => {
-  const c = COUPANG[location.pathname];
+  const c = null; // 11-27 쇼핑 없앰: 쿠팡 카드도 안 보여요
   if (!c || !/^https:\/\/(link\.coupang\.com|coupa\.ng)\//.test(c.url)) return; // 쿠팡 파트너스 링크만 써요
   const box = document.createElement('aside');
   box.className = 'cpn';
@@ -4497,7 +4497,7 @@ const GUIDE_FOR = {
   if (!ft || ft.querySelector('.biz')) return;
   const d = document.createElement('div');
   d.className = 'biz';
-  d.innerHTML = `<p class="biz-links"><a href="/about/">사이트 소개</a> · <a href="/terms/">이용약관</a> · <a href="/privacy/"><b>개인정보처리방침</b></a> · <a href="/contact/">문의</a> · <a href="/refund/">환불정책</a> · <a href="/shop/">돈셈 스토어</a></p>
+  d.innerHTML = `<p class="biz-links"><a href="/about/">사이트 소개</a> · <a href="/terms/">이용약관</a> · <a href="/privacy/"><b>개인정보처리방침</b></a> · <a href="/contact/">문의</a> · <a href="/refund/">환불정책</a></p>
     <p>상호 돈셈 · 대표 정현진 · 사업자등록번호 589-37-01513 · 통신판매업 신고 제2026-전북순창-54호<br>전북 순창군 순창읍 장류로 422 광명메이루즈 102동 602호<br>대표전화 <a href="tel:010-2277-8530">010-2277-8530</a> · <a href="mailto:hjjung330@gmail.com">hjjung330@gmail.com</a></p>`;
   ft.append(d);
 })();

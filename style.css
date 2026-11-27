@@ -4917,3 +4917,10 @@ html[data-theme="dark"] .bn-pts { background: #23232b; box-shadow: 0 0 0 1px rgb
 .cal-hint img { width: 46px; height: 46px; object-fit: contain; flex: none; }
 .bn-h1 { display: flex; align-items: center; justify-content: space-between; }
 .bn-h1 img { width: 42px; height: 42px; object-fit: contain; }
+
+/* 11-27 부동산 탭 섹션 셈이 */
+.sec-semi { position: absolute; right: 12px; top: 12px; width: 72px; height: 72px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 8px 8px rgba(30,20,50,.14)); z-index: 1; }
+.has-semi > h2, .has-semi > .sub.small { padding-right: 78px; }
+@media (min-width: 761px) { .sec-semi { width: 88px; height: 88px; right: 22px; top: 18px; } .has-semi > h2, .has-semi > .sub.small { padding-right: 100px; } }
+/* 11-27 사용방법 사진: 휴대폰 화면 전체가 버튼 위에 다 보이게 (아래가 흐려지며 버튼 밑으로 겹치지 않게) */
+.how-phone:has(> img) { width: auto; max-width: 72%; aspect-ratio: 574 / 1226; align-self: center; margin-bottom: 4px; border-bottom: 7px solid #17171a; border-radius: 32px; -webkit-mask-image: none; mask-image: none; box-shadow: 0 10px 24px rgba(20,16,40,.16); }
