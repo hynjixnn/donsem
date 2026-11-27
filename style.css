@@ -4832,3 +4832,45 @@ html[data-theme="dark"] .bn-pts { background: #23232b; box-shadow: 0 0 0 1px rgb
 @keyframes pcWiggle { 0%, 70%, 100% { transform: none; } 78% { transform: rotate(-10deg) scale(1.08); } 88% { transform: rotate(10deg) scale(1.08); } }
 @media (min-width: 761px) { .pth-stat { top: 72px; } .pu-h { top: 140px; } .pu-semi { width: 140px; height: 140px; } .pu-semi.r { right: 12%; } .pu-semi.l { left: 12%; } }
 @media (prefers-reduced-motion: reduce) { .pn-tip, .pc.ready span { animation: none !important; } }
+
+/* ── 11-27 주간 리그 (듀오링고 리그처럼) ── */
+.lg-mini { display: flex; align-items: center; gap: 12px; margin: -8px 0 18px; padding: 12px 14px; border-radius: 18px; background: #191f28; color: #fff !important; text-decoration: none !important; }
+.lm-ic svg { display: block; width: 40px; height: 46px; }
+.lm-tx { flex: 1; min-width: 0; } .lm-tx small { display: block; font-size: 11.5px; font-weight: 700; color: var(--c); filter: brightness(1.3); }
+.lm-tx b { display: block; margin: 2px 0; font-size: 14.5px; letter-spacing: -0.02em; } .lm-tx span { font-size: 12px; opacity: .65; }
+.lg-mini > em { font-style: normal; font-size: 20px; opacity: .6; }
+.lg-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.lg-left { margin: -6px 0 0; font-size: 14px; font-weight: 700; color: var(--muted); }
+.lg-nick { flex: none; margin-top: 6px; padding: 8px 12px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--line) 70%, transparent); color: var(--text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.lg-tiers { display: flex; justify-content: space-between; gap: 4px; margin: 18px 0 16px; overflow-x: auto; scrollbar-width: none; }
+.lg-tiers span { flex: none; width: 44px; } .lg-tiers svg { display: block; width: 44px; height: 50px; } .lg-tiers span.on svg { width: 56px; height: 64px; margin-top: -7px; filter: drop-shadow(0 6px 10px rgba(0,0,0,.18)); }
+.lg-tiers span.on { width: 56px; }
+.lg-tip { margin: 0 0 10px; padding: 10px 14px; border-radius: 14px; background: color-mix(in srgb, #22b59c 12%, transparent); font-size: 13.5px; color: var(--text); }
+.lg-tip b { color: #138a75; }
+.lg-list { list-style: none; margin: 0; padding: 0; }
+.lg-row { display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 16px; }
+.lg-row.me { background: color-mix(in srgb, #7040A1 12%, transparent); }
+.lg-r { flex: none; width: 28px; text-align: center; font-weight: 900; font-size: 15px; color: var(--muted); }
+.lg-r.m1, .lg-r.m2, .lg-r.m3 { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; font-size: 13px; }
+.lg-r.m1 { background: #f5b301; } .lg-r.m2 { background: #9aa5b1; } .lg-r.m3 { background: #cd7f32; }
+.lg-row.zu .lg-r:not(.m1):not(.m2):not(.m3) { color: #138a75; } .lg-row.zd .lg-r { color: #e5484d; }
+.lg-av { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: #fff; font-weight: 800; font-size: 18px; }
+.lg-row b { flex: 1; min-width: 0; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lg-row b em { margin-left: 4px; padding: 2px 7px; border-radius: 8px; background: #7040A1; color: #fff; font-style: normal; font-size: 11px; vertical-align: 2px; }
+.lg-row.me b { color: #7040A1; } html[data-theme="dark"] .lg-row.me b { color: #B69AD8; }
+.lg-xp { flex: none; font-weight: 800; font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; } .lg-row.me .lg-xp { color: var(--text); }
+.lg-line { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 12px; font-weight: 800; }
+.lg-line::before, .lg-line::after { content: ''; flex: 1; height: 2px; border-radius: 2px; }
+.lg-line.up { color: #138a75; } .lg-line.up::before, .lg-line.up::after { background: #22b59c; }
+.lg-line.down { color: #e5484d; } .lg-line.down::before, .lg-line.down::after { background: #e5484d; }
+.lg-join, .lg-alone { margin: 6px 0 10px; padding: 20px 18px; border-radius: 22px; background: var(--card); text-align: center; }
+.lg-join img { width: 96px; height: 96px; object-fit: contain; margin: 0 auto 6px; display: block; }
+.lg-join b, .lg-alone b { display: block; font-size: 18px; } .lg-join p, .lg-alone p { margin: 6px 0 14px; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+.lg-join label { display: block; text-align: left; font-size: 13px; font-weight: 700; color: var(--muted); }
+.lg-join input { display: block; width: 100%; margin: 6px 0 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg, #fff); color: var(--text); font: inherit; font-size: 16px; }
+.lg-join .btn, .lg-alone .btn { width: 100%; height: 48px; border-radius: 14px; font-weight: 800; }
+.lg-wait { padding: 30px 0; text-align: center; color: var(--muted); }
+.lg-how { margin: 18px 0 0; padding: 16px; border-radius: 18px; background: var(--card); }
+.lg-how b { font-size: 15px; } .lg-how ul { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; }
+.lg-how li { display: flex; justify-content: space-between; font-size: 14px; } .lg-how li em { font-style: normal; font-weight: 800; color: #7040A1; }
+.lg-how p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }

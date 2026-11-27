@@ -4978,3 +4978,66 @@ const PARTNER_LINKS = {
   const start = () => { tick(true); drawPath(); setInterval(() => { if (!document.hidden) tick(); }, 3000); addEventListener('pageshow', () => tick(true)); };
   document.readyState === 'loading' ? addEventListener('DOMContentLoaded', start) : setTimeout(start, 0);
 })();
+
+// ── 11-27 주간 리그 (듀오링고 리그처럼): 이번 주 모은 셈 포인트 = XP, 익명 별명으로 30명씩 겨뤄요 ──
+// 서버(워커 /league)에는 무작위 번호·별명·이번 주 XP만 보내요. 참가 버튼을 눌러야 보내기 시작해요
+(() => {
+  const rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const raw = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const put = (k, v) => { try { localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v)); } catch (e) { /* 괜찮아요 */ } };
+  const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const API = (typeof COUNTER_URL !== 'undefined' ? COUNTER_URL : 'https://donsem-counter.hjjung330.workers.dev') + '/league';
+  const TC = ['#cd7f32', '#9aa5b1', '#f5b301', '#3b82f6', '#e5484d', '#22b59c', '#7c5cff'];
+  const week = () => { const d = new Date(Date.now() + 9 * 3600e3); d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7); return d.toISOString().slice(0, 10); };
+  function xp() { // 이번 주에 늘어난 셈 포인트만 세요 (얼리기에 쓴 건 빼지 않아요)
+    const p = (rd('donsem:points') || {}).n || 0, x = Object.assign({ wk: '', n: 0, last: null }, rd('donsem:xp') || {}), wk = week();
+    if (x.wk !== wk) { x.wk = wk; x.n = 0; }
+    if (x.last === null) x.last = p;
+    if (p > x.last) x.n += p - x.last;
+    x.last = p; put('donsem:xp', x); return x.n;
+  }
+  const id = () => { let v = raw('donsem:lg-id'); if (!/^[a-f0-9]{16}$/.test(v || '')) { v = [...crypto.getRandomValues(new Uint8Array(8))].map(b => b.toString(16).padStart(2, '0')).join(''); put('donsem:lg-id', v); } return v; };
+  const nick = () => raw('donsem:lg-nick') || '';
+  const shield = (c, on) => `<svg viewBox="0 0 40 46" aria-hidden="true"><path d="M20 2 36 8v14c0 11-7 18-16 22C11 40 4 33 4 22V8z" fill="${on ? c : 'color-mix(in srgb, var(--line) 90%, #888)'}"/><path d="M20 7 31 11v11c0 8-5 13-11 16-6-3-11-8-11-16V11z" fill="#fff" opacity="${on ? .28 : .15}"/>${on ? '' : '<path d="M16 21v-3a4 4 0 0 1 8 0v3M14.5 21h11v8h-11z" fill="none" stroke="#fff" stroke-width="2" opacity=".7"/>'}</svg>`;
+  async function call(post) {
+    const r = await fetch(post ? API : API + '?id=' + id(), post ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id(), nick: nick(), xp: xp() }) } : {});
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || 'fail'); if (j.joined) put('donsem:lg-last', { tier: j.tier, tiers: j.tiers, rank: (j.list.findIndex(x => x.me) + 1), n: j.list.length, xp: xp(), wk: j.wk }); return j;
+  }
+  // 리그에 참가한 사람은 XP가 늘면 1분에 한 번만 조용히 올려요
+  let sent = -1, at = 0;
+  function sync() { if (raw('donsem:lg-on') !== '1' || document.hidden) return; const n = xp(); if (n === sent || Date.now() - at < 60000) return; sent = n; at = Date.now(); call(true).then(() => mini()).catch(() => { /* 다음에 다시 */ }); }
+  function mini() {
+    const el = document.getElementById('lg-mini'); if (!el) return;
+    const L = rd('donsem:lg-last'), on = raw('donsem:lg-on') === '1' && L && L.wk === week(), t = on ? L.tier : 0, name = (on ? L.tiers[t] : '브론즈') + ' 리그';
+    el.style.setProperty('--c', TC[t]);
+    el.innerHTML = `<span class="lm-ic">${shield(TC[t], true)}</span><span class="lm-tx"><small>주간 리그</small><b>${on ? `${esc(name)} · ${L.rank}위 / ${L.n}명` : '이번 주 리그에 참가해 보세요'}</b><span>이번 주 ${xp()} XP</span></span><em>›</em>`;
+  }
+  function page() {
+    const root = document.getElementById('lg-root'); if (!root) return;
+    const body = document.getElementById('lg-body'), title = document.getElementById('lg-title'), left = document.getElementById('lg-left'), tiersEl = document.getElementById('lg-tiers'), nb = document.getElementById('lg-nick');
+    const drawTiers = (tiers, t) => { tiersEl.innerHTML = tiers.map((n, i) => `<span class="${i === t ? 'on' : ''}" title="${esc(n)} 리그">${shield(TC[i], i <= t)}</span>`).join(''); };
+    const days = end => { const d = Math.max(0, Math.ceil((end - Date.now()) / 864e5)); return d <= 1 ? '⏱ 오늘 자정에 끝나요' : `⏱ ${d}일 남음`; };
+    function join(j) {
+      drawTiers(j.tiers || ['브론즈'], 0); title.textContent = '주간 리그'; left.textContent = '매주 월요일에 새 리그가 시작돼요';
+      const def = nick() || '셈친구' + Math.floor(1000 + Math.random() * 9000);
+      body.innerHTML = `<div class="lg-join"><img src="/img/semi-front.png" alt="" width="96" height="96"><b>이번 주 리그에 참가해 볼까요?</b><p>미션으로 모은 셈 포인트가 XP가 돼요. 별명만 정하면 바로 시작!</p><label>별명 (2~10자)<input id="lg-in" maxlength="10" value="${esc(def)}" autocomplete="off"></label><button type="button" class="btn fill" id="lg-go">리그 참가하기</button></div>`;
+      document.getElementById('lg-go').onclick = async e => { const v = document.getElementById('lg-in').value.replace(/[^0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ_ ]/g, '').trim().slice(0, 10); if (v.length < 2) { alertBox('별명은 2~10자로 정해 주세요'); return; } put('donsem:lg-nick', v); put('donsem:lg-on', '1'); e.target.disabled = true; e.target.textContent = '참가하는 중…'; try { draw(await call(true)); } catch (er) { e.target.disabled = false; e.target.textContent = '리그 참가하기'; alertBox('지금 리그에 연결되지 않아요. 잠시 뒤 다시 해 주세요.'); } };
+    }
+    const alertBox = m => { if (typeof toast === 'function') toast(m); else alert(m); };
+    function draw(j) {
+      const t = j.tier || 0, L = j.list || [], n = L.length, tierName = j.tiers[t];
+      drawTiers(j.tiers, t); title.textContent = `${tierName} 리그`; left.textContent = days(j.end); nb.hidden = false;
+      const up = t < j.tiers.length - 1 ? 7 : 0, down = n >= 15 && t > 0 ? n - 5 : n + 1;
+      const C = ['#7040A1', '#4ea3e6', '#ff9459', '#22b59c', '#f2708f', '#9a7aea'];
+      const rows = L.map((x, i) => { const r = i + 1, col = C[[...x.nick].reduce((a, c) => a + c.charCodeAt(0), 0) % C.length];
+        return `${r === up + 1 && up ? '<li class="lg-line up"><span>▲ 승급권</span></li>' : ''}${r === down ? '<li class="lg-line down"><span>▼ 강등권</span></li>' : ''}<li class="lg-row${x.me ? ' me' : ''}${r <= up ? ' zu' : ''}${r >= down ? ' zd' : ''}"><span class="lg-r${r <= 3 ? ' m' + r : ''}">${r}</span><span class="lg-av" style="background:${col}">${esc([...x.nick][0] || '셈')}</span><b>${esc(x.nick)}${x.me ? ' <em>나</em>' : ''}</b><span class="lg-xp">${x.xp} XP</span></li>`; }).join('');
+      body.innerHTML = `<p class="lg-tip">${up ? `상위 ${up}명은 다음 주 <b>${esc(j.tiers[t + 1])} 리그</b>로 올라가요` : '최고 리그예요! 1등을 노려 보세요'}</p><ol class="lg-list">${rows}</ol>${n < 2 ? '<div class="lg-alone"><b>아직 이 리그에 나 혼자예요</b><p>이번 주에 참가하는 사람이 생기면 여기에 같이 나와요. 친구에게 돈셈을 알려 주면 같이 겨룰 수 있어요.</p><button type="button" class="btn line" id="lg-share">친구에게 알리기</button></div>' : ''}`;
+      const sh = document.getElementById('lg-share'); if (sh) sh.onclick = () => { const d = { title: '돈셈 주간 리그', text: '나랑 돈셈 주간 리그에서 셈 포인트 겨루자!', url: 'https://doncalculator.com/league/' }; if (navigator.share) navigator.share(d).catch(() => {}); else { navigator.clipboard && navigator.clipboard.writeText(d.url); alertBox('링크를 복사했어요'); } };
+      mini();
+    }
+    nb.onclick = async () => { const v = (prompt('새 별명 (2~10자)', nick()) || '').replace(/[^0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ_ ]/g, '').trim().slice(0, 10); if (v.length < 2) return; put('donsem:lg-nick', v); try { draw(await call(true)); } catch (e) { alertBox('지금은 바꿀 수 없어요. 잠시 뒤 다시 해 주세요.'); } };
+    (raw('donsem:lg-on') === '1' ? call(true) : call(false)).then(j => j.joined ? draw(j) : join(j)).catch(() => { body.innerHTML = '<p class="lg-wait">지금 리그에 연결되지 않아요. 잠시 뒤 다시 열어 주세요.</p>'; });
+  }
+  const go = () => { xp(); mini(); page(); setInterval(() => { xp(); mini(); if (location.pathname !== '/league/') sync(); }, 5000); };
+  document.readyState === 'loading' ? addEventListener('DOMContentLoaded', go) : setTimeout(go, 0);
+})();
