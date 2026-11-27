@@ -4977,7 +4977,7 @@ const PARTNER_LINKS = {
   const SEC = { 1: ['돈 계산 기초', '생활 속 돈 계산을 하나씩 해 보며 돈셈 계산기와 친해져요.'], 2: ['돈 관리 습관', '출석·캘린더·셈이·자산 기능으로 매일 돈을 챙기는 습관을 만들어요.'], 3: ['돈 고수', '투자·절세·내 집 마련까지, 한 단계 깊은 돈 계산에 도전해요.'] };
   const icon = id => I[id] || `/icons/${id}.webp`;
   // 유닛마다 다른 셈이 (듀오링고 길 옆 캐릭터처럼)
-  const SEMI = ['coin', 'coffee', 'piggy', 'search', 'house', 'flower', 'pencil', 'card', 'sleep', 'calc', 'gift', 'book', 'wave', 'chart', 'glasses', 'idea', 'umbrella', 'house', 'piggy', 'trophy'];
+  const SEMI = ['coin', 'wallet', 'piggy', 'search', 'house', 'flower', 'briefcase', 'bag', 'sleep', 'hourglass', 'bell', 'calendar', 'phone', 'crown', 'megaphone', 'rocket', 'umbrella', 'key', 'diamond', 'trophy'];
   const data = () => U.map(u => Object.assign({}, u, { d: u.n.map(x => { try { return !!(x[3] ? x[3]() : used(x[2])); } catch (e) { return false; } }) }));
   const OFF = [0, -58, -82, -58, 0, 58, 82, 58];
   window.drawPath = function drawPath() {
@@ -5076,11 +5076,12 @@ const PARTNER_LINKS = {
 
 // ── 11-27 계산기마다 주제에 맞는 셈이 (카드 오른쪽 위) ──
 (() => {
-  const M = { salary: 'wave', wage: 'wave', 'salary-rank': 'trophy', 'holiday-pay': 'gift', 'year-end-tax': 'gift', 'year-end': 'pencil', 'income-tax': 'pencil', vat: 'calc', 'corporate-tax': 'calc', percent: 'calc', date: 'calc', pyeong: 'calc', 'unit-price': 'calc', 'time-value': 'calc',
-    loan: 'coin', 'loan-limit': 'glasses', prepayment: 'glasses', refinance: 'glasses', 'car-loan': 'card', 'jeonse-check': 'glasses', 'should-i': 'glasses', 'financial-income-tax': 'glasses',
-    savings: 'flower', deposit: 'flower', inflation: 'flower', goal: 'trophy', compound: 'chart', invest: 'chart', 'avg-price': 'chart', 'loss-recovery': 'chart', 'etf-fee': 'chart', dividend: 'chart', 'overseas-stock-tax': 'chart', 'asset-rank': 'chart',
-    isa: 'umbrella', pension: 'umbrella', retirement: 'umbrella', unemployment: 'umbrella', severance: 'umbrella', rent: 'house', 'acquisition-tax': 'house', 'brokerage-fee': 'house', 'subscription-score': 'trophy',
-    'hidden-money': 'search', 'lump-sum': 'idea', discount: 'card', 'used-price': 'card', delivery: 'card', 'fan-budget': 'card', fuel: 'coffee', 'dutch-pay': 'pencil' };
+  const M = { salary: 'wave', wage: 'briefcase', 'salary-rank': 'medal', 'holiday-pay': 'gift', 'year-end-tax': 'gift', 'year-end': 'scroll', 'income-tax': 'scroll', vat: 'calc', 'corporate-tax': 'briefcase', percent: 'calc', date: 'calendar', pyeong: 'calc', 'unit-price': 'calc', 'time-value': 'clock',
+    loan: 'coin', 'loan-limit': 'key', prepayment: 'hourglass', refinance: 'glasses', 'car-loan': 'key', 'jeonse-check': 'glasses', 'should-i': 'scale', 'financial-income-tax': 'scale',
+    savings: 'flower', deposit: 'flower', inflation: 'flower', goal: 'rocket', compound: 'chart', invest: 'chart', 'avg-price': 'chart', 'loss-recovery': 'chart', 'etf-fee': 'chart', dividend: 'pouch', 'overseas-stock-tax': 'chart', 'asset-rank': 'crown',
+    isa: 'umbrella', pension: 'umbrella', retirement: 'cushion', unemployment: 'umbrella', severance: 'briefcase', rent: 'house', 'acquisition-tax': 'house', 'brokerage-fee': 'house', 'subscription-score': 'trophy',
+    'hidden-money': 'search', 'lump-sum': 'diamond', discount: 'bag', 'used-price': 'bag', delivery: 'bag', 'fan-budget': 'card', fuel: 'coffee', 'dutch-pay': 'wallet',
+    quiz: 'grad', 'money-calendar': 'calendar', 'no-spend': 'wallet', collection: 'medal', 'money-type': 'clover', redev: 'key', calculators: 'calc' };
   const parts = location.pathname.split('/').filter(Boolean), n = parts.length === 1 && M[parts[0]];
   if (!n) return;
   const card = document.querySelector('main section.card, .wrap > section.card, .wrap > article.card, section.card'); const h1 = card && card.querySelector('h1');
