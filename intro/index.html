@@ -247,7 +247,8 @@ img{display:block}
 /* 11-27 새 셈이 */
 .isemi{object-fit:contain;filter:drop-shadow(0 8px 8px rgba(30,20,50,.16));pointer-events:none}
 .rcard{position:relative}.isemi.rc{position:absolute;right:10px;top:8px;width:58px;height:58px}
-.ihint{display:flex;align-items:center;gap:8px;margin-top:10px;padding:6px 10px 6px 6px;border-radius:14px;background:#fff;font-size:10.5px;font-weight:700;color:#4e5968}
+.ihint{display:flex;align-items:center;gap:8px;margin-top:10px;padding:6px 10px 6px 6px;border-radius:14px;background:rgba(112,64,161,.07);font-size:10.5px;font-weight:700;color:#4e5968}
+.ifold{text-align:center;margin-top:6px;font-size:10.5px;color:#8b95a1}
 .ihint img{width:46px;height:46px;object-fit:contain;flex:none}
 .isemi.th{display:block;width:96px;height:96px;margin:0 auto 6px}
 #words .stick{flex-direction:column;gap:14px}.isemi.say-s{width:110px;height:110px}
@@ -289,7 +290,7 @@ img{display:block}
         <div class="sl">비과세액 (식대 등, 한 달)</div>
         <div class="sin"><span>200,000</span><small>원</small></div>
         <div class="chips"><span>+1만</span><span>+10만</span><span>+100만</span><i>지우기</i><em>20만 원</em></div>
-        <div class="rcard" id="rcard"><img class="isemi rc" src="/img/semi/briefcase.png" alt="" width="58" height="58">
+        <div class="rcard" id="rcard">
           <small>한 달 실수령액</small><b id="net">2,935,813원</b>
           <div class="slip"><em>PAYSLIP</em><b>연봉 4,000만 원 급여명세서</b>
             <div class="sh"><i>+</i>받는 돈</div>
@@ -310,6 +311,7 @@ img{display:block}
       <div class="wk2"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
       <div class="cal2" id="cal"></div>
       <div class="ihint" id="calhint"><img src="/img/semi/calendar.png" alt="" width="46" height="46"><span>셈이가 이번 달 돈 흐름을 날짜마다 정리했어요</span></div>
+      <div class="ifold">︿ 한 주만 보기</div>
     </div>
 
     <div class="app" data-a="2">
