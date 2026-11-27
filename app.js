@@ -4854,3 +4854,127 @@ const PARTNER_LINKS = {
     } catch (x) { msg.textContent = '잠시 뒤 다시 해 주세요.'; }
   });
 })();
+
+// ── 11-27 듀오링고처럼: 🔥 연속 기록 · 셈이 표정(시간이 갈수록 애타요) · 연속 축하 화면 · 돈 관리 코스(/path/) ──
+// 모두 이 기기 기록(localStorage)만 봐요. 하루에 출석·퀴즈·가계부·계산·셈이 중 하나라도 하면 그날 불이 켜져요
+(() => {
+  const rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const raw = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const wr = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 저장이 막힌 브라우저 */ } };
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const dayAt = n => { const d = new Date(); d.setDate(d.getDate() + n); return ymd(d); };
+  const say = m => { if (typeof toast === 'function') toast(m); };
+  if (location.pathname === '/hidden-money/') { try { localStorage.setItem('donsem:pv:/hidden-money/', '1'); } catch (e) { /* 괜찮아요 */ } }
+
+  function activeToday() {
+    const st = typeof dailyStatus === 'function' ? dailyStatus() : {}, t = st.today || dayAt(0);
+    const p = rd('donsem:points') || {}, at = rd('donsem:bn-attend') || {};
+    return !!(st.quiz || st.money || st.calc || at[t] || raw('donsem:semi-day') === t || (p.got && p.got[t] && p.got[t].length));
+  }
+  function S() {
+    const s = Object.assign({ d: {}, fz: 0, best: 0, cel: '' }, rd('donsem:streak') || {});
+    const t = dayAt(0), y = dayAt(-1), y2 = dayAt(-2);
+    if (!s.d[y] && s.d[y2] && s.fz > 0) { s.d[y] = 'f'; s.fz--; s.usedFz = 1; } // 하루 빠지면 ❄ 얼리기가 대신 지켜 줘요
+    if (activeToday()) s.d[t] = 1;
+    let n = 0, k = s.d[t] ? 0 : -1;
+    while (s.d[dayAt(k)]) { n++; k--; }
+    const keep = {}; for (let i = 0; i > -70; i--) { const x = dayAt(i); if (s.d[x]) keep[x] = s.d[x]; }
+    s.d = keep; s.n = n; s.today = !!s.d[t]; s.best = Math.max(s.best || 0, n);
+    wr('donsem:streak', { d: s.d, fz: s.fz, best: s.best, cel: s.cel });
+    return s;
+  }
+  // 듀오링고 위젯처럼: 오늘 안 하면 저녁부터 셈이가 점점 애타요
+  function mood(s) {
+    const h = new Date().getHours(), n = s.n;
+    if (s.today) return ['happy', '😊', `오늘 돈 관리 끝! 🔥 ${n}일째 불이 활활 타요.`, '내일도 하나만 하면 이어져요. 셈이가 뿌듯해요!'];
+    if (!n) return ['hi', '👋', '오늘 미션 하나로 🔥 연속 기록을 시작해요!', '출석·퀴즈·가계부·계산 중 아무거나 하나면 돼요.'];
+    if (h < 18) return ['hi', '👋', `오늘 하나만 하면 🔥 ${n + 1}일째예요.`, '출석 버튼 한 번, 1분이면 충분해요.'];
+    if (h < 22) return ['sad', '🥺', `셈이가 기다리고 있어요… 🔥 ${n}일 기록이 꺼지기 전에!`, '출석 버튼 한 번이면 지킬 수 있어요.'];
+    return ['mad', '😤', `🔥 ${n}일 기록이 오늘 밤 사라져요!`, '지금 출석 한 번이면 지켜져요. 셈이 진짜 서운해요…'];
+  }
+  const flame = (cls = '') => `<svg class="stk-fl ${cls}" viewBox="0 0 48 56" aria-hidden="true"><defs><linearGradient id="fl1" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff7a1a"/><stop offset="1" stop-color="#ffb21a"/></linearGradient></defs><path d="M24 2c3 9 15 15 15 30a15 15 0 0 1-30 0c0-7 4-12 7-15 0 5 2 8 5 9-1-9 1-17 3-24z" fill="url(#fl1)"/><path d="M24 30c2 4 7 6 7 13a7 7 0 0 1-14 0c0-4 2-6 4-8 0 2 1 3 2 4 0-4 0-6 1-9z" fill="#ffe27a"/></svg>`;
+  const WK = ['월', '화', '수', '목', '금', '토', '일'];
+  function week(s) {
+    const now = new Date(), mon = (now.getDay() + 6) % 7, t = ymd(now);
+    return WK.map((w, i) => { const d = new Date(now); d.setDate(now.getDate() - mon + i); const x = ymd(d), v = s.d[x];
+      const c = v === 'f' ? 'frz' : v ? 'done' : x === t ? 'now' : x > t ? 'fut' : 'miss';
+      return `<i class="${c}"><em>${w}</em><u>${c === 'done' ? '✓' : c === 'frz' ? '❄' : c === 'now' ? '' : ''}</u></i>`; }).join('');
+  }
+
+  // ₩ 버튼에 🔥 숫자 (오늘 안 했으면 회색, 저녁엔 깜빡여요)
+  function badge(s) {
+    const w = document.querySelector('.topbar .benefit-btn'); if (!w) return;
+    let b = w.querySelector('.stk-b'); if (!b) { b = document.createElement('i'); b.className = 'stk-b'; w.append(b); }
+    b.hidden = !s.n && !s.today; b.textContent = '🔥' + s.n;
+    b.classList.toggle('on', s.today); b.classList.toggle('late', !s.today && s.n > 0 && new Date().getHours() >= 18);
+    w.setAttribute('aria-label', `혜택·미션 (연속 ${s.n}일)`);
+  }
+  // 혜택·미션 맨 위 연속 기록 카드
+  function card(s) {
+    const el = document.getElementById('stk-card'); if (!el) return;
+    const [m, face, l1, l2] = mood(s), pts = (rd('donsem:points') || {}).n || 0;
+    el.innerHTML = `<div class="stk ${m}"><div class="stk-top"><div class="stk-fire${s.today ? '' : ' off'}">${flame()}<b>${s.n}</b></div><div class="stk-tx"><small>연속 기록</small><strong>${s.n}일 연속</strong><span>최고 ${s.best}일 · ❄ 얼리기 ${s.fz}개</span></div></div>
+      <div class="stk-week">${week(s)}</div>
+      <div class="stk-say"><span class="stk-ava"><img src="/icons/semi-blink.svg" alt="" width="44" height="44"><em>${face}</em></span><p><b>${l1}</b><small>${l2}</small></p></div>
+      <div class="stk-btns">${s.today ? '<a class="stk-go" href="/path/">돈 관리 코스 이어 하기 ›</a>' : '<a class="stk-go hot" href="#bn-cards">오늘 미션 하러 가기</a>'}<button type="button" class="stk-fz"${s.fz >= 2 || pts < 50 ? ' disabled' : ''}>❄ 얼리기 · 50P</button></div></div>`;
+    el.querySelector('.stk-fz').onclick = () => { const p = rd('donsem:points') || { n: 0, got: {} }, x = rd('donsem:streak') || {}; if ((p.n || 0) < 50 || (x.fz || 0) >= 2) return; p.n -= 50; x.fz = (x.fz || 0) + 1; wr('donsem:points', p); wr('donsem:streak', x); say('❄ 얼리기를 샀어요! 하루 빠져도 불이 안 꺼져요'); tick(true); };
+    const go = el.querySelector('.stk-go.hot'); if (go) go.onclick = e => { const c = document.getElementById('bn-cards'); if (c) { e.preventDefault(); c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } };
+  }
+  // 듀오링고 '연속 학습' 화면처럼: 오늘 처음 불이 켜지면 크게 축하해요
+  function celebrate(s) {
+    const o = document.createElement('div'); o.className = 'stk-cel'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', `연속 ${s.n}일`);
+    const C = ['#ff9459', '#ffb21a', '#9a7aea', '#22b59c', '#4ea3e6', '#f2708f'];
+    o.innerHTML = `<div class="stk-conf">${Array.from({ length: 28 }, (_, i) => `<i style="left:${(i * 37) % 100}%;background:${C[i % 6]};animation-delay:${(i % 7) * 0.12}s;--r:${(i * 53) % 360}deg"></i>`).join('')}</div>
+      <div class="stk-cel-in"><div class="stk-big">${flame('big')}<b class="stk-num">${Math.max(0, s.n - 1)}</b></div>
+      <h2>${s.n <= 1 ? '연속 기록 시작!' : `${s.n}일 연속!`}</h2><p>${s.n <= 1 ? '오늘 돈 관리 하나 끝! 내일도 하면 🔥2일이에요.' : `벌써 ${s.n}일째 돈 관리 중이에요. 셈이가 진짜 뿌듯해요!`}</p>
+      <div class="stk-week">${week(s)}</div><img class="stk-cel-semi" src="/img/semi-front.png" alt="" width="120" height="120"><button type="button" class="btn fill stk-ok">계속하기</button></div>`;
+    document.body.append(o); requestAnimationFrame(() => o.classList.add('on'));
+    setTimeout(() => { const b = o.querySelector('.stk-num'); if (b) { b.textContent = s.n; b.classList.add('pop'); } }, 700);
+    const close = () => { o.classList.remove('on'); setTimeout(() => o.remove(), 300); };
+    o.querySelector('.stk-ok').onclick = close; o.addEventListener('click', e => { if (e.target === o) close(); });
+  }
+  let was = null;
+  function tick(force) {
+    const s = S();
+    if (force || was === null || was.today !== s.today || was.n !== s.n || was.fz !== s.fz) { badge(s); card(s); if (typeof drawPath === 'function') drawPath(); }
+    if (s.today && s.cel !== dayAt(0) && !document.querySelector('.stk-cel')) { const x = rd('donsem:streak') || {}; x.cel = dayAt(0); wr('donsem:streak', x); setTimeout(() => celebrate(s), 500); }
+    if (s.usedFz && !was) say('❄ 어제는 얼리기가 불을 지켜 줬어요!');
+    was = s;
+  }
+
+  // ── 돈 관리 코스: 듀오링고 '섹션·유닛' 길처럼, 칸마다 계산 한 번이면 완료 ──
+  const used = p => !!raw('donsem:last:' + p), len = v => Array.isArray(v) ? v.length : v && typeof v === 'object' ? Object.keys(v).length : 0;
+  const U = [
+    { t: '내 월급 알기', c: '#7040A1', bg: '#ebe5f8', semi: '/img/semi-front.png', n: [['salary', '연봉 실수령액', '/salary/'], ['wage', '시급·월급·연봉', '/wage/'], ['salary-rank', '내 연봉 상위 %', '/salary-rank/'], ['quiz', '돈 퀴즈 한 문제', '/quiz/', () => len((rd('donsem:quiz') || {}).days) > 0]] },
+    { t: '쓰는 돈 잡기', c: '#22b59c', bg: '#d6f0eb', semi: '/icons/semi-blink.svg', n: [['budget', '가계부 첫 기록', '/budget/', () => { const b = rd('donsem:budget'); return !!(b && Array.isArray(b.entries) && b.entries.some(e => !String(e.id).startsWith('fx-'))); }], ['fixed', '고정지출 등록', '/budget/#fixed', () => len(rd('donsem:fixed')) > 0], ['no-spend', '무지출 도장', '/no-spend/', () => len((rd('donsem:nospend') || {}).days) > 0], ['dutch-pay', '더치페이 나누기', '/dutch-pay/']] },
+    { t: '모으는 돈 키우기', c: '#4ea3e6', bg: '#dcedfb', semi: '/img/semi-laptop.png', n: [['savings', '적금 이자', '/savings/'], ['compound', '복리 투자', '/compound/'], ['goals', '저축 목표 만들기', '/goals/', () => len(rd('donsem:goals')) > 0], ['dividend', '배당금', '/dividend/']] },
+    { t: '세금·환급 챙기기', c: '#ff9459', bg: '#fde7d9', semi: '/img/semi-front.png', n: [['year-end-tax', '연말정산 환급', '/year-end-tax/'], ['hidden-money', '숨은 돈 찾기', '/hidden-money/', () => used('/hidden-money/') || !!raw('donsem:pv:/hidden-money/')], ['severance', '퇴직금', '/severance/'], ['unemployment', '실업급여', '/unemployment/']] },
+    { t: '집과 큰돈', c: '#f2708f', bg: '#fbe3ea', semi: '/img/semi-laptop.png', n: [['rent', '전월세 전환', '/rent/'], ['loan', '대출 이자', '/loan/'], ['acquisition-tax', '취득세', '/acquisition-tax/']] },
+  ];
+  const data = () => U.map(u => Object.assign({}, u, { d: u.n.map(x => { try { return !!(x[3] ? x[3]() : used(x[2])); } catch (e) { return false; } }) }));
+  const OFF = [0, -58, -82, -58, 0, 58, 82, 58];
+  window.drawPath = function drawPath() {
+    const D = data(), all = D.flatMap(u => u.d), done = all.filter(Boolean).length, tot = all.length, chest = rd('donsem:path-chest') || {};
+    let cu = -1, cn = -1; D.some((u, i) => { const j = u.d.indexOf(false); if (j >= 0) { cu = i; cn = j; return true; } return false; });
+    const mini = document.getElementById('pth-mini');
+    if (mini) { const u = D[Math.max(0, cu)], x = cu >= 0 ? u.n[cn] : null;
+      mini.style.setProperty('--c', u.c); mini.style.setProperty('--bg', u.bg);
+      mini.innerHTML = `<span class="pm-ic"><img src="/icons/${x ? x[0] : 'collection'}.webp" alt="" width="40" height="40"></span><span class="pm-tx"><small>돈 관리 코스 · 유닛 ${Math.max(0, cu) + 1}</small><b>${x ? `다음 칸: ${x[1]}` : '코스를 모두 깼어요! 🏆'}</b><i><u style="width:${Math.round(done / tot * 100)}%"></u></i></span><em>${done}/${tot}</em>`; }
+    const map = document.getElementById('pth-map'); if (!map) return;
+    const s = S(), pts = (rd('donsem:points') || {}).n || 0;
+    document.getElementById('pth-stat').innerHTML = `<span>${flame(s.today ? '' : 'off')}<b>${s.n}</b><small>연속</small></span><span><i class="bn-coin">₩</i><b>${pts}</b><small>셈 포인트</small></span><span><img src="/icons/goals.webp" alt="" width="26" height="26"><b>${Math.round(done / tot * 100)}%</b><small>코스 진행</small></span>`;
+    let k = 0;
+    map.innerHTML = D.map((u, ui) => { const ud = u.d.filter(Boolean).length, full = ud === u.n.length, got = chest[ui];
+      const nodes = u.n.map((x, j) => { const st = u.d[j] ? 'done' : ui === cu && j === cn ? 'cur' : 'lock', off = OFF[(k++) % OFF.length];
+        return `<a class="pn ${st}" href="${x[2]}" style="--x:${off}px" aria-label="${x[1]}${st === 'done' ? ' (완료)' : ''}">${st === 'cur' ? '<i class="pn-tip">시작!</i>' : ''}<span class="pn-c"><img src="/icons/${x[0]}.webp" alt="" width="40" height="40">${st === 'done' ? '<em>✓</em>' : ''}</span><b>${x[1]}</b></a>`; }).join('');
+      const off = OFF[(k++) % OFF.length];
+      return `<section class="pu" style="--c:${u.c};--bg:${u.bg}"><header class="pu-h"><small>섹션 1 · 유닛 ${ui + 1}</small><b>${u.t}</b><em>${ud}/${u.n.length}</em></header>
+        <div class="pu-path"><img class="pu-semi ${ui % 2 ? 'l' : 'r'}" src="${u.semi}" alt="" width="110" height="110" loading="lazy">${nodes}
+        <button type="button" class="pc ${got ? 'open' : full ? 'ready' : ''}" data-u="${ui}" style="--x:${off}px"${got || !full ? ' disabled' : ''}><span>${got ? '🎉' : '🎁'}</span><b>${got ? '받았어요 +30P' : full ? '상자 열기 +30P' : '유닛을 다 깨면 열려요'}</b></button></div></section>`; }).join('');
+    map.querySelectorAll('.pc.ready').forEach(b => b.onclick = () => { const ui = +b.dataset.u, c = rd('donsem:path-chest') || {}; if (c[ui]) return; c[ui] = 1; wr('donsem:path-chest', c);
+      const p = rd('donsem:points') || { n: 0, got: {} }; p.n = (p.n || 0) + 30; wr('donsem:points', p); say(`🎁 유닛 ${ui + 1} 상자에서 30P를 받았어요!`); drawPath(); });
+    const cur = map.querySelector('.pn.cur'); if (cur && !drawPath.scrolled && location.pathname === '/path/') { drawPath.scrolled = 1; setTimeout(() => cur.scrollIntoView({ block: 'center' }), 200); }
+  };
+  const start = () => { tick(true); drawPath(); setInterval(() => { if (!document.hidden) tick(); }, 3000); addEventListener('pageshow', () => tick(true)); };
+  document.readyState === 'loading' ? addEventListener('DOMContentLoaded', start) : setTimeout(start, 0);
+})();
