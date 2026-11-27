@@ -4944,13 +4944,37 @@ const PARTNER_LINKS = {
 
   // ── 돈 관리 코스: 듀오링고 '섹션·유닛' 길처럼, 칸마다 계산 한 번이면 완료 ──
   const used = p => !!raw('donsem:last:' + p), len = v => Array.isArray(v) ? v.length : v && typeof v === 'object' ? Object.keys(v).length : 0;
+  // 방문 기록 (계산이 없는 화면은 들어가 보기만 해도 칸이 완료돼요)
+  const PV = rd('donsem:pv') || {}; if (!PV[location.pathname]) { PV[location.pathname] = 1; wr('donsem:pv', PV); }
+  const seen = p => !!(rd('donsem:pv') || {})[p], seenAny = re => Object.keys(rd('donsem:pv') || {}).some(k => re.test(k));
+  const qd = () => len((rd('donsem:quiz') || {}).days), ent = () => { const b = rd('donsem:budget'); return b && Array.isArray(b.entries) ? b.entries.filter(e => !String(e.id).startsWith('fx-')).length : 0; };
+  const pts = () => (rd('donsem:points') || {}).n || 0, best = () => (rd('donsem:streak') || {}).best || 0;
+  const I = { semi: '/icons/semi-blink.svg' }; // 아이콘 파일이 .webp가 아닌 칸
+  // 섹션 1 돈 계산 기초 · 섹션 2 돈 관리 습관 · 섹션 3 돈 고수 (유닛 순서는 상자 기록 번호라 앞쪽은 바꾸지 않아요)
   const U = [
-    { t: '내 월급 알기', c: '#7040A1', bg: '#ebe5f8', semi: '/img/semi-front.png', n: [['salary', '연봉 실수령액', '/salary/'], ['wage', '시급·월급·연봉', '/wage/'], ['salary-rank', '내 연봉 상위 %', '/salary-rank/'], ['quiz', '돈 퀴즈 한 문제', '/quiz/', () => len((rd('donsem:quiz') || {}).days) > 0]] },
-    { t: '쓰는 돈 잡기', c: '#22b59c', bg: '#d6f0eb', semi: '/icons/semi-blink.svg', n: [['budget', '가계부 첫 기록', '/budget/', () => { const b = rd('donsem:budget'); return !!(b && Array.isArray(b.entries) && b.entries.some(e => !String(e.id).startsWith('fx-'))); }], ['fixed', '고정지출 등록', '/budget/#fixed', () => len(rd('donsem:fixed')) > 0], ['no-spend', '무지출 도장', '/no-spend/', () => len((rd('donsem:nospend') || {}).days) > 0], ['dutch-pay', '더치페이 나누기', '/dutch-pay/']] },
-    { t: '모으는 돈 키우기', c: '#4ea3e6', bg: '#dcedfb', semi: '/img/semi-laptop.png', n: [['savings', '적금 이자', '/savings/'], ['compound', '복리 투자', '/compound/'], ['goals', '저축 목표 만들기', '/goals/', () => len(rd('donsem:goals')) > 0], ['dividend', '배당금', '/dividend/']] },
-    { t: '세금·환급 챙기기', c: '#ff9459', bg: '#fde7d9', semi: '/img/semi-front.png', n: [['year-end-tax', '연말정산 환급', '/year-end-tax/'], ['hidden-money', '숨은 돈 찾기', '/hidden-money/', () => used('/hidden-money/') || !!raw('donsem:pv:/hidden-money/')], ['severance', '퇴직금', '/severance/'], ['unemployment', '실업급여', '/unemployment/']] },
-    { t: '집과 큰돈', c: '#f2708f', bg: '#fbe3ea', semi: '/img/semi-laptop.png', n: [['rent', '전월세 전환', '/rent/'], ['loan', '대출 이자', '/loan/'], ['acquisition-tax', '취득세', '/acquisition-tax/']] },
+    { s: 1, t: '내 월급 알기', c: '#7040A1', bg: '#ebe5f8', semi: '/img/semi-front.png', n: [['salary', '연봉 실수령액', '/salary/'], ['wage', '시급·월급·연봉', '/wage/'], ['salary-rank', '내 연봉 상위 %', '/salary-rank/'], ['quiz', '돈 퀴즈 한 문제', '/quiz/', () => qd() > 0]] },
+    { s: 1, t: '쓰는 돈 잡기', c: '#22b59c', bg: '#d6f0eb', semi: I.semi, n: [['budget', '가계부 첫 기록', '/budget/', () => ent() > 0], ['fixed', '고정지출 등록', '/budget/#fixed', () => len(rd('donsem:fixed')) > 0], ['no-spend', '무지출 도장', '/no-spend/', () => len((rd('donsem:nospend') || {}).days) > 0], ['dutch-pay', '더치페이 나누기', '/dutch-pay/']] },
+    { s: 1, t: '모으는 돈 키우기', c: '#4ea3e6', bg: '#dcedfb', semi: '/img/semi-laptop.png', n: [['savings', '적금 이자', '/savings/'], ['compound', '복리 투자', '/compound/'], ['goals', '저축 목표 만들기', '/goals/', () => len(rd('donsem:goals')) > 0], ['dividend', '배당금', '/dividend/']] },
+    { s: 1, t: '세금·환급 챙기기', c: '#ff9459', bg: '#fde7d9', semi: '/img/semi-front.png', n: [['year-end-tax', '연말정산 환급', '/year-end-tax/'], ['hidden-money', '숨은 돈 찾기', '/hidden-money/', () => used('/hidden-money/') || !!raw('donsem:pv:/hidden-money/') || seen('/hidden-money/')], ['severance', '퇴직금', '/severance/'], ['unemployment', '실업급여', '/unemployment/']] },
+    { s: 1, t: '집과 큰돈', c: '#f2708f', bg: '#fbe3ea', semi: '/img/semi-laptop.png', n: [['rent', '전월세 전환', '/rent/'], ['loan', '대출 이자', '/loan/'], ['acquisition-tax', '취득세', '/acquisition-tax/']] },
+    { s: 1, t: '예금과 이자', c: '#7040A1', bg: '#ebe5f8', semi: I.semi, n: [['deposit', '예금 이자', '/deposit/'], ['percent', '퍼센트 계산', '/percent/'], ['inflation', '물가상승률', '/inflation/'], ['goal', '목표 저축', '/goal/']] },
+    { s: 1, t: '일한 만큼 받기', c: '#22b59c', bg: '#d6f0eb', semi: '/img/semi-front.png', n: [['holiday-pay', '주휴수당', '/holiday-pay/'], ['income-tax', '종합소득세', '/income-tax/'], ['vat', '부가세', '/vat/'], ['year-end', '연말정산 모아보기', '/year-end/', () => used('/year-end/') || seen('/year-end/')]] },
+    { s: 1, t: '쇼핑 똑똑하게', c: '#4ea3e6', bg: '#dcedfb', semi: '/img/semi-laptop.png', n: [['discount', '할인율', '/discount/'], ['unit-price', '단가 비교', '/unit-price/'], ['used-price', '중고 시세', '/used-price/'], ['delivery', '배달비', '/delivery/']] },
+    { s: 1, t: '생활비 줄이기', c: '#ff9459', bg: '#fde7d9', semi: I.semi, n: [['fuel', '유류비', '/fuel/'], ['fan-budget', '덕질 비용', '/fan-budget/'], ['time-value', '내 시간 가치', '/time-value/'], ['date', '날짜·D-day', '/date/']] },
+    { s: 1, t: '대출 다루기', c: '#f2708f', bg: '#fbe3ea', semi: '/img/semi-front.png', n: [['loan-limit', '대출 한도', '/loan-limit/'], ['prepayment', '중도상환수수료', '/prepayment/'], ['refinance', '대출 갈아타기', '/refinance/'], ['car-loan', '자동차 할부', '/car-loan/']] },
+    { s: 2, t: '매일 출석하기', c: '#7040A1', bg: '#ebe5f8', semi: '/img/semi-laptop.png', n: [['money-calendar', '오늘 출석체크', '/benefits/', () => len(rd('donsem:bn-attend')) > 0], ['piggy-big', '셈 포인트 50P', '/benefits/', () => pts() >= 50], ['fortune', '🔥 3일 연속', '/benefits/', () => best() >= 3], ['clover', '주간 리그 참가', '/league/', () => raw('donsem:lg-on') === '1']] },
+    { s: 2, t: '캘린더 가계부', c: '#22b59c', bg: '#d6f0eb', semi: I.semi, n: [['money-calendar', '돈 캘린더 열기', '/money-calendar/', () => seen('/money-calendar/') || seen('/budget/')], ['budget', '가계부 5번 기록', '/budget/', () => ent() >= 5], ['fixed', '고정지출 3개', '/budget/#fixed', () => len(rd('donsem:fixed')) >= 3], ['no-spend', '무지출 3일', '/no-spend/', () => len((rd('donsem:nospend') || {}).days) >= 3]] },
+    { s: 2, t: '셈이와 친해지기', c: '#4ea3e6', bg: '#dcedfb', semi: '/img/semi-front.png', n: [['semi', '셈이에게 일 맡기기', '/', () => !!raw('donsem:semi-day')], ['guide', '사용방법 보기', '/?how=1', () => !!raw('donsem:how-seen')], ['money-type', '돈BTI 테스트', '/money-type/', () => seen('/money-type/')], ['wrap', '셈이 대화창 꾸미기', '/my/#set-chat', () => !!(raw('donsem:chat-style') || raw('donsem:deco'))]] },
+    { s: 2, t: '내 자산 한눈에', c: '#ff9459', bg: '#fde7d9', semi: '/img/semi-laptop.png', n: [['assets', '내 자산 등록', '/assets/', () => len(rd('donsem:assets')) > 0], ['asset-rank', '순자산 상위 %', '/asset-rank/'], ['goals', '저축 목표 2개', '/goals/', () => len(rd('donsem:goals')) >= 2], ['collection', '컬렉션 보기', '/collection/', () => seen('/collection/')]] },
+    { s: 2, t: '돈 소식 챙기기', c: '#f2708f', bg: '#fbe3ea', semi: I.semi, n: [['guide', '매거진 글 읽기', '/guide/', () => seenAny(/^\/guide\/[^/]+\/./)], ['should-i', '해야 할까, 말까?', '/should-i/', () => seen('/should-i/')], ['quiz', '돈 퀴즈 3일', '/quiz/', () => qd() >= 3], ['wrap', '돈셈 레터 구독', '/#nl', () => !!raw('donsem:nl')]] },
+    { s: 3, t: '투자 첫걸음', c: '#7040A1', bg: '#ebe5f8', semi: '/img/semi-front.png', n: [['invest', '투자 계산 모음', '/invest/', () => used('/invest/') || seen('/invest/')], ['avg-price', '물타기 평단가', '/avg-price/'], ['loss-recovery', '손실 회복 수익률', '/loss-recovery/'], ['etf-fee', 'ETF 보수 비교', '/etf-fee/']] },
+    { s: 3, t: '절세 계좌 쓰기', c: '#22b59c', bg: '#d6f0eb', semi: '/img/semi-laptop.png', n: [['isa', 'ISA 절세', '/isa/'], ['pension', '연금저축·IRP', '/pension/'], ['financial-income-tax', '금융소득종합과세', '/financial-income-tax/'], ['overseas-stock-tax', '해외주식 양도세', '/overseas-stock-tax/']] },
+    { s: 3, t: '내 집 마련 준비', c: '#4ea3e6', bg: '#dcedfb', semi: I.semi, n: [['subscription-score', '청약 가점', '/subscription-score/'], ['jeonse-check', '전세 안심 진단', '/jeonse-check/', () => used('/jeonse-check/') || seen('/jeonse-check/')], ['brokerage-fee', '중개수수료', '/brokerage-fee/'], ['pyeong', '평수 계산', '/pyeong/']] },
+    { s: 3, t: '큰돈 굴리기', c: '#ff9459', bg: '#fde7d9', semi: '/img/semi-front.png', n: [['lump-sum', '1,000만 원 어디에?', '/lump-sum/'], ['real-estate', '서울 부동산 지도', '/real-estate/', () => seen('/real-estate/')], ['assets', '재건축·재개발 구역', '/redev/', () => seenAny(/^\/redev\//)], ['corporate-tax', '법인세', '/corporate-tax/']] },
+    { s: 3, t: '돈셈 마스터', c: '#f2708f', bg: '#fbe3ea', semi: '/img/semi-laptop.png', n: [['retirement', '노후자금', '/retirement/'], ['fortune', '🔥 7일 연속', '/benefits/', () => best() >= 7], ['piggy-big', '셈 포인트 300P', '/benefits/', () => pts() >= 300], ['clover', '리그 승급하기', '/league/', () => ((rd('donsem:lg-last') || {}).tier || 0) >= 1]] },
   ];
+  const SEC = { 1: ['돈 계산 기초', '생활 속 돈 계산을 하나씩 해 보며 돈셈 계산기와 친해져요.'], 2: ['돈 관리 습관', '출석·캘린더·셈이·자산 기능으로 매일 돈을 챙기는 습관을 만들어요.'], 3: ['돈 고수', '투자·절세·내 집 마련까지, 한 단계 깊은 돈 계산에 도전해요.'] };
+  const icon = id => I[id] || `/icons/${id}.webp`;
   const data = () => U.map(u => Object.assign({}, u, { d: u.n.map(x => { try { return !!(x[3] ? x[3]() : used(x[2])); } catch (e) { return false; } }) }));
   const OFF = [0, -58, -82, -58, 0, 58, 82, 58];
   window.drawPath = function drawPath() {
@@ -4959,16 +4983,20 @@ const PARTNER_LINKS = {
     const mini = document.getElementById('pth-mini');
     if (mini) { const u = D[Math.max(0, cu)], x = cu >= 0 ? u.n[cn] : null;
       mini.style.setProperty('--c', u.c); mini.style.setProperty('--bg', u.bg);
-      mini.innerHTML = `<span class="pm-ic"><img src="/icons/${x ? x[0] : 'collection'}.webp" alt="" width="40" height="40"></span><span class="pm-tx"><small>돈 관리 코스 · 유닛 ${Math.max(0, cu) + 1}</small><b>${x ? `다음 칸: ${x[1]}` : '코스를 모두 깼어요! 🏆'}</b><i><u style="width:${Math.round(done / tot * 100)}%"></u></i></span><em>${done}/${tot}</em>`; }
+      mini.innerHTML = `<span class="pm-ic"><img src="${icon(x ? x[0] : 'collection')}" alt="" width="40" height="40"></span><span class="pm-tx"><small>돈 관리 코스 · 섹션 ${u.s} · 유닛 ${Math.max(0, cu) + 1}</small><b>${x ? `다음 칸: ${x[1]}` : '코스를 모두 깼어요! 🏆'}</b><i><u style="width:${Math.round(done / tot * 100)}%"></u></i></span><em>${done}/${tot}</em>`; }
     const map = document.getElementById('pth-map'); if (!map) return;
     const s = S(), pts = (rd('donsem:points') || {}).n || 0;
     document.getElementById('pth-stat').innerHTML = `<span>${flame(s.today ? '' : 'off')}<b>${s.n}</b><small>연속</small></span><span><i class="bn-coin">₩</i><b>${pts}</b><small>셈 포인트</small></span><span><img src="/icons/goals.webp" alt="" width="26" height="26"><b>${Math.round(done / tot * 100)}%</b><small>코스 진행</small></span>`;
-    let k = 0;
+    let k = 0, ps = 0;
+    const secPct = n => { const x = D.filter(u => u.s === n).flatMap(u => u.d); return Math.round(x.filter(Boolean).length / x.length * 100); };
+    let nav = document.getElementById('pth-secs'); if (!nav) { nav = document.createElement('div'); nav.id = 'pth-secs'; nav.className = 'pth-secs'; map.before(nav); }
+    nav.innerHTML = [1, 2, 3].map(n => `<a href="#sec-${n}"><b>섹션 ${n}</b><span>${SEC[n][0]}</span><i><u style="width:${secPct(n)}%"></u></i></a>`).join('');
     map.innerHTML = D.map((u, ui) => { const ud = u.d.filter(Boolean).length, full = ud === u.n.length, got = chest[ui];
+      const head = u.s !== ps ? (ps = u.s, `<header class="psec" id="sec-${u.s}"><small>SECTION ${u.s}</small><b>섹션 ${u.s} · ${SEC[u.s][0]}</b><p>${SEC[u.s][1]}</p><i><u style="width:${secPct(u.s)}%"></u></i><em>${secPct(u.s)}% 완료</em></header>`) : '';
       const nodes = u.n.map((x, j) => { const st = u.d[j] ? 'done' : ui === cu && j === cn ? 'cur' : 'lock', off = OFF[(k++) % OFF.length];
-        return `<a class="pn ${st}" href="${x[2]}" style="--x:${off}px" aria-label="${x[1]}${st === 'done' ? ' (완료)' : ''}">${st === 'cur' ? '<i class="pn-tip">시작!</i>' : ''}<span class="pn-c"><img src="/icons/${x[0]}.webp" alt="" width="40" height="40">${st === 'done' ? '<em>✓</em>' : ''}</span><b>${x[1]}</b></a>`; }).join('');
+        return `<a class="pn ${st}" href="${x[2]}" style="--x:${off}px" aria-label="${x[1]}${st === 'done' ? ' (완료)' : ''}">${st === 'cur' ? '<i class="pn-tip">시작!</i>' : ''}<span class="pn-c"><img src="${icon(x[0])}" alt="" width="40" height="40">${st === 'done' ? '<em>✓</em>' : ''}</span><b>${x[1]}</b></a>`; }).join('');
       const off = OFF[(k++) % OFF.length];
-      return `<section class="pu" style="--c:${u.c};--bg:${u.bg}"><header class="pu-h"><small>섹션 1 · 유닛 ${ui + 1}</small><b>${u.t}</b><em>${ud}/${u.n.length}</em></header>
+      return `${head}<section class="pu" style="--c:${u.c};--bg:${u.bg}"><header class="pu-h"><small>섹션 ${u.s} · 유닛 ${ui + 1}</small><b>${u.t}</b><em>${ud}/${u.n.length}</em></header>
         <div class="pu-path"><img class="pu-semi ${ui % 2 ? 'l' : 'r'}" src="${u.semi}" alt="" width="110" height="110" loading="lazy">${nodes}
         <button type="button" class="pc ${got ? 'open' : full ? 'ready' : ''}" data-u="${ui}" style="--x:${off}px"${got || !full ? ' disabled' : ''}><span>${got ? '🎉' : '🎁'}</span><b>${got ? '받았어요 +30P' : full ? '상자 열기 +30P' : '유닛을 다 깨면 열려요'}</b></button></div></section>`; }).join('');
     map.querySelectorAll('.pc.ready').forEach(b => b.onclick = () => { const ui = +b.dataset.u, c = rd('donsem:path-chest') || {}; if (c[ui]) return; c[ui] = 1; wr('donsem:path-chest', c);
