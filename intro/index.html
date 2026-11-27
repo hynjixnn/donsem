@@ -188,18 +188,28 @@ img{display:block}
 .istk-w em{font-style:normal;font-size:8px;font-weight:700;color:#8b95a1}
 .istk-w u{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;text-decoration:none;font-size:10px;font-weight:900;color:#fff;background:rgba(0,0,0,.07)}
 .istk-w .d u{background:#ff9459}
-.pts{border-radius:18px;background:#191f28;color:#fff;padding:10px 14px 9px}
+.ipm{display:flex;align-items:center;gap:9px;margin-top:10px;padding:8px 11px;border-radius:15px;background:#ebe5f8}
+.ipm-ic{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 3px 0 #c6b3e0}.ipm-ic img{width:24px;height:24px;object-fit:contain}
+.ipm-tx{flex:1;min-width:0}.ipm-tx small{display:block;font-size:8.5px;font-weight:700;color:#7040A1}.ipm-tx b{display:block;margin:1px 0 4px;font-size:11.5px;letter-spacing:-.02em;white-space:nowrap}
+.ipm-tx i{display:block;height:5px;border-radius:4px;background:rgba(255,255,255,.75);overflow:hidden}.ipm-tx i u{display:block;width:2%;height:100%;background:#7040A1}
+.ipm>em{flex:none;font-style:normal;font-size:10px;font-weight:800;color:#7040A1}
+.ilm{display:flex;align-items:center;gap:9px;margin-top:7px;padding:8px 11px;border-radius:15px;background:#191f28;color:#fff}
+.ilm-ic svg{display:block;width:28px;height:32px}.ilm-tx{flex:1;min-width:0}.ilm-tx small{display:block;font-size:8.5px;font-weight:700;color:#e9a466}
+.ilm-tx b{display:block;margin:1px 0;font-size:11.5px;letter-spacing:-.02em}.ilm-tx span{font-size:9px;opacity:.65}.ilm>em{font-style:normal;font-size:15px;opacity:.6}
+#bcol{will-change:transform}
+.app[data-a="3"]:before{content:"";position:absolute;top:0;left:0;right:0;height:50px;background:#fff;z-index:3}
+.pts{border-radius:18px;background:#191f28;color:#fff;padding:13px 14px 12px}
 .pts small{font-size:10.5px;opacity:.6;font-weight:600}
 .pts b{display:flex;justify-content:space-between;align-items:baseline;margin-top:3px;font-size:20px}
 .pts b u{text-decoration:none;font:400 21px var(--st);color:var(--p3);font-variant-numeric:tabular-nums}
-.pts .tr{margin-top:7px;height:6px;border-radius:5px;background:rgba(255,255,255,.14);overflow:hidden}
+.pts .tr{margin-top:10px;height:6px;border-radius:5px;background:rgba(255,255,255,.14);overflow:hidden}
 .pts .tr i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--p3),#fff);border-radius:5px;transition:width .4s}
-.pts p{margin-top:5px;font-size:10.5px;opacity:.7}
-.msh{display:flex;justify-content:space-between;align-items:baseline;margin:9px 0 6px}
+.pts p{margin-top:7px;font-size:10.5px;opacity:.7}
+.msh{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 8px}
 .msh b{font-size:15px;font-weight:800}.msh b em{font-style:normal;color:var(--p)}.msh span{font-size:9.5px;color:#6b7684}.msh span u{text-decoration:none;color:var(--p);font-weight:800}
 .mis{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.mi{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-height:82px;border-radius:15px;padding:10px 10px 9px;background:var(--c)}
-.mi img{width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,.12))}
+.mi{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-height:106px;border-radius:15px;padding:10px 10px 9px;background:var(--c)}
+.mi img{width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,.12))}
 .mi b{font-size:11.5px;line-height:1.3;letter-spacing:-.02em}
 .mi small{margin-top:auto;font-size:9px;color:#4e5968}
 .mi u{position:absolute;top:8px;right:8px;text-decoration:none;font-size:9px;font-weight:800;padding:4px 7px;border-radius:99px;background:rgba(255,255,255,.8);color:#4e5968;transition:background .3s,color .3s}
@@ -336,9 +346,12 @@ img{display:block}
     </div>
 
     <div class="app" data-a="3">
+      <div id="bcol">
       <div class="ah" style="margin-bottom:8px"><b>혜택·미션</b><img src="/img/semi/medal.png" alt="" style="width:42px;height:42px;object-fit:contain"></div>
       <div class="istk"><div class="istk-t"><span class="istk-f"><svg class="ifl" viewBox="0 0 48 56" aria-hidden="true"><defs><linearGradient id="ifl1" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff7a1a"/><stop offset="1" stop-color="#ffb21a"/></linearGradient></defs><path d="M24 2c3 9 15 15 15 30a15 15 0 0 1-30 0c0-7 4-12 7-15 0 5 2 8 5 9-1-9 1-17 3-24z" fill="url(#ifl1)"/><path d="M24 30c2 4 7 6 7 13a7 7 0 0 1-14 0c0-4 2-6 4-8 0 2 1 3 2 4 0-4 0-6 1-9z" fill="#ffe27a"/></svg><b>5</b></span><div><small>연속 기록</small><strong>5일 연속</strong></div></div><div class="istk-w"><i class="d"><em>월</em><u>✓</u></i><i class="d"><em>화</em><u>✓</u></i><i class="d"><em>수</em><u>✓</u></i><i class="d"><em>목</em><u>✓</u></i><i class="d"><em>금</em><u>✓</u></i><i class=""><em>토</em><u></u></i><i class=""><em>일</em><u></u></i></div></div>
       <div class="pts"><small>내 셈 포인트</small><b><span id="lvt">3단계</span><u id="pt">210P</u></b><div class="tr"><i id="ptb"></i></div><p id="ptt">90P 더 모으면 4단계</p></div>
+      <div class="ipm"><span class="ipm-ic"><img src="/icons/salary.webp" alt="" width="26" height="26"></span><span class="ipm-tx"><small>돈 관리 코스 · 섹션 1 · 유닛 1</small><b>다음 칸: 연봉 실수령액</b><i><u></u></i></span><em>1/79</em></div>
+      <div class="ilm"><span class="ilm-ic"><svg viewBox="0 0 40 46" aria-hidden="true"><path d="M20 2 36 8v14c0 11-7 18-16 22C11 40 4 33 4 22V8z" fill="#cd7f32"/><path d="M20 7 31 11v11c0 8-5 13-11 16-6-3-11-8-11-16V11z" fill="#fff" opacity=".28"/></svg></span><span class="ilm-tx"><small>주간 리그</small><b>이번 주 리그에 참가해 보세요</b><span>이번 주 40 XP</span></span><em>›</em></div>
       <div class="msh"><b>오늘의 미션 <em id="mdone">0</em>/5</b><span>모두 하면 최대 <u>50P</u></span></div>
       <div class="mis" id="mis">
         <div class="mi" style="--c:#d6f0eb;--th:#22b59c"><u>참여하기</u><img src="/icons/money-calendar.webp" alt=""><b>오늘 출석하고<br>10P 받기</b><small>+10P</small></div>
@@ -347,6 +360,7 @@ img{display:block}
         <div class="mi" style="--c:#ebe5f8;--th:#9a7aea"><u>참여하기</u><img src="/icons/semi-blink.svg" alt=""><b>셈이에게<br>일 하나 맡기기</b><small>+10P</small></div>
         <div class="mi wide" style="--c:#fbe3ea;--th:#f2708f"><u>참여하기</u><img src="/icons/percent.webp" alt=""><b>계산기로 하나 따져 보기</b><small>+10P</small></div>
       </div>
+    </div>
     </div>
 
     <div class="home-ind"></div>
@@ -435,7 +449,8 @@ function frame(){
   const st=s2>=.68?2:s2>.6?1:0;if(st!==window._cs){window._cs=st;$('c3').innerHTML=st==2?'<b>적었어요 ✓</b><p>이번 달 지출은 지금까지 164,300원이에요.</p><a>캘린더 보기 ›</a>':'<b>가계부에 적을까요?</b><dl><div><dt>날짜</dt><dd>11월 26일</dd></div><div><dt>금액</dt><dd>−9,000원</dd></div><div><dt>분류</dt><dd>식비</dd></div><div><dt>메모</dt><dd>국밥</dd></div></dl><div class="bt"><button type="button" class="ok'+(st==1?' press':'')+'" tabindex="-1">적기</button><button type="button" tabindex="-1">취소</button></div><small>확인을 누르기 전에는 아무것도 저장하지 않아요.</small>'}
   // 혜택: 미션을 하면 ₩ 받기 → 누르면 받기 완료 +10P
   const s3=b<3?0:q;let gotN=0,okN=0;
-  mis.forEach((m,i)=>{const ok=s3>.08+i*.15,got=s3>.15+i*.15;okN+=ok;gotN+=got;m.classList.toggle('ok',ok&&!got);m.classList.toggle('got',got);m.querySelector('u').textContent=got?'₩ 받기 완료':ok?'₩ 받기':'참여하기';m.querySelector('small').textContent=got?'+10P 적립했어요':ok?'+10P 받을 수 있어요':'+10P'});
+  const bc=$('bcol'),ba=bc.parentElement,bmax=Math.max(0,bc.offsetHeight-(ba.clientHeight-parseFloat(getComputedStyle(ba).paddingTop)-26));bc.style.transform='translateY('+(-ez(cl((s3-.12)/.2))*bmax)+'px)';
+  mis.forEach((m,i)=>{const ok=s3>.34+i*.12,got=s3>.4+i*.12;okN+=ok;gotN+=got;m.classList.toggle('ok',ok&&!got);m.classList.toggle('got',got);m.querySelector('u').textContent=got?'₩ 받기 완료':ok?'₩ 받기':'참여하기';m.querySelector('small').textContent=got?'+10P 적립했어요':ok?'+10P 받을 수 있어요':'+10P'});
   const pt=210+10*gotN,lv=1+Math.floor(pt/100);
   $('pt').textContent=pt+'P';$('lvt').textContent=lv+'단계';$('ptb').style.width=(pt%100)+'%';$('ptt').textContent=(100-pt%100)+'P 더 모으면 '+(lv+1)+'단계';$('mdone').textContent=okN;
   /* 3. 계산기 띠 */
