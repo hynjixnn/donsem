@@ -217,7 +217,7 @@ img{display:block}
 .say small{display:inline-block;margin-top:.6em;font-size:.56em;line-height:1.4;letter-spacing:-.02em}
 /* 5. 시작 */
 .cta{background:var(--p);color:#fff;text-align:center;padding:110px 24px 90px;position:relative;overflow:hidden}
-.cta img{width:190px;margin:0 auto 24px;filter:drop-shadow(0 24px 40px rgba(0,0,0,.3))}
+.cta img{width:190px;height:190px;object-fit:contain;margin:0 auto 24px;filter:drop-shadow(0 24px 40px rgba(0,0,0,.3))}
 .cta h2{font-family:var(--st);font-weight:400;font-size:clamp(44px,8vw,96px);line-height:.92;letter-spacing:.01em}
 .cta p{margin-top:16px;font-size:18px;opacity:.8;font-weight:600}
 .go{display:inline-flex;align-items:center;gap:8px;margin-top:34px;padding:17px 34px;border-radius:99px;background:#fff;color:var(--p);font-size:17px;font-weight:800;box-shadow:0 18px 40px -14px rgba(0,0,0,.45);transition:transform .2s}
@@ -243,6 +243,15 @@ img{display:block}
   #tools .stick{gap:12px}
 }
 @media (prefers-reduced-motion:reduce){.cue i,.dots i,.caret,.they.sr img,.they.sr i{animation:none}}
+
+/* 11-27 새 셈이 */
+.isemi{object-fit:contain;filter:drop-shadow(0 8px 8px rgba(30,20,50,.16));pointer-events:none}
+.rcard{position:relative}.isemi.rc{position:absolute;right:10px;top:8px;width:58px;height:58px}
+.ihint{display:flex;align-items:center;gap:8px;margin-top:10px;padding:6px 10px 6px 6px;border-radius:14px;background:#fff;font-size:10.5px;font-weight:700;color:#4e5968}
+.ihint img{width:46px;height:46px;object-fit:contain;flex:none}
+.isemi.th{display:block;width:96px;height:96px;margin:0 auto 6px}
+#words .stick{flex-direction:column;gap:14px}.isemi.say-s{width:110px;height:110px}
+@media (max-width:760px){.isemi.th{width:76px;height:76px}.isemi.say-s{width:90px;height:90px}}
 </style>
 </head>
 <body>
@@ -250,7 +259,7 @@ img{display:block}
 
 <section class="pin" id="hero"><div class="stick">
   <div class="glow" id="glow"></div>
-  <div class="h-semi" id="hsemi"><img src="/img/semi-front.png" alt="돈셈 캐릭터 셈이" width="230" height="230"></div>
+  <div class="h-semi" id="hsemi"><img src="/img/semi/wave.png" alt="돈셈 캐릭터 셈이" width="230" height="230"></div>
   <div id="htx">
     <p class="h-kick">DONSAM</p>
     <h1 class="h-big"><span>MONEY,</span><span>SIMPLE.</span></h1>
@@ -280,7 +289,7 @@ img{display:block}
         <div class="sl">비과세액 (식대 등, 한 달)</div>
         <div class="sin"><span>200,000</span><small>원</small></div>
         <div class="chips"><span>+1만</span><span>+10만</span><span>+100만</span><i>지우기</i><em>20만 원</em></div>
-        <div class="rcard" id="rcard">
+        <div class="rcard" id="rcard"><img class="isemi rc" src="/img/semi/briefcase.png" alt="" width="58" height="58">
           <small>한 달 실수령액</small><b id="net">2,935,813원</b>
           <div class="slip"><em>PAYSLIP</em><b>연봉 4,000만 원 급여명세서</b>
             <div class="sh"><i>+</i>받는 돈</div>
@@ -300,6 +309,7 @@ img{display:block}
         <div class="cmp"><p>지난달보다 <em>109,000원</em> 더 쓰는 중<span>분석·고정 지출 보기 ›</span></p><svg viewBox="0 0 78 28" aria-hidden="true"><path d="M2 26H48V22H58V16H78V26Z" fill="#eceef2"/><path id="cline" d="M2 25H20L28 24H40V19H46V14H52V9H60L64 5H70" fill="none" stroke="#7040A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/><circle id="cdot" cx="70" cy="5" r="2.4" fill="#7040A1" opacity="0"/></svg></div></div>
       <div class="wk2"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
       <div class="cal2" id="cal"></div>
+      <div class="ihint" id="calhint"><img src="/img/semi/calendar.png" alt="" width="46" height="46"><span>셈이가 이번 달 돈 흐름을 날짜마다 정리했어요</span></div>
     </div>
 
     <div class="app" data-a="2">
@@ -314,7 +324,7 @@ img{display:block}
     </div>
 
     <div class="app" data-a="3">
-      <div class="ah" style="margin-bottom:12px"><b>혜택·미션</b></div>
+      <div class="ah" style="margin-bottom:12px"><b>혜택·미션</b><img src="/img/semi/medal.png" alt="" style="width:42px;height:42px;object-fit:contain"></div>
       <div class="pts"><small>내 셈 포인트</small><b><span id="lvt">3단계</span><u id="pt">210P</u></b><div class="tr"><i id="ptb"></i></div><p id="ptt">90P 더 모으면 4단계</p></div>
       <div class="msh"><b>오늘의 미션 <em id="mdone">0</em>/5</b><span>모두 하면 최대 <u>50P</u></span></div>
       <div class="mis" id="mis">
@@ -332,17 +342,18 @@ img{display:block}
 </div></section>
 
 <section class="pin" id="tools"><div class="stick">
-  <div class="t-hd"><em>ALL IN ONE</em><h2>생활 속 돈 계산,<br>여기 다 있어요</h2></div>
+  <div class="t-hd"><img class="isemi th" src="/img/semi/calc.png" alt="" width="96" height="96"><em>ALL IN ONE</em><h2>생활 속 돈 계산,<br>여기 다 있어요</h2></div>
   <div class="row" id="r1"></div>
   <div class="row" id="r2"></div>
 </div></section>
 
 <section class="pin" id="words"><div class="stick">
+  <img class="isemi say-s" src="/img/semi/flower.png" alt="" width="110" height="110">
   <p class="say" id="say">계산은 <span class="pu">돈셈이,</span><br>결정은 <span class="pu">당신이.</span><br><small>모르고 놓치는 돈 없이, 오늘부터 가볍게.</small></p>
 </div></section>
 
 <section class="cta">
-  <img src="/img/semi-laptop.png" alt="" width="190" height="190">
+  <img src="/img/semi/rocket.png" alt="" width="190" height="190">
   <h2>START<br>DONSAM</h2>
   <p>가입 없이, 무료로 바로 써요</p>
   <a class="go" href="/" data-go>돈셈 시작하기 →</a>
