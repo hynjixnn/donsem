@@ -4899,3 +4899,9 @@ html[data-theme="dark"] .bn-pts { background: #23232b; box-shadow: 0 0 0 1px rgb
 @keyframes puBob { 50% { transform: translateY(calc(-50% - 6px)); } }
 @media (min-width: 761px) { .pu-semi { width: 150px !important; height: 150px !important; } .pu-semi.r { right: 14% !important; } .pu-semi.l { left: 14% !important; } }
 @media (prefers-reduced-motion: reduce) { .pu-semi { animation: none; } }
+
+/* ── 11-27 계산기 카드 셈이 ── */
+.has-semi { position: relative; }
+.calc-semi { position: absolute; right: 10px; top: 54px; width: 88px; height: 88px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 8px 8px rgba(30,20,50,.14)); z-index: 1; }
+.has-semi > h1, .has-semi > .sub { padding-right: 92px; }
+@media (min-width: 761px) { .calc-semi { width: 110px; height: 110px; top: 40px; right: 20px; } .has-semi > h1, .has-semi > .sub { padding-right: 124px; } }

@@ -4928,7 +4928,7 @@ const PARTNER_LINKS = {
     o.innerHTML = `<div class="stk-conf">${Array.from({ length: 28 }, (_, i) => `<i style="left:${(i * 37) % 100}%;background:${C[i % 6]};animation-delay:${(i % 7) * 0.12}s;--r:${(i * 53) % 360}deg"></i>`).join('')}</div>
       <div class="stk-cel-in"><div class="stk-big">${flame('big')}<b class="stk-num">${Math.max(0, s.n - 1)}</b></div>
       <h2>${s.n <= 1 ? '연속 기록 시작!' : `${s.n}일 연속!`}</h2><p>${s.n <= 1 ? '오늘 돈 관리 하나 끝! 내일도 하면 🔥2일이에요.' : `벌써 ${s.n}일째 돈 관리 중이에요. 셈이가 진짜 뿌듯해요!`}</p>
-      <div class="stk-week">${week(s)}</div><img class="stk-cel-semi" src="/img/semi-front.png" alt="" width="120" height="120"><button type="button" class="btn fill stk-ok">계속하기</button></div>`;
+      <div class="stk-week">${week(s)}</div><img class="stk-cel-semi" src="/img/semi/trophy.png" alt="" width="120" height="120"><button type="button" class="btn fill stk-ok">계속하기</button></div>`;
     document.body.append(o); requestAnimationFrame(() => o.classList.add('on'));
     setTimeout(() => { const b = o.querySelector('.stk-num'); if (b) { b.textContent = s.n; b.classList.add('pop'); } }, 700);
     const close = () => { o.classList.remove('on'); setTimeout(() => o.remove(), 300); };
@@ -4977,7 +4977,7 @@ const PARTNER_LINKS = {
   const SEC = { 1: ['돈 계산 기초', '생활 속 돈 계산을 하나씩 해 보며 돈셈 계산기와 친해져요.'], 2: ['돈 관리 습관', '출석·캘린더·셈이·자산 기능으로 매일 돈을 챙기는 습관을 만들어요.'], 3: ['돈 고수', '투자·절세·내 집 마련까지, 한 단계 깊은 돈 계산에 도전해요.'] };
   const icon = id => I[id] || `/icons/${id}.webp`;
   // 유닛마다 다른 셈이 (듀오링고 길 옆 캐릭터처럼)
-  const SEMI = ['coin', 'coffee', 'piggy', 'search', 'house', 'happy', 'idea', 'music', 'sleep', 'book', 'happy', 'book', 'music', 'piggy', 'search', 'idea', 'coin', 'house', 'piggy', 'happy'];
+  const SEMI = ['coin', 'coffee', 'piggy', 'search', 'house', 'flower', 'pencil', 'card', 'sleep', 'calc', 'gift', 'book', 'wave', 'chart', 'glasses', 'idea', 'umbrella', 'house', 'piggy', 'trophy'];
   const data = () => U.map(u => Object.assign({}, u, { d: u.n.map(x => { try { return !!(x[3] ? x[3]() : used(x[2])); } catch (e) { return false; } }) }));
   const OFF = [0, -58, -82, -58, 0, 58, 82, 58];
   window.drawPath = function drawPath() {
@@ -5051,7 +5051,7 @@ const PARTNER_LINKS = {
     function join(j) {
       drawTiers(j.tiers || ['브론즈'], 0); title.textContent = '주간 리그'; left.textContent = '매주 월요일에 새 리그가 시작돼요';
       const def = nick() || '셈친구' + Math.floor(1000 + Math.random() * 9000);
-      body.innerHTML = `<div class="lg-join"><img src="/img/semi-front.png" alt="" width="96" height="96"><b>이번 주 리그에 참가해 볼까요?</b><p>미션으로 모은 셈 포인트가 XP가 돼요. 별명만 정하면 바로 시작!</p><label>별명 (2~10자)<input id="lg-in" maxlength="10" value="${esc(def)}" autocomplete="off"></label><button type="button" class="btn fill" id="lg-go">리그 참가하기</button></div>`;
+      body.innerHTML = `<div class="lg-join"><img src="/img/semi/wave.png" alt="" width="96" height="96"><b>이번 주 리그에 참가해 볼까요?</b><p>미션으로 모은 셈 포인트가 XP가 돼요. 별명만 정하면 바로 시작!</p><label>별명 (2~10자)<input id="lg-in" maxlength="10" value="${esc(def)}" autocomplete="off"></label><button type="button" class="btn fill" id="lg-go">리그 참가하기</button></div>`;
       document.getElementById('lg-go').onclick = async e => { const v = document.getElementById('lg-in').value.replace(/[^0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ_ ]/g, '').trim().slice(0, 10); if (v.length < 2) { alertBox('별명은 2~10자로 정해 주세요'); return; } put('donsem:lg-nick', v); put('donsem:lg-on', '1'); e.target.disabled = true; e.target.textContent = '참가하는 중…'; try { draw(await call(true)); } catch (er) { e.target.disabled = false; e.target.textContent = '리그 참가하기'; alertBox('지금 리그에 연결되지 않아요. 잠시 뒤 다시 해 주세요.'); } };
     }
     const alertBox = m => { if (typeof toast === 'function') toast(m); else alert(m); };
@@ -5071,4 +5071,20 @@ const PARTNER_LINKS = {
   }
   const go = () => { xp(); mini(); page(); setInterval(() => { xp(); mini(); if (location.pathname !== '/league/') sync(); }, 5000); };
   document.readyState === 'loading' ? addEventListener('DOMContentLoaded', go) : setTimeout(go, 0);
+})();
+
+
+// ── 11-27 계산기마다 주제에 맞는 셈이 (카드 오른쪽 위) ──
+(() => {
+  const M = { salary: 'wave', wage: 'wave', 'salary-rank': 'trophy', 'holiday-pay': 'gift', 'year-end-tax': 'gift', 'year-end': 'pencil', 'income-tax': 'pencil', vat: 'calc', 'corporate-tax': 'calc', percent: 'calc', date: 'calc', pyeong: 'calc', 'unit-price': 'calc', 'time-value': 'calc',
+    loan: 'coin', 'loan-limit': 'glasses', prepayment: 'glasses', refinance: 'glasses', 'car-loan': 'card', 'jeonse-check': 'glasses', 'should-i': 'glasses', 'financial-income-tax': 'glasses',
+    savings: 'flower', deposit: 'flower', inflation: 'flower', goal: 'trophy', compound: 'chart', invest: 'chart', 'avg-price': 'chart', 'loss-recovery': 'chart', 'etf-fee': 'chart', dividend: 'chart', 'overseas-stock-tax': 'chart', 'asset-rank': 'chart',
+    isa: 'umbrella', pension: 'umbrella', retirement: 'umbrella', unemployment: 'umbrella', severance: 'umbrella', rent: 'house', 'acquisition-tax': 'house', 'brokerage-fee': 'house', 'subscription-score': 'trophy',
+    'hidden-money': 'search', 'lump-sum': 'idea', discount: 'card', 'used-price': 'card', delivery: 'card', 'fan-budget': 'card', fuel: 'coffee', 'dutch-pay': 'pencil' };
+  const parts = location.pathname.split('/').filter(Boolean), n = parts.length === 1 && M[parts[0]];
+  if (!n) return;
+  const card = document.querySelector('main section.card, .wrap > section.card, .wrap > article.card, section.card'); const h1 = card && card.querySelector('h1');
+  if (!h1 || !card.querySelector(':scope > .sub') || card.querySelector('.calc-semi')) return;
+  const im = document.createElement('img'); im.className = 'calc-semi'; im.src = `/img/semi/${n}.png`; im.alt = ''; im.width = 88; im.height = 88; im.setAttribute('aria-hidden', 'true');
+  card.classList.add('has-semi'); h1.before(im);
 })();
