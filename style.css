@@ -4934,3 +4934,14 @@ html[data-theme="dark"] .bn-pts { background: #23232b; box-shadow: 0 0 0 1px rgb
 .tl-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
 .tl-semi { width: 64px; height: 64px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 8px 8px rgba(30,20,50,.14)); }
 @media (min-width: 761px) { .sec-semi.sm { width: 54px; height: 54px; top: 9px; } .tl-semi { width: 80px; height: 80px; } .pro-semi { width: 92px; height: 92px; right: 22px; top: 16px; } }
+
+/* 11-28 연봉별 연말정산 */
+.ye-up { color: #7040A1; font-weight: 700; }
+.ye-dn { color: #d23b3b; font-weight: 700; }
+:root[data-theme="dark"] .ye-up { color: #B69AD8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ye-up { color: #B69AD8; } }
+.ye-tbl td:first-child { text-align: left; }
+.ye-tbl td small { display: block; margin-top: 3px; font-size: 12px; font-weight: 400; color: var(--muted); }
+.ye-tbl td:last-child, .ye-tbl th:last-child { text-align: right; white-space: nowrap; }
+.sal-big.ye-neg b { color: #d23b3b; }
+.ye-tbl th:first-child { text-align: left; }
