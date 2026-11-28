@@ -4924,3 +4924,13 @@ html[data-theme="dark"] .bn-pts { background: #23232b; box-shadow: 0 0 0 1px rgb
 @media (min-width: 761px) { .sec-semi { width: 88px; height: 88px; right: 22px; top: 18px; } .has-semi > h2, .has-semi > .sub.small { padding-right: 100px; } }
 /* 11-27 사용방법 사진: 휴대폰 화면 전체가 버튼 위에 다 보이게 (아래가 흐려지며 버튼 밑으로 겹치지 않게) */
 .how-phone:has(> img) { width: auto; max-width: 72%; aspect-ratio: 574 / 1226; align-self: center; margin-bottom: 4px; border-bottom: 7px solid #17171a; border-radius: 32px; -webkit-mask-image: none; mask-image: none; box-shadow: 0 10px 24px rgba(20,16,40,.16); }
+
+/* 11-28 매거진·부동산·캘린더 섹션 셈이 */
+.sec-semi.sm { width: 56px; height: 56px; top: 10px; }
+.has-semi > h2:only-of-type { padding-right: 64px; }
+.pro-hero { position: relative; }
+.pro-semi { position: absolute; right: 14px; top: 12px; width: 76px; height: 76px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 8px 10px rgba(0,0,0,.35)); }
+.pro-hero h2, .pro-hero > p { padding-right: 70px; }
+.tl-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
+.tl-semi { width: 64px; height: 64px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 8px 8px rgba(30,20,50,.14)); }
+@media (min-width: 761px) { .sec-semi.sm { width: 54px; height: 54px; top: 9px; } .tl-semi { width: 80px; height: 80px; } .pro-semi { width: 92px; height: 92px; right: 22px; top: 16px; } }

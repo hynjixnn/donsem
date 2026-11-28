@@ -92,7 +92,8 @@
     <div class="cal-more" id="b-cal-more"></div>
   </section>
 
-  <section data-tab="book" class="card" id="budget">
+  <section data-tab="book" class="card has-semi" id="budget">
+    <img class="calc-semi" src="/img/semi/wallet.png" alt="" width="88" height="88">
     <h1>가계부</h1>
     <p class="sub">설치도 가입도 없이, 쓴 돈을 바로 적어요.</p>
     <p class="trust">🔒 기록은 이 기기에만 저장돼요 · 서버로 보내지 않아요</p>
@@ -130,7 +131,8 @@
   </section>
 
 
-  <section data-tab="fixed" class="card sub-card" id="fixed">
+  <section data-tab="fixed" class="card sub-card has-semi" id="fixed">
+    <img class="sec-semi sm" src="/img/semi/card.png" alt="" width="56" height="56">
     <h2>고정지출 <small class="h2-note">구독 · 통신 · 보험 · 월세</small></h2>
     <div class="sum">
       <div><span>한 달</span><b id="f-month-total"></b></div>
@@ -170,7 +172,8 @@
     <div hidden><ul id="f-upcoming"></ul><button type="button" id="f-export"></button><input type="file" id="f-import"><button type="button" id="f-reset"></button></div>
   </section>
 
-  <section data-tab="assets" class="card sub-card" id="assets">
+  <section data-tab="assets" class="card sub-card has-semi" id="assets">
+    <img class="sec-semi sm" src="/img/semi/diamond.png" alt="" width="56" height="56">
     <h2>내 자산 <small class="h2-note">통장 · 투자 · 대출</small></h2>
     <div class="net">
       <span>순자산</span>
@@ -207,7 +210,8 @@
     <div hidden><button type="button" id="a-export"></button><input type="file" id="a-import"><button type="button" id="a-reset"></button></div>
   </section>
 
-  <section data-tab="anal" class="card sub-card" id="anal">
+  <section data-tab="anal" class="card sub-card has-semi" id="anal">
+    <img class="sec-semi sm" src="/img/semi/search.png" alt="" width="56" height="56">
     <h2>어디에 썼나요</h2>
     <div id="b-breakdown"></div>
   </section>
@@ -255,7 +259,7 @@
   </section>
 
   <section data-tab="pro" class="card sub-card pro-sec" id="pro">
-    <div class="pro-hero"><span class="pro-badge">PRO · 지금은 무료 체험</span><h2>기록이 쌓일수록<br>더 많이 알려 드려요</h2><p>가계부에 적은 기록으로 소비 분석, 앞으로의 잔액, 숨은 반복 결제, 카드 실적, 한 달 결산, 돈 습관까지 챙겨 드려요. 계산은 모두 이 기기 안에서 해요. (캡처 읽기만 AI 서버를 써요)</p></div>
+    <div class="pro-hero"><img class="pro-semi" src="/img/semi/rocket.png" alt="" width="76" height="76"><span class="pro-badge">PRO · 지금은 무료 체험</span><h2>기록이 쌓일수록<br>더 많이 알려 드려요</h2><p>가계부에 적은 기록으로 소비 분석, 앞으로의 잔액, 숨은 반복 결제, 카드 실적, 한 달 결산, 돈 습관까지 챙겨 드려요. 계산은 모두 이 기기 안에서 해요. (캡처 읽기만 AI 서버를 써요)</p></div>
     <div class="pro-scan" id="pro-scan"></div>
     <div class="pro-seg" id="pro-seg" role="tablist" aria-label="Pro 기능"></div>
     <div id="pro-body" class="pro-body"></div>
@@ -284,7 +288,7 @@
 
   <footer>
     가계부 기록은 이 기기의 브라우저에만 저장되고 돈셈 서버로 보내지 않아요. 브라우저 데이터를 지우면 함께 지워지니 가끔 백업해 주세요.
-    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a></div>
+    <div style="margin-top:8px"><a href="/about/" style="color:inherit">사이트 소개</a> · <a href="/terms/" style="color:inherit">이용약관</a> · <a href="/privacy/" style="color:inherit">개인정보처리방침</a> · <a href="/contact/" style="color:inherit">문의</a></div>
   </footer>
 </div>
 <script src="/app.js"></script>

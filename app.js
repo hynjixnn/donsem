@@ -5097,3 +5097,18 @@ const PARTNER_LINKS = {
   const im = document.createElement('img'); im.className = 'calc-semi'; im.src = `/img/semi/${n}.png`; im.alt = ''; im.width = 88; im.height = 88; im.setAttribute('aria-hidden', 'true');
   card.classList.add('has-semi'); h1.before(im);
 })();
+
+// ── 11-28 매거진 제목 옆 셈이: 위 메뉴(한눈에·이번 달·용어·연말정산·월급·모으기·집)마다 어울리는 셈이로 바뀌어요 ──
+(() => {
+  if (location.pathname !== '/guide/') return;
+  const pick = t => /연말정산/.test(t) ? 'scroll' : /월급/.test(t) ? 'briefcase' : /모으기|불리기/.test(t) ? 'piggy' : /집/.test(t) ? 'house' : /돈 체크|마감/.test(t) ? 'bell' : /용어/.test(t) ? 'glasses' : 'book';
+  const fix = () => document.querySelectorAll('.tl-head').forEach(hd => {
+    const h = hd.querySelector('h2'), cnt = hd.querySelector('.tl-cnt'); if (!h || !cnt) return;
+    let side = hd.querySelector('.tl-side');
+    if (!side) { side = document.createElement('span'); side.className = 'tl-side'; side.innerHTML = '<img class="tl-semi" alt="" width="64" height="64">'; cnt.before(side); side.append(cnt); }
+    const src = '/img/semi/' + pick(h.textContent) + '.png', im = side.querySelector('img');
+    if (im.getAttribute('src') !== src) im.setAttribute('src', src);
+  });
+  fix();
+  new MutationObserver(fix).observe(document.body, { childList: true, subtree: true, characterData: true });
+})();
