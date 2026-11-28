@@ -3800,6 +3800,7 @@ function semiTodos() {
     if (name === 'calculate') {
       const cs = await (calcsP = calcsP || fetch('/semi-calcs.json').then(r => r.json()).catch(() => []));
       const c = cs.find(x => x.path === String(a.path || '')); if (!c) return '그런 계산기가 없어요. find_calculator로 먼저 찾아 주세요.';
+      const ks = Object.keys(a.inputs || {}); if (ks.length && !ks.some(k => c.fields.some(f => f.k === k))) return { error: '입력칸 이름이 달라요. 아래 k로 다시 불러 주세요.', fields: c.fields.map(f => f.type === 'choice' ? { k: f.k, label: f.label, choose: f.opts.map(o => `${o[0]}=${o[1]}`) } : { k: f.k, label: f.label, type: f.type }) };
       const out = await runCalc(c, a.inputs && typeof a.inputs === 'object' ? a.inputs : {});
       cards.links.push([c.path + '?' + new URLSearchParams(Object.entries(a.inputs || {}).map(([k, v]) => [k, String(v).replace(/,/g, '')])).toString(), `${c.name} 열기`]);
       return `[${c.name} 결과]\n${out}`;
@@ -3895,7 +3896,7 @@ function semiTodos() {
       } catch (e) { return steps ? { face: 'worry', html: '<p>셈이가 잠깐 연결이 끊겼어요. 다시 물어봐 주세요.</p>' } : null; }
       if (r.status === 429 && j.error === 'limit') return { face: 'worry', html: `<b>오늘 사용량 한도를 다 썼어요</b><p>자정이 지나면 다시 채워져요. 한도 초기화 티켓이 있으면 지금 바로 다시 쓸 수 있어요. 계산기·가계부는 그대로 무료예요.</p><a class="ai-go" href="/my/#my-usage">한도 초기화 티켓 ›</a>` };
       if (!r.ok || !j.ok) return steps ? { face: 'worry', html: `<p>${esc(j.message || '셈이가 대답을 마치지 못했어요. 다시 물어봐 주세요.')}</p>` } : null;
-      if (j.done || !Array.isArray(j.calls) || !j.calls.length || ++steps > 7) break;
+      if (j.done || !Array.isArray(j.calls) || !j.calls.length || ++steps > 10) break;
       run.push({ role: 'assistant', content: j.content });
       const results = [];
       for (const c of j.calls.slice(0, 6)) {
