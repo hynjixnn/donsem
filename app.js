@@ -3561,8 +3561,99 @@ function semiTodos() {
   if (m >= 10 || m <= 1) out.push(['🧮', '연말정산 환급액을 미리 계산해 드릴 수 있어요.', '올해 카드 쓴 돈과 월세만 넣으면, 13월의 월급이 얼마일지 미리 볼 수 있어요.', { href: '/year-end-tax/' }]);
   if (!es.length) out.push(['📒', '오늘 쓴 돈을 대신 적어 드릴게요.', '"점심 12000원"처럼 말하면 가계부에 바로 적어요.', { q: '점심 12000원' }]);
   out.push(['🔍', '아직 안 받은 숨은 돈을 찾아 드릴 수 있어요.', '월세·의료비 환급, 근로장려금처럼 신청만 하면 받는 돈이 있는지 확인해 보세요.', { href: '/hidden-money/' }]);
+  // 11-28: 예산을 80% 넘게 썼으면 맨 앞에서 먼저 알려요
+  if (b && b.budget > 0 && used >= b.budget * 0.8) { const i = out.findIndex(x => x[0] === '📊'); if (i > 0) out.unshift(out.splice(i, 1)[0]); if (out[0][0] === '📊') out[0][0] = used >= b.budget ? '🚨' : '⚠️'; }
   return out;
 }
+
+// ── 11-28 셈이 3단계 「기억하기」: 사용자가 말한 자기 이야기(월급날·목표·가족·관심사)를 이 기기에만 기억해요 ──
+const SEMI_MEM_KEY = 'donsem:semi-mem';
+function semiMemList() { try { const m = JSON.parse(localStorage.getItem(SEMI_MEM_KEY)); return m && Array.isArray(m.items) ? m.items : []; } catch (e) { return []; } }
+function semiMemSave(items) { try { localStorage.setItem(SEMI_MEM_KEY, JSON.stringify({ items: items.slice(-30) })); } catch (e) { /* 저장이 막힌 브라우저 */ } }
+function semiMemAdd(t) {
+  t = String(t || '').replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 80); if (!t) return null;
+  const l = semiMemList().filter(x => x.t !== t), d = new Date();
+  const it = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t, at: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` };
+  l.push(it); semiMemSave(l); return it;
+}
+function semiMemDel(id) { semiMemSave(semiMemList().filter(x => x.id !== id)); }
+
+// ── 11-28 셈이 2단계 「먼저 챙기기」: 앞으로 14일 동안 셈이가 먼저 알려 줄 일을 이 기기 기록으로 만들어요 ──
+// 알림을 켠 사람만, 알림 제목·짧은 글·날짜를 워커에 맡겨서 그날 아침 9시(am)·저녁 8시(pm)에 받아요
+function semiAlerts() {
+  const rd = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const n = new Date(), t0 = new Date(n.getFullYear(), n.getMonth(), n.getDate()), day = k => new Date(t0.getTime() + k * 864e5), out = [];
+  const add = (d, slot, id, title, body, url) => { if (d >= t0) out.push({ id: String(id).slice(0, 60), date: iso(d), slot, title: String(title).slice(0, 60), body: String(body).slice(0, 120), url }); };
+  // 고정지출: 빠져나가기 전날 저녁
+  const f = rd('donsem:fixed'), fx = f && Array.isArray(f.items) ? f.items.filter(x => +x.amt > 0 && +x.day >= 1 && x.cycle !== 'year') : [];
+  for (let k = 1; k <= 14; k++) { const d = day(k), last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    fx.forEach(x => { if (Math.min(+x.day, last) === d.getDate()) add(day(k - 1), 'pm', `fx-${x.id || x.name}-${iso(d)}`, `내일 ${x.name || x.cat} 빠져나가요`, `${won(+x.amt)}이 내일 결제돼요. 통장 잔액을 미리 확인해 두세요.`, '/budget/#fixed'); }); }
+  // 월급날 아침
+  const b = rd('donsem:budget'), pi = typeof paydayInfo === 'function' ? paydayInfo(b) : null;
+  if (pi && pi.days <= 14) add(pi.next, 'am', `pay-${iso(pi.next)}`, '오늘은 월급날이에요 💰', '들어온 월급, 셈이랑 이번 달 돈 정리해 볼까요?', '/?semi=hi');
+  // 중요한 돈 일정: 전날 아침 (기준금리·세금·연말정산 등)
+  let mcs = []; try { mcs = typeof mcUpcoming === 'function' ? mcUpcoming() : []; } catch (e) { mcs = []; } // 돈 달력 자료가 아직 준비 전이면 건너뛰어요
+  mcs.filter(e => e.imp >= 2 && !e.soft && mcDays(e.d) >= 1 && mcDays(e.d) <= 14).slice(0, 8).forEach(e => add(day(mcDays(e.d) - 1), 'am', `mc-${e.d}-${String(e.t).slice(0, 20)}`, `내일 ${e.t}`, String(e.who || '').slice(0, 110), (e.go && e.go[0]) || '/money-calendar/'));
+  // 예산: 이번 달 80%·100%를 넘으면 오늘 저녁 (한 달에 한 번씩)
+  if (b && b.budget > 0) {
+    const ym = iso(n).slice(0, 7), used = withFixed(Array.isArray(b.entries) ? b.entries : []).filter(e => e.type === 'out' && e.date.startsWith(ym) && e.date <= iso(n)).reduce((s, e) => s + e.amt, 0), p = used / b.budget;
+    if (p >= 1) add(t0, 'pm', `bd100-${ym}`, '이번 달 예산을 다 썼어요 🚨', `예산보다 ${won(used - b.budget)} 더 썼어요. 셈이에게 어디서 줄일지 물어보세요.`, '/?semi=hi');
+    else if (p >= 0.8) add(t0, 'pm', `bd80-${ym}`, `이번 달 예산의 ${Math.floor(p * 100)}%를 썼어요`, `남은 예산은 ${won(b.budget - used)}이에요. 남은 날 하루 쓸 돈을 셈이가 계산해 드릴게요.`, '/?semi=hi');
+  }
+  return out.sort((x, y) => (x.date + x.slot).localeCompare(y.date + y.slot)).slice(0, 30);
+}
+const SEMI_PUSH_KEY = 'donsem:semi-push';
+const semiCanPush = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const semiPushIsOn = () => { try { return !!(JSON.parse(localStorage.getItem(SEMI_PUSH_KEY)) || {}).on; } catch (e) { return false; } };
+async function semiPushSub() {
+  const reg = await navigator.serviceWorker.ready, { key } = await fetch(COUNTER_URL + '/push/key').then(r => r.json());
+  const b64 = k => { const p = (k + '='.repeat((4 - k.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/'); return Uint8Array.from(atob(p), c => c.charCodeAt(0)); };
+  return (await reg.pushManager.getSubscription()) || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
+}
+const semiPost = (p, b) => fetch(COUNTER_URL + p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(r => r.json());
+async function semiPushSync(force) {
+  if (!semiCanPush() || !semiPushIsOn()) return;
+  const al = semiAlerts(), sig = JSON.stringify(al.map(a => [a.id, a.date, a.slot, a.title])).length + ':' + al.map(a => a.id).join('|').slice(0, 400), st = JSON.parse(localStorage.getItem(SEMI_PUSH_KEY) || '{}'), today = new Date().toDateString();
+  if (!force && st.sig === sig && st.day === today) return;
+  const reg = await navigator.serviceWorker.getRegistration(), s = reg && await reg.pushManager.getSubscription(); if (!s) return;
+  const j = await semiPost('/push/semi', { endpoint: s.endpoint, alerts: al }).catch(() => null);
+  if (j && j.ok) localStorage.setItem(SEMI_PUSH_KEY, JSON.stringify({ on: 1, sig, day: today }));
+}
+async function semiPushOn() {
+  if (!semiCanPush()) return { ok: false, msg: /iP(hone|ad|od)/.test(navigator.userAgent) ? '아이폰은 돈셈을 홈 화면에 추가한 뒤 그 앱에서 켤 수 있어요.' : '이 브라우저는 알림을 지원하지 않아요.' };
+  try {
+    if (Notification.permission === 'denied') return { ok: false, msg: '브라우저 설정에서 돈셈 알림을 허용해 주세요.' };
+    if (await Notification.requestPermission() !== 'granted') return { ok: false, msg: '알림을 허용해야 받을 수 있어요.' };
+    const s = await semiPushSub(), j = await semiPost('/push/semi', { endpoint: s.endpoint, alerts: semiAlerts() });
+    if (!j.ok) return { ok: false, msg: j.message || '알림을 켜지 못했어요.' };
+    localStorage.setItem(SEMI_PUSH_KEY, JSON.stringify({ on: 1, sig: '', day: '' }));
+    semiPost('/push/semi-test', { endpoint: s.endpoint }).catch(() => {});
+    return { ok: true, msg: '🔔 셈이 알림을 켰어요! 시험 알림을 보냈어요.' };
+  } catch (e) { return { ok: false, msg: '이 브라우저에서는 알림을 켜지 못했어요.' }; }
+}
+async function semiPushOff() {
+  try { const reg = await navigator.serviceWorker.getRegistration(), s = reg && await reg.pushManager.getSubscription(); if (s) await semiPost('/push/semi-off', { endpoint: s.endpoint }).catch(() => {}); } catch (e) { /* 괜찮아요 */ }
+  try { localStorage.removeItem(SEMI_PUSH_KEY); } catch (e) { /* 괜찮아요 */ } // 구독 자체는 그대로 둬요 (연속 기록·조합원 플러스 알림과 같이 써요)
+}
+setTimeout(() => { semiPushSync().catch(() => {}); }, 4000); // 화면을 열 때마다 알림 일정을 새로 맞춰요 (바뀐 게 없으면 보내지 않아요)
+
+// 마이 화면: 셈이 알림 켜기·끄기 + 셈이가 기억하는 것 보기·지우기
+(() => {
+  const anchor = document.getElementById('my-usage'); if (!anchor) return;
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const sec = document.createElement('section'); sec.className = 'card sub-card sm-card'; sec.id = 'my-semi'; anchor.after(sec);
+  const draw = msg => {
+    const on = semiPushIsOn(), mem = semiMemList(), al = semiAlerts();
+    sec.innerHTML = `<h2 class="sm-h"><img src="/icons/semi-blink.svg" alt="" width="28" height="28">셈이</h2>
+      <div class="sm-row"><div><b>먼저 챙기기 알림</b><small>고정지출 하루 전, 월급날, 예산 80%, 중요한 돈 일정을 아침 9시·저녁 8시에 알려 드려요.${on && al.length ? ` 앞으로 ${al.length}건이 예정돼 있어요.` : ''}</small></div><button type="button" class="sm-btn${on ? ' off' : ''}" id="sm-push">${on ? '끄기' : '켜기'}</button></div>
+      ${msg ? `<p class="sm-msg">${esc(msg)}</p>` : ''}
+      <div class="sm-mem"><b>셈이가 기억하는 것 ${mem.length ? `<em>${mem.length}</em>` : ''}</b>${mem.length ? `<ul>${mem.slice().reverse().map(x => `<li><span>${esc(x.t)}</span><button type="button" data-del="${esc(x.id)}" aria-label="${esc(x.t)} 잊기">잊기</button></li>`).join('')}</ul>` : '<small>셈이에게 "월급날은 25일이야", "올해 목표는 천만 원 모으기"처럼 말하면 기억해서 다음 대화에 써요. 이 기기에만 저장돼요.</small>'}</div>`;
+    sec.querySelector('#sm-push').onclick = async () => { if (semiPushIsOn()) { await semiPushOff(); draw('셈이 알림을 껐어요.'); } else { const r = await semiPushOn(); draw(r.msg); } };
+    sec.querySelectorAll('[data-del]').forEach(bt => { bt.onclick = () => { semiMemDel(bt.dataset.del); draw('잊었어요.'); }; });
+  };
+  setTimeout(() => { try { draw(); } catch (e) { /* 그리다 문제가 생겨도 다른 화면은 그대로 */ } }, 0); // 돈 달력 자료가 다 준비된 뒤에 그려요
+})();
 
 // ── 돈셈 도우미: 오른쪽 위 알록달록한 버튼 → 궁금한 걸 물으면, 돈셈에 이미 정리된 설명(kb.json)에서 찾아 답해요 ──
 // 진짜 AI가 아니라 '찾아 주는' 도우미라 돈이 들지 않고, 확인된 내용만 보여 줘서 틀린 답을 지어내지 않아요
@@ -3786,7 +3877,7 @@ function semiTodos() {
   const STEP_SAY = { find_calculator: '맞는 계산기를 찾는 중', calculate: '돈셈 계산기로 계산하는 중', get_overview: '내 돈 현황을 보는 중', get_records: '가계부를 살펴보는 중', find_redev: '재건축 자료를 찾는 중', get_schedule: '돈 달력을 확인하는 중', search_guides: '매거진을 찾아보는 중' };
   const WROTE = '사용자 화면에 확인 카드를 띄웠어요. 아직 저장 전이에요. 저장됐다고 말하지 말고 확인 버튼을 눌러 달라고 짧게 안내해 주세요.';
   // 확인 버튼을 누르면 셈이 기억(hist)에 「저장 완료」를 남겨서, 다음 대답에서 헷갈리지 않게 해요
-  const saved = (job, what) => () => { const out = job(); const h = hist[hist.length - 1]; if (h && h.role === 'assistant') h.content = (h.content + `\n(사용자가 확인을 눌러 저장 완료: ${what})`).slice(-1800); return out; };
+  const saved = (job, what) => () => { const out = job(); setTimeout(() => semiPushSync(true).catch(() => {}), 300); const h = hist[hist.length - 1]; if (h && h.role === 'assistant') h.content = (h.content + `\n(사용자가 확인을 눌러 저장 완료: ${what})`).slice(-1800); return out; };
   const WRITE_TOOLS = ['add_record', 'edit_record', 'delete_record', 'add_fixed', 'set_budget', 'save_zone'];
   async function runTool(name, a, cards, allowWrite) {
     a = a && typeof a === 'object' ? a : {};
@@ -3838,6 +3929,16 @@ function semiTodos() {
       const gs = await (guidesP = guidesP || fetch('/guide/list.json').then(r => r.json()).catch(() => []));
       const ws = wordsOf(a.query), top = gs.map(g => [ws.filter(w => g.t.includes(w)).length, g]).filter(x => x[0] > 0).sort((x, y) => y[0] - x[0]).slice(0, 6);
       return top.length ? top.map(([, g]) => ({ title: g.t, url: `/guide/${g.s}/` })) : '맞는 매거진 글이 없어요.';
+    }
+    // ── 기억하기 (이 기기에만, 바로 저장하고 「잊기」 버튼을 붙여요) ──
+    if (name === 'remember') {
+      const it = semiMemAdd(a.text); if (!it) return '기억할 내용이 비어 있어요.';
+      cards.push(`<span class="ai-src">기억했어요</span><p>${esc(it.t)}</p><div class="ai-btns"><button type="button" class="ai-no" data-mem-del="${esc(it.id)}">잊어 줘</button></div>`);
+      return '기억했어요. 다음 대화부터 이 내용을 알고 있어요.';
+    }
+    if (name === 'forget') {
+      const q = String(a.text || '').trim(), l = semiMemList(), hit = l.filter(x => q && (x.t.includes(q) || q.includes(x.t) || wordsOf(q).some(w => x.t.includes(w))));
+      if (!hit.length) return '그런 기억이 없어요.'; hit.forEach(x => semiMemDel(x.id)); return `잊었어요: ${hit.map(x => x.t).join(' / ')}`;
     }
     // ── 저장하는 도구: 확인 카드만 띄워요 ──
     const amt = Math.round(Math.abs(+a.amt || 0)), memo = String(a.memo || a.name || '').replace(/[<>]/g, '').trim().slice(0, 30);
@@ -3891,7 +3992,7 @@ function semiTodos() {
     const allowWrite = /기록|적어|적기|써\s?줘|써줘|썼어|샀어|냈어|받았어|추가|등록|저장|고쳐|고치|수정|바꿔|지워|삭제|빼\s?줘|예산.*(정해|잡아|설정|으로)|관심/.test(q);
     for (;;) {
       try {
-        r = await fetch(COUNTER_URL + '/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ v: 2, msgs: run, page: location.pathname, t: passes() }) });
+        r = await fetch(COUNTER_URL + '/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ v: 2, msgs: run, page: location.pathname, t: passes(), mem: semiMemList().map(x => x.t).slice(-30) }) });
         j = await r.json().catch(() => ({}));
       } catch (e) { return steps ? { face: 'worry', html: '<p>셈이가 잠깐 연결이 끊겼어요. 다시 물어봐 주세요.</p>' } : null; }
       if (r.status === 429 && j.error === 'limit') return { face: 'worry', html: `<b>오늘 사용량 한도를 다 썼어요</b><p>자정이 지나면 다시 채워져요. 한도 초기화 티켓이 있으면 지금 바로 다시 쓸 수 있어요. 계산기·가계부는 그대로 무료예요.</p><a class="ai-go" href="/my/#my-usage">한도 초기화 티켓 ›</a>` };
@@ -3906,7 +4007,7 @@ function semiTodos() {
       }
       run.push({ role: 'user', content: results });
     }
-    const reply = String(j.reply || '').trim() || '할 일을 마쳤어요.';
+    const reply = String(j.reply || '').trim() || (cards.some(h => h.includes('기억했어요')) ? '기억해 둘게요 🌱 다음 대화부터 이걸 알고 도와 드릴게요.' : cards.length ? '말씀하신 대로 준비했어요. 아래에서 확인해 주세요.' : '할 일을 마쳤어요.');
     hist.push({ role: 'user', content: q }, { role: 'assistant', content: reply.slice(0, 1500) }); if (hist.length > 8) hist.splice(0, hist.length - 8);
     const seen = new Set(), links = cards.links.filter(([h]) => !seen.has(h) && seen.add(h)).slice(0, 3).map(([h, l]) => `<a class="ai-go" href="${esc(h)}">${esc(l)} ›</a>`).join(' ');
     return { face: 'happy', html: `<p>${esc(reply).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p>${links}${j.paid || j.left == null ? '' : `<p class="ai-small">오늘 남은 무료 대화 ${j.left}번</p>`}`, cards: cards.map(h => `<div class="ai-a ai-did">${h}</div>`).join('') };
@@ -3983,10 +4084,12 @@ function semiTodos() {
   // 피클 '할 일 제안'처럼: 대화창을 열면 셈이가 먼저 챙겨 본 일 3개를 말풍선으로 꺼내요
   const todoHtml = () => { const l = semiTodos().slice(0, 3); return l.length ? `<div class="ai-a ai-todo"><b>먼저 챙겨 봤어요 👀</b><ul>${l.map(([ico, t, , go]) => `<li>${go.href ? `<a href="${go.href}">` : `<button type="button" data-q="${esc(go.q)}">`}<span aria-hidden="true">${ico}</span><span>${t}</span><em>›</em>${go.href ? '</a>' : '</button>'}</li>`).join('')}</ul></div>` : ''; };
   // 피클처럼: 위에 셈이 프로필, 아래로 말풍선이 쌓이는 친구 DM 화면
+  const pushCard = () => semiCanPush() && !semiPushIsOn() ? '<div class="ai-a ai-push"><b>🔔 셈이가 먼저 챙겨 드릴까요?</b><p>고정지출 빠져나가기 전날, 월급날, 예산 80%를 넘었을 때, 기준금리 발표 같은 중요한 돈 일정을 알림으로 알려 드려요.</p><div class="ai-btns"><button type="button" class="ai-ok" data-semi-push>알림 받기</button></div></div>' : '';
   const helloHtml = () => `<p class="ai-time">${stamp()}</p>
       <div class="ai-a">안녕하세요! 저는 계산만 해 주는 도우미가 아니라, 돈 관리를 같이 챙겨 주는 셈이예요.</div>
       <div class="ai-a">저에 대해 몇 가지 알려 드릴게요:<ul><li>세금·금융 상식, 계산 방법, 돈셈 쓰는 법을 바로 찾아 드려요.</li><li>"이번 달 얼마 썼어?"처럼 물어보면 내 가계부 기록을 보고 알려 드려요.</li><li>놓치면 손해인 환급·지원금 일정도 챙겨 드려요.</li></ul></div>
       ${todoHtml()}
+      ${pushCard()}
       <div class="ai-a">"커피 4500원 썼어", "월세 50만 매달 25일"처럼 말만 하면 제가 대신 적고 등록해 드려요. 아래에서 골라도 돼요!</div>
       <div class="ai-a ai-ex"><div class="ai-ex-h"><b><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/></svg>셈이 둘러보기</b><a href="/calculators/">더보기 ›</a></div><div class="ai-ex-in">${exploreHtml(0)}</div></div>`;
   function build() {
@@ -4069,6 +4172,8 @@ function semiTodos() {
         else toast(url);
       }
       const ex = e.target.closest('[data-ex]'); if (ex) box.querySelector('.ai-ex-in').innerHTML = exploreHtml(+ex.dataset.ex);
+      const pu = e.target.closest('[data-semi-push]'); if (pu) { pu.disabled = true; semiPushOn().then(r => { const c = pu.closest('.ai-a'); if (c) c.innerHTML = `<b>${r.ok ? '알림을 켰어요 🔔' : '알림을 켜지 못했어요'}</b><p>${esc(r.msg)}</p>`; }); }
+      const md = e.target.closest('[data-mem-del]'); if (md) { semiMemDel(md.dataset.memDel); const c = md.closest('.ai-a'); if (c) c.innerHTML = '<b>잊었어요.</b><p>마이 화면에서 셈이가 기억하는 것을 볼 수 있어요.</p>'; }
       if (e.target.closest('.ai-x')) close();
       if (e.target.closest('.ai-new')) { log.innerHTML = helloHtml(); box.classList.remove('chatting'); body.scrollTo({ top: 0 }); const ava = box.querySelector('.ai-ava img'); if (ava) ava.src = '/icons/semi-blink.svg'; }
       if (e.target.closest('.ai-plus')) { close(); if (window.openQuickAdd) setTimeout(() => window.openQuickAdd(), 250); }
