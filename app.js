@@ -3759,7 +3759,159 @@ function semiTodos() {
     return ctx;
   }
   const passes = () => ['donsem:semi-pass', 'donsem:pro-pass', 'donsem:redevplus-pass'].map(k => { try { return (JSON.parse(localStorage.getItem(k)) || {}).token; } catch (e) { return ''; } }).filter(Boolean);
-  async function askAI(q) {
+  // ── 11-28 셈이 에이전트 v2: 셈이가 돈셈 기능(도구)을 여러 번 골라 쓰면서 답을 완성해요 ──
+  // 워커가 「이 도구를 써 줘」라고 하면 여기(사용자 기기)서 실행하고 결과를 돌려보내요. 가계부 같은 내 기록은 필요한 만큼만 그때그때 보내요
+  // 저장하는 도구(기록·고정지출·예산 등)는 확인 카드만 띄우고, 사용자가 버튼을 눌러야 저장돼요
+  const RD = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const ISO = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const OK_DATE = s => /^20\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(String(s || ''));
+  const CATS_OUT = ['식비', '카페·간식', '교통', '주거·통신', '구독', '쇼핑', '의료', '문화·여가', '경조사', '생활', '기타'], CATS_IN = ['월급', '용돈', '부수입', '이자·배당', '기타'];
+  let calcsP = null, guidesP = null;
+  const wordsOf = q => String(q || '').replace(/[^가-힣a-zA-Z0-9\s]/g, ' ').split(/\s+/).map(w => w.replace(/(계산기|계산|은|는|이|가|을|를|에|의|도|좀|요|해줘|알려줘)$/, '')).filter(w => w.length >= 2);
+  const budgetData = () => { const b = RD('donsem:budget'); return { b, es: withFixed(b && Array.isArray(b.entries) ? b.entries : []) }; };
+  const sumBy = list => { const by = {}; list.forEach(e => { by[e.cat] = (by[e.cat] || 0) + e.amt; }); return by; };
+  // 계산기 화면을 보이지 않게 띄워서, 입력값을 넣고 결과칸 글자만 읽어 와요 (돈셈 계산기 공식 그대로)
+  function runCalc(c, inputs) {
+    const qs = new URLSearchParams();
+    for (const f of c.fields) { if (inputs[f.k] == null || inputs[f.k] === '') continue; let v = String(inputs[f.k]).trim(); if (f.type === 'num') v = v.replace(/[^0-9.\-]/g, ''); if (f.type === 'choice' && !f.opts.some(o => o[0] === v)) continue; qs.set(f.k, v.slice(0, 40)); }
+    return new Promise(res => {
+      const fr = document.createElement('iframe'); let done = false;
+      fr.setAttribute('aria-hidden', 'true'); fr.tabIndex = -1; fr.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;height:900px;border:0;opacity:0;pointer-events:none';
+      const fin = t => { if (done) return; done = true; fr.remove(); res(t); };
+      fr.onload = () => setTimeout(() => { try { const o = fr.contentDocument.getElementById(c.out); fin(o ? o.innerText.replace(/\n{2,}/g, '\n').trim().slice(0, 1500) : '결과를 찾지 못했어요'); } catch (e) { fin('계산기를 열지 못했어요'); } }, 700);
+      setTimeout(() => fin('계산기가 늦게 열려서 결과를 못 받았어요'), 9000);
+      fr.src = c.path + '?' + qs.toString(); document.body.append(fr);
+    });
+  }
+  const STEP_SAY = { find_calculator: '맞는 계산기를 찾는 중', calculate: '돈셈 계산기로 계산하는 중', get_overview: '내 돈 현황을 보는 중', get_records: '가계부를 살펴보는 중', find_redev: '재건축 자료를 찾는 중', get_schedule: '돈 달력을 확인하는 중', search_guides: '매거진을 찾아보는 중' };
+  const WROTE = '사용자 화면에 확인 카드를 띄웠어요. 아직 저장 전이에요. 저장됐다고 말하지 말고 확인 버튼을 눌러 달라고 짧게 안내해 주세요.';
+  // 확인 버튼을 누르면 셈이 기억(hist)에 「저장 완료」를 남겨서, 다음 대답에서 헷갈리지 않게 해요
+  const saved = (job, what) => () => { const out = job(); const h = hist[hist.length - 1]; if (h && h.role === 'assistant') h.content = (h.content + `\n(사용자가 확인을 눌러 저장 완료: ${what})`).slice(-1800); return out; };
+  const WRITE_TOOLS = ['add_record', 'edit_record', 'delete_record', 'add_fixed', 'set_budget', 'save_zone'];
+  async function runTool(name, a, cards, allowWrite) {
+    a = a && typeof a === 'object' ? a : {};
+    if (WRITE_TOOLS.includes(name) && !allowWrite) return '사용자가 이번 질문에서 저장·수정·삭제를 부탁하지 않았어요. 저장 도구를 쓰지 말고 질문에만 답해 주세요.';
+    if (name === 'find_calculator') {
+      const cs = await (calcsP = calcsP || fetch('/semi-calcs.json').then(r => r.json()).catch(() => []));
+      const ws = wordsOf(a.query); const sc = c => ws.reduce((s, w) => s + (c.name.includes(w) ? 3 : 0) + (c.path.includes(w) ? 2 : 0) + c.fields.filter(f => f.label.includes(w)).length, 0);
+      const top = cs.map(c => [sc(c), c]).filter(x => x[0] > 0).sort((x, y) => y[0] - x[0]).slice(0, 3).map(x => x[1]);
+      return top.length ? top.map(c => ({ path: c.path, name: c.name, fields: c.fields.map(f => f.type === 'choice' ? { k: f.k, label: f.label, choose: f.opts.map(o => `${o[0]}=${o[1]}`) } : { k: f.k, label: f.label, type: f.type, ex: f.ex }) })) : '맞는 계산기가 없어요. 다른 말로 찾아보거나 모른다고 답해 주세요.';
+    }
+    if (name === 'calculate') {
+      const cs = await (calcsP = calcsP || fetch('/semi-calcs.json').then(r => r.json()).catch(() => []));
+      const c = cs.find(x => x.path === String(a.path || '')); if (!c) return '그런 계산기가 없어요. find_calculator로 먼저 찾아 주세요.';
+      const out = await runCalc(c, a.inputs && typeof a.inputs === 'object' ? a.inputs : {});
+      cards.links.push([c.path + '?' + new URLSearchParams(Object.entries(a.inputs || {}).map(([k, v]) => [k, String(v).replace(/,/g, '')])).toString(), `${c.name} 열기`]);
+      return `[${c.name} 결과]\n${out}`;
+    }
+    if (name === 'get_overview') {
+      const { b, es } = budgetData(), n = new Date(), ym = ISO(n).slice(0, 7), mo = es.filter(e => e.date.startsWith(ym));
+      const outs = mo.filter(e => e.type === 'out'), ins = mo.filter(e => e.type === 'in');
+      const f = RD('donsem:fixed'), fx = f && Array.isArray(f.items) ? f.items : [], as = RD('donsem:assets'), ai = as && Array.isArray(as.items) ? as.items : [];
+      const pl = RD('donsem:plans'), plans = pl && Array.isArray(pl.items) ? pl.items.filter(p => String(p.date || p.d || '') >= ISO(n)).slice(0, 5) : [];
+      const sum = l => l.reduce((s, e) => s + e.amt, 0);
+      return { today: ISO(n), thisMonth: { spent: sum(outs), income: sum(ins), budget: (b && b.budget) || 0, byCat: sumBy(outs), records: mo.length },
+        fixed: fx.slice(0, 15).map(x => ({ name: x.name || x.cat, amt: +x.amt, when: x.cycle === 'year' ? '매년' : `매달 ${x.day}일` })),
+        assets: ai.length ? { total: sum(ai.filter(x => x.kind !== 'debt').map(x => ({ amt: +x.amt || 0 }))), debt: sum(ai.filter(x => x.kind === 'debt').map(x => ({ amt: +x.amt || 0 }))), items: ai.slice(0, 12).map(x => ({ name: x.name, kind: x.kind, amt: +x.amt || 0 })) } : '자산 기록 없음',
+        plans: plans.length ? plans.map(p => JSON.stringify(p).slice(0, 120)) : '일정 없음', hasRecords: es.length > 0 };
+    }
+    if (name === 'get_records') {
+      const { es } = budgetData(), q = String(a.q || '').trim();
+      let l = es.filter(e => (!a.from || e.date >= a.from) && (!a.to || e.date <= a.to) && (!a.type || e.type === a.type) && (!a.cat || String(e.cat).includes(a.cat)) && (!q || String(e.memo || '').includes(q) || String(e.cat).includes(q)));
+      const sum = t => l.filter(e => e.type === t).reduce((s, e) => s + e.amt, 0);
+      return { count: l.length, spent: sum('out'), income: sum('in'), byCat: sumBy(l.filter(e => e.type === 'out')), items: l.slice(-40).map(e => ({ id: e.id, date: e.date, type: e.type, cat: e.cat, amt: e.amt, memo: e.memo || '', fixed: String(e.id).startsWith('fx-') || undefined })) };
+    }
+    if (name === 'find_redev') {
+      [rz, rn] = await Promise.all([rz || getJ('/redev-seoul.json'), rn || getJ('/redev-news.json')]);
+      const ws = wordsOf(a.query).map(w => w.replace(/(재건축|재개발|구역|아파트)$/, '')).filter(w => w.length >= 2 && !/재건축|재개발|가능성|정리|요약|진행|단계/.test(w));
+      const zones = rz && rz.rows && ws.length ? rz.rows.filter(r => ws.some(w => (r[1] + r[2] + r[3]).includes(w))).slice(0, 6).map(r => ({ id: r[0], gu: r[1], name: r[2], addr: r[3], type: r[5], stage: r[6], dates: r[11], asof: rz.asof })) : [];
+      const news = rn && rn.news && ws.length ? rn.news.filter(x => ws.some(w => String((rn.names || {})[x.z] || '').includes(w))).slice(0, 6).map(x => ({ zone: (rn.names || {})[x.z], d: x.d, t: x.t })) : [];
+      return zones.length || news.length ? { zones, news } : '서울시 정비사업 자료에서 찾지 못했어요.';
+    }
+    if (name === 'get_schedule') {
+      const days = Math.min(Math.max(+a.days || 60, 1), 200), t0 = new Date(ISO(new Date()) + 'T00:00:00');
+      const l = (typeof MONEY_CAL !== 'undefined' ? MONEY_CAL : []).map(e => ({ e, n: Math.round((new Date(e.d + 'T00:00:00') - t0) / 864e5) })).filter(x => x.n >= -2 && x.n <= days).sort((x, y) => x.n - y.n).slice(0, 25);
+      return l.map(({ e, n }) => ({ date: e.d, dday: n, when: e.when || '', title: e.t, tag: e.tag || '', note: String(e.who || '').slice(0, 110), page: e.go ? e.go[0] : '' }));
+    }
+    if (name === 'search_guides') {
+      const gs = await (guidesP = guidesP || fetch('/guide/list.json').then(r => r.json()).catch(() => []));
+      const ws = wordsOf(a.query), top = gs.map(g => [ws.filter(w => g.t.includes(w)).length, g]).filter(x => x[0] > 0).sort((x, y) => y[0] - x[0]).slice(0, 6);
+      return top.length ? top.map(([, g]) => ({ title: g.t, url: `/guide/${g.s}/` })) : '맞는 매거진 글이 없어요.';
+    }
+    // ── 저장하는 도구: 확인 카드만 띄워요 ──
+    const amt = Math.round(Math.abs(+a.amt || 0)), memo = String(a.memo || a.name || '').replace(/[<>]/g, '').trim().slice(0, 30);
+    if (name === 'add_record') {
+      if (!(amt > 0 && amt < MAX_REC)) return '금액이 이상해요. 다시 확인해 주세요.';
+      const type = a.type === 'in' ? 'in' : 'out', cat = (type === 'in' ? CATS_IN : CATS_OUT).includes(a.cat) ? a.cat : (type === 'in' ? '기타' : catOf(memo)), date = OK_DATE(a.date) && a.date <= ISO(new Date()) ? a.date : today();
+      cards.push(confirmCard(`가계부에 ${type === 'in' ? '수입으로 ' : ''}적을까요?`, [['날짜', `${+date.slice(5, 7)}월 ${+date.slice(8)}일`], ['금액', `${type === 'in' ? '+' : '−'}${won(amt)}`], ['분류', esc(cat)], ...(memo ? [['메모', esc(memo)]] : [])], saved(() => {
+        let b = RD('donsem:budget'); if (!b || !Array.isArray(b.entries)) b = { entries: [], budget: (b && b.budget) || 0 };
+        b.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, cat, amt, date, memo }); localStorage.setItem('donsem:budget', JSON.stringify(b));
+        return `<b>적었어요 ✓</b><a class="ai-go" href="/budget/">캘린더 보기 ›</a>`;
+      }, `가계부 ${date} ${cat} ${amt}원`), '적기')); return WROTE;
+    }
+    if (name === 'edit_record' || name === 'delete_record') {
+      const b = RD('donsem:budget'), e = b && Array.isArray(b.entries) ? b.entries.find(x => x.id === String(a.id || '')) : null;
+      if (!e) return '그 기록을 찾지 못했어요. get_records로 id를 다시 찾아 주세요. (고정지출에서 생긴 기록은 고정지출 화면에서 바꿔야 해요)';
+      const row = x => `${+x.date.slice(5, 7)}/${+x.date.slice(8)} ${esc(x.cat)} ${won(x.amt)}${x.memo ? ' · ' + esc(x.memo) : ''}`;
+      if (name === 'delete_record') { cards.push(confirmCard('이 기록을 지울까요?', [['기록', row(e)]], saved(() => { const bb = RD('donsem:budget'); bb.entries = bb.entries.filter(x => x.id !== e.id); localStorage.setItem('donsem:budget', JSON.stringify(bb)); return '<b>지웠어요 ✓</b>'; }, `기록 삭제 ${e.date} ${e.cat} ${e.amt}원`), '지우기')); return WROTE; }
+      const nx = { ...e, ...(amt > 0 && amt < MAX_REC ? { amt } : {}), ...(OK_DATE(a.date) ? { date: a.date } : {}), ...((e.type === 'in' ? CATS_IN : CATS_OUT).includes(a.cat) ? { cat: a.cat } : {}), ...(a.memo != null ? { memo } : {}) };
+      cards.push(confirmCard('이렇게 고칠까요?', [['전', row(e)], ['후', row(nx)]], saved(() => { const bb = RD('donsem:budget'); bb.entries = bb.entries.map(x => (x.id === e.id ? nx : x)); localStorage.setItem('donsem:budget', JSON.stringify(bb)); return '<b>고쳤어요 ✓</b><a class="ai-go" href="/budget/">캘린더 보기 ›</a>'; }, `기록 수정 ${nx.date} ${nx.cat} ${nx.amt}원`), '고치기')); return WROTE;
+    }
+    if (name === 'add_fixed') {
+      const day = Math.round(+a.day || 0); if (!(amt > 0 && amt < MAX_REC) || day < 1 || day > 31) return '금액이나 날짜(1~31일)가 이상해요.';
+      const cat = CATS_OUT.includes(a.cat) ? a.cat : (catOf(memo) === '기타' ? '주거·통신' : catOf(memo)), nm = memo || '고정지출';
+      cards.push(confirmCard('고정지출로 등록할까요?', [['이름', esc(nm)], ['금액', won(amt)], ['빠져나가는 날', `매달 ${day}일`], ['분류', esc(cat)]], saved(() => {
+        let f = RD('donsem:fixed'); if (!f || !Array.isArray(f.items)) f = { items: [] };
+        f.items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: nm, cat, amt, cycle: 'month', day }); localStorage.setItem('donsem:fixed', JSON.stringify(f));
+        return `<b>등록했어요 ✓</b><p>매달 ${day}일 캘린더에 들어가요.</p><a class="ai-go" href="/budget/#fixed">고정지출 보기 ›</a>`;
+      }, `고정지출 ${nm} ${amt}원 매달 ${day}일`), '등록하기')); return WROTE;
+    }
+    if (name === 'set_budget') {
+      if (!(amt >= 10000 && amt < MAX_REC)) return '예산 금액이 이상해요.';
+      cards.push(confirmCard('한 달 예산을 이렇게 정할까요?', [['한 달 예산', won(amt)]], saved(() => { let b = RD('donsem:budget'); if (!b || !Array.isArray(b.entries)) b = { entries: [] }; b.budget = amt; localStorage.setItem('donsem:budget', JSON.stringify(b)); return '<b>예산을 정했어요 ✓</b><a class="ai-go" href="/budget/">캘린더 보기 ›</a>'; }, `한 달 예산 ${amt}원`), '정하기')); return WROTE;
+    }
+    if (name === 'save_zone') {
+      const id = String(a.zone || ''), nm = String(a.name || id).replace(/[<>]/g, '').slice(0, 30); if (!/^[0-9a-z]{1,12}$/i.test(id)) return '구역 id가 이상해요. find_redev로 찾은 id를 써 주세요.';
+      cards.push(confirmCard('관심 구역으로 저장할까요?', [['구역', esc(nm)]], saved(() => { let l = RD('donsem:semi-zones') || []; if (!l.some(z => z.id === id)) l.unshift({ id, name: nm }); localStorage.setItem('donsem:semi-zones', JSON.stringify(l.slice(0, 10))); return `<b>관심 구역에 넣었어요 ⭐</b><a class="ai-go" href="/redev/z/${esc(id)}/">구역 정보 보기 ›</a>`; }, `관심 구역 ${nm}`), '저장하기')); return WROTE;
+    }
+    if (name === 'split_bill') {
+      const tot = Math.round(+a.total || 0), n = Math.round(+a.n || 0); if (!(tot > 0) || n < 2 || n > 50) return '금액이나 사람 수가 이상해요.';
+      const d = act(`${memo || '정산'} ${tot}원 ${n}명 나눠줘`); if (d) cards.push(d.html); return '사용자 화면에 1인당 금액과 정산 요청 보내기 버튼을 보여 줬어요.';
+    }
+    if (name === 'show_link') {
+      const h = String(a.href || ''); if (!/^\/[a-z0-9\-/#?=&_.%]*$/i.test(h) || h.startsWith('//')) return '돈셈 안의 주소(/로 시작)만 걸 수 있어요.';
+      cards.links.push([h, String(a.label || '열기').slice(0, 24)]); return '버튼을 붙였어요.';
+    }
+    return '그런 도구는 없어요.';
+  }
+  async function askAI(q, onStep) {
+    const run = hist.map(m => ({ role: m.role, content: m.content })).concat([{ role: 'user', content: q }]);
+    const cards = []; cards.links = []; let j, r, steps = 0;
+    const allowWrite = /기록|적어|적기|써\s?줘|써줘|썼어|샀어|냈어|받았어|추가|등록|저장|고쳐|고치|수정|바꿔|지워|삭제|빼\s?줘|예산.*(정해|잡아|설정|으로)|관심/.test(q);
+    for (;;) {
+      try {
+        r = await fetch(COUNTER_URL + '/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ v: 2, msgs: run, page: location.pathname, t: passes() }) });
+        j = await r.json().catch(() => ({}));
+      } catch (e) { return steps ? { face: 'worry', html: '<p>셈이가 잠깐 연결이 끊겼어요. 다시 물어봐 주세요.</p>' } : null; }
+      if (r.status === 429 && j.error === 'limit') return { face: 'worry', html: `<b>오늘 사용량 한도를 다 썼어요</b><p>자정이 지나면 다시 채워져요. 한도 초기화 티켓이 있으면 지금 바로 다시 쓸 수 있어요. 계산기·가계부는 그대로 무료예요.</p><a class="ai-go" href="/my/#my-usage">한도 초기화 티켓 ›</a>` };
+      if (!r.ok || !j.ok) return steps ? { face: 'worry', html: `<p>${esc(j.message || '셈이가 대답을 마치지 못했어요. 다시 물어봐 주세요.')}</p>` } : null;
+      if (j.done || !Array.isArray(j.calls) || !j.calls.length || ++steps > 7) break;
+      run.push({ role: 'assistant', content: j.content });
+      const results = [];
+      for (const c of j.calls.slice(0, 6)) {
+        if (onStep && STEP_SAY[c.name]) onStep(STEP_SAY[c.name]);
+        let out; try { out = await runTool(c.name, c.input, cards, allowWrite); } catch (e) { out = '도구를 쓰다가 문제가 생겼어요.'; }
+        results.push({ type: 'tool_result', tool_use_id: c.id, content: (typeof out === 'string' ? out : JSON.stringify(out)).slice(0, 6000) });
+      }
+      run.push({ role: 'user', content: results });
+    }
+    const reply = String(j.reply || '').trim() || '할 일을 마쳤어요.';
+    hist.push({ role: 'user', content: q }, { role: 'assistant', content: reply.slice(0, 1500) }); if (hist.length > 8) hist.splice(0, hist.length - 8);
+    const seen = new Set(), links = cards.links.filter(([h]) => !seen.has(h) && seen.add(h)).slice(0, 3).map(([h, l]) => `<a class="ai-go" href="${esc(h)}">${esc(l)} ›</a>`).join(' ');
+    return { face: 'happy', html: `<p>${esc(reply).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</p>${links}${j.paid || j.left == null ? '' : `<p class="ai-small">오늘 남은 무료 대화 ${j.left}번</p>`}`, cards: cards.map(h => `<div class="ai-a ai-did">${h}</div>`).join('') };
+  }
+  // (11-28 전) 한 번에 할 일만 고르던 셈이 — 워커 v2가 없을 때를 대비해 남겨 둬요
+  async function askAI1(q) {
     let r, j;
     try {
       const ctx = await aiCtx(q);
@@ -3860,8 +4012,11 @@ function semiTodos() {
       // 실수령액을 대신 계산할 때는 간이세액표(/salary/table.js)가 있어야 세금이 맞아요 → 없으면 그때 불러와요
       const needTax = /(연봉|월급).*(실수령|세후|얼마|손에|통장)/.test(q) && !window.TAX_TABLE;
       await Promise.all([!kb || !kb.length ? loadKb() : 0, new Promise(r => setTimeout(r, 650)), needTax ? new Promise(r => { const s = document.createElement('script'); s.src = '/salary/table.js'; s.onload = s.onerror = r; document.head.append(s); }) : 0]);
-      const talk0 = smallTalk(q), did0 = talk0 ? null : act(q), my0 = talk0 || did0 ? null : mine(q);
-      const ai = talk0 || did0 || my0 ? null : await askAI(q); // 바로 못 한 말은 셈이 AI가 (실패하면 아래 설명 찾기)
+      // 짧고 단순한 말은 바로 처리하고, 여러 단계가 필요한 말(계획·비교·"~하면")은 셈이 에이전트가 도구를 써서 해요
+      const multi = q.length > 26 || /하면|줄이면|비교|계획|어떻게|추천|분석|정리|그리고|랑 |고쳐|지워|수정|삭제/.test(q);
+      const talk0 = multi ? null : smallTalk(q), did0 = talk0 || multi ? null : act(q), my0 = talk0 || did0 || multi ? null : mine(q);
+      const step = s => { const sp = thinking.querySelector('span'); if (sp) sp.innerHTML = `${esc(s)}<i>.</i><i>.</i><i>.</i>`; };
+      const ai = talk0 || did0 || my0 ? null : await askAI(q, step); // 바로 못 한 말은 셈이 에이전트가 (실패하면 아래 설명 찾기)
       thinking.remove();
       const talk = talk0, did = did0 || ai, hits = talk || did ? [] : search(q), calc = talk || did ? null : calcFor(q), my = talk || did ? null : my0;
       let html = '';
