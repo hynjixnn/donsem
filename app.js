@@ -4918,6 +4918,43 @@ const PARTNER_LINKS = {
     b.classList.toggle('on', s.today); b.classList.toggle('late', !s.today && s.n > 0 && new Date().getHours() >= 18);
     w.setAttribute('aria-label', `혜택·미션 (연속 ${s.n}일)`);
   }
+  // 🔥 저녁 8시 알림 (웹 푸시, 이용권 없이 누구나): 마지막으로 불 켠 날만 워커에 알려 주고, 어제까지 켰는데 오늘 안 켰으면 워커가 저녁 8시에 알림을 보내요
+  const PAPI = 'https://donsem-counter.hjjung330.workers.dev';
+  const canPush = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const iosWeb = /iP(hone|ad|od)/.test(navigator.userAgent) && !navigator.standalone && !canPush;
+  const pPost = (p, b) => fetch(PAPI + p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(r => r.json());
+  const pSub = () => navigator.serviceWorker.getRegistration().then(r => (r ? r.pushManager.getSubscription() : null));
+  const lastLit = s => Object.keys(s.d).sort().pop() || '';
+  const pushOnNow = () => !!(rd('donsem:stk-push') || {}).on;
+  function pushSync(s) {
+    const st = rd('donsem:stk-push'); if (!st || !st.on || !canPush) return;
+    const last = lastLit(s), sig = `${last}|${s.n}|${s.fz}`; if (!last || st.sig === sig) return;
+    pSub().then(x => x && pPost('/push/stk', { endpoint: x.endpoint, last, n: s.n, fz: s.fz }).then(j => { if (j.ok) wr('donsem:stk-push', { on: 1, sig }); })).catch(() => {});
+  }
+  async function pushOn() {
+    try {
+      if (Notification.permission === 'denied') return say('브라우저 설정에서 돈셈 알림을 허용해 주세요.');
+      if (await Notification.requestPermission() !== 'granted') return say('알림을 허용해야 받을 수 있어요.');
+      const s = S(), reg = await navigator.serviceWorker.ready, { key } = await fetch(PAPI + '/push/key').then(r => r.json());
+      const b64 = k => { const p = (k + '='.repeat((4 - k.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/'); return Uint8Array.from(atob(p), c => c.charCodeAt(0)); };
+      const x = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
+      const last = lastLit(s) || dayAt(-3); // 아직 불을 켠 적이 없으면 오늘 알림 대상이 아니에요
+      const j = await pPost('/push/stk', { endpoint: x.endpoint, last, n: s.n, fz: s.fz });
+      if (!j.ok) return say(j.message || '알림을 켜지 못했어요.');
+      wr('donsem:stk-push', { on: 1, sig: `${lastLit(s)}|${s.n}|${s.fz}` });
+      pPost('/push/stk-test', { endpoint: x.endpoint }).catch(() => {});
+      say('🔔 저녁 8시 알림을 켰어요!'); card(S());
+    } catch (e) { say('이 브라우저에서는 알림을 켜지 못했어요.'); }
+  }
+  async function pushOff() {
+    const x = await pSub().catch(() => null); // 구독은 그대로 둬요 (조합원 플러스 알림과 같이 써요)
+    if (x) await pPost('/push/stk-off', { endpoint: x.endpoint }).catch(() => {});
+    try { localStorage.removeItem('donsem:stk-push'); } catch (e) { /* 괜찮아요 */ }
+    say('저녁 알림을 껐어요.'); card(S());
+  }
+  const pushRow = () => iosWeb ? '<div class="stk-push"><span>🔔 홈 화면에 돈셈을 추가하면 저녁 8시 알림을 받을 수 있어요</span></div>'
+    : !canPush ? '' : pushOnNow() ? '<div class="stk-push"><span>🔔 저녁 8시 알림 켜짐</span><button type="button" class="stk-pn off">끄기</button></div>'
+    : '<div class="stk-push"><span>🔔 깜빡하면 저녁 8시에 셈이가 알려 드릴까요?</span><button type="button" class="stk-pn">알림 받기</button></div>';
   // 혜택·미션 맨 위 연속 기록 카드
   function card(s) {
     const el = document.getElementById('stk-card'); if (!el) return;
@@ -4925,7 +4962,8 @@ const PARTNER_LINKS = {
     el.innerHTML = `<div class="stk ${m}"><div class="stk-top"><div class="stk-fire${s.today ? '' : ' off'}">${flame()}<b>${s.n}</b></div><div class="stk-tx"><small>연속 기록</small><strong>${s.n}일 연속</strong><span>최고 ${s.best}일 · ❄ 얼리기 ${s.fz}개</span></div></div>
       <div class="stk-week">${week(s)}</div>
       <div class="stk-say"><span class="stk-ava"><img src="/icons/semi-blink.svg" alt="" width="44" height="44"><em>${face}</em></span><p><b>${l1}</b><small>${l2}</small></p></div>
-      <div class="stk-btns">${s.today ? '<a class="stk-go" href="/path/">돈 관리 코스 이어 하기 ›</a>' : '<a class="stk-go hot" href="#bn-cards">오늘 미션 하러 가기</a>'}<button type="button" class="stk-fz"${s.fz >= 2 || pts < 50 ? ' disabled' : ''}>❄ 얼리기 · 50P</button></div></div>`;
+      <div class="stk-btns">${s.today ? '<a class="stk-go" href="/path/">돈 관리 코스 이어 하기 ›</a>' : '<a class="stk-go hot" href="#bn-cards">오늘 미션 하러 가기</a>'}<button type="button" class="stk-fz"${s.fz >= 2 || pts < 50 ? ' disabled' : ''}>❄ 얼리기 · 50P</button></div>${pushRow()}</div>`;
+    const pn = el.querySelector('.stk-pn'); if (pn) pn.onclick = () => (pn.classList.contains('off') ? pushOff() : pushOn());
     el.querySelector('.stk-fz').onclick = () => { const p = rd('donsem:points') || { n: 0, got: {} }, x = rd('donsem:streak') || {}; if ((p.n || 0) < 50 || (x.fz || 0) >= 2) return; p.n -= 50; x.fz = (x.fz || 0) + 1; wr('donsem:points', p); wr('donsem:streak', x); say('❄ 얼리기를 샀어요! 하루 빠져도 불이 안 꺼져요'); tick(true); };
     const go = el.querySelector('.stk-go.hot'); if (go) go.onclick = e => { const c = document.getElementById('bn-cards'); if (c) { e.preventDefault(); c.scrollIntoView({ behavior: 'smooth', block: 'center' }); } };
   }
@@ -4948,6 +4986,7 @@ const PARTNER_LINKS = {
     if (force || was === null || was.today !== s.today || was.n !== s.n || was.fz !== s.fz) { badge(s); card(s); if (typeof drawPath === 'function') drawPath(); }
     if (s.today && s.cel !== dayAt(0) && !document.querySelector('.stk-cel')) { const x = rd('donsem:streak') || {}; x.cel = dayAt(0); wr('donsem:streak', x); setTimeout(() => celebrate(s), 500); }
     if (s.usedFz && !was) say('❄ 어제는 얼리기가 불을 지켜 줬어요!');
+    pushSync(s);
     was = s;
   }
 
